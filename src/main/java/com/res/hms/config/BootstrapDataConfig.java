@@ -51,10 +51,10 @@ public class BootstrapDataConfig {
 
             if (!userAccountRepository.existsByUsername(properties.adminUsername())) {
                 UserAccount admin = new UserAccount();
-                admin.setHospitalId(hospital.getId());
+                admin.setHospitalId(null);
                 admin.setUsername(properties.adminUsername());
                 admin.setPasswordHash(passwordEncoder.encode(properties.adminPassword()));
-                admin.setRole(roleRepository.findByCode(RoleCode.ADMIN).orElseThrow());
+                admin.setRole(roleRepository.findByCode(RoleCode.SUPER_ADMIN).orElseThrow());
                 admin.setActive(true);
                 userAccountRepository.save(admin);
             }

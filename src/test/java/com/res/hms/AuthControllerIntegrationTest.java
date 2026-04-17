@@ -44,6 +44,7 @@ class AuthControllerIntegrationTest {
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.data.username").value("admin"))
                 .andExpect(jsonPath("$.data.user_id").exists())
-                .andExpect(jsonPath("$.data.role").value("ADMIN"));
+                .andExpect(jsonPath("$.data.role").value("SUPER_ADMIN"))
+                .andExpect(jsonPath("$.data.hospital_id").isEmpty());
     }
 }

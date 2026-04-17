@@ -1,6 +1,7 @@
 package com.res.hms.common.tenant;
 
 import com.res.hms.common.exception.ApiException;
+import com.res.hms.domain.RoleCode;
 import com.res.hms.user.security.HospitalUserPrincipal;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.authentication.AnonymousAuthenticationToken;
@@ -19,6 +20,13 @@ public class HospitalContext {
 
         Object principal = authentication.getPrincipal();
         if (principal instanceof HospitalUserPrincipal hospitalUserPrincipal) {
+            if (hospitalUserPrincipal.roleCode() == RoleCode.SUPER_ADMIN || hospitalUserPrincipal.hospitalId() == null) {
+                throw new ApiException(
+                        "BUSINESS_RULE_VIOLATION",
+                        "A hospital-scoped user is required for this operation",
+                        HttpStatus.BAD_REQUEST
+                );
+            }
             return hospitalUserPrincipal.hospitalId();
         }
 

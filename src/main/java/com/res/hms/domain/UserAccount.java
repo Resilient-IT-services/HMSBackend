@@ -13,7 +13,10 @@ import lombok.Setter;
 @Setter
 @Entity
 @Table(name = "user_account")
-public class UserAccount extends HospitalScopedEntity {
+public class UserAccount extends BaseEntity {
+
+    @Column(name = "hospital_id")
+    private Long hospitalId;
 
     @Column(nullable = false, unique = true)
     private String username;

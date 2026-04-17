@@ -1,11 +1,18 @@
 package com.res.hms;
 
+import com.res.hms.domain.RoleCode;
+import com.res.hms.domain.UserAccount;
+import com.res.hms.repository.HospitalRepository;
+import com.res.hms.repository.RoleRepository;
+import com.res.hms.repository.UserAccountRepository;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.http.MediaType;
 import org.springframework.mock.web.MockHttpSession;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.web.servlet.MockMvc;
 
@@ -21,6 +28,29 @@ class PatientControllerIntegrationTest {
 
     @Autowired
     private MockMvc mockMvc;
+    @Autowired
+    private UserAccountRepository userAccountRepository;
+    @Autowired
+    private RoleRepository roleRepository;
+    @Autowired
+    private HospitalRepository hospitalRepository;
+    @Autowired
+    private PasswordEncoder passwordEncoder;
+
+    @BeforeEach
+    void ensureHospitalAdminExists() {
+        if (userAccountRepository.existsByUsername("hospital_admin")) {
+            return;
+        }
+
+        UserAccount hospitalAdmin = new UserAccount();
+        hospitalAdmin.setHospitalId(hospitalRepository.findByCode("TEST").orElseThrow().getId());
+        hospitalAdmin.setUsername("hospital_admin");
+        hospitalAdmin.setPasswordHash(passwordEncoder.encode("admin123"));
+        hospitalAdmin.setRole(roleRepository.findByCode(RoleCode.ADMIN).orElseThrow());
+        hospitalAdmin.setActive(true);
+        userAccountRepository.save(hospitalAdmin);
+    }
 
     @Test
     void patientEndpointsRequireAuthenticationAndUseSessionCookie() throws Exception {
@@ -31,7 +61,7 @@ class PatientControllerIntegrationTest {
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("""
                                 {
-                                  "username": "admin",
+                                  "username": "hospital_admin",
                                   "password": "admin123"
                                 }
                                 """))
