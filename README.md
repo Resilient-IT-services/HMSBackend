@@ -1,7 +1,195 @@
-# HMS Multi-Hospital Core Principle
+# HMS Phase 1 Scope (Codex Ready)
 
-## Overview
-The HMS platform is designed as a **multi-tenant system using a single database**, where multiple hospitals operate in complete isolation from each other.
+## 1. Objective
+Build a Hospital Management System (HMS) focused on **OPD workflows**, with:
+- Patient registration
+- Appointment management
+- Doctor/Nurse management
+- OPD billing
+- Pharmacy dispensing
+- Role-based access (simple, no RBAC)
+
+---
+
+## 2. Scope (In-Scope)
+
+### 2.1 Authentication
+- Cookie-based authentication
+- Login / Logout
+- Secure HTTP-only cookie
+
+---
+
+### 2.2 User & Roles
+- Predefined roles:
+  - ADMIN
+  - DOCTOR
+  - NURSE
+  - RECEPTIONIST
+  - PHARMACIST
+- Create user with role
+- Role-based access enforced in backend
+- No permission system
+
+---
+
+### 2.3 Patient Management
+- Create patient
+- View patient list
+- View patient details
+
+---
+
+### 2.4 Staff Management
+
+#### Doctor
+- Create doctor
+- View doctors
+
+#### Nurse
+- Create nurse
+- View nurses
+
+---
+
+### 2.5 Appointment Management (OPD Only)
+
+- Create appointment (Receptionist)
+- View appointments
+- Update appointment status
+
+Supported statuses:
+- SCHEDULED
+- COMPLETED
+- NO_SHOW
+- DELAYED
+- CANCELLED
+
+---
+
+### 2.6 Billing (OPD + Pharmacy Only)
+
+- Create OPD bill
+- Add billing items
+- Calculate total
+
+#### Pharmacy Billing
+- Create pharmacy bill (linked to prescription)
+- Auto-add medicine items from dispense
+- Maintain per-item price, quantity, subtotal
+
+No payment processing in Phase 1
+
+---
+
+### 2.7 Pharmacy
+
+#### Prescription (Doctor)
+- Doctor creates prescription
+- Add multiple medicines with dosage and duration
+
+#### Pharmacy Dispensing
+- Pharmacist views prescriptions
+- Dispense medicines (partial/full)
+- Dispense action reduces stock
+- Dispense creates/updates pharmacy billing
+
+#### Pharmacy Stock Management
+- Maintain stock per medicine + batch
+- Track:
+  - batch_number
+  - expiry_date
+  - quantity
+  - price
+- Support stock add (purchase/entry)
+- Support stock deduction (dispense)
+- Prevent dispense if insufficient stock
+- Alert/flag for near expiry (optional)
+
+---
+
+### 2.8 Inventory
+
+- Add item
+- Update stock
+- Track stock quantity
+
+---
+
+### 2.9 Audit Logs
+
+- Track key actions (create/update)
+- Fetch audit logs
+
+---
+
+## 3. Out of Scope (Phase 1)
+
+- Admission / IPD
+- Payment processing
+- Online payment gateway
+- Advanced RBAC / permissions
+- Multi-hospital UI workflows
+- Reports & analytics (basic only if needed)
+
+---
+
+## 4. Core Technical Constraints
+
+- Single database
+- `hospital_id` enforced at backend
+- No trust on frontend
+- All APIs must be hospital-scoped
+
+---
+
+## 5. Key Deliverables
+
+- Backend APIs (Spring Boot)
+- Database schema
+- Authentication (cookie-based)
+- Core modules implemented:
+  - Patient
+  - Appointment
+  - Billing
+  - Pharmacy
+  - Inventory
+
+---
+
+## 6. Development Principles
+
+- No business logic in controllers
+- Strict validation at API layer
+- Consistent API response structure
+- Pagination for all list APIs
+- Error handling with standard codes
+
+---
+
+## 7. Success Criteria
+
+- Receptionist can manage appointments
+- Doctor can view assigned patients and create prescriptions
+- Pharmacy can dispense medicines and generate billing
+- Admin can manage users
+- Stock is reduced correctly on dispense
+- System works fully offline (on-prem ready)
+
+---
+
+## 8. Notes for Codex
+
+- Keep implementation simple (Phase 1 focus)
+- Avoid over-engineering
+- Follow modular structure
+- Design for future extensibility (Person model, multi-hospital ready)
+
+---
+
+## Summary
+
+Phase 1 focuses on **core hospital operations (OPD)** with minimal complexity and strong backend control. The goal is fast delivery with a solid architectural foundation.
 
 Each hospital is identified using a `hospital_id`, which acts as the primary boundary for all data access and operations.
 
