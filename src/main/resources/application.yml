@@ -1,0 +1,18 @@
+spring:
+  application:
+    name: HMS
+  profiles:
+    default: local
+  jpa:
+    hibernate:
+      ddl-auto: update
+    show-sql: true
+  datasource:
+    username: postgres
+    password: 2011
+    url: jdbc:postgresql://localhost:5432/hms
+server:
+  port: ${SERVER_PORT:8081}
+  servlet:
+    session:
+      timeout: 15m
