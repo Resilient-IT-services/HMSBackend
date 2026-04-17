@@ -1,18 +1,41 @@
 spring:
   application:
-    name: HMS
-  profiles:
-    default: local
+    name: hms-backend
+  datasource:
+    url: ${DB_URL:jdbc:postgresql://localhost:5432/hms}
+    username: ${DB_USERNAME:postgres}
+    password: ${DB_PASSWORD:postgres}
   jpa:
     hibernate:
-      ddl-auto: update
-    show-sql: true
-  datasource:
-    username: postgres
-    password: 2011
-    url: jdbc:postgresql://localhost:5432/hms
+      ddl-auto: validate
+    open-in-view: false
+    properties:
+      hibernate:
+        format_sql: true
+  flyway:
+    enabled: true
+    locations: classpath:db/migration
+  jackson:
+    default-property-inclusion: non_null
+    property-naming-strategy: SNAKE_CASE
+
 server:
   port: ${SERVER_PORT:8081}
   servlet:
     session:
-      timeout: 15m
+      timeout: 30m
+      cookie:
+        http-only: true
+        secure: ${SESSION_COOKIE_SECURE:false}
+        same-site: lax
+
+springdoc:
+  swagger-ui:
+    path: /swagger-ui.html
+
+app:
+  bootstrap:
+    admin-username: ${HMS_ADMIN_USERNAME:admin}
+    admin-password: ${HMS_ADMIN_PASSWORD:admin123}
+    hospital-code: ${HMS_DEFAULT_HOSPITAL_CODE:DEFAULT}
+    hospital-name: ${HMS_DEFAULT_HOSPITAL_NAME:Default Hospital}

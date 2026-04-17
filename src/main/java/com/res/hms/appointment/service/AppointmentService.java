@@ -1,0 +1,83 @@
+package com.res.hms.appointment.service;
+
+import com.res.hms.appointment.dto.AppointmentResponse;
+import com.res.hms.appointment.dto.CreateAppointmentRequest;
+import com.res.hms.appointment.dto.UpdateAppointmentStatusRequest;
+import com.res.hms.appointment.repository.AppointmentRepository;
+import com.res.hms.audit.service.AuditLogService;
+import com.res.hms.common.api.PageResponse;
+import com.res.hms.common.exception.ApiException;
+import com.res.hms.common.tenant.HospitalContext;
+import com.res.hms.doctor.service.DoctorService;
+import com.res.hms.domain.Appointment;
+import com.res.hms.domain.AppointmentStatus;
+import com.res.hms.domain.Doctor;
+import com.res.hms.domain.Patient;
+import com.res.hms.patient.service.PatientService;
+import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.http.HttpStatus;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+
+@Service
+@RequiredArgsConstructor
+public class AppointmentService {
+
+    private final AppointmentRepository appointmentRepository;
+    private final PatientService patientService;
+    private final DoctorService doctorService;
+    private final HospitalContext hospitalContext;
+    private final AuditLogService auditLogService;
+
+    @Transactional
+    public AppointmentResponse create(CreateAppointmentRequest request) {
+        Long hospitalId = hospitalContext.requireHospitalId();
+        Patient patient = patientService.requirePatient(request.patientId(), hospitalId);
+        Doctor doctor = doctorService.requireDoctor(request.doctorId(), hospitalId);
+
+        Appointment appointment = new Appointment();
+        appointment.setHospitalId(hospitalId);
+        appointment.setPatient(patient);
+        appointment.setDoctor(doctor);
+        appointment.setAppointmentTime(request.appointmentTime());
+        appointment.setStatus(AppointmentStatus.SCHEDULED);
+        appointment.setNotes(request.notes());
+        appointmentRepository.save(appointment);
+
+        auditLogService.record(hospitalId, "appointment", appointment.getId(), "CREATE", "Created OPD appointment");
+        return toResponse(appointment);
+    }
+
+    @Transactional(readOnly = true)
+    public PageResponse<AppointmentResponse> list(int page, int size) {
+        Long hospitalId = hospitalContext.requireHospitalId();
+        return PageResponse.from(appointmentRepository.findAllByHospitalIdOrderByAppointmentTimeDesc(hospitalId, PageRequest.of(page, size))
+                .map(this::toResponse));
+    }
+
+    @Transactional
+    public AppointmentResponse updateStatus(Long id, UpdateAppointmentStatusRequest request) {
+        Long hospitalId = hospitalContext.requireHospitalId();
+        Appointment appointment = appointmentRepository.findByIdAndHospitalId(id, hospitalId)
+                .orElseThrow(() -> new ApiException("NOT_FOUND", "Appointment not found", HttpStatus.NOT_FOUND));
+
+        appointment.setStatus(request.status());
+        auditLogService.record(hospitalId, "appointment", appointment.getId(), "UPDATE_STATUS", "Updated appointment status to " + request.status());
+        return toResponse(appointment);
+    }
+
+    private AppointmentResponse toResponse(Appointment appointment) {
+        return new AppointmentResponse(
+                appointment.getId(),
+                appointment.getPatient().getId(),
+                appointment.getPatient().getFullName(),
+                appointment.getDoctor().getId(),
+                appointment.getDoctor().getFullName(),
+                appointment.getAppointmentTime(),
+                appointment.getStatus(),
+                appointment.getNotes(),
+                appointment.getCreatedAt()
+        );
+    }
+}
