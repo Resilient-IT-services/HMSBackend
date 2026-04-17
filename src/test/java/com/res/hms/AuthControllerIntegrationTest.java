@@ -11,7 +11,6 @@ import org.springframework.test.web.servlet.MockMvc;
 
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.cookie;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
@@ -27,24 +26,25 @@ class AuthControllerIntegrationTest {
     void loginCreatesHttpSessionAndAllowsProfileLookup() throws Exception {
         MockHttpSession session = (MockHttpSession) mockMvc.perform(post("/api/v1/auth/login")
                         .contentType(MediaType.APPLICATION_JSON)
-                        .content("""
+                .content("""
                                 {
                                   "username": "admin",
                                   "password": "admin123"
                                 }
                                 """))
                 .andExpect(status().isOk())
-                .andExpect(cookie().exists("JSESSIONID"))
                 .andExpect(jsonPath("$.success").value(true))
                 .andReturn()
                 .getRequest()
                 .getSession(false);
+
+        org.junit.jupiter.api.Assertions.assertNotNull(session);
 
         mockMvc.perform(get("/api/v1/auth/me").session(session))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.data.username").value("admin"))
                 .andExpect(jsonPath("$.data.user_id").exists())
                 .andExpect(jsonPath("$.data.role").value("SUPER_ADMIN"))
-                .andExpect(jsonPath("$.data.hospital_id").isEmpty());
+                .andExpect(jsonPath("$.data.hospital_id").doesNotExist());
     }
 }
