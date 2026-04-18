@@ -9,9 +9,9 @@ import java.math.BigDecimal;
 import java.time.LocalDate;
 
 public record AddPharmacyStockRequest(
-        @NotNull(message = "medicine_id is required")
+        @NotNull(message = "medicineId is required")
         Long medicineId,
-        @NotBlank(message = "batch_number is required")
+        @NotBlank(message = "batchNumber is required")
         String batchNumber,
         LocalDate expiryDate,
         @NotNull(message = "quantity is required")

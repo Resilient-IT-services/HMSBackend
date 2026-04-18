@@ -76,7 +76,7 @@ class SecurityExhaustiveIntegrationTest {
             mockMvc.perform(post("/api/v1/auth/select-hospital")
                             .session(session)
                             .contentType(MediaType.APPLICATION_JSON)
-                            .content("{\"hospital_id\": " + hospitalId + "}"))
+                            .content("{\"hospitalId\": " + hospitalId + "}"))
                     .andExpect(status().isOk());
         }
 
@@ -98,7 +98,7 @@ class SecurityExhaustiveIntegrationTest {
                                   "username": "newuser1",
                                   "password": "password",
                                   "roles": [],
-                                  "full_name": "New User",
+                                  "fullName": "New User",
                                   "gender": "MALE",
                                   "dob": "1990-01-01"
                                 }
@@ -117,7 +117,7 @@ class SecurityExhaustiveIntegrationTest {
                                   "username": "newuser2",
                                   "password": "password",
                                   "roles": ["NURSE"],
-                                  "full_name": "New User",
+                                  "fullName": "New User",
                                   "gender": "MALE",
                                   "dob": "1990-01-01"
                                 }
@@ -136,7 +136,7 @@ class SecurityExhaustiveIntegrationTest {
                                   "username": "another_admin",
                                   "password": "password",
                                   "roles": ["ADMIN"],
-                                  "full_name": "Another Admin",
+                                  "fullName": "Another Admin",
                                   "gender": "MALE",
                                   "dob": "1990-01-01"
                                 }
@@ -156,7 +156,7 @@ class SecurityExhaustiveIntegrationTest {
                                   "username": "hosp_doctor",
                                   "password": "password",
                                   "roles": ["NURSE"],
-                                  "full_name": "Dup User",
+                                  "fullName": "Dup User",
                                   "gender": "MALE",
                                   "dob": "1990-01-01"
                                 }
@@ -188,9 +188,9 @@ class SecurityExhaustiveIntegrationTest {
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("""
                                 {
-                                  "patient_id": 1,
-                                  "doctor_id": 1,
-                                  "appointment_time": "2026-05-01T10:00:00"
+                                  "patientId": 1,
+                                  "doctorId": 1,
+                                  "appointmentTime": "2026-05-01T10:00:00"
                                 }
                                 """))
                 .andExpect(status().isForbidden());
@@ -214,7 +214,7 @@ class SecurityExhaustiveIntegrationTest {
         mockMvc.perform(post("/api/v1/users/allocate")
                         .session(session)
                         .contentType(MediaType.APPLICATION_JSON)
-                        .content("{\"user_id\": " + hosp2UserId + ", \"roles\": [\"DOCTOR\"]}"))
+                        .content("{\"userId\": " + hosp2UserId + ", \"roles\": [\"DOCTOR\"]}"))
                 .andExpect(status().isNotFound()); // Strict isolation: user not found in context
     }
 
@@ -234,20 +234,20 @@ class SecurityExhaustiveIntegrationTest {
         MockHttpSession session = loginAndSelect("multi_dr", testHospitalId);
         mockMvc.perform(get("/api/v1/auth/me").session(session))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.data.hospital_id").value(testHospitalId));
+                .andExpect(jsonPath("$.data.hospitalId").value(testHospitalId));
 
         // 2. Switch to Hospital 2
         mockMvc.perform(post("/api/v1/auth/select-hospital")
                         .session(session)
                         .contentType(MediaType.APPLICATION_JSON)
-                        .content("{\"hospital_id\": " + secondHospitalId + "}"))
+                        .content("{\"hospitalId\": " + secondHospitalId + "}"))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.data.hospital_id").value(secondHospitalId));
+                .andExpect(jsonPath("$.data.hospitalId").value(secondHospitalId));
 
         // 3. Verify 'me' now returns Hospital 2
         mockMvc.perform(get("/api/v1/auth/me").session(session))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.data.hospital_id").value(secondHospitalId));
+                .andExpect(jsonPath("$.data.hospitalId").value(secondHospitalId));
     }
 
     @Test
@@ -279,7 +279,7 @@ class SecurityExhaustiveIntegrationTest {
                                   "username": "nogender",
                                   "password": "password",
                                   "roles": ["NURSE"],
-                                  "full_name": "No Gender",
+                                  "fullName": "No Gender",
                                   "dob": "1990-01-01"
                                 }
                                 """))
@@ -297,7 +297,7 @@ class SecurityExhaustiveIntegrationTest {
                                   "username": "nodob",
                                   "password": "password",
                                   "roles": ["NURSE"],
-                                  "full_name": "No DOB",
+                                  "fullName": "No DOB",
                                   "gender": "MALE"
                                 }
                                 """))

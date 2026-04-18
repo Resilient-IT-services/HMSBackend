@@ -85,7 +85,7 @@ class PatientControllerIntegrationTest {
         // Fetch /me to get hospital list
         mockMvc.perform(get("/api/v1/auth/me").session(session))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.data.hospitals[0].hospital_code").value("TEST"));
+                .andExpect(jsonPath("$.data.hospitals[0].hospitalCode").value("TEST"));
 
         // Try to access patients without selecting hospital -> should fail with 400
         mockMvc.perform(get("/api/v1/patients").session(session))
@@ -96,9 +96,9 @@ class PatientControllerIntegrationTest {
         mockMvc.perform(post("/api/v1/auth/select-hospital")
                         .session(session)
                         .contentType(MediaType.APPLICATION_JSON)
-                        .content("{\"hospital_id\": " + testHospitalId + "}"))
+                        .content("{\"hospitalId\": " + testHospitalId + "}"))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.data.hospital_id").value(testHospitalId));
+                .andExpect(jsonPath("$.data.hospitalId").value(testHospitalId));
 
         // Now it should work
         mockMvc.perform(post("/api/v1/patients")
@@ -106,7 +106,7 @@ class PatientControllerIntegrationTest {
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("""
                                 {
-                                  "full_name": "Asha Nair",
+                                  "fullName": "Asha Nair",
                                   "gender": "FEMALE",
                                   "dob": "1992-08-14",
                                   "phone": "9999999999",
@@ -114,10 +114,10 @@ class PatientControllerIntegrationTest {
                                 }
                                 """))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.data.full_name").value("Asha Nair"));
+                .andExpect(jsonPath("$.data.fullName").value("Asha Nair"));
 
         mockMvc.perform(get("/api/v1/patients").session(session))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.data.content[0].full_name").value("Asha Nair"));
+                .andExpect(jsonPath("$.data.content[0].fullName").value("Asha Nair"));
     }
 }

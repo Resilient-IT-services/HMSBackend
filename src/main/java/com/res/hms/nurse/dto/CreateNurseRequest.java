@@ -7,7 +7,7 @@ import jakarta.validation.constraints.NotNull;
 import java.time.LocalDate;
 
 public record CreateNurseRequest(
-        @NotNull(message = "user_id is required")
+        @NotNull(message = "userId is required")
         Long userId,
         @NotBlank(message = "department is required")
         String department

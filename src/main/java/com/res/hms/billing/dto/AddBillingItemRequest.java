@@ -8,7 +8,7 @@ import jakarta.validation.constraints.NotNull;
 import java.math.BigDecimal;
 
 public record AddBillingItemRequest(
-        @NotBlank(message = "item_name is required")
+        @NotBlank(message = "itemName is required")
         String itemName,
         @NotNull(message = "amount is required")
         @DecimalMin(value = "0.01", message = "amount must be positive")

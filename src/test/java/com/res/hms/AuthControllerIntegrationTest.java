@@ -47,9 +47,9 @@ class AuthControllerIntegrationTest {
         mockMvc.perform(get("/api/v1/auth/me").session(session))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.data.username").value("admin"))
-                .andExpect(jsonPath("$.data.user_id").exists())
+                .andExpect(jsonPath("$.data.userId").exists())
                 .andExpect(jsonPath("$.data.roles").value(hasItem("SUPER_ADMIN")))
                 .andExpect(jsonPath("$.data.hospitals").isArray())
-                .andExpect(jsonPath("$.data.hospital_id").doesNotExist());
+                .andExpect(jsonPath("$.data.hospitalId").doesNotExist());
     }
 }

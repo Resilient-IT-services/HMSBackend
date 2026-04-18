@@ -6,7 +6,7 @@ import jakarta.validation.constraints.NotNull;
 import java.math.BigDecimal;
 
 public record UpdateInventoryStockRequest(
-        @NotNull(message = "item_id is required")
+        @NotNull(message = "itemId is required")
         Long itemId,
         @NotNull(message = "quantity is required")
         @DecimalMin(value = "0.01", message = "quantity must be positive")

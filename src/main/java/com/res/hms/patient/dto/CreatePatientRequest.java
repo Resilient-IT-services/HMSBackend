@@ -6,7 +6,7 @@ import jakarta.validation.constraints.NotBlank;
 import java.time.LocalDate;
 
 public record CreatePatientRequest(
-        @NotBlank(message = "full_name is required")
+        @NotBlank(message = "fullName is required")
         String fullName,
         Gender gender,
         LocalDate dob,

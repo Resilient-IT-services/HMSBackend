@@ -19,7 +19,7 @@ public record CreateUserRequest(
         @NotEmpty(message = "at least one role is required")
         Set<RoleCode> roles,
 
-        @NotBlank(message = "full_name is required")
+        @NotBlank(message = "fullName is required")
         String fullName,
         
         @NotNull(message = "gender is required")

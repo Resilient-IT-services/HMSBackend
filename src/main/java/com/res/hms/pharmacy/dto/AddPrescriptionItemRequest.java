@@ -4,7 +4,7 @@ import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 
 public record AddPrescriptionItemRequest(
-        @NotNull(message = "medicine_id is required")
+        @NotNull(message = "medicineId is required")
         Long medicineId,
         @NotBlank(message = "dosage is required")
         String dosage,

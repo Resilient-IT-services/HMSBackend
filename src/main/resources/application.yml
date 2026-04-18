@@ -17,7 +17,6 @@ spring:
     locations: classpath:db/migration
   jackson:
     default-property-inclusion: non_null
-    property-naming-strategy: SNAKE_CASE
 
 server:
   port: ${SERVER_PORT:8081}
