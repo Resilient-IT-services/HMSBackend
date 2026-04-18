@@ -2,6 +2,7 @@ package com.res.hms.user.service;
 
 import com.res.hms.common.exception.ApiException;
 import com.res.hms.domain.RoleCode;
+import com.res.hms.repository.HospitalRepository;
 import com.res.hms.user.dto.LoginRequest;
 import com.res.hms.user.security.HospitalUserPrincipal;
 import jakarta.servlet.http.HttpServletRequest;
@@ -21,6 +22,8 @@ import org.springframework.security.core.context.SecurityContext;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.web.context.SecurityContextRepository;
 
+import java.util.HashMap;
+import java.util.Map;
 import java.util.Set;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -39,6 +42,8 @@ class AuthServiceTest {
     @Mock
     private SecurityContextRepository securityContextRepository;
     @Mock
+    private HospitalRepository hospitalRepository;
+    @Mock
     private HttpServletRequest httpServletRequest;
     @Mock
     private HttpServletResponse httpServletResponse;
@@ -53,18 +58,22 @@ class AuthServiceTest {
 
     @Test
     void loginAuthenticatesAndPersistsSecurityContext() {
-        HospitalUserPrincipal principal = new HospitalUserPrincipal(1L, 5L, "doctor", "secret", Set.of(RoleCode.DOCTOR), true);
+        Map<Long, Set<RoleCode>> roles = new HashMap<>();
+        roles.put(null, Set.of(RoleCode.DOCTOR));
+
+        HospitalUserPrincipal principal = new HospitalUserPrincipal(
+                1L, "doctor", "secret", true, 
+                roles, 
+                null, Set.of(RoleCode.DOCTOR)
+        );
         Authentication authentication = new TestingAuthenticationToken(principal, null);
         when(authenticationManager.authenticate(any())).thenReturn(authentication);
 
-        var response = authService.login(new LoginRequest("doctor", "secret"), httpServletRequest, httpServletResponse);
+        authService.login(new LoginRequest("doctor", "secret"), httpServletRequest, httpServletResponse);
 
         ArgumentCaptor<SecurityContext> contextCaptor = ArgumentCaptor.forClass(SecurityContext.class);
         verify(securityContextRepository).saveContext(contextCaptor.capture(), any(), any());
         assertNotNull(contextCaptor.getValue().getAuthentication());
-        assertEquals(1L, response.userId());
-        assertEquals(5L, response.hospitalId());
-        assertTrue(response.roles().contains(RoleCode.DOCTOR));
     }
 
     @Test
@@ -80,15 +89,21 @@ class AuthServiceTest {
 
     @Test
     void currentUserReturnsPrincipalDetails() {
+        Map<Long, Set<RoleCode>> roles = new HashMap<>();
+        roles.put(null, Set.of(RoleCode.ADMIN));
+
         SecurityContextHolder.getContext().setAuthentication(new TestingAuthenticationToken(
-                new HospitalUserPrincipal(2L, 8L, "admin", "secret", Set.of(RoleCode.ADMIN), true),
+                new HospitalUserPrincipal(
+                        2L, "admin", "secret", true, 
+                        roles, 
+                        null, Set.of(RoleCode.ADMIN)
+                ),
                 null
         ));
 
         var response = authService.currentUser();
 
         assertEquals(2L, response.userId());
-        assertEquals(8L, response.hospitalId());
         assertTrue(response.roles().contains(RoleCode.ADMIN));
     }
 

@@ -6,6 +6,8 @@ import com.res.hms.common.tenant.HospitalContext;
 import com.res.hms.domain.Role;
 import com.res.hms.domain.RoleCode;
 import com.res.hms.domain.UserAccount;
+import com.res.hms.domain.UserRoleAssignment;
+import com.res.hms.repository.HospitalRepository;
 import com.res.hms.repository.RoleRepository;
 import com.res.hms.repository.UserAccountRepository;
 import com.res.hms.user.dto.CreateUserRequest;
@@ -35,6 +37,8 @@ class UserServiceTest {
     @Mock
     private RoleRepository roleRepository;
     @Mock
+    private HospitalRepository hospitalRepository;
+    @Mock
     private PasswordEncoder passwordEncoder;
     @Mock
     private HospitalContext hospitalContext;
@@ -58,6 +62,7 @@ class UserServiceTest {
     @Test
     void createRejectsUnknownRole() {
         when(userAccountRepository.existsByUsername("admin")).thenReturn(false);
+        when(hospitalContext.getHospitalIdOrNull()).thenReturn(10L);
         when(roleRepository.findByCode(RoleCode.ADMIN)).thenReturn(Optional.empty());
 
         ApiException exception = assertThrows(ApiException.class, () ->
@@ -72,9 +77,9 @@ class UserServiceTest {
         Role role = new Role();
         role.setCode(RoleCode.ADMIN);
         when(userAccountRepository.existsByUsername("admin")).thenReturn(false);
+        when(hospitalContext.getHospitalIdOrNull()).thenReturn(10L);
         when(roleRepository.findByCode(RoleCode.ADMIN)).thenReturn(Optional.of(role));
         when(passwordEncoder.encode("secret1")).thenReturn("encoded");
-        when(hospitalContext.requireHospitalId()).thenReturn(10L);
         when(userAccountRepository.save(any(UserAccount.class))).thenAnswer(invocation -> {
             UserAccount userAccount = invocation.getArgument(0);
             userAccount.setId(99L);
@@ -92,13 +97,20 @@ class UserServiceTest {
     void listReturnsHospitalUsers() {
         Role role = new Role();
         role.setCode(RoleCode.DOCTOR);
+        
         UserAccount userAccount = new UserAccount();
         userAccount.setId(5L);
         userAccount.setUsername("doctor");
-        userAccount.getRoles().add(role);
         userAccount.setActive(true);
-        when(hospitalContext.requireHospitalId()).thenReturn(12L);
-        when(userAccountRepository.findAllByHospitalIdOrderByCreatedAtDesc(12L)).thenReturn(List.of(userAccount));
+        
+        UserRoleAssignment assignment = new UserRoleAssignment();
+        assignment.setHospitalId(12L);
+        assignment.setRole(role);
+        assignment.setUser(userAccount);
+        userAccount.getAssignments().add(assignment);
+
+        when(hospitalContext.getHospitalIdOrNull()).thenReturn(12L);
+        when(userAccountRepository.findAllByHospitalId(12L)).thenReturn(List.of(userAccount));
 
         var response = userService.list();
 

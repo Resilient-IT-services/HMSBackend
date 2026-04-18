@@ -8,6 +8,8 @@ import org.junit.jupiter.api.Test;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.context.SecurityContextHolder;
 
+import java.util.HashMap;
+import java.util.Map;
 import java.util.Set;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -25,7 +27,11 @@ class HospitalContextTest {
 
     @Test
     void requireHospitalIdReturnsHospitalIdForHospitalScopedUser() {
-        HospitalUserPrincipal principal = new HospitalUserPrincipal(7L, 11L, "admin", "secret", Set.of(RoleCode.ADMIN), true);
+        HospitalUserPrincipal principal = new HospitalUserPrincipal(
+                7L, "admin", "secret", true, 
+                Map.of(11L, Set.of(RoleCode.ADMIN)), 
+                11L, Set.of(RoleCode.ADMIN)
+        );
         SecurityContextHolder.getContext().setAuthentication(
                 UsernamePasswordAuthenticationToken.authenticated(principal, null, principal.getAuthorities())
         );
@@ -42,7 +48,14 @@ class HospitalContextTest {
 
     @Test
     void requireHospitalIdRejectsSuperAdmin() {
-        HospitalUserPrincipal principal = new HospitalUserPrincipal(7L, null, "super", "secret", Set.of(RoleCode.SUPER_ADMIN), true);
+        Map<Long, Set<RoleCode>> roles = new HashMap<>();
+        roles.put(null, Set.of(RoleCode.SUPER_ADMIN));
+
+        HospitalUserPrincipal principal = new HospitalUserPrincipal(
+                7L, "super", "secret", true, 
+                roles, 
+                null, Set.of(RoleCode.SUPER_ADMIN)
+        );
         SecurityContextHolder.getContext().setAuthentication(
                 UsernamePasswordAuthenticationToken.authenticated(principal, null, principal.getAuthorities())
         );
@@ -54,7 +67,11 @@ class HospitalContextTest {
 
     @Test
     void currentUserIdOrNullReturnsUserIdForPrincipal() {
-        HospitalUserPrincipal principal = new HospitalUserPrincipal(9L, 11L, "user", "secret", Set.of(RoleCode.DOCTOR), true);
+        HospitalUserPrincipal principal = new HospitalUserPrincipal(
+                9L, "user", "secret", true, 
+                Map.of(11L, Set.of(RoleCode.DOCTOR)), 
+                11L, Set.of(RoleCode.DOCTOR)
+        );
         SecurityContextHolder.getContext().setAuthentication(
                 UsernamePasswordAuthenticationToken.authenticated(principal, null, principal.getAuthorities())
         );

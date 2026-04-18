@@ -6,20 +6,27 @@ import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetails;
 
 import java.util.Collection;
+import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
 
 public record HospitalUserPrincipal(
         Long userId,
-        Long hospitalId,
         String username,
         String password,
-        Set<RoleCode> roleCodes,
-        boolean active
+        boolean active,
+        // Map of Hospital ID to Set of Roles. Hospital ID can be NULL for global roles.
+        Map<Long, Set<RoleCode>> hospitalRoles,
+        // The active context for this session
+        Long hospitalId,
+        Set<RoleCode> roleCodes
 ) implements UserDetails {
 
     @Override
     public Collection<? extends GrantedAuthority> getAuthorities() {
+        if (roleCodes == null) {
+            return Set.of();
+        }
         return roleCodes.stream()
                 .map(code -> new SimpleGrantedAuthority("ROLE_" + code.name()))
                 .collect(Collectors.toSet());
@@ -53,5 +60,9 @@ public record HospitalUserPrincipal(
     @Override
     public boolean isEnabled() {
         return active;
+    }
+
+    public boolean isSuperAdmin() {
+        return roleCodes != null && roleCodes.contains(RoleCode.SUPER_ADMIN);
     }
 }

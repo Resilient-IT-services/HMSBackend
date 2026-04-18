@@ -20,10 +20,18 @@ public class HospitalContext {
 
         Object principal = authentication.getPrincipal();
         if (principal instanceof HospitalUserPrincipal hospitalUserPrincipal) {
-            if (hospitalUserPrincipal.roleCodes().contains(RoleCode.SUPER_ADMIN) || hospitalUserPrincipal.hospitalId() == null) {
+            if (hospitalUserPrincipal.hospitalId() == null) {
+                if (hospitalUserPrincipal.isSuperAdmin()) {
+                    throw new ApiException(
+                            "BUSINESS_RULE_VIOLATION",
+                            "A hospital must be selected even for Super Admin to perform operational tasks",
+                            HttpStatus.BAD_REQUEST
+                    );
+                }
+                
                 throw new ApiException(
                         "BUSINESS_RULE_VIOLATION",
-                        "A hospital-scoped user is required for this operation",
+                        "Please select a hospital first",
                         HttpStatus.BAD_REQUEST
                 );
             }
@@ -31,6 +39,22 @@ public class HospitalContext {
         }
 
         throw new ApiException("AUTH_ERROR", "Hospital context is missing", HttpStatus.UNAUTHORIZED);
+    }
+
+    public Long getHospitalIdOrNull() {
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        if (authentication != null && authentication.getPrincipal() instanceof HospitalUserPrincipal principal) {
+            return principal.hospitalId();
+        }
+        return null;
+    }
+
+    public boolean isSuperAdmin() {
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        if (authentication != null && authentication.getPrincipal() instanceof HospitalUserPrincipal principal) {
+            return principal.isSuperAdmin();
+        }
+        return false;
     }
 
     public Long currentUserIdOrNull() {

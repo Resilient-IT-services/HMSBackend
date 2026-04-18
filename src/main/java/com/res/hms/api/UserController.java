@@ -1,6 +1,7 @@
 package com.res.hms.api;
 
 import com.res.hms.common.api.ApiResponse;
+import com.res.hms.user.dto.AllocateRoleRequest;
 import com.res.hms.user.dto.CreateUserRequest;
 import com.res.hms.user.dto.UserResponse;
 import com.res.hms.user.service.UserService;
@@ -25,14 +26,20 @@ public class UserController {
     private final UserService userService;
 
     @PostMapping
-    @PreAuthorize("hasRole('ADMIN')")
+    @PreAuthorize("hasAnyRole('SUPER_ADMIN', 'ADMIN')")
     public ApiResponse<UserResponse> create(@Valid @RequestBody CreateUserRequest request) {
         return ApiResponse.success(userService.create(request));
     }
 
     @GetMapping
-    @PreAuthorize("hasRole('ADMIN')")
+    @PreAuthorize("hasAnyRole('SUPER_ADMIN', 'ADMIN')")
     public ApiResponse<List<UserResponse>> list() {
         return ApiResponse.success(userService.list());
+    }
+
+    @PostMapping("/allocate")
+    @PreAuthorize("hasAnyRole('SUPER_ADMIN', 'ADMIN')")
+    public ApiResponse<UserResponse> allocate(@Valid @RequestBody AllocateRoleRequest request) {
+        return ApiResponse.success(userService.allocateRoles(request));
     }
 }
