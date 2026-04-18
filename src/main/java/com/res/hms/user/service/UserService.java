@@ -16,6 +16,8 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
+import java.util.Set;
+import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
@@ -33,15 +35,21 @@ public class UserService {
             throw new ApiException("BUSINESS_RULE_VIOLATION", "Username already exists", HttpStatus.CONFLICT);
         }
 
-        Role role = roleRepository.findByCode(request.role())
-                .orElseThrow(() -> new ApiException("NOT_FOUND", "Role not found", HttpStatus.NOT_FOUND));
+        Set<Role> roles = request.roles().stream()
+                .map(code -> roleRepository.findByCode(code)
+                        .orElseThrow(() -> new ApiException("NOT_FOUND", "Role not found: " + code, HttpStatus.NOT_FOUND)))
+                .collect(Collectors.toSet());
 
         Long hospitalId = hospitalContext.requireHospitalId();
         UserAccount userAccount = new UserAccount();
         userAccount.setHospitalId(hospitalId);
         userAccount.setUsername(request.username());
         userAccount.setPasswordHash(passwordEncoder.encode(request.password()));
-        userAccount.setRole(role);
+        userAccount.setFullName(request.fullName());
+        userAccount.setGender(request.gender());
+        userAccount.setDob(request.dob());
+        userAccount.setPhone(request.phone());
+        userAccount.setRoles(roles);
         userAccount.setActive(true);
         userAccountRepository.save(userAccount);
 
@@ -61,7 +69,7 @@ public class UserService {
         return new UserResponse(
                 userAccount.getId(),
                 userAccount.getUsername(),
-                userAccount.getRole().getCode(),
+                userAccount.getRoles().stream().map(Role::getCode).collect(Collectors.toSet()),
                 userAccount.isActive(),
                 userAccount.getCreatedAt()
         );

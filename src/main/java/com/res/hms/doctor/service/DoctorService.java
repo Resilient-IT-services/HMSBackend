@@ -8,6 +8,8 @@ import com.res.hms.doctor.dto.CreateDoctorRequest;
 import com.res.hms.doctor.dto.DoctorResponse;
 import com.res.hms.doctor.repository.DoctorRepository;
 import com.res.hms.domain.Doctor;
+import com.res.hms.domain.UserAccount;
+import com.res.hms.repository.UserAccountRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.http.HttpStatus;
@@ -19,22 +21,24 @@ import org.springframework.transaction.annotation.Transactional;
 public class DoctorService {
 
     private final DoctorRepository doctorRepository;
+    private final UserAccountRepository userAccountRepository;
     private final HospitalContext hospitalContext;
     private final AuditLogService auditLogService;
 
     @Transactional
     public DoctorResponse create(CreateDoctorRequest request) {
         Long hospitalId = hospitalContext.requireHospitalId();
+
+        UserAccount user = userAccountRepository.findByIdAndHospitalId(request.userId(), hospitalId)
+                .orElseThrow(() -> new ApiException("NOT_FOUND", "User not found", HttpStatus.NOT_FOUND));
+
         Doctor doctor = new Doctor();
         doctor.setHospitalId(hospitalId);
-        doctor.setFullName(request.fullName());
-        doctor.setGender(request.gender());
-        doctor.setDob(request.dob());
-        doctor.setPhone(request.phone());
+        doctor.setUser(user);
         doctor.setSpecialization(request.specialization());
         doctorRepository.save(doctor);
 
-        auditLogService.record(hospitalId, "doctor", doctor.getId(), "CREATE", "Created doctor " + doctor.getFullName());
+        auditLogService.record(hospitalId, "doctor", doctor.getId(), "CREATE", "Created doctor profile for " + user.getFullName());
         return toResponse(doctor);
     }
 
@@ -50,12 +54,13 @@ public class DoctorService {
     }
 
     private DoctorResponse toResponse(Doctor doctor) {
+        UserAccount user = doctor.getUser();
         return new DoctorResponse(
                 doctor.getId(),
-                doctor.getFullName(),
-                doctor.getGender(),
-                doctor.getDob(),
-                doctor.getPhone(),
+                user != null ? user.getFullName() : "N/A",
+                user != null ? user.getGender() : null,
+                user != null ? user.getDob() : null,
+                user != null ? user.getPhone() : null,
                 doctor.getSpecialization(),
                 doctor.getCreatedAt()
         );

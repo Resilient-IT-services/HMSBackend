@@ -18,9 +18,11 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 
 import java.util.List;
 import java.util.Optional;
+import java.util.Set;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -47,7 +49,7 @@ class UserServiceTest {
         when(userAccountRepository.existsByUsername("admin")).thenReturn(true);
 
         ApiException exception = assertThrows(ApiException.class, () ->
-                userService.create(new CreateUserRequest("admin", "secret1", RoleCode.ADMIN))
+                userService.create(new CreateUserRequest("admin", "secret1", Set.of(RoleCode.ADMIN), null, null, null, null))
         );
 
         assertEquals("BUSINESS_RULE_VIOLATION", exception.getCode());
@@ -59,7 +61,7 @@ class UserServiceTest {
         when(roleRepository.findByCode(RoleCode.ADMIN)).thenReturn(Optional.empty());
 
         ApiException exception = assertThrows(ApiException.class, () ->
-                userService.create(new CreateUserRequest("admin", "secret1", RoleCode.ADMIN))
+                userService.create(new CreateUserRequest("admin", "secret1", Set.of(RoleCode.ADMIN), null, null, null, null))
         );
 
         assertEquals("NOT_FOUND", exception.getCode());
@@ -79,10 +81,10 @@ class UserServiceTest {
             return userAccount;
         });
 
-        var response = userService.create(new CreateUserRequest("admin", "secret1", RoleCode.ADMIN));
+        var response = userService.create(new CreateUserRequest("admin", "secret1", Set.of(RoleCode.ADMIN), "Admin User", null, null, null));
 
         assertEquals("admin", response.username());
-        assertEquals(RoleCode.ADMIN, response.role());
+        assertTrue(response.roles().contains(RoleCode.ADMIN));
         verify(auditLogService).record(10L, "user_account", 99L, "CREATE", "Created user admin");
     }
 
@@ -93,7 +95,7 @@ class UserServiceTest {
         UserAccount userAccount = new UserAccount();
         userAccount.setId(5L);
         userAccount.setUsername("doctor");
-        userAccount.setRole(role);
+        userAccount.getRoles().add(role);
         userAccount.setActive(true);
         when(hospitalContext.requireHospitalId()).thenReturn(12L);
         when(userAccountRepository.findAllByHospitalIdOrderByCreatedAtDesc(12L)).thenReturn(List.of(userAccount));
@@ -102,5 +104,6 @@ class UserServiceTest {
 
         assertEquals(1, response.size());
         assertEquals("doctor", response.getFirst().username());
+        assertTrue(response.getFirst().roles().contains(RoleCode.DOCTOR));
     }
 }

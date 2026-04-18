@@ -1,11 +1,12 @@
 package com.res.hms.user.dto;
 
 import com.res.hms.domain.RoleCode;
+import java.util.Set;
 
 public record UserProfileResponse(
         Long userId,
         Long hospitalId,
         String username,
-        RoleCode role
+        Set<RoleCode> roles
 ) {
 }

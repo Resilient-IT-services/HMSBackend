@@ -20,7 +20,7 @@ public class HospitalContext {
 
         Object principal = authentication.getPrincipal();
         if (principal instanceof HospitalUserPrincipal hospitalUserPrincipal) {
-            if (hospitalUserPrincipal.roleCode() == RoleCode.SUPER_ADMIN || hospitalUserPrincipal.hospitalId() == null) {
+            if (hospitalUserPrincipal.roleCodes().contains(RoleCode.SUPER_ADMIN) || hospitalUserPrincipal.hospitalId() == null) {
                 throw new ApiException(
                         "BUSINESS_RULE_VIOLATION",
                         "A hospital-scoped user is required for this operation",

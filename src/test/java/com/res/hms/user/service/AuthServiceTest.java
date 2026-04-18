@@ -21,9 +21,12 @@ import org.springframework.security.core.context.SecurityContext;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.web.context.SecurityContextRepository;
 
+import java.util.Set;
+
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -50,7 +53,7 @@ class AuthServiceTest {
 
     @Test
     void loginAuthenticatesAndPersistsSecurityContext() {
-        HospitalUserPrincipal principal = new HospitalUserPrincipal(1L, 5L, "doctor", "secret", RoleCode.DOCTOR, true);
+        HospitalUserPrincipal principal = new HospitalUserPrincipal(1L, 5L, "doctor", "secret", Set.of(RoleCode.DOCTOR), true);
         Authentication authentication = new TestingAuthenticationToken(principal, null);
         when(authenticationManager.authenticate(any())).thenReturn(authentication);
 
@@ -61,7 +64,7 @@ class AuthServiceTest {
         assertNotNull(contextCaptor.getValue().getAuthentication());
         assertEquals(1L, response.userId());
         assertEquals(5L, response.hospitalId());
-        assertEquals(RoleCode.DOCTOR, response.role());
+        assertTrue(response.roles().contains(RoleCode.DOCTOR));
     }
 
     @Test
@@ -78,7 +81,7 @@ class AuthServiceTest {
     @Test
     void currentUserReturnsPrincipalDetails() {
         SecurityContextHolder.getContext().setAuthentication(new TestingAuthenticationToken(
-                new HospitalUserPrincipal(2L, 8L, "admin", "secret", RoleCode.ADMIN, true),
+                new HospitalUserPrincipal(2L, 8L, "admin", "secret", Set.of(RoleCode.ADMIN), true),
                 null
         ));
 
@@ -86,7 +89,7 @@ class AuthServiceTest {
 
         assertEquals(2L, response.userId());
         assertEquals(8L, response.hospitalId());
-        assertEquals(RoleCode.ADMIN, response.role());
+        assertTrue(response.roles().contains(RoleCode.ADMIN));
     }
 
     @Test

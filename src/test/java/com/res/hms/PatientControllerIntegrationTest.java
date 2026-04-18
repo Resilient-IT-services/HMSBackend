@@ -47,7 +47,7 @@ class PatientControllerIntegrationTest {
         hospitalAdmin.setHospitalId(hospitalRepository.findByCode("TEST").orElseThrow().getId());
         hospitalAdmin.setUsername("hospital_admin");
         hospitalAdmin.setPasswordHash(passwordEncoder.encode("admin123"));
-        hospitalAdmin.setRole(roleRepository.findByCode(RoleCode.ADMIN).orElseThrow());
+        hospitalAdmin.getRoles().add(roleRepository.findByCode(RoleCode.ADMIN).orElseThrow());
         hospitalAdmin.setActive(true);
         userAccountRepository.save(hospitalAdmin);
     }

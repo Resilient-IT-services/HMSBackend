@@ -13,6 +13,7 @@ import com.res.hms.domain.Patient;
 import com.res.hms.domain.PharmacyStock;
 import com.res.hms.domain.Prescription;
 import com.res.hms.domain.PrescriptionItem;
+import com.res.hms.domain.UserAccount;
 import com.res.hms.patient.service.PatientService;
 import com.res.hms.pharmacy.dto.AddPharmacyStockRequest;
 import com.res.hms.pharmacy.dto.AddPrescriptionItemRequest;
@@ -153,9 +154,13 @@ class PharmacyServiceTest {
         Patient patient = new Patient();
         patient.setId(10L);
         patient.setFullName("Asha");
+        
+        UserAccount user = new UserAccount();
+        user.setFullName("Dr. Maya");
         Doctor doctor = new Doctor();
         doctor.setId(11L);
-        doctor.setFullName("Dr. Maya");
+        doctor.setUser(user);
+
         when(hospitalContext.requireHospitalId()).thenReturn(4L);
         when(patientService.requirePatient(10L, 4L)).thenReturn(patient);
         when(doctorService.requireDoctor(11L, 4L)).thenReturn(doctor);
@@ -176,9 +181,13 @@ class PharmacyServiceTest {
         Patient patient = new Patient();
         patient.setId(10L);
         patient.setFullName("Asha");
+        
+        UserAccount user = new UserAccount();
+        user.setFullName("Dr. Maya");
         Doctor doctor = new Doctor();
         doctor.setId(11L);
-        doctor.setFullName("Dr. Maya");
+        doctor.setUser(user);
+
         Medicine medicine = new Medicine();
         medicine.setId(2L);
         medicine.setName("Paracetamol");
@@ -215,8 +224,13 @@ class PharmacyServiceTest {
     void dispenseRejectsInsufficientStock() {
         Patient patient = new Patient();
         patient.setId(10L);
+        
+        UserAccount user = new UserAccount();
+        user.setFullName("Dr. Maya");
         Doctor doctor = new Doctor();
         doctor.setId(11L);
+        doctor.setUser(user);
+
         Medicine medicine = new Medicine();
         medicine.setId(2L);
         medicine.setName("Paracetamol");
@@ -247,8 +261,13 @@ class PharmacyServiceTest {
         Patient patient = new Patient();
         patient.setId(10L);
         patient.setHospitalId(4L);
+        
+        UserAccount user = new UserAccount();
+        user.setFullName("Dr. Maya");
         Doctor doctor = new Doctor();
         doctor.setId(11L);
+        doctor.setUser(user);
+
         Medicine medicine = new Medicine();
         medicine.setId(2L);
         medicine.setName("Paracetamol");

@@ -54,8 +54,9 @@ public class BootstrapDataConfig {
                 admin.setHospitalId(null);
                 admin.setUsername(properties.adminUsername());
                 admin.setPasswordHash(passwordEncoder.encode(properties.adminPassword()));
-                admin.setRole(roleRepository.findByCode(RoleCode.SUPER_ADMIN).orElseThrow());
+                admin.getRoles().add(roleRepository.findByCode(RoleCode.SUPER_ADMIN).orElseThrow());
                 admin.setActive(true);
+                admin.setFullName("Super Admin");
                 userAccountRepository.save(admin);
             }
         };

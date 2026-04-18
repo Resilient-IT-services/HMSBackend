@@ -11,6 +11,7 @@ import com.res.hms.domain.Appointment;
 import com.res.hms.domain.AppointmentStatus;
 import com.res.hms.domain.Doctor;
 import com.res.hms.domain.Patient;
+import com.res.hms.domain.UserAccount;
 import com.res.hms.patient.service.PatientService;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -53,9 +54,13 @@ class AppointmentServiceTest {
         Patient patient = new Patient();
         patient.setId(10L);
         patient.setFullName("Asha");
+        
+        UserAccount user = new UserAccount();
+        user.setFullName("Dr. Maya");
         Doctor doctor = new Doctor();
         doctor.setId(11L);
-        doctor.setFullName("Dr. Maya");
+        doctor.setUser(user);
+
         when(hospitalContext.requireHospitalId()).thenReturn(4L);
         when(patientService.requirePatient(10L, 4L)).thenReturn(patient);
         when(doctorService.requireDoctor(11L, 4L)).thenReturn(doctor);
@@ -78,9 +83,13 @@ class AppointmentServiceTest {
         Patient patient = new Patient();
         patient.setId(10L);
         patient.setFullName("Asha");
+        
+        UserAccount user = new UserAccount();
+        user.setFullName("Dr. Maya");
         Doctor doctor = new Doctor();
         doctor.setId(11L);
-        doctor.setFullName("Dr. Maya");
+        doctor.setUser(user);
+
         Appointment appointment = new Appointment();
         appointment.setId(50L);
         appointment.setPatient(patient);
@@ -115,9 +124,13 @@ class AppointmentServiceTest {
         Patient patient = new Patient();
         patient.setId(10L);
         patient.setFullName("Asha");
+        
+        UserAccount user = new UserAccount();
+        user.setFullName("Dr. Maya");
         Doctor doctor = new Doctor();
         doctor.setId(11L);
-        doctor.setFullName("Dr. Maya");
+        doctor.setUser(user);
+
         Appointment appointment = new Appointment();
         appointment.setId(50L);
         appointment.setPatient(patient);

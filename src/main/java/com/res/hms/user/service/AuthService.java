@@ -38,7 +38,7 @@ public class AuthService {
             securityContextRepository.saveContext(context, httpRequest, httpResponse);
 
             HospitalUserPrincipal principal = (HospitalUserPrincipal) authentication.getPrincipal();
-            return new LoginResponse(principal.userId(), principal.hospitalId(), principal.username(), principal.roleCode());
+            return new LoginResponse(principal.userId(), principal.hospitalId(), principal.username(), principal.roleCodes());
         } catch (BadCredentialsException exception) {
             throw new ApiException("AUTH_ERROR", "Invalid username or password", HttpStatus.UNAUTHORIZED);
         }
@@ -58,6 +58,6 @@ public class AuthService {
             throw new ApiException("AUTH_ERROR", "Authentication is required", HttpStatus.UNAUTHORIZED);
         }
 
-        return new UserProfileResponse(userPrincipal.userId(), userPrincipal.hospitalId(), userPrincipal.username(), userPrincipal.roleCode());
+        return new UserProfileResponse(userPrincipal.userId(), userPrincipal.hospitalId(), userPrincipal.username(), userPrincipal.roleCodes());
     }
 }

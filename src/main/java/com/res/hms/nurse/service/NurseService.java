@@ -2,13 +2,17 @@ package com.res.hms.nurse.service;
 
 import com.res.hms.audit.service.AuditLogService;
 import com.res.hms.common.api.PageResponse;
+import com.res.hms.common.exception.ApiException;
 import com.res.hms.common.tenant.HospitalContext;
 import com.res.hms.domain.Nurse;
+import com.res.hms.domain.UserAccount;
 import com.res.hms.nurse.dto.CreateNurseRequest;
 import com.res.hms.nurse.dto.NurseResponse;
 import com.res.hms.nurse.repository.NurseRepository;
+import com.res.hms.repository.UserAccountRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.PageRequest;
+import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -17,22 +21,24 @@ import org.springframework.transaction.annotation.Transactional;
 public class NurseService {
 
     private final NurseRepository nurseRepository;
+    private final UserAccountRepository userAccountRepository;
     private final HospitalContext hospitalContext;
     private final AuditLogService auditLogService;
 
     @Transactional
     public NurseResponse create(CreateNurseRequest request) {
         Long hospitalId = hospitalContext.requireHospitalId();
+
+        UserAccount user = userAccountRepository.findByIdAndHospitalId(request.userId(), hospitalId)
+                .orElseThrow(() -> new ApiException("NOT_FOUND", "User not found", HttpStatus.NOT_FOUND));
+
         Nurse nurse = new Nurse();
         nurse.setHospitalId(hospitalId);
-        nurse.setFullName(request.fullName());
-        nurse.setGender(request.gender());
-        nurse.setDob(request.dob());
-        nurse.setPhone(request.phone());
+        nurse.setUser(user);
         nurse.setDepartment(request.department());
         nurseRepository.save(nurse);
 
-        auditLogService.record(hospitalId, "nurse", nurse.getId(), "CREATE", "Created nurse " + nurse.getFullName());
+        auditLogService.record(hospitalId, "nurse", nurse.getId(), "CREATE", "Created nurse profile for " + user.getFullName());
         return toResponse(nurse);
     }
 
@@ -43,12 +49,13 @@ public class NurseService {
     }
 
     private NurseResponse toResponse(Nurse nurse) {
+        UserAccount user = nurse.getUser();
         return new NurseResponse(
                 nurse.getId(),
-                nurse.getFullName(),
-                nurse.getGender(),
-                nurse.getDob(),
-                nurse.getPhone(),
+                user != null ? user.getFullName() : "N/A",
+                user != null ? user.getGender() : null,
+                user != null ? user.getDob() : null,
+                user != null ? user.getPhone() : null,
                 nurse.getDepartment(),
                 nurse.getCreatedAt()
         );

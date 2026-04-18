@@ -6,20 +6,23 @@ import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetails;
 
 import java.util.Collection;
-import java.util.List;
+import java.util.Set;
+import java.util.stream.Collectors;
 
 public record HospitalUserPrincipal(
         Long userId,
         Long hospitalId,
         String username,
         String password,
-        RoleCode roleCode,
+        Set<RoleCode> roleCodes,
         boolean active
 ) implements UserDetails {
 
     @Override
     public Collection<? extends GrantedAuthority> getAuthorities() {
-        return List.of(new SimpleGrantedAuthority("ROLE_" + roleCode.name()));
+        return roleCodes.stream()
+                .map(code -> new SimpleGrantedAuthority("ROLE_" + code.name()))
+                .collect(Collectors.toSet());
     }
 
     @Override

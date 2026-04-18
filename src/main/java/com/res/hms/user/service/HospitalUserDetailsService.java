@@ -1,5 +1,6 @@
 package com.res.hms.user.service;
 
+import com.res.hms.domain.Role;
 import com.res.hms.domain.UserAccount;
 import com.res.hms.repository.UserAccountRepository;
 import com.res.hms.user.security.HospitalUserPrincipal;
@@ -10,6 +11,8 @@ import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+
+import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
@@ -32,7 +35,7 @@ public class HospitalUserDetailsService implements UserDetailsService {
                 userAccount.getHospitalId(),
                 userAccount.getUsername(),
                 userAccount.getPasswordHash(),
-                userAccount.getRole().getCode(),
+                userAccount.getRoles().stream().map(Role::getCode).collect(Collectors.toSet()),
                 userAccount.isActive()
         );
     }
