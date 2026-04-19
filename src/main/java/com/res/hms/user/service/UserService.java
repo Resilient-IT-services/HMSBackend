@@ -37,31 +37,11 @@ public class UserService {
 
     @Transactional
     public UserResponse create(CreateUserRequest request) {
-        if (userAccountRepository.existsByUsername(request.username())) {
-            throw new ApiException("BUSINESS_RULE_VIOLATION", "Username already exists", HttpStatus.CONFLICT);
-        }
-
-        if (request.roles() == null || request.roles().isEmpty()) {
-            throw new ApiException("VALIDATION_ERROR", "At least one role is required", HttpStatus.BAD_REQUEST);
-        }
 
         boolean isSuperAdmin = hospitalContext.isSuperAdmin();
         Long activeHospitalId = hospitalContext.getHospitalIdOrNull();
 
-        // If not super admin, must have an active hospital context
-        if (!isSuperAdmin && activeHospitalId == null) {
-            throw new ApiException("BUSINESS_RULE_VIOLATION", "Please select a hospital first", HttpStatus.BAD_REQUEST);
-        }
-
-        // Regular admin cannot create Super Admins
-        if (!isSuperAdmin && request.roles().contains(RoleCode.SUPER_ADMIN)) {
-            throw new ApiException("FORBIDDEN", "Only Super Admin can create Super Admins", HttpStatus.FORBIDDEN);
-        }
-
-        // If Super Admin has no hospital selected and is not assigning SUPER_ADMIN role, they must select a hospital
-        if (isSuperAdmin && activeHospitalId == null && !request.roles().contains(RoleCode.SUPER_ADMIN)) {
-             throw new ApiException("BUSINESS_RULE_VIOLATION", "Please select a hospital first or assign a global role", HttpStatus.BAD_REQUEST);
-        }
+        validateCreateRequest(request, isSuperAdmin, activeHospitalId);
 
         UserAccount userAccount = new UserAccount();
         userAccount.setUsername(request.username());
@@ -71,9 +51,6 @@ public class UserService {
         userAccount.setDob(request.dob());
         userAccount.setPhone(request.phone());
         userAccount.setActive(true);
-
-        Long targetHospitalId = activeHospitalId;
-
         Set<Role> roles = request.roles().stream()
                 .map(code -> roleRepository.findByCode(code)
                         .orElseThrow(() -> new ApiException("NOT_FOUND", "Role not found: " + code, HttpStatus.NOT_FOUND)))
@@ -83,15 +60,35 @@ public class UserService {
             UserRoleAssignment assignment = new UserRoleAssignment();
             assignment.setUser(userAccount);
             // SUPER_ADMIN role is always global (hospitalId = null)
-            assignment.setHospitalId(role.getCode() == RoleCode.SUPER_ADMIN ? null : targetHospitalId);
+            assignment.setHospitalId(role.getCode() == RoleCode.SUPER_ADMIN ? null : activeHospitalId);
             assignment.setRole(role);
             userAccount.getAssignments().add(assignment);
         }
 
         userAccountRepository.save(userAccount);
 
-        auditLogService.record(targetHospitalId, "user_account", userAccount.getId(), "CREATE", "Created user " + userAccount.getUsername());
+        auditLogService.record(activeHospitalId, "user_account", userAccount.getId(), "CREATE", "Created user " + userAccount.getUsername());
         return toResponse(userAccount);
+    }
+
+
+    public void validateCreateRequest(CreateUserRequest request, boolean isSuperAdmin, Long hospitalId) {
+
+        if (request.roles() == null || request.roles().isEmpty()) {
+            throw new ApiException("VALIDATION_ERROR", "At least one role is required", HttpStatus.BAD_REQUEST);
+        }
+
+        if (!isSuperAdmin && hospitalId == null) {
+            throw new ApiException("BUSINESS_RULE_VIOLATION", "Please select a hospital first", HttpStatus.BAD_REQUEST);
+        }
+
+        if (!isSuperAdmin && request.roles().contains(RoleCode.SUPER_ADMIN)) {
+            throw new ApiException("FORBIDDEN", "Only Super Admin can create Super Admins", HttpStatus.FORBIDDEN);
+        }
+
+        if (isSuperAdmin && hospitalId == null && !request.roles().contains(RoleCode.SUPER_ADMIN)) {
+            throw new ApiException("BUSINESS_RULE_VIOLATION", "Please select a hospital first or assign a global role", HttpStatus.BAD_REQUEST);
+        }
     }
 
     @Transactional
@@ -125,16 +122,16 @@ public class UserService {
         }
 
         // Remove existing assignments for this user in this hospital context
-        user.getAssignments().removeIf(a -> 
-            (targetHospitalId == null && a.getHospitalId() == null) || 
-            (targetHospitalId != null && targetHospitalId.equals(a.getHospitalId()))
+        user.getAssignments().removeIf(a ->
+                (targetHospitalId == null && a.getHospitalId() == null) ||
+                        (targetHospitalId != null && targetHospitalId.equals(a.getHospitalId()))
         );
 
         // Add new assignments
         for (RoleCode code : request.roles()) {
             Role role = roleRepository.findByCode(code)
                     .orElseThrow(() -> new ApiException("NOT_FOUND", "Role not found: " + code, HttpStatus.NOT_FOUND));
-            
+
             UserRoleAssignment assignment = new UserRoleAssignment();
             assignment.setUser(user);
             assignment.setHospitalId(targetHospitalId);

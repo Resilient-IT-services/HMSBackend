@@ -24,10 +24,12 @@ public record CreateUserRequest(
         
         @NotNull(message = "gender is required")
         Gender gender,
-        
+
         @NotNull(message = "dob is required")
         LocalDate dob,
-        
+
+        long hospitalId,
+
         String phone
 ) {
 }
