@@ -4,7 +4,4 @@ import com.res.hms.domain.AppointmentStatus;
 import jakarta.validation.constraints.NotNull;
 
 public record UpdateAppointmentStatusRequest(
-        @NotNull(message = "status is required")
-        AppointmentStatus status
-) {
-}
+    @NotNull(message = "status is required") AppointmentStatus status) {}

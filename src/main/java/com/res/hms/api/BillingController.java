@@ -22,23 +22,25 @@ import org.springframework.web.bind.annotation.RestController;
 @RequiredArgsConstructor
 public class BillingController {
 
-    private final BillingService billingService;
+  private final BillingService billingService;
 
-    @PostMapping("/opd")
-    @PreAuthorize("hasAnyRole('ADMIN','RECEPTIONIST')")
-    public ApiResponse<BillingResponse> createOpdBilling(@Valid @RequestBody CreateOpdBillingRequest request) {
-        return ApiResponse.success(billingService.createOpdBilling(request));
-    }
+  @PostMapping("/opd")
+  @PreAuthorize("hasAnyRole('ADMIN','RECEPTIONIST')")
+  public ApiResponse<BillingResponse> createOpdBilling(
+      @Valid @RequestBody CreateOpdBillingRequest request) {
+    return ApiResponse.success(billingService.createOpdBilling(request));
+  }
 
-    @PostMapping("/{id}/items")
-    @PreAuthorize("hasAnyRole('ADMIN','RECEPTIONIST','PHARMACIST')")
-    public ApiResponse<BillingResponse> addItem(@PathVariable Long id, @Valid @RequestBody AddBillingItemRequest request) {
-        return ApiResponse.success(billingService.addItem(id, request));
-    }
+  @PostMapping("/{id}/items")
+  @PreAuthorize("hasAnyRole('ADMIN','RECEPTIONIST','PHARMACIST')")
+  public ApiResponse<BillingResponse> addItem(
+      @PathVariable Long id, @Valid @RequestBody AddBillingItemRequest request) {
+    return ApiResponse.success(billingService.addItem(id, request));
+  }
 
-    @GetMapping("/{id}")
-    @PreAuthorize("hasAnyRole('ADMIN','RECEPTIONIST','PHARMACIST')")
-    public ApiResponse<BillingResponse> get(@PathVariable Long id) {
-        return ApiResponse.success(billingService.get(id));
-    }
+  @GetMapping("/{id}")
+  @PreAuthorize("hasAnyRole('ADMIN','RECEPTIONIST','PHARMACIST')")
+  public ApiResponse<BillingResponse> get(@PathVariable Long id) {
+    return ApiResponse.success(billingService.get(id));
+  }
 }

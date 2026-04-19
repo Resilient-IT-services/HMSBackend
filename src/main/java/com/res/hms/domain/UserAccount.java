@@ -8,13 +8,12 @@ import jakarta.persistence.Enumerated;
 import jakarta.persistence.FetchType;
 import jakarta.persistence.OneToMany;
 import jakarta.persistence.Table;
-import lombok.Getter;
-import lombok.Setter;
-
 import java.time.LocalDate;
 import java.util.HashSet;
 import java.util.Set;
 import java.util.stream.Collectors;
+import lombok.Getter;
+import lombok.Setter;
 
 @Getter
 @Setter
@@ -22,31 +21,33 @@ import java.util.stream.Collectors;
 @Table(name = "user_account")
 public class UserAccount extends BaseEntity {
 
-    @Column(nullable = false, unique = true)
-    private String username;
+  @Column(nullable = false, unique = true)
+  private String username;
 
-    @Column(name = "password_hash", nullable = false)
-    private String passwordHash;
+  @Column(name = "password_hash", nullable = false)
+  private String passwordHash;
 
-    @Column(name = "full_name")
-    private String fullName;
+  @Column(name = "full_name")
+  private String fullName;
 
-    @Enumerated(EnumType.STRING)
-    private Gender gender;
+  @Enumerated(EnumType.STRING)
+  private Gender gender;
 
-    private LocalDate dob;
+  private LocalDate dob;
 
-    private String phone;
+  private String phone;
 
-    @OneToMany(mappedBy = "user", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.EAGER)
-    private Set<UserRoleAssignment> assignments = new HashSet<>();
+  @OneToMany(
+      mappedBy = "user",
+      cascade = CascadeType.ALL,
+      orphanRemoval = true,
+      fetch = FetchType.EAGER)
+  private Set<UserRoleAssignment> assignments = new HashSet<>();
 
-    @Column(name = "is_active", nullable = false)
-    private boolean active = true;
+  @Column(name = "is_active", nullable = false)
+  private boolean active = true;
 
-    public Set<RoleCode> getRoleCodes() {
-        return assignments.stream()
-                .map(a -> a.getRole().getCode())
-                .collect(Collectors.toSet());
-    }
+  public Set<RoleCode> getRoleCodes() {
+    return assignments.stream().map(a -> a.getRole().getCode()).collect(Collectors.toSet());
+  }
 }

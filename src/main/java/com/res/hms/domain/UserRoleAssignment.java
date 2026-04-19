@@ -15,14 +15,14 @@ import lombok.Setter;
 @Table(name = "user_role_assignment")
 public class UserRoleAssignment extends BaseEntity {
 
-    @ManyToOne(fetch = FetchType.LAZY, optional = false)
-    @JoinColumn(name = "user_id", nullable = false)
-    private UserAccount user;
+  @ManyToOne(fetch = FetchType.LAZY, optional = false)
+  @JoinColumn(name = "user_id", nullable = false)
+  private UserAccount user;
 
-    @Column(name = "hospital_id")
-    private Long hospitalId;
+  @Column(name = "hospital_id")
+  private Long hospitalId;
 
-    @ManyToOne(fetch = FetchType.EAGER, optional = false)
-    @JoinColumn(name = "role_id", nullable = false)
-    private Role role;
+  @ManyToOne(fetch = FetchType.EAGER, optional = false)
+  @JoinColumn(name = "role_id", nullable = false)
+  private Role role;
 }

@@ -1,5 +1,10 @@
 package com.res.hms;
 
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
+
 import com.res.hms.domain.Hospital;
 import com.res.hms.domain.RoleCode;
 import com.res.hms.domain.UserAccount;
@@ -18,60 +23,54 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.web.servlet.MockMvc;
 
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
-
 @SpringBootTest
 @AutoConfigureMockMvc
 @ActiveProfiles("test")
 class PatientControllerIntegrationTest {
 
-    @Autowired
-    private MockMvc mockMvc;
-    @Autowired
-    private UserAccountRepository userAccountRepository;
-    @Autowired
-    private RoleRepository roleRepository;
-    @Autowired
-    private HospitalRepository hospitalRepository;
-    @Autowired
-    private PasswordEncoder passwordEncoder;
+  @Autowired private MockMvc mockMvc;
+  @Autowired private UserAccountRepository userAccountRepository;
+  @Autowired private RoleRepository roleRepository;
+  @Autowired private HospitalRepository hospitalRepository;
+  @Autowired private PasswordEncoder passwordEncoder;
 
-    private Long testHospitalId;
+  private Long testHospitalId;
 
-    @BeforeEach
-    void ensureHospitalAdminExists() {
-        Hospital hospital = hospitalRepository.findByCode("TEST").orElseThrow();
-        testHospitalId = hospital.getId();
+  @BeforeEach
+  void ensureHospitalAdminExists() {
+    Hospital hospital = hospitalRepository.findByCode("TEST").orElseThrow();
+    testHospitalId = hospital.getId();
 
-        if (userAccountRepository.existsByUsername("hospital_admin")) {
-            return;
-        }
-
-        UserAccount hospitalAdmin = new UserAccount();
-        hospitalAdmin.setUsername("hospital_admin");
-        hospitalAdmin.setPasswordHash(passwordEncoder.encode("admin123"));
-        hospitalAdmin.setActive(true);
-
-        UserRoleAssignment assignment = new UserRoleAssignment();
-        assignment.setUser(hospitalAdmin);
-        assignment.setHospitalId(testHospitalId);
-        assignment.setRole(roleRepository.findByCode(RoleCode.ADMIN).orElseThrow());
-        hospitalAdmin.getAssignments().add(assignment);
-
-        userAccountRepository.save(hospitalAdmin);
+    if (userAccountRepository.existsByUsername("hospital_admin")) {
+      return;
     }
 
-    @Test
-    void patientEndpointsRequireAuthenticationAndUseSessionCookie() throws Exception {
-        mockMvc.perform(get("/api/v1/patients"))
-                .andExpect(status().isUnauthorized());
+    UserAccount hospitalAdmin = new UserAccount();
+    hospitalAdmin.setUsername("hospital_admin");
+    hospitalAdmin.setPasswordHash(passwordEncoder.encode("admin123"));
+    hospitalAdmin.setActive(true);
 
-        MockHttpSession session = (MockHttpSession) mockMvc.perform(post("/api/v1/auth/login")
+    UserRoleAssignment assignment = new UserRoleAssignment();
+    assignment.setUser(hospitalAdmin);
+    assignment.setHospitalId(testHospitalId);
+    assignment.setRole(roleRepository.findByCode(RoleCode.ADMIN).orElseThrow());
+    hospitalAdmin.getAssignments().add(assignment);
+
+    userAccountRepository.save(hospitalAdmin);
+  }
+
+  @Test
+  void patientEndpointsRequireAuthenticationAndUseSessionCookie() throws Exception {
+    mockMvc.perform(get("/api/v1/patients")).andExpect(status().isUnauthorized());
+
+    MockHttpSession session =
+        (MockHttpSession)
+            mockMvc
+                .perform(
+                    post("/api/v1/auth/login")
                         .contentType(MediaType.APPLICATION_JSON)
-                        .content("""
+                        .content(
+                            """
                                 {
                                   "username": "hospital_admin",
                                   "password": "admin123"
@@ -82,29 +81,36 @@ class PatientControllerIntegrationTest {
                 .getRequest()
                 .getSession(false);
 
-        // Fetch /me to get hospital list
-        mockMvc.perform(get("/api/v1/auth/me").session(session))
-                .andExpect(status().isOk())
-                .andExpect(jsonPath("$.data.hospitals[0].hospitalCode").value("TEST"));
+    // Fetch /me to get hospital list
+    mockMvc
+        .perform(get("/api/v1/auth/me").session(session))
+        .andExpect(status().isOk())
+        .andExpect(jsonPath("$.data.hospitals[0].hospitalCode").value("TEST"));
 
-        // Try to access patients without selecting hospital -> should fail with 400
-        mockMvc.perform(get("/api/v1/patients").session(session))
-                .andExpect(status().isBadRequest())
-                .andExpect(jsonPath("$.error.message").value("Please select a hospital first"));
+    // Try to access patients without selecting hospital -> should fail with 400
+    mockMvc
+        .perform(get("/api/v1/patients").session(session))
+        .andExpect(status().isBadRequest())
+        .andExpect(jsonPath("$.error.message").value("Please select a hospital first"));
 
-        // Select hospital
-        mockMvc.perform(post("/api/v1/auth/select-hospital")
-                        .session(session)
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content("{\"hospitalId\": " + testHospitalId + "}"))
-                .andExpect(status().isOk())
-                .andExpect(jsonPath("$.data.hospitalId").value(testHospitalId));
+    // Select hospital
+    mockMvc
+        .perform(
+            post("/api/v1/auth/select-hospital")
+                .session(session)
+                .contentType(MediaType.APPLICATION_JSON)
+                .content("{\"hospitalId\": " + testHospitalId + "}"))
+        .andExpect(status().isOk())
+        .andExpect(jsonPath("$.data.hospitalId").value(testHospitalId));
 
-        // Now it should work
-        mockMvc.perform(post("/api/v1/patients")
-                        .session(session)
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content("""
+    // Now it should work
+    mockMvc
+        .perform(
+            post("/api/v1/patients")
+                .session(session)
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(
+                    """
                                 {
                                   "fullName": "Asha Nair",
                                   "gender": "FEMALE",
@@ -113,11 +119,12 @@ class PatientControllerIntegrationTest {
                                   "address": "Kochi"
                                 }
                                 """))
-                .andExpect(status().isOk())
-                .andExpect(jsonPath("$.data.fullName").value("Asha Nair"));
+        .andExpect(status().isOk())
+        .andExpect(jsonPath("$.data.fullName").value("Asha Nair"));
 
-        mockMvc.perform(get("/api/v1/patients").session(session))
-                .andExpect(status().isOk())
-                .andExpect(jsonPath("$.data.content[0].fullName").value("Asha Nair"));
-    }
+    mockMvc
+        .perform(get("/api/v1/patients").session(session))
+        .andExpect(status().isOk())
+        .andExpect(jsonPath("$.data.content[0].fullName").value("Asha Nair"));
+  }
 }

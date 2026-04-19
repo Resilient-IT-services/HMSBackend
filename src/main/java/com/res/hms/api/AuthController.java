@@ -22,27 +22,34 @@ import org.springframework.web.bind.annotation.RestController;
 @RequiredArgsConstructor
 public class AuthController {
 
-    private final AuthService authService;
+  private final AuthService authService;
 
-    @PostMapping("/login")
-    public ApiResponse<Void> login(@Valid @RequestBody LoginRequest request, HttpServletRequest httpRequest, HttpServletResponse httpResponse) {
-        authService.login(request, httpRequest, httpResponse);
-        return ApiResponse.success(null);
-    }
+  @PostMapping("/login")
+  public ApiResponse<Void> login(
+      @Valid @RequestBody LoginRequest request,
+      HttpServletRequest httpRequest,
+      HttpServletResponse httpResponse) {
+    authService.login(request, httpRequest, httpResponse);
+    return ApiResponse.success(null);
+  }
 
-    @PostMapping("/select-hospital")
-    public ApiResponse<UserProfileResponse> selectHospital(@Valid @RequestBody SelectHospitalRequest request, HttpServletRequest httpRequest, HttpServletResponse httpResponse) {
-        return ApiResponse.success(authService.selectHospital(request.hospitalId(), httpRequest, httpResponse));
-    }
+  @PostMapping("/select-hospital")
+  public ApiResponse<UserProfileResponse> selectHospital(
+      @Valid @RequestBody SelectHospitalRequest request,
+      HttpServletRequest httpRequest,
+      HttpServletResponse httpResponse) {
+    return ApiResponse.success(
+        authService.selectHospital(request.hospitalId(), httpRequest, httpResponse));
+  }
 
-    @PostMapping("/logout")
-    public ApiResponse<Void> logout(HttpServletRequest request, HttpServletResponse response) {
-        authService.logout(request, response);
-        return ApiResponse.success(null);
-    }
+  @PostMapping("/logout")
+  public ApiResponse<Void> logout(HttpServletRequest request, HttpServletResponse response) {
+    authService.logout(request, response);
+    return ApiResponse.success(null);
+  }
 
-    @GetMapping("/me")
-    public ApiResponse<UserProfileResponse> currentUser() {
-        return ApiResponse.success(authService.currentUser());
-    }
+  @GetMapping("/me")
+  public ApiResponse<UserProfileResponse> currentUser() {
+    return ApiResponse.success(authService.currentUser());
+  }
 }

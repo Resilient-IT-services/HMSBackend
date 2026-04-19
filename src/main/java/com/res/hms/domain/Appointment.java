@@ -8,10 +8,9 @@ import jakarta.persistence.FetchType;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.Table;
+import java.time.LocalDateTime;
 import lombok.Getter;
 import lombok.Setter;
-
-import java.time.LocalDateTime;
 
 @Getter
 @Setter
@@ -19,20 +18,20 @@ import java.time.LocalDateTime;
 @Table(name = "appointment")
 public class Appointment extends HospitalScopedEntity {
 
-    @ManyToOne(fetch = FetchType.LAZY, optional = false)
-    @JoinColumn(name = "patient_id", nullable = false)
-    private Patient patient;
+  @ManyToOne(fetch = FetchType.LAZY, optional = false)
+  @JoinColumn(name = "patient_id", nullable = false)
+  private Patient patient;
 
-    @ManyToOne(fetch = FetchType.LAZY, optional = false)
-    @JoinColumn(name = "doctor_id", nullable = false)
-    private Doctor doctor;
+  @ManyToOne(fetch = FetchType.LAZY, optional = false)
+  @JoinColumn(name = "doctor_id", nullable = false)
+  private Doctor doctor;
 
-    @Column(name = "appointment_time", nullable = false)
-    private LocalDateTime appointmentTime;
+  @Column(name = "appointment_time", nullable = false)
+  private LocalDateTime appointmentTime;
 
-    @Enumerated(EnumType.STRING)
-    @Column(nullable = false)
-    private AppointmentStatus status;
+  @Enumerated(EnumType.STRING)
+  @Column(nullable = false)
+  private AppointmentStatus status;
 
-    private String notes;
+  private String notes;
 }

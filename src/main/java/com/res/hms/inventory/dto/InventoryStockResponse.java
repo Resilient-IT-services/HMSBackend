@@ -4,9 +4,4 @@ import java.math.BigDecimal;
 import java.time.LocalDateTime;
 
 public record InventoryStockResponse(
-        Long itemId,
-        String itemName,
-        BigDecimal quantity,
-        LocalDateTime lastUpdated
-) {
-}
+    Long itemId, String itemName, BigDecimal quantity, LocalDateTime lastUpdated) {}

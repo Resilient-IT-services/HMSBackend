@@ -23,26 +23,24 @@ import org.springframework.web.bind.annotation.RestController;
 @RequiredArgsConstructor
 public class PatientController {
 
-    private final PatientService patientService;
+  private final PatientService patientService;
 
-    @PostMapping
-    @PreAuthorize("hasAnyRole('ADMIN','RECEPTIONIST','NURSE')")
-    public ApiResponse<PatientResponse> create(@Valid @RequestBody CreatePatientRequest request) {
-        return ApiResponse.success(patientService.create(request));
-    }
+  @PostMapping
+  @PreAuthorize("hasAnyRole('ADMIN','RECEPTIONIST','NURSE')")
+  public ApiResponse<PatientResponse> create(@Valid @RequestBody CreatePatientRequest request) {
+    return ApiResponse.success(patientService.create(request));
+  }
 
-    @GetMapping
-    @PreAuthorize("hasAnyRole('ADMIN','RECEPTIONIST','NURSE','DOCTOR')")
-    public ApiResponse<PageResponse<PatientResponse>> list(
-            @RequestParam(defaultValue = "0") int page,
-            @RequestParam(defaultValue = "20") int size
-    ) {
-        return ApiResponse.success(patientService.list(page, Math.min(size, 100)));
-    }
+  @GetMapping
+  @PreAuthorize("hasAnyRole('ADMIN','RECEPTIONIST','NURSE','DOCTOR')")
+  public ApiResponse<PageResponse<PatientResponse>> list(
+      @RequestParam(defaultValue = "0") int page, @RequestParam(defaultValue = "20") int size) {
+    return ApiResponse.success(patientService.list(page, Math.min(size, 100)));
+  }
 
-    @GetMapping("/{id}")
-    @PreAuthorize("hasAnyRole('ADMIN','RECEPTIONIST','NURSE','DOCTOR')")
-    public ApiResponse<PatientResponse> get(@PathVariable Long id) {
-        return ApiResponse.success(patientService.get(id));
-    }
+  @GetMapping("/{id}")
+  @PreAuthorize("hasAnyRole('ADMIN','RECEPTIONIST','NURSE','DOCTOR')")
+  public ApiResponse<PatientResponse> get(@PathVariable Long id) {
+    return ApiResponse.success(patientService.get(id));
+  }
 }

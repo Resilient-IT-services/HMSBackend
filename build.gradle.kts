@@ -3,6 +3,10 @@ plugins {
     id("io.spring.dependency-management") version "1.1.4"
     id("java")
     id("jacoco")
+    id("checkstyle")
+    id("pmd")
+    id("com.diffplug.spotless") version "6.25.0"
+    id("com.github.spotbugs") version "6.0.14"
 }
 
 group = "com.res"
@@ -30,6 +34,7 @@ dependencies {
     implementation("org.springframework.boot:spring-boot-starter-validation")
     implementation("org.springframework.boot:spring-boot-starter-security")
     implementation("org.springframework.boot:spring-boot-starter-data-jpa")
+    implementation("org.springframework.boot:spring-boot-starter-aop")
     implementation("org.flywaydb:flyway-core:10.13.0")
     implementation("org.flywaydb:flyway-database-postgresql:10.13.0")
     implementation("org.springdoc:springdoc-openapi-starter-webmvc-ui:2.5.0")
@@ -41,6 +46,7 @@ dependencies {
     testImplementation("org.springframework.boot:spring-boot-starter-test")
     testImplementation("org.springframework.security:spring-security-test")
     testImplementation("com.h2database:h2")
+    testImplementation("com.tngtech.archunit:archunit-junit5:1.3.0")
     testRuntimeOnly("org.junit.platform:junit-platform-launcher")
 }
 
@@ -51,6 +57,53 @@ tasks.withType<Test> {
 
 jacoco {
     toolVersion = "0.8.12"
+}
+
+spotless {
+    java {
+        googleJavaFormat("1.19.2")
+        removeUnusedImports()
+        trimTrailingWhitespace()
+        endWithNewline()
+    }
+}
+
+checkstyle {
+    toolVersion = "10.12.1"
+    configFile = file("${rootProject.projectDir}/config/checkstyle/checkstyle.xml")
+    isIgnoreFailures = false
+    maxWarnings = 0
+}
+
+tasks.withType<Checkstyle> {
+    reports {
+        xml.required.set(true)
+        html.required.set(true)
+    }
+}
+
+pmd {
+    isConsoleOutput = true
+    toolVersion = "7.1.0"
+    rulesMinimumPriority.set(5)
+    ruleSetFiles = files("${rootProject.projectDir}/config/pmd/ruleset.xml")
+    ruleSets = listOf() // Clear default rulesets
+}
+
+spotbugs {
+    ignoreFailures = false
+    showStackTraces = true
+    showProgress = true
+    effort = com.github.spotbugs.snom.Effort.MAX
+    reportLevel = com.github.spotbugs.snom.Confidence.DEFAULT
+}
+
+tasks.withType<com.github.spotbugs.snom.SpotBugsTask> {
+    reports {
+        create("html") {
+            required.set(true)
+        }
+    }
 }
 
 tasks.jacocoTestReport {
@@ -89,4 +142,8 @@ tasks.jacocoTestCoverageVerification {
     }
 
     classDirectories.setFrom(tasks.jacocoTestReport.get().classDirectories)
+}
+
+tasks.check {
+    dependsOn(tasks.jacocoTestCoverageVerification)
 }

@@ -12,14 +12,14 @@ import lombok.Setter;
 @Table(name = "hospital")
 public class Hospital extends BaseEntity {
 
-    @Column(nullable = false)
-    private String name;
+  @Column(nullable = false)
+  private String name;
 
-    @Column(nullable = false, unique = true)
-    private String code;
+  @Column(nullable = false, unique = true)
+  private String code;
 
-    private String address;
+  private String address;
 
-    @Column(nullable = false)
-    private String status;
+  @Column(nullable = false)
+  private String status;
 }

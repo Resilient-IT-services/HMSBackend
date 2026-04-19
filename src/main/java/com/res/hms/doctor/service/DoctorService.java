@@ -1,7 +1,7 @@
 package com.res.hms.doctor.service;
 
-import com.res.hms.audit.service.AuditLogService;
 import com.res.hms.common.api.PageResponse;
+import com.res.hms.common.audit.Auditable;
 import com.res.hms.common.exception.ApiException;
 import com.res.hms.common.tenant.HospitalContext;
 import com.res.hms.doctor.dto.CreateDoctorRequest;
@@ -20,49 +20,53 @@ import org.springframework.transaction.annotation.Transactional;
 @RequiredArgsConstructor
 public class DoctorService {
 
-    private final DoctorRepository doctorRepository;
-    private final UserAccountRepository userAccountRepository;
-    private final HospitalContext hospitalContext;
-    private final AuditLogService auditLogService;
+  private final DoctorRepository doctorRepository;
+  private final UserAccountRepository userAccountRepository;
+  private final HospitalContext hospitalContext;
 
-    @Transactional
-    public DoctorResponse create(CreateDoctorRequest request) {
-        Long hospitalId = hospitalContext.requireHospitalId();
+  @Transactional
+  @Auditable(entity = "doctor", action = "CREATE")
+  public DoctorResponse create(CreateDoctorRequest request) {
+    Long hospitalId = hospitalContext.requireHospitalId();
 
-        UserAccount user = userAccountRepository.findByIdAndHospitalId(request.userId(), hospitalId)
-                .orElseThrow(() -> new ApiException("NOT_FOUND", "User not found", HttpStatus.NOT_FOUND));
+    UserAccount user =
+        userAccountRepository
+            .findByIdAndHospitalId(request.userId(), hospitalId)
+            .orElseThrow(
+                () -> new ApiException("NOT_FOUND", "User not found", HttpStatus.NOT_FOUND));
 
-        Doctor doctor = new Doctor();
-        doctor.setHospitalId(hospitalId);
-        doctor.setUser(user);
-        doctor.setSpecialization(request.specialization());
-        doctorRepository.save(doctor);
+    Doctor doctor = new Doctor();
+    doctor.setHospitalId(hospitalId);
+    doctor.setUser(user);
+    doctor.setSpecialization(request.specialization());
+    doctorRepository.save(doctor);
 
-        auditLogService.record(hospitalId, "doctor", doctor.getId(), "CREATE", "Created doctor profile for " + user.getFullName());
-        return toResponse(doctor);
-    }
+    return toResponse(doctor);
+  }
 
-    public PageResponse<DoctorResponse> list(int page, int size) {
-        Long hospitalId = hospitalContext.requireHospitalId();
-        return PageResponse.from(doctorRepository.findAllByHospitalIdOrderByCreatedAtDesc(hospitalId, PageRequest.of(page, size))
-                .map(this::toResponse));
-    }
+  public PageResponse<DoctorResponse> list(int page, int size) {
+    Long hospitalId = hospitalContext.requireHospitalId();
+    return PageResponse.from(
+        doctorRepository
+            .findAllByHospitalIdOrderByCreatedAtDesc(hospitalId, PageRequest.of(page, size))
+            .map(this::toResponse));
+  }
 
-    public Doctor requireDoctor(Long id, Long hospitalId) {
-        return doctorRepository.findByIdAndHospitalId(id, hospitalId)
-                .orElseThrow(() -> new ApiException("NOT_FOUND", "Doctor not found", HttpStatus.NOT_FOUND));
-    }
+  public Doctor requireDoctor(Long id, Long hospitalId) {
+    return doctorRepository
+        .findByIdAndHospitalId(id, hospitalId)
+        .orElseThrow(() -> new ApiException("NOT_FOUND", "Doctor not found", HttpStatus.NOT_FOUND));
+  }
 
-    private DoctorResponse toResponse(Doctor doctor) {
-        UserAccount user = doctor.getUser();
-        return new DoctorResponse(
-                doctor.getId(),
-                user != null ? user.getFullName() : "N/A",
-                user != null ? user.getGender() : null,
-                user != null ? user.getDob() : null,
-                user != null ? user.getPhone() : null,
-                doctor.getSpecialization(),
-                doctor.getCreatedAt()
-        );
-    }
+  private DoctorResponse toResponse(Doctor doctor) {
+    UserAccount user = doctor.getUser();
+    return new DoctorResponse(
+        doctor.getId(),
+        user != null ? user.getFullName() : "N/A",
+        user != null ? user.getGender() : null,
+        user != null ? user.getDob() : null,
+        user != null ? user.getPhone() : null,
+        doctor.getSpecialization(),
+        doctor.getCreatedAt());
+  }
 }

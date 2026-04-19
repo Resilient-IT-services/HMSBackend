@@ -12,18 +12,18 @@ import lombok.Setter;
 @Table(name = "audit_log")
 public class AuditLog extends HospitalScopedEntity {
 
-    @Column(name = "entity_name", nullable = false)
-    private String entityName;
+  @Column(name = "entity_name", nullable = false)
+  private String entityName;
 
-    @Column(name = "entity_id", nullable = false)
-    private Long entityId;
+  @Column(name = "entity_id", nullable = false)
+  private Long entityId;
 
-    @Column(nullable = false)
-    private String action;
+  @Column(nullable = false)
+  private String action;
 
-    @Column(name = "performed_by")
-    private Long performedBy;
+  @Column(name = "performed_by")
+  private Long performedBy;
 
-    @Column(name = "details", length = 4000)
-    private String details;
+  @Column(name = "details", length = 4000)
+  private String details;
 }

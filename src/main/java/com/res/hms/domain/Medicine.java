@@ -12,10 +12,10 @@ import lombok.Setter;
 @Table(name = "medicine")
 public class Medicine extends HospitalScopedEntity {
 
-    @Column(nullable = false)
-    private String name;
+  @Column(nullable = false)
+  private String name;
 
-    private String composition;
+  private String composition;
 
-    private String manufacturer;
+  private String manufacturer;
 }

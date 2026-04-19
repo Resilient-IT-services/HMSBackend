@@ -10,6 +10,6 @@ import lombok.Setter;
 @MappedSuperclass
 public abstract class HospitalScopedEntity extends BaseEntity {
 
-    @Column(name = "hospital_id", nullable = false)
-    private Long hospitalId;
+  @Column(name = "hospital_id", nullable = false)
+  private Long hospitalId;
 }

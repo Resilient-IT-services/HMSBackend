@@ -5,10 +5,9 @@ import jakarta.persistence.Entity;
 import jakarta.persistence.EnumType;
 import jakarta.persistence.Enumerated;
 import jakarta.persistence.Table;
+import java.time.LocalDate;
 import lombok.Getter;
 import lombok.Setter;
-
-import java.time.LocalDate;
 
 @Getter
 @Setter
@@ -16,15 +15,15 @@ import java.time.LocalDate;
 @Table(name = "patient")
 public class Patient extends HospitalScopedEntity {
 
-    @Column(name = "full_name", nullable = false)
-    private String fullName;
+  @Column(name = "full_name", nullable = false)
+  private String fullName;
 
-    @Enumerated(EnumType.STRING)
-    private Gender gender;
+  @Enumerated(EnumType.STRING)
+  private Gender gender;
 
-    private LocalDate dob;
+  private LocalDate dob;
 
-    private String phone;
+  private String phone;
 
-    private String address;
+  private String address;
 }

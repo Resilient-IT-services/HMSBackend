@@ -12,10 +12,10 @@ import lombok.Setter;
 @Table(name = "item")
 public class Item extends HospitalScopedEntity {
 
-    @Column(nullable = false)
-    private String name;
+  @Column(nullable = false)
+  private String name;
 
-    private String category;
+  private String category;
 
-    private String unit;
+  private String unit;
 }

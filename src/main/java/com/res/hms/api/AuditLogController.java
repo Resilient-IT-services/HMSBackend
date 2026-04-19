@@ -18,14 +18,12 @@ import org.springframework.web.bind.annotation.RestController;
 @RequiredArgsConstructor
 public class AuditLogController {
 
-    private final AuditLogService auditLogService;
+  private final AuditLogService auditLogService;
 
-    @GetMapping
-    @PreAuthorize("hasRole('ADMIN')")
-    public ApiResponse<PageResponse<AuditLogResponse>> list(
-            @RequestParam(defaultValue = "0") int page,
-            @RequestParam(defaultValue = "20") int size
-    ) {
-        return ApiResponse.success(auditLogService.list(page, Math.min(size, 100)));
-    }
+  @GetMapping
+  @PreAuthorize("hasRole('ADMIN')")
+  public ApiResponse<PageResponse<AuditLogResponse>> list(
+      @RequestParam(defaultValue = "0") int page, @RequestParam(defaultValue = "20") int size) {
+    return ApiResponse.success(auditLogService.list(page, Math.min(size, 100)));
+  }
 }

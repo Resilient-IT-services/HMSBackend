@@ -15,17 +15,17 @@ import lombok.Setter;
 @Table(name = "prescription_item")
 public class PrescriptionItem extends HospitalScopedEntity {
 
-    @ManyToOne(fetch = FetchType.LAZY, optional = false)
-    @JoinColumn(name = "prescription_id", nullable = false)
-    private Prescription prescription;
+  @ManyToOne(fetch = FetchType.LAZY, optional = false)
+  @JoinColumn(name = "prescription_id", nullable = false)
+  private Prescription prescription;
 
-    @ManyToOne(fetch = FetchType.LAZY, optional = false)
-    @JoinColumn(name = "medicine_id", nullable = false)
-    private Medicine medicine;
+  @ManyToOne(fetch = FetchType.LAZY, optional = false)
+  @JoinColumn(name = "medicine_id", nullable = false)
+  private Medicine medicine;
 
-    @Column(nullable = false)
-    private String dosage;
+  @Column(nullable = false)
+  private String dosage;
 
-    @Column(nullable = false)
-    private String duration;
+  @Column(nullable = false)
+  private String duration;
 }

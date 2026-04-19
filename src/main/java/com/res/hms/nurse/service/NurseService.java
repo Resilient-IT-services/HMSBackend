@@ -1,7 +1,7 @@
 package com.res.hms.nurse.service;
 
-import com.res.hms.audit.service.AuditLogService;
 import com.res.hms.common.api.PageResponse;
+import com.res.hms.common.audit.Auditable;
 import com.res.hms.common.exception.ApiException;
 import com.res.hms.common.tenant.HospitalContext;
 import com.res.hms.domain.Nurse;
@@ -20,44 +20,47 @@ import org.springframework.transaction.annotation.Transactional;
 @RequiredArgsConstructor
 public class NurseService {
 
-    private final NurseRepository nurseRepository;
-    private final UserAccountRepository userAccountRepository;
-    private final HospitalContext hospitalContext;
-    private final AuditLogService auditLogService;
+  private final NurseRepository nurseRepository;
+  private final UserAccountRepository userAccountRepository;
+  private final HospitalContext hospitalContext;
 
-    @Transactional
-    public NurseResponse create(CreateNurseRequest request) {
-        Long hospitalId = hospitalContext.requireHospitalId();
+  @Transactional
+  @Auditable(entity = "nurse", action = "CREATE")
+  public NurseResponse create(CreateNurseRequest request) {
+    Long hospitalId = hospitalContext.requireHospitalId();
 
-        UserAccount user = userAccountRepository.findByIdAndHospitalId(request.userId(), hospitalId)
-                .orElseThrow(() -> new ApiException("NOT_FOUND", "User not found", HttpStatus.NOT_FOUND));
+    UserAccount user =
+        userAccountRepository
+            .findByIdAndHospitalId(request.userId(), hospitalId)
+            .orElseThrow(
+                () -> new ApiException("NOT_FOUND", "User not found", HttpStatus.NOT_FOUND));
 
-        Nurse nurse = new Nurse();
-        nurse.setHospitalId(hospitalId);
-        nurse.setUser(user);
-        nurse.setDepartment(request.department());
-        nurseRepository.save(nurse);
+    Nurse nurse = new Nurse();
+    nurse.setHospitalId(hospitalId);
+    nurse.setUser(user);
+    nurse.setDepartment(request.department());
+    nurseRepository.save(nurse);
 
-        auditLogService.record(hospitalId, "nurse", nurse.getId(), "CREATE", "Created nurse profile for " + user.getFullName());
-        return toResponse(nurse);
-    }
+    return toResponse(nurse);
+  }
 
-    public PageResponse<NurseResponse> list(int page, int size) {
-        Long hospitalId = hospitalContext.requireHospitalId();
-        return PageResponse.from(nurseRepository.findAllByHospitalIdOrderByCreatedAtDesc(hospitalId, PageRequest.of(page, size))
-                .map(this::toResponse));
-    }
+  public PageResponse<NurseResponse> list(int page, int size) {
+    Long hospitalId = hospitalContext.requireHospitalId();
+    return PageResponse.from(
+        nurseRepository
+            .findAllByHospitalIdOrderByCreatedAtDesc(hospitalId, PageRequest.of(page, size))
+            .map(this::toResponse));
+  }
 
-    private NurseResponse toResponse(Nurse nurse) {
-        UserAccount user = nurse.getUser();
-        return new NurseResponse(
-                nurse.getId(),
-                user != null ? user.getFullName() : "N/A",
-                user != null ? user.getGender() : null,
-                user != null ? user.getDob() : null,
-                user != null ? user.getPhone() : null,
-                nurse.getDepartment(),
-                nurse.getCreatedAt()
-        );
-    }
+  private NurseResponse toResponse(Nurse nurse) {
+    UserAccount user = nurse.getUser();
+    return new NurseResponse(
+        nurse.getId(),
+        user != null ? user.getFullName() : "N/A",
+        user != null ? user.getGender() : null,
+        user != null ? user.getDob() : null,
+        user != null ? user.getPhone() : null,
+        nurse.getDepartment(),
+        nurse.getCreatedAt());
+  }
 }

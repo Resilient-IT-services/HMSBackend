@@ -24,26 +24,26 @@ import org.springframework.web.bind.annotation.RestController;
 @RequiredArgsConstructor
 public class AppointmentController {
 
-    private final AppointmentService appointmentService;
+  private final AppointmentService appointmentService;
 
-    @PostMapping
-    @PreAuthorize("hasAnyRole('ADMIN','RECEPTIONIST')")
-    public ApiResponse<AppointmentResponse> create(@Valid @RequestBody CreateAppointmentRequest request) {
-        return ApiResponse.success(appointmentService.create(request));
-    }
+  @PostMapping
+  @PreAuthorize("hasAnyRole('ADMIN','RECEPTIONIST')")
+  public ApiResponse<AppointmentResponse> create(
+      @Valid @RequestBody CreateAppointmentRequest request) {
+    return ApiResponse.success(appointmentService.create(request));
+  }
 
-    @GetMapping
-    @PreAuthorize("hasAnyRole('ADMIN','RECEPTIONIST','DOCTOR','NURSE')")
-    public ApiResponse<PageResponse<AppointmentResponse>> list(
-            @RequestParam(defaultValue = "0") int page,
-            @RequestParam(defaultValue = "20") int size
-    ) {
-        return ApiResponse.success(appointmentService.list(page, Math.min(size, 100)));
-    }
+  @GetMapping
+  @PreAuthorize("hasAnyRole('ADMIN','RECEPTIONIST','DOCTOR','NURSE')")
+  public ApiResponse<PageResponse<AppointmentResponse>> list(
+      @RequestParam(defaultValue = "0") int page, @RequestParam(defaultValue = "20") int size) {
+    return ApiResponse.success(appointmentService.list(page, Math.min(size, 100)));
+  }
 
-    @PostMapping("/{id}/status")
-    @PreAuthorize("hasAnyRole('ADMIN','RECEPTIONIST','DOCTOR')")
-    public ApiResponse<AppointmentResponse> updateStatus(@PathVariable Long id, @Valid @RequestBody UpdateAppointmentStatusRequest request) {
-        return ApiResponse.success(appointmentService.updateStatus(id, request));
-    }
+  @PostMapping("/{id}/status")
+  @PreAuthorize("hasAnyRole('ADMIN','RECEPTIONIST','DOCTOR')")
+  public ApiResponse<AppointmentResponse> updateStatus(
+      @PathVariable Long id, @Valid @RequestBody UpdateAppointmentStatusRequest request) {
+    return ApiResponse.success(appointmentService.updateStatus(id, request));
+  }
 }

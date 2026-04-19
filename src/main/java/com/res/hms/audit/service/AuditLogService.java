@@ -13,35 +13,37 @@ import org.springframework.stereotype.Service;
 @RequiredArgsConstructor
 public class AuditLogService {
 
-    private final AuditLogRepository auditLogRepository;
-    private final HospitalContext hospitalContext;
+  private final AuditLogRepository auditLogRepository;
+  private final HospitalContext hospitalContext;
 
-    public void record(Long hospitalId, String entityName, Long entityId, String action, String details) {
-        AuditLog auditLog = new AuditLog();
-        auditLog.setHospitalId(hospitalId);
-        auditLog.setEntityName(entityName);
-        auditLog.setEntityId(entityId);
-        auditLog.setAction(action);
-        auditLog.setPerformedBy(hospitalContext.currentUserIdOrNull());
-        auditLog.setDetails(details);
-        auditLogRepository.save(auditLog);
-    }
+  public void record(
+      Long hospitalId, String entityName, Long entityId, String action, String details) {
+    AuditLog auditLog = new AuditLog();
+    auditLog.setHospitalId(hospitalId);
+    auditLog.setEntityName(entityName);
+    auditLog.setEntityId(entityId);
+    auditLog.setAction(action);
+    auditLog.setPerformedBy(hospitalContext.currentUserIdOrNull());
+    auditLog.setDetails(details);
+    auditLogRepository.save(auditLog);
+  }
 
-    public PageResponse<AuditLogResponse> list(int page, int size) {
-        Long hospitalId = hospitalContext.requireHospitalId();
-        return PageResponse.from(auditLogRepository.findAllByHospitalIdOrderByCreatedAtDesc(hospitalId, PageRequest.of(page, size))
-                .map(this::toResponse));
-    }
+  public PageResponse<AuditLogResponse> list(int page, int size) {
+    Long hospitalId = hospitalContext.requireHospitalId();
+    return PageResponse.from(
+        auditLogRepository
+            .findAllByHospitalIdOrderByCreatedAtDesc(hospitalId, PageRequest.of(page, size))
+            .map(this::toResponse));
+  }
 
-    private AuditLogResponse toResponse(AuditLog auditLog) {
-        return new AuditLogResponse(
-                auditLog.getId(),
-                auditLog.getEntityName(),
-                auditLog.getEntityId(),
-                auditLog.getAction(),
-                auditLog.getPerformedBy(),
-                auditLog.getDetails(),
-                auditLog.getCreatedAt()
-        );
-    }
+  private AuditLogResponse toResponse(AuditLog auditLog) {
+    return new AuditLogResponse(
+        auditLog.getId(),
+        auditLog.getEntityName(),
+        auditLog.getEntityId(),
+        auditLog.getAction(),
+        auditLog.getPerformedBy(),
+        auditLog.getDetails(),
+        auditLog.getCreatedAt());
+  }
 }

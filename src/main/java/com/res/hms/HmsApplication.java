@@ -11,7 +11,11 @@ import org.springframework.security.config.annotation.method.configuration.Enabl
 @EnableConfigurationProperties(AppBootstrapProperties.class)
 public class HmsApplication {
 
-    public static void main(String[] args) {
-        SpringApplication.run(HmsApplication.class, args);
-    }
+  protected HmsApplication() {
+    // Utility class
+  }
+
+  public static void main(String[] args) {
+    SpringApplication.run(HmsApplication.class, args);
+  }
 }

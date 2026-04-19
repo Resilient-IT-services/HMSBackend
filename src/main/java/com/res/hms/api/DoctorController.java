@@ -22,20 +22,18 @@ import org.springframework.web.bind.annotation.RestController;
 @RequiredArgsConstructor
 public class DoctorController {
 
-    private final DoctorService doctorService;
+  private final DoctorService doctorService;
 
-    @PostMapping
-    @PreAuthorize("hasRole('ADMIN')")
-    public ApiResponse<DoctorResponse> create(@Valid @RequestBody CreateDoctorRequest request) {
-        return ApiResponse.success(doctorService.create(request));
-    }
+  @PostMapping
+  @PreAuthorize("hasRole('ADMIN')")
+  public ApiResponse<DoctorResponse> create(@Valid @RequestBody CreateDoctorRequest request) {
+    return ApiResponse.success(doctorService.create(request));
+  }
 
-    @GetMapping
-    @PreAuthorize("hasAnyRole('ADMIN','RECEPTIONIST','DOCTOR','NURSE')")
-    public ApiResponse<PageResponse<DoctorResponse>> list(
-            @RequestParam(defaultValue = "0") int page,
-            @RequestParam(defaultValue = "20") int size
-    ) {
-        return ApiResponse.success(doctorService.list(page, Math.min(size, 100)));
-    }
+  @GetMapping
+  @PreAuthorize("hasAnyRole('ADMIN','RECEPTIONIST','DOCTOR','NURSE')")
+  public ApiResponse<PageResponse<DoctorResponse>> list(
+      @RequestParam(defaultValue = "0") int page, @RequestParam(defaultValue = "20") int size) {
+    return ApiResponse.success(doctorService.list(page, Math.min(size, 100)));
+  }
 }

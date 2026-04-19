@@ -15,14 +15,14 @@ import lombok.Setter;
 @Table(name = "doctor")
 public class Doctor extends HospitalScopedEntity {
 
-    @OneToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "user_id")
-    private UserAccount user;
+  @OneToOne(fetch = FetchType.LAZY)
+  @JoinColumn(name = "user_id")
+  private UserAccount user;
 
-    @Column(nullable = false)
-    private String specialization;
+  @Column(nullable = false)
+  private String specialization;
 
-    public String getFullName() {
-        return user != null ? user.getFullName() : null;
-    }
+  public String getFullName() {
+    return user != null ? user.getFullName() : null;
+  }
 }

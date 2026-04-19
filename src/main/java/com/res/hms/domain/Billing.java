@@ -10,12 +10,11 @@ import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.OneToMany;
 import jakarta.persistence.Table;
-import lombok.Getter;
-import lombok.Setter;
-
 import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.List;
+import lombok.Getter;
+import lombok.Setter;
 
 @Getter
 @Setter
@@ -23,21 +22,21 @@ import java.util.List;
 @Table(name = "billing")
 public class Billing extends HospitalScopedEntity {
 
-    @ManyToOne(fetch = FetchType.LAZY, optional = false)
-    @JoinColumn(name = "patient_id", nullable = false)
-    private Patient patient;
+  @ManyToOne(fetch = FetchType.LAZY, optional = false)
+  @JoinColumn(name = "patient_id", nullable = false)
+  private Patient patient;
 
-    @Enumerated(EnumType.STRING)
-    @Column(name = "source_type", nullable = false)
-    private BillingSourceType sourceType;
+  @Enumerated(EnumType.STRING)
+  @Column(name = "source_type", nullable = false)
+  private BillingSourceType sourceType;
 
-    @Enumerated(EnumType.STRING)
-    @Column(nullable = false)
-    private BillingStatus status;
+  @Enumerated(EnumType.STRING)
+  @Column(nullable = false)
+  private BillingStatus status;
 
-    @Column(name = "total_amount", nullable = false)
-    private BigDecimal totalAmount = BigDecimal.ZERO;
+  @Column(name = "total_amount", nullable = false)
+  private BigDecimal totalAmount = BigDecimal.ZERO;
 
-    @OneToMany(mappedBy = "billing", cascade = CascadeType.ALL, orphanRemoval = true)
-    private List<BillingItem> items = new ArrayList<>();
+  @OneToMany(mappedBy = "billing", cascade = CascadeType.ALL, orphanRemoval = true)
+  private List<BillingItem> items = new ArrayList<>();
 }

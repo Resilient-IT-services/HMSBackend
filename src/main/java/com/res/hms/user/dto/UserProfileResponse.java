@@ -5,10 +5,8 @@ import java.util.List;
 import java.util.Set;
 
 public record UserProfileResponse(
-        Long userId,
-        Long hospitalId,
-        String username,
-        Set<RoleCode> roles,
-        List<HospitalMembershipResponse> hospitals
-) {
-}
+    Long userId,
+    Long hospitalId,
+    String username,
+    Set<RoleCode> roles,
+    List<HospitalMembershipResponse> hospitals) {}

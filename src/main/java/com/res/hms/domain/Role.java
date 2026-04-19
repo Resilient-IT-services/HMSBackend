@@ -14,18 +14,18 @@ import lombok.Setter;
 @Table(name = "role")
 public class Role extends BaseEntity {
 
-    @Enumerated(EnumType.STRING)
-    @Column(nullable = false, unique = true)
-    private RoleCode code;
+  @Enumerated(EnumType.STRING)
+  @Column(nullable = false, unique = true)
+  private RoleCode code;
 
-    @Column(nullable = false)
-    private String name;
+  @Column(nullable = false)
+  private String name;
 
-    private String description;
+  private String description;
 
-    @Column(name = "is_system", nullable = false)
-    private boolean system;
+  @Column(name = "is_system", nullable = false)
+  private boolean system;
 
-    @Column(name = "is_active", nullable = false)
-    private boolean active = true;
+  @Column(name = "is_active", nullable = false)
+  private boolean active = true;
 }
