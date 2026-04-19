@@ -8,10 +8,10 @@ import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.repository.NoRepositoryBean;
 
 @NoRepositoryBean
-public interface BaseRepository<T, ID> extends JpaRepository<T, ID> {
+public interface BaseRepository<T, K> extends JpaRepository<T, K> {
   Page<T> findAllByHospitalIdOrderByCreatedAtDesc(Long hospitalId, Pageable pageable);
 
   List<T> findAllByHospitalId(Long hospitalId);
 
-  Optional<T> findByIdAndHospitalId(ID id, Long hospitalId);
+  Optional<T> findByIdAndHospitalId(K id, Long hospitalId);
 }

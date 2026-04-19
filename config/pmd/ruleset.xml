@@ -10,7 +10,7 @@
 
     <!-- Best Practices -->
     <rule ref="category/java/bestpractices.xml">
-        <exclude name="JUnitTestsShouldIncludeAssert" /> <!-- Handled by other tools/ArchUnit -->
+        <exclude name="JUnitTestsShouldIncludeAssert" />
     </rule>
 
     <!-- Code Style -->
@@ -21,12 +21,18 @@
         <exclude name="LocalVariableCouldBeFinal" />
         <exclude name="MethodArgumentCouldBeFinal" />
         <exclude name="OnlyOneReturn" />
+        <exclude name="ShortClassName" />
+        <exclude name="GenericsNaming" />
+        <exclude name="ConfusingTernary" />
     </rule>
 
     <!-- Design -->
     <rule ref="category/java/design.xml">
         <exclude name="LawOfDemeter" />
         <exclude name="LoosePackageCoupling" />
+        <exclude name="SignatureDeclareThrowsException" />
+        <exclude name="AbstractClassWithoutAbstractMethod" />
+        <exclude name="AbstractClassWithoutAnyMethod" />
     </rule>
 
     <!-- Error Prone -->

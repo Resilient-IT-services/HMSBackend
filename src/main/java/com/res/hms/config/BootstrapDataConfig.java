@@ -28,7 +28,7 @@ public class BootstrapDataConfig {
       UserAccountRepository userAccountRepository,
       PasswordEncoder passwordEncoder) {
     return args -> {
-      Hospital hospital = ensureHospital(hospitalRepository);
+      ensureHospital(hospitalRepository);
       ensureRoles(roleRepository);
       ensureAdminUser(userAccountRepository, roleRepository, passwordEncoder);
     };

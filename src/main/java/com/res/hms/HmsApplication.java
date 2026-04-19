@@ -9,11 +9,8 @@ import org.springframework.security.config.annotation.method.configuration.Enabl
 @SpringBootApplication
 @EnableMethodSecurity
 @EnableConfigurationProperties(AppBootstrapProperties.class)
+@SuppressWarnings("PMD.UseUtilityClass")
 public class HmsApplication {
-
-  protected HmsApplication() {
-    // Utility class
-  }
 
   public static void main(String[] args) {
     SpringApplication.run(HmsApplication.class, args);

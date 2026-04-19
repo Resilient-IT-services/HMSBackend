@@ -5,6 +5,7 @@ import org.springframework.http.HttpStatus;
 
 public class ApiException extends RuntimeException {
 
+  private static final long serialVersionUID = 1L;
   private final String code;
   private final HttpStatus status;
   private final Map<String, Object> details;
@@ -15,6 +16,18 @@ public class ApiException extends RuntimeException {
 
   public ApiException(String code, String message, HttpStatus status, Map<String, Object> details) {
     super(message);
+    this.code = code;
+    this.status = status;
+    this.details = details;
+  }
+
+  public ApiException(
+      String code,
+      String message,
+      HttpStatus status,
+      Map<String, Object> details,
+      Throwable cause) {
+    super(message, cause);
     this.code = code;
     this.status = status;
     this.details = details;

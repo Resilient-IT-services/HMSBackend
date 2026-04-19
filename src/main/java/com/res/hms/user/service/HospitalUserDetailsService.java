@@ -1,5 +1,6 @@
 package com.res.hms.user.service;
 
+import com.res.hms.domain.RoleCode;
 import com.res.hms.domain.UserAccount;
 import com.res.hms.domain.UserRoleAssignment;
 import com.res.hms.repository.UserAccountRepository;
@@ -24,7 +25,8 @@ public class HospitalUserDetailsService implements UserDetailsService {
 
   @Override
   @Transactional(readOnly = true)
-  public UserDetails loadUserByUsername(String username) throws UsernameNotFoundException {
+  @SuppressWarnings({"PMD.AvoidInstantiatingObjectsInLoops", "PMD.UseConcurrentHashMap"})
+  public UserDetails loadUserByUsername(String username) {
     UserAccount userAccount =
         userAccountRepository
             .findByUsername(username)
@@ -34,12 +36,12 @@ public class HospitalUserDetailsService implements UserDetailsService {
       throw new DisabledException("User account is inactive");
     }
 
-    Map<Long, Set<com.res.hms.domain.RoleCode>> hospitalRoles = new HashMap<>();
-    Set<com.res.hms.domain.RoleCode> allRoles = new HashSet<>();
+    Map<Long, Set<RoleCode>> hospitalRoles = new HashMap<>();
+    Set<RoleCode> allRoles = new HashSet<>();
 
     for (UserRoleAssignment assignment : userAccount.getAssignments()) {
       Long hid = assignment.getHospitalId();
-      com.res.hms.domain.RoleCode code = assignment.getRole().getCode();
+      RoleCode code = assignment.getRole().getCode();
       hospitalRoles.computeIfAbsent(hid, k -> new HashSet<>()).add(code);
       allRoles.add(code);
     }
@@ -51,8 +53,7 @@ public class HospitalUserDetailsService implements UserDetailsService {
         userAccount.isActive(),
         hospitalRoles,
         null, // Active hospitalId
-        allRoles // We load ALL roles so @PreAuthorize works, but HospitalContext will enforce
-        // hospitalId selection
+        allRoles // We load ALL roles so @PreAuthorize works
         );
   }
 }

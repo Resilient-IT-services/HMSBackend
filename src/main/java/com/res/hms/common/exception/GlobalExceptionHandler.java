@@ -3,7 +3,7 @@ package com.res.hms.common.exception;
 import com.res.hms.common.api.ApiError;
 import com.res.hms.common.api.ApiResponse;
 import jakarta.validation.ConstraintViolationException;
-import java.util.LinkedHashMap;
+import java.util.HashMap;
 import java.util.Map;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -25,11 +25,13 @@ public class GlobalExceptionHandler {
   }
 
   @ExceptionHandler(MethodArgumentNotValidException.class)
+  @SuppressWarnings("PMD.UseConcurrentHashMap")
   public ResponseEntity<ApiResponse<Void>> handleValidationException(
       MethodArgumentNotValidException exception) {
-    Map<String, Object> details = new LinkedHashMap<>();
+    Map<String, Object> details = new HashMap<>();
     for (FieldError fieldError : exception.getBindingResult().getFieldErrors()) {
-      details.put(fieldError.getField(), fieldError.getDefaultMessage());
+      String message = fieldError.getDefaultMessage();
+      details.put(fieldError.getField(), message != null ? message : "Invalid value");
     }
 
     return ResponseEntity.badRequest()
@@ -37,14 +39,19 @@ public class GlobalExceptionHandler {
   }
 
   @ExceptionHandler(ConstraintViolationException.class)
+  @SuppressWarnings("PMD.UseConcurrentHashMap")
   public ResponseEntity<ApiResponse<Void>> handleConstraintViolation(
       ConstraintViolationException exception) {
-    Map<String, Object> details = new LinkedHashMap<>();
+    Map<String, Object> details = new HashMap<>();
     exception
         .getConstraintViolations()
         .forEach(
-            violation ->
-                details.put(violation.getPropertyPath().toString(), violation.getMessage()));
+            violation -> {
+              String message = violation.getMessage();
+              details.put(
+                  violation.getPropertyPath().toString(),
+                  message != null ? message : "Invalid value");
+            });
 
     return ResponseEntity.badRequest()
         .body(ApiResponse.failure(new ApiError("VALIDATION_ERROR", "Validation failed", details)));

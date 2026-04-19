@@ -2,6 +2,7 @@ package com.res.hms.api;
 
 import com.res.hms.common.api.ApiResponse;
 import com.res.hms.common.api.PageResponse;
+import com.res.hms.config.SecurityConstants;
 import com.res.hms.pharmacy.dto.AddPharmacyStockRequest;
 import com.res.hms.pharmacy.dto.AddPrescriptionItemRequest;
 import com.res.hms.pharmacy.dto.CreateMedicineRequest;
@@ -34,48 +35,48 @@ public class PharmacyController {
   private final PharmacyService pharmacyService;
 
   @PostMapping("/medicines")
-  @PreAuthorize("hasAnyRole('ADMIN','PHARMACIST')")
+  @PreAuthorize(SecurityConstants.HAS_ADMIN_OR_PHARMACIST)
   public ApiResponse<MedicineResponse> createMedicine(
       @Valid @RequestBody CreateMedicineRequest request) {
     return ApiResponse.success(pharmacyService.createMedicine(request));
   }
 
   @GetMapping("/medicines")
-  @PreAuthorize("hasAnyRole('ADMIN','PHARMACIST','DOCTOR')")
+  @PreAuthorize(SecurityConstants.HAS_ADMIN_PHARMACIST_OR_DOCTOR)
   public ApiResponse<PageResponse<MedicineResponse>> listMedicines(
       @RequestParam(defaultValue = "0") int page, @RequestParam(defaultValue = "20") int size) {
     return ApiResponse.success(pharmacyService.listMedicines(page, Math.min(size, 100)));
   }
 
   @PostMapping("/stock")
-  @PreAuthorize("hasAnyRole('ADMIN','PHARMACIST')")
+  @PreAuthorize(SecurityConstants.HAS_ADMIN_OR_PHARMACIST)
   public ApiResponse<PharmacyStockResponse> addStock(
       @Valid @RequestBody AddPharmacyStockRequest request) {
     return ApiResponse.success(pharmacyService.addStock(request));
   }
 
   @GetMapping("/stock")
-  @PreAuthorize("hasAnyRole('ADMIN','PHARMACIST')")
+  @PreAuthorize(SecurityConstants.HAS_ADMIN_OR_PHARMACIST)
   public ApiResponse<List<PharmacyStockResponse>> listStock() {
     return ApiResponse.success(pharmacyService.listStock());
   }
 
   @PostMapping("/prescriptions")
-  @PreAuthorize("hasAnyRole('ADMIN','DOCTOR')")
+  @PreAuthorize(SecurityConstants.HAS_ADMIN_OR_DOCTOR)
   public ApiResponse<PrescriptionResponse> createPrescription(
       @Valid @RequestBody CreatePrescriptionRequest request) {
     return ApiResponse.success(pharmacyService.createPrescription(request));
   }
 
   @PostMapping("/prescriptions/{id}/items")
-  @PreAuthorize("hasAnyRole('ADMIN','DOCTOR')")
+  @PreAuthorize(SecurityConstants.HAS_ADMIN_OR_DOCTOR)
   public ApiResponse<PrescriptionResponse> addPrescriptionItem(
       @PathVariable Long id, @Valid @RequestBody AddPrescriptionItemRequest request) {
     return ApiResponse.success(pharmacyService.addPrescriptionItem(id, request));
   }
 
   @PostMapping("/dispense")
-  @PreAuthorize("hasAnyRole('ADMIN','PHARMACIST')")
+  @PreAuthorize(SecurityConstants.HAS_ADMIN_OR_PHARMACIST)
   public ApiResponse<DispenseResponse> dispense(
       @Valid @RequestBody DispensePrescriptionRequest request) {
     return ApiResponse.success(pharmacyService.dispense(request));

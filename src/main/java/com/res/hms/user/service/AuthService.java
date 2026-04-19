@@ -48,7 +48,12 @@ public class AuthService {
       SecurityContextHolder.setContext(context);
       securityContextRepository.saveContext(context, httpRequest, httpResponse);
     } catch (BadCredentialsException exception) {
-      throw new ApiException("AUTH_ERROR", "Invalid username or password", HttpStatus.UNAUTHORIZED);
+      throw new ApiException(
+          "AUTH_ERROR",
+          "Invalid username or password",
+          HttpStatus.UNAUTHORIZED,
+          Map.of(),
+          exception);
     }
   }
 

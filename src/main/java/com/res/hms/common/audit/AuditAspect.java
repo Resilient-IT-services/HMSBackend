@@ -2,6 +2,7 @@ package com.res.hms.common.audit;
 
 import com.res.hms.audit.service.AuditLogService;
 import com.res.hms.common.tenant.HospitalContext;
+import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import lombok.RequiredArgsConstructor;
 import org.aspectj.lang.JoinPoint;
@@ -35,11 +36,11 @@ public class AuditAspect {
     try {
       Method getId = result.getClass().getMethod("id");
       return (Long) getId.invoke(result);
-    } catch (Exception e) {
+    } catch (NoSuchMethodException | IllegalAccessException | InvocationTargetException e) {
       try {
         Method getId = result.getClass().getMethod("getId");
         return (Long) getId.invoke(result);
-      } catch (Exception ex) {
+      } catch (NoSuchMethodException | IllegalAccessException | InvocationTargetException ex) {
         return null;
       }
     }

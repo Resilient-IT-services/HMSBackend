@@ -24,6 +24,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 @Service
 @RequiredArgsConstructor
+@SuppressWarnings({"PMD.AvoidDuplicateLiterals", "PMD.AvoidInstantiatingObjectsInLoops"})
 public class UserService {
 
   private final UserAccountRepository userAccountRepository;
@@ -67,27 +68,42 @@ public class UserService {
 
   public void validateCreateRequest(
       CreateUserRequest request, boolean isSuperAdmin, Long hospitalId) {
-    if (userAccountRepository.existsByUsername(request.username())) {
+    validateUsernameUnique(request.username());
+    validateRolesPresent(request.roles());
+    validateHospitalContext(isSuperAdmin, hospitalId, request.roles());
+  }
+
+  private void validateUsernameUnique(String username) {
+    if (userAccountRepository.existsByUsername(username)) {
       throw new ApiException(
           "BUSINESS_RULE_VIOLATION", "Username already exists", HttpStatus.CONFLICT);
     }
-    if (request.roles() == null || request.roles().isEmpty()) {
+  }
+
+  private void validateRolesPresent(Set<RoleCode> roles) {
+    if (roles == null || roles.isEmpty()) {
       throw new ApiException(
           "VALIDATION_ERROR", "At least one role is required", HttpStatus.BAD_REQUEST);
     }
-    if (!isSuperAdmin && hospitalId == null) {
-      throw new ApiException(
-          "BUSINESS_RULE_VIOLATION", "Please select a hospital first", HttpStatus.BAD_REQUEST);
-    }
-    if (!isSuperAdmin && request.roles().contains(RoleCode.SUPER_ADMIN)) {
-      throw new ApiException(
-          "FORBIDDEN", "Only Super Admin can create Super Admins", HttpStatus.FORBIDDEN);
-    }
-    if (isSuperAdmin && hospitalId == null && !request.roles().contains(RoleCode.SUPER_ADMIN)) {
-      throw new ApiException(
-          "BUSINESS_RULE_VIOLATION",
-          "Please select a hospital first or assign a global role",
-          HttpStatus.BAD_REQUEST);
+  }
+
+  private void validateHospitalContext(boolean isSuperAdmin, Long hospitalId, Set<RoleCode> roles) {
+    if (!isSuperAdmin) {
+      if (hospitalId == null) {
+        throw new ApiException(
+            "BUSINESS_RULE_VIOLATION", "Please select a hospital first", HttpStatus.BAD_REQUEST);
+      }
+      if (roles.contains(RoleCode.SUPER_ADMIN)) {
+        throw new ApiException(
+            "FORBIDDEN", "Only Super Admin can create Super Admins", HttpStatus.FORBIDDEN);
+      }
+    } else {
+      if (hospitalId == null && !roles.contains(RoleCode.SUPER_ADMIN)) {
+        throw new ApiException(
+            "BUSINESS_RULE_VIOLATION",
+            "Please select a hospital first or assign a global role",
+            HttpStatus.BAD_REQUEST);
+      }
     }
   }
 

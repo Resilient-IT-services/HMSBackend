@@ -2,6 +2,7 @@ package com.res.hms.api;
 
 import com.res.hms.common.api.ApiResponse;
 import com.res.hms.common.api.PageResponse;
+import com.res.hms.config.SecurityConstants;
 import com.res.hms.inventory.dto.CreateItemRequest;
 import com.res.hms.inventory.dto.InventoryStockResponse;
 import com.res.hms.inventory.dto.ItemResponse;
@@ -28,27 +29,27 @@ public class InventoryController {
   private final InventoryService inventoryService;
 
   @PostMapping("/items")
-  @PreAuthorize("hasAnyRole('ADMIN','PHARMACIST')")
+  @PreAuthorize(SecurityConstants.HAS_ADMIN_OR_PHARMACIST)
   public ApiResponse<ItemResponse> createItem(@Valid @RequestBody CreateItemRequest request) {
     return ApiResponse.success(inventoryService.createItem(request));
   }
 
   @GetMapping("/items")
-  @PreAuthorize("hasAnyRole('ADMIN','PHARMACIST')")
+  @PreAuthorize(SecurityConstants.HAS_ADMIN_OR_PHARMACIST)
   public ApiResponse<PageResponse<ItemResponse>> listItems(
       @RequestParam(defaultValue = "0") int page, @RequestParam(defaultValue = "20") int size) {
     return ApiResponse.success(inventoryService.listItems(page, Math.min(size, 100)));
   }
 
   @PostMapping("/stock")
-  @PreAuthorize("hasAnyRole('ADMIN','PHARMACIST')")
+  @PreAuthorize(SecurityConstants.HAS_ADMIN_OR_PHARMACIST)
   public ApiResponse<InventoryStockResponse> updateStock(
       @Valid @RequestBody UpdateInventoryStockRequest request) {
     return ApiResponse.success(inventoryService.updateStock(request));
   }
 
   @GetMapping("/stock")
-  @PreAuthorize("hasAnyRole('ADMIN','PHARMACIST')")
+  @PreAuthorize(SecurityConstants.HAS_ADMIN_OR_PHARMACIST)
   public ApiResponse<List<InventoryStockResponse>> listStock() {
     return ApiResponse.success(inventoryService.listStock());
   }

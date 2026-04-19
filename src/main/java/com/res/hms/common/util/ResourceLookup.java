@@ -10,15 +10,15 @@ import org.springframework.stereotype.Component;
 @Component
 public class ResourceLookup {
 
-  public <T, ID> T findRequired(
-      ID id, Long hospitalId, BiFunction<ID, Long, Optional<T>> finder, String resourceName) {
+  public <T, K> T findRequired(
+      K id, Long hospitalId, BiFunction<K, Long, Optional<T>> finder, String resourceName) {
     return finder
         .apply(id, hospitalId)
         .orElseThrow(
             () -> new ApiException("NOT_FOUND", resourceName + " not found", HttpStatus.NOT_FOUND));
   }
 
-  public <T, ID> T findRequired(ID id, Function<ID, Optional<T>> finder, String resourceName) {
+  public <T, K> T findRequired(K id, Function<K, Optional<T>> finder, String resourceName) {
     return finder
         .apply(id)
         .orElseThrow(

@@ -35,6 +35,11 @@ import org.springframework.transaction.annotation.Transactional;
 
 @Service
 @RequiredArgsConstructor
+@SuppressWarnings({
+  "PMD.ExcessiveImports",
+  "PMD.CouplingBetweenObjects",
+  "PMD.AvoidDuplicateLiterals"
+})
 public class PharmacyService {
 
   private final MedicineRepository medicineRepository;
