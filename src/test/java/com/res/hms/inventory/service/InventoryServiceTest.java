@@ -3,12 +3,14 @@ package com.res.hms.inventory.service;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 import com.res.hms.common.exception.ApiException;
 import com.res.hms.common.tenant.HospitalContext;
+import com.res.hms.common.util.ResourceLookup;
 import com.res.hms.domain.InventoryStock;
 import com.res.hms.domain.Item;
 import com.res.hms.inventory.dto.CreateItemRequest;
@@ -26,6 +28,7 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.PageRequest;
+import org.springframework.http.HttpStatus;
 
 @ExtendWith(MockitoExtension.class)
 class InventoryServiceTest {
@@ -34,6 +37,7 @@ class InventoryServiceTest {
   @Mock private InventoryStockRepository inventoryStockRepository;
   @Mock private InventoryTransactionRepository inventoryTransactionRepository;
   @Mock private HospitalContext hospitalContext;
+  @Mock private ResourceLookup resourceLookup;
 
   @InjectMocks private InventoryService inventoryService;
 
@@ -74,7 +78,8 @@ class InventoryServiceTest {
   @Test
   void updateStockRejectsMissingItem() {
     when(hospitalContext.requireHospitalId()).thenReturn(4L);
-    when(itemRepository.findByIdAndHospitalId(99L, 4L)).thenReturn(Optional.empty());
+    when(resourceLookup.findRequired(eq(99L), eq(4L), any(), anyString()))
+        .thenThrow(new ApiException("NOT_FOUND", "Item not found", HttpStatus.NOT_FOUND));
 
     ApiException exception =
         assertThrows(
@@ -91,7 +96,7 @@ class InventoryServiceTest {
     item.setId(1L);
     item.setName("Bandage");
     when(hospitalContext.requireHospitalId()).thenReturn(4L);
-    when(itemRepository.findByIdAndHospitalId(1L, 4L)).thenReturn(Optional.of(item));
+    when(resourceLookup.findRequired(eq(1L), eq(4L), any(), anyString())).thenReturn(item);
     when(inventoryStockRepository.findByHospitalIdAndItemId(4L, 1L)).thenReturn(Optional.empty());
     when(inventoryStockRepository.save(any(InventoryStock.class)))
         .thenAnswer(invocation -> invocation.getArgument(0));
@@ -113,7 +118,7 @@ class InventoryServiceTest {
     stock.setItem(item);
     stock.setQuantity(new BigDecimal("2.0"));
     when(hospitalContext.requireHospitalId()).thenReturn(4L);
-    when(itemRepository.findByIdAndHospitalId(1L, 4L)).thenReturn(Optional.of(item));
+    when(resourceLookup.findRequired(eq(1L), eq(4L), any(), anyString())).thenReturn(item);
     when(inventoryStockRepository.findByHospitalIdAndItemId(4L, 1L)).thenReturn(Optional.of(stock));
     when(inventoryStockRepository.save(any(InventoryStock.class)))
         .thenAnswer(invocation -> invocation.getArgument(0));

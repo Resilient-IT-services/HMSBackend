@@ -3,6 +3,7 @@ package com.res.hms.appointment.service;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.when;
 
@@ -11,6 +12,7 @@ import com.res.hms.appointment.dto.UpdateAppointmentStatusRequest;
 import com.res.hms.appointment.repository.AppointmentRepository;
 import com.res.hms.common.exception.ApiException;
 import com.res.hms.common.tenant.HospitalContext;
+import com.res.hms.common.util.ResourceLookup;
 import com.res.hms.doctor.service.DoctorService;
 import com.res.hms.domain.Appointment;
 import com.res.hms.domain.AppointmentStatus;
@@ -20,7 +22,6 @@ import com.res.hms.domain.UserAccount;
 import com.res.hms.patient.service.PatientService;
 import java.time.LocalDateTime;
 import java.util.List;
-import java.util.Optional;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
@@ -28,6 +29,7 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.PageRequest;
+import org.springframework.http.HttpStatus;
 
 @ExtendWith(MockitoExtension.class)
 class AppointmentServiceTest {
@@ -36,6 +38,7 @@ class AppointmentServiceTest {
   @Mock private PatientService patientService;
   @Mock private DoctorService doctorService;
   @Mock private HospitalContext hospitalContext;
+  @Mock private ResourceLookup resourceLookup;
 
   @InjectMocks private AppointmentService appointmentService;
 
@@ -102,7 +105,8 @@ class AppointmentServiceTest {
   @Test
   void updateStatusRejectsMissingAppointment() {
     when(hospitalContext.requireHospitalId()).thenReturn(4L);
-    when(appointmentRepository.findByIdAndHospitalId(99L, 4L)).thenReturn(Optional.empty());
+    when(resourceLookup.findRequired(eq(99L), eq(4L), any(), anyString()))
+        .thenThrow(new ApiException("NOT_FOUND", "Appointment not found", HttpStatus.NOT_FOUND));
 
     ApiException exception =
         assertThrows(
@@ -133,7 +137,9 @@ class AppointmentServiceTest {
     appointment.setAppointmentTime(LocalDateTime.now().plusDays(1));
     appointment.setStatus(AppointmentStatus.SCHEDULED);
     when(hospitalContext.requireHospitalId()).thenReturn(4L);
-    when(appointmentRepository.findByIdAndHospitalId(50L, 4L)).thenReturn(Optional.of(appointment));
+    when(resourceLookup.findRequired(eq(50L), eq(4L), any(), anyString())).thenReturn(appointment);
+    when(appointmentRepository.save(any(Appointment.class)))
+        .thenAnswer(invocation -> invocation.getArgument(0));
 
     var response =
         appointmentService.updateStatus(

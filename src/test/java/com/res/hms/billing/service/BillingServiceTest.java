@@ -3,6 +3,8 @@ package com.res.hms.billing.service;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.when;
 
 import com.res.hms.billing.dto.AddBillingItemRequest;
@@ -10,13 +12,13 @@ import com.res.hms.billing.dto.CreateOpdBillingRequest;
 import com.res.hms.billing.repository.BillingRepository;
 import com.res.hms.common.exception.ApiException;
 import com.res.hms.common.tenant.HospitalContext;
+import com.res.hms.common.util.ResourceLookup;
 import com.res.hms.domain.Billing;
 import com.res.hms.domain.BillingSourceType;
 import com.res.hms.domain.BillingStatus;
 import com.res.hms.domain.Patient;
 import com.res.hms.patient.service.PatientService;
 import java.math.BigDecimal;
-import java.util.Optional;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
@@ -29,10 +31,12 @@ class BillingServiceTest {
   @Mock private BillingRepository billingRepository;
   @Mock private PatientService patientService;
   @Mock private HospitalContext hospitalContext;
+  @Mock private ResourceLookup resourceLookup;
 
   @InjectMocks private BillingService billingService;
 
   @Test
+  @SuppressWarnings("unchecked")
   void createOpdBillingPersistsDraftBilling() {
     Patient patient = new Patient();
     patient.setId(10L);
@@ -53,9 +57,13 @@ class BillingServiceTest {
   }
 
   @Test
+  @SuppressWarnings("unchecked")
   void addItemRejectsMissingBilling() {
     when(hospitalContext.requireHospitalId()).thenReturn(4L);
-    when(billingRepository.findByIdAndHospitalId(99L, 4L)).thenReturn(Optional.empty());
+    when(resourceLookup.findRequired(eq(99L), eq(4L), any(), anyString()))
+        .thenThrow(
+            new ApiException(
+                "NOT_FOUND", "Billing not found", org.springframework.http.HttpStatus.NOT_FOUND));
 
     ApiException exception =
         assertThrows(
@@ -68,6 +76,7 @@ class BillingServiceTest {
   }
 
   @Test
+  @SuppressWarnings("unchecked")
   void addItemUpdatesTotalAndStatus() {
     Patient patient = new Patient();
     patient.setId(10L);
@@ -77,7 +86,7 @@ class BillingServiceTest {
     billing.setStatus(BillingStatus.DRAFT);
     billing.setTotalAmount(BigDecimal.ZERO);
     when(hospitalContext.requireHospitalId()).thenReturn(4L);
-    when(billingRepository.findByIdAndHospitalId(70L, 4L)).thenReturn(Optional.of(billing));
+    when(resourceLookup.findRequired(eq(70L), eq(4L), any(), anyString())).thenReturn(billing);
     when(billingRepository.save(any(Billing.class)))
         .thenAnswer(invocation -> invocation.getArgument(0));
 

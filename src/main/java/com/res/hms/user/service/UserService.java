@@ -3,6 +3,7 @@ package com.res.hms.user.service;
 import com.res.hms.common.audit.Auditable;
 import com.res.hms.common.exception.ApiException;
 import com.res.hms.common.tenant.HospitalContext;
+import com.res.hms.common.util.ResourceLookup;
 import com.res.hms.domain.Role;
 import com.res.hms.domain.RoleCode;
 import com.res.hms.domain.UserAccount;
@@ -31,6 +32,7 @@ public class UserService {
   private final PasswordEncoder passwordEncoder;
   private final HospitalContext hospitalContext;
   private final UserMapper userMapper;
+  private final ResourceLookup resourceLookup;
 
   @Transactional
   @Auditable(entity = "user_account", action = "CREATE")
@@ -54,13 +56,7 @@ public class UserService {
 
   private void assignRoles(UserAccount user, Set<RoleCode> roleCodes, Long activeHospitalId) {
     for (RoleCode code : roleCodes) {
-      Role role =
-          roleRepository
-              .findByCode(code)
-              .orElseThrow(
-                  () ->
-                      new ApiException(
-                          "NOT_FOUND", "Role not found: " + code, HttpStatus.NOT_FOUND));
+      Role role = resourceLookup.findRequired(code, roleRepository::findByCode, "Role: " + code);
       UserRoleAssignment assignment = new UserRoleAssignment();
       assignment.setUser(user);
       assignment.setHospitalId(code == RoleCode.SUPER_ADMIN ? null : activeHospitalId);
@@ -104,8 +100,8 @@ public class UserService {
     UserAccount user = resolveUser(request, isCallerSuperAdmin, activeHospitalId);
     Long targetHospitalId = isCallerSuperAdmin ? request.hospitalId() : activeHospitalId;
 
-    if (targetHospitalId != null && !hospitalRepository.existsById(targetHospitalId)) {
-      throw new ApiException("NOT_FOUND", "Hospital not found", HttpStatus.NOT_FOUND);
+    if (targetHospitalId != null) {
+      resourceLookup.findRequired(targetHospitalId, hospitalRepository::findById, "Hospital");
     }
 
     user.getAssignments()
@@ -122,9 +118,7 @@ public class UserService {
   private UserAccount resolveUser(
       AllocateRoleRequest request, boolean isSuperAdmin, Long activeHospitalId) {
     if (isSuperAdmin) {
-      return userAccountRepository
-          .findById(request.userId())
-          .orElseThrow(() -> new ApiException("NOT_FOUND", "User not found", HttpStatus.NOT_FOUND));
+      return resourceLookup.findRequired(request.userId(), userAccountRepository::findById, "User");
     }
     if (activeHospitalId == null) {
       throw new ApiException(
@@ -134,10 +128,8 @@ public class UserService {
       throw new ApiException(
           "FORBIDDEN", "Only Super Admin can allocate Super Admin role", HttpStatus.FORBIDDEN);
     }
-    return userAccountRepository
-        .findByIdAndHospitalId(request.userId(), activeHospitalId)
-        .orElseThrow(
-            () -> new ApiException("NOT_FOUND", "User not found in context", HttpStatus.NOT_FOUND));
+    return resourceLookup.findRequired(
+        request.userId(), activeHospitalId, userAccountRepository::findByIdAndHospitalId, "User");
   }
 
   @Transactional(readOnly = true)

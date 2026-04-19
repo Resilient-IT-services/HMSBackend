@@ -5,6 +5,7 @@ import com.res.hms.common.api.PageResponse;
 import com.res.hms.common.audit.Auditable;
 import com.res.hms.common.exception.ApiException;
 import com.res.hms.common.tenant.HospitalContext;
+import com.res.hms.common.util.ResourceLookup;
 import com.res.hms.doctor.service.DoctorService;
 import com.res.hms.domain.Billing;
 import com.res.hms.domain.Medicine;
@@ -44,6 +45,7 @@ public class PharmacyService {
   private final BillingService billingService;
   private final HospitalContext hospitalContext;
   private final PharmacyMapper pharmacyMapper;
+  private final ResourceLookup resourceLookup;
 
   @Transactional
   @Auditable(entity = "medicine", action = "CREATE")
@@ -70,10 +72,11 @@ public class PharmacyService {
   public PharmacyStockResponse addStock(AddPharmacyStockRequest request) {
     Long hospitalId = hospitalContext.requireHospitalId();
     Medicine medicine =
-        medicineRepository
-            .findByIdAndHospitalId(request.medicineId(), hospitalId)
-            .orElseThrow(
-                () -> new ApiException("NOT_FOUND", "Medicine not found", HttpStatus.NOT_FOUND));
+        resourceLookup.findRequired(
+            request.medicineId(),
+            hospitalId,
+            medicineRepository::findByIdAndHospitalId,
+            "Medicine");
 
     PharmacyStock stock = new PharmacyStock();
     stock.setHospitalId(hospitalId);
@@ -111,17 +114,18 @@ public class PharmacyService {
       Long prescriptionId, AddPrescriptionItemRequest request) {
     Long hospitalId = hospitalContext.requireHospitalId();
     Prescription p =
-        prescriptionRepository
-            .findByIdAndHospitalId(prescriptionId, hospitalId)
-            .orElseThrow(
-                () ->
-                    new ApiException("NOT_FOUND", "Prescription not found", HttpStatus.NOT_FOUND));
+        resourceLookup.findRequired(
+            prescriptionId,
+            hospitalId,
+            prescriptionRepository::findByIdAndHospitalId,
+            "Prescription");
 
     Medicine m =
-        medicineRepository
-            .findByIdAndHospitalId(request.medicineId(), hospitalId)
-            .orElseThrow(
-                () -> new ApiException("NOT_FOUND", "Medicine not found", HttpStatus.NOT_FOUND));
+        resourceLookup.findRequired(
+            request.medicineId(),
+            hospitalId,
+            medicineRepository::findByIdAndHospitalId,
+            "Medicine");
 
     PrescriptionItem item = new PrescriptionItem();
     item.setHospitalId(hospitalId);
@@ -138,11 +142,11 @@ public class PharmacyService {
   public DispenseResponse dispense(DispensePrescriptionRequest request) {
     Long hospitalId = hospitalContext.requireHospitalId();
     Prescription prescription =
-        prescriptionRepository
-            .findByIdAndHospitalId(request.prescriptionId(), hospitalId)
-            .orElseThrow(
-                () ->
-                    new ApiException("NOT_FOUND", "Prescription not found", HttpStatus.NOT_FOUND));
+        resourceLookup.findRequired(
+            request.prescriptionId(),
+            hospitalId,
+            prescriptionRepository::findByIdAndHospitalId,
+            "Prescription");
 
     if (prescription.getItems().isEmpty()) {
       throw new ApiException(

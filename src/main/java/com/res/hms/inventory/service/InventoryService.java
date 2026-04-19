@@ -2,8 +2,8 @@ package com.res.hms.inventory.service;
 
 import com.res.hms.common.api.PageResponse;
 import com.res.hms.common.audit.Auditable;
-import com.res.hms.common.exception.ApiException;
 import com.res.hms.common.tenant.HospitalContext;
+import com.res.hms.common.util.ResourceLookup;
 import com.res.hms.domain.InventoryStock;
 import com.res.hms.domain.InventoryTransaction;
 import com.res.hms.domain.InventoryTransactionType;
@@ -20,7 +20,6 @@ import java.time.LocalDateTime;
 import java.util.List;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.PageRequest;
-import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -32,6 +31,7 @@ public class InventoryService {
   private final InventoryStockRepository inventoryStockRepository;
   private final InventoryTransactionRepository inventoryTransactionRepository;
   private final HospitalContext hospitalContext;
+  private final ResourceLookup resourceLookup;
 
   @Transactional
   @Auditable(entity = "item", action = "CREATE")
@@ -60,12 +60,8 @@ public class InventoryService {
   public InventoryStockResponse updateStock(UpdateInventoryStockRequest request) {
     Long hospitalId = hospitalContext.requireHospitalId();
     Item item =
-        itemRepository
-            .findByIdAndHospitalId(request.itemId(), hospitalId)
-            .orElseThrow(
-                () ->
-                    new ApiException(
-                        "NOT_FOUND", "Inventory item not found", HttpStatus.NOT_FOUND));
+        resourceLookup.findRequired(
+            request.itemId(), hospitalId, itemRepository::findByIdAndHospitalId, "Inventory item");
 
     InventoryStock stock = getOrCreateStock(hospitalId, item);
     stock.setQuantity(stock.getQuantity().add(request.quantity()));

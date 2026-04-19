@@ -6,8 +6,8 @@ import com.res.hms.billing.dto.BillingResponse;
 import com.res.hms.billing.dto.CreateOpdBillingRequest;
 import com.res.hms.billing.repository.BillingRepository;
 import com.res.hms.common.audit.Auditable;
-import com.res.hms.common.exception.ApiException;
 import com.res.hms.common.tenant.HospitalContext;
+import com.res.hms.common.util.ResourceLookup;
 import com.res.hms.domain.Billing;
 import com.res.hms.domain.BillingItem;
 import com.res.hms.domain.BillingSourceType;
@@ -16,7 +16,6 @@ import com.res.hms.domain.Patient;
 import com.res.hms.patient.service.PatientService;
 import java.math.BigDecimal;
 import lombok.RequiredArgsConstructor;
-import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -27,6 +26,7 @@ public class BillingService {
   private final BillingRepository billingRepository;
   private final PatientService patientService;
   private final HospitalContext hospitalContext;
+  private final ResourceLookup resourceLookup;
 
   @Transactional
   @Auditable(entity = "billing", action = "CREATE")
@@ -101,10 +101,8 @@ public class BillingService {
   }
 
   private Billing requireBilling(Long billingId, Long hospitalId) {
-    return billingRepository
-        .findByIdAndHospitalId(billingId, hospitalId)
-        .orElseThrow(
-            () -> new ApiException("NOT_FOUND", "Billing not found", HttpStatus.NOT_FOUND));
+    return resourceLookup.findRequired(
+        billingId, hospitalId, billingRepository::findByIdAndHospitalId, "Billing");
   }
 
   private BillingResponse toResponse(Billing billing) {

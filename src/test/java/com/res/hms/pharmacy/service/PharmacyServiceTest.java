@@ -3,6 +3,7 @@ package com.res.hms.pharmacy.service;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.when;
 
@@ -10,6 +11,7 @@ import com.res.hms.billing.dto.BillingResponse;
 import com.res.hms.billing.service.BillingService;
 import com.res.hms.common.exception.ApiException;
 import com.res.hms.common.tenant.HospitalContext;
+import com.res.hms.common.util.ResourceLookup;
 import com.res.hms.doctor.service.DoctorService;
 import com.res.hms.domain.Billing;
 import com.res.hms.domain.Doctor;
@@ -35,7 +37,6 @@ import com.res.hms.pharmacy.repository.PrescriptionRepository;
 import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.util.List;
-import java.util.Optional;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
@@ -43,6 +44,7 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.PageRequest;
+import org.springframework.http.HttpStatus;
 
 @ExtendWith(MockitoExtension.class)
 class PharmacyServiceTest {
@@ -55,6 +57,7 @@ class PharmacyServiceTest {
   @Mock private BillingService billingService;
   @Mock private HospitalContext hospitalContext;
   @Mock private PharmacyMapper pharmacyMapper;
+  @Mock private ResourceLookup resourceLookup;
 
   @InjectMocks private PharmacyService pharmacyService;
 
@@ -108,7 +111,8 @@ class PharmacyServiceTest {
   @Test
   void addStockRejectsMissingMedicine() {
     when(hospitalContext.requireHospitalId()).thenReturn(4L);
-    when(medicineRepository.findByIdAndHospitalId(2L, 4L)).thenReturn(Optional.empty());
+    when(resourceLookup.findRequired(eq(2L), eq(4L), any(), anyString()))
+        .thenThrow(new ApiException("NOT_FOUND", "Medicine not found", HttpStatus.NOT_FOUND));
 
     ApiException exception =
         assertThrows(
@@ -127,7 +131,7 @@ class PharmacyServiceTest {
     medicine.setId(2L);
     medicine.setName("Paracetamol");
     when(hospitalContext.requireHospitalId()).thenReturn(4L);
-    when(medicineRepository.findByIdAndHospitalId(2L, 4L)).thenReturn(Optional.of(medicine));
+    when(resourceLookup.findRequired(eq(2L), eq(4L), any(), anyString())).thenReturn(medicine);
     when(pharmacyStockRepository.save(any(PharmacyStock.class)))
         .thenAnswer(
             invocation -> {
@@ -252,9 +256,9 @@ class PharmacyServiceTest {
     prescription.setPatient(patient);
     prescription.setDoctor(doctor);
     when(hospitalContext.requireHospitalId()).thenReturn(4L);
-    when(prescriptionRepository.findByIdAndHospitalId(110L, 4L))
-        .thenReturn(Optional.of(prescription));
-    when(medicineRepository.findByIdAndHospitalId(2L, 4L)).thenReturn(Optional.of(medicine));
+    when(resourceLookup.findRequired(eq(110L), eq(4L), any(), anyString()))
+        .thenReturn(prescription);
+    when(resourceLookup.findRequired(eq(2L), eq(4L), any(), anyString())).thenReturn(medicine);
     when(prescriptionRepository.save(any(Prescription.class)))
         .thenAnswer(invocation -> invocation.getArgument(0));
     when(pharmacyMapper.toPrescriptionResponse(any(Prescription.class)))
@@ -293,8 +297,8 @@ class PharmacyServiceTest {
     Prescription prescription = new Prescription();
     prescription.setId(110L);
     when(hospitalContext.requireHospitalId()).thenReturn(4L);
-    when(prescriptionRepository.findByIdAndHospitalId(110L, 4L))
-        .thenReturn(Optional.of(prescription));
+    when(resourceLookup.findRequired(eq(110L), eq(4L), any(), anyString()))
+        .thenReturn(prescription);
 
     ApiException exception =
         assertThrows(
@@ -328,8 +332,8 @@ class PharmacyServiceTest {
     Billing billing = new Billing();
     billing.setId(200L);
     when(hospitalContext.requireHospitalId()).thenReturn(4L);
-    when(prescriptionRepository.findByIdAndHospitalId(110L, 4L))
-        .thenReturn(Optional.of(prescription));
+    when(resourceLookup.findRequired(eq(110L), eq(4L), any(), anyString()))
+        .thenReturn(prescription);
     when(billingService.createPharmacyBilling(patient)).thenReturn(billing);
     when(pharmacyStockRepository.findAllByHospitalIdAndMedicineIdOrderByExpiryDateAsc(4L, 2L))
         .thenReturn(List.of());
@@ -381,8 +385,8 @@ class PharmacyServiceTest {
     BillingResponse billingResponse =
         new BillingResponse(200L, 10L, null, null, new BigDecimal("12.50"), List.of(), null);
     when(hospitalContext.requireHospitalId()).thenReturn(4L);
-    when(prescriptionRepository.findByIdAndHospitalId(110L, 4L))
-        .thenReturn(Optional.of(prescription));
+    when(resourceLookup.findRequired(eq(110L), eq(4L), any(), anyString()))
+        .thenReturn(prescription);
     when(billingService.createPharmacyBilling(patient)).thenReturn(billing);
     when(pharmacyStockRepository.findAllByHospitalIdAndMedicineIdOrderByExpiryDateAsc(4L, 2L))
         .thenReturn(List.of(exhausted, usable));

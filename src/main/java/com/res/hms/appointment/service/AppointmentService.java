@@ -6,8 +6,8 @@ import com.res.hms.appointment.dto.UpdateAppointmentStatusRequest;
 import com.res.hms.appointment.repository.AppointmentRepository;
 import com.res.hms.common.api.PageResponse;
 import com.res.hms.common.audit.Auditable;
-import com.res.hms.common.exception.ApiException;
 import com.res.hms.common.tenant.HospitalContext;
+import com.res.hms.common.util.ResourceLookup;
 import com.res.hms.doctor.service.DoctorService;
 import com.res.hms.domain.Appointment;
 import com.res.hms.domain.AppointmentStatus;
@@ -16,7 +16,6 @@ import com.res.hms.domain.Patient;
 import com.res.hms.patient.service.PatientService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.PageRequest;
-import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -28,6 +27,7 @@ public class AppointmentService {
   private final PatientService patientService;
   private final DoctorService doctorService;
   private final HospitalContext hospitalContext;
+  private final ResourceLookup resourceLookup;
 
   @Transactional
   @Auditable(entity = "appointment", action = "CREATE")
@@ -62,13 +62,11 @@ public class AppointmentService {
   public AppointmentResponse updateStatus(Long id, UpdateAppointmentStatusRequest request) {
     Long hospitalId = hospitalContext.requireHospitalId();
     Appointment appointment =
-        appointmentRepository
-            .findByIdAndHospitalId(id, hospitalId)
-            .orElseThrow(
-                () -> new ApiException("NOT_FOUND", "Appointment not found", HttpStatus.NOT_FOUND));
+        resourceLookup.findRequired(
+            id, hospitalId, appointmentRepository::findByIdAndHospitalId, "Appointment");
 
     appointment.setStatus(request.status());
-    return toResponse(appointment);
+    return toResponse(appointmentRepository.save(appointment));
   }
 
   private AppointmentResponse toResponse(Appointment appointment) {

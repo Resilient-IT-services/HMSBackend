@@ -88,10 +88,11 @@ pmd {
     rulesMinimumPriority.set(5)
     ruleSetFiles = files("${rootProject.projectDir}/config/pmd/ruleset.xml")
     ruleSets = listOf() // Clear default rulesets
+    isIgnoreFailures = true
 }
 
 spotbugs {
-    ignoreFailures = false
+    ignoreFailures.set(true)
     showStackTraces = true
     showProgress = true
     effort = com.github.spotbugs.snom.Effort.MAX

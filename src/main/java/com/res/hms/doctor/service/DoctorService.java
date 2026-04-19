@@ -2,8 +2,8 @@ package com.res.hms.doctor.service;
 
 import com.res.hms.common.api.PageResponse;
 import com.res.hms.common.audit.Auditable;
-import com.res.hms.common.exception.ApiException;
 import com.res.hms.common.tenant.HospitalContext;
+import com.res.hms.common.util.ResourceLookup;
 import com.res.hms.doctor.dto.CreateDoctorRequest;
 import com.res.hms.doctor.dto.DoctorResponse;
 import com.res.hms.doctor.repository.DoctorRepository;
@@ -12,7 +12,6 @@ import com.res.hms.domain.UserAccount;
 import com.res.hms.repository.UserAccountRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.PageRequest;
-import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -23,6 +22,7 @@ public class DoctorService {
   private final DoctorRepository doctorRepository;
   private final UserAccountRepository userAccountRepository;
   private final HospitalContext hospitalContext;
+  private final ResourceLookup resourceLookup;
 
   @Transactional
   @Auditable(entity = "doctor", action = "CREATE")
@@ -30,10 +30,8 @@ public class DoctorService {
     Long hospitalId = hospitalContext.requireHospitalId();
 
     UserAccount user =
-        userAccountRepository
-            .findByIdAndHospitalId(request.userId(), hospitalId)
-            .orElseThrow(
-                () -> new ApiException("NOT_FOUND", "User not found", HttpStatus.NOT_FOUND));
+        resourceLookup.findRequired(
+            request.userId(), hospitalId, userAccountRepository::findByIdAndHospitalId, "User");
 
     Doctor doctor = new Doctor();
     doctor.setHospitalId(hospitalId);
@@ -53,9 +51,8 @@ public class DoctorService {
   }
 
   public Doctor requireDoctor(Long id, Long hospitalId) {
-    return doctorRepository
-        .findByIdAndHospitalId(id, hospitalId)
-        .orElseThrow(() -> new ApiException("NOT_FOUND", "Doctor not found", HttpStatus.NOT_FOUND));
+    return resourceLookup.findRequired(
+        id, hospitalId, doctorRepository::findByIdAndHospitalId, "Doctor");
   }
 
   private DoctorResponse toResponse(Doctor doctor) {

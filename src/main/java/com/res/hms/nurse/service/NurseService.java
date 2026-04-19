@@ -2,8 +2,8 @@ package com.res.hms.nurse.service;
 
 import com.res.hms.common.api.PageResponse;
 import com.res.hms.common.audit.Auditable;
-import com.res.hms.common.exception.ApiException;
 import com.res.hms.common.tenant.HospitalContext;
+import com.res.hms.common.util.ResourceLookup;
 import com.res.hms.domain.Nurse;
 import com.res.hms.domain.UserAccount;
 import com.res.hms.nurse.dto.CreateNurseRequest;
@@ -12,7 +12,6 @@ import com.res.hms.nurse.repository.NurseRepository;
 import com.res.hms.repository.UserAccountRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.PageRequest;
-import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -23,6 +22,7 @@ public class NurseService {
   private final NurseRepository nurseRepository;
   private final UserAccountRepository userAccountRepository;
   private final HospitalContext hospitalContext;
+  private final ResourceLookup resourceLookup;
 
   @Transactional
   @Auditable(entity = "nurse", action = "CREATE")
@@ -30,10 +30,8 @@ public class NurseService {
     Long hospitalId = hospitalContext.requireHospitalId();
 
     UserAccount user =
-        userAccountRepository
-            .findByIdAndHospitalId(request.userId(), hospitalId)
-            .orElseThrow(
-                () -> new ApiException("NOT_FOUND", "User not found", HttpStatus.NOT_FOUND));
+        resourceLookup.findRequired(
+            request.userId(), hospitalId, userAccountRepository::findByIdAndHospitalId, "User");
 
     Nurse nurse = new Nurse();
     nurse.setHospitalId(hospitalId);

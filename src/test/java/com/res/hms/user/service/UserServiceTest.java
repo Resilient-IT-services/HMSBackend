@@ -4,10 +4,13 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.when;
 
 import com.res.hms.common.exception.ApiException;
 import com.res.hms.common.tenant.HospitalContext;
+import com.res.hms.common.util.ResourceLookup;
 import com.res.hms.domain.Gender;
 import com.res.hms.domain.Role;
 import com.res.hms.domain.RoleCode;
@@ -20,13 +23,13 @@ import com.res.hms.user.dto.CreateUserRequest;
 import com.res.hms.user.dto.UserResponse;
 import java.time.LocalDate;
 import java.util.List;
-import java.util.Optional;
 import java.util.Set;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.http.HttpStatus;
 import org.springframework.security.crypto.password.PasswordEncoder;
 
 @ExtendWith(MockitoExtension.class)
@@ -38,6 +41,7 @@ class UserServiceTest {
   @Mock private PasswordEncoder passwordEncoder;
   @Mock private HospitalContext hospitalContext;
   @Mock private UserMapper userMapper;
+  @Mock private ResourceLookup resourceLookup;
 
   @InjectMocks private UserService userService;
 
@@ -60,7 +64,7 @@ class UserServiceTest {
                         10L,
                         "123")));
 
-    assertEquals("BUSINESS_RULE_VIOLATION", exception.getCode());
+    assertEquals(HttpStatus.CONFLICT, exception.getStatus());
     assertEquals("Username already exists", exception.getMessage());
   }
 
@@ -69,7 +73,8 @@ class UserServiceTest {
     when(userAccountRepository.existsByUsername("admin")).thenReturn(false);
     when(hospitalContext.getHospitalIdOrNull()).thenReturn(10L);
     when(hospitalContext.isSuperAdmin()).thenReturn(false);
-    when(roleRepository.findByCode(RoleCode.ADMIN)).thenReturn(Optional.empty());
+    when(resourceLookup.findRequired(eq(RoleCode.ADMIN), any(), anyString()))
+        .thenThrow(new ApiException("NOT_FOUND", "Role not found", HttpStatus.NOT_FOUND));
 
     ApiException exception =
         assertThrows(
@@ -96,7 +101,7 @@ class UserServiceTest {
     when(userAccountRepository.existsByUsername("admin")).thenReturn(false);
     when(hospitalContext.getHospitalIdOrNull()).thenReturn(10L);
     when(hospitalContext.isSuperAdmin()).thenReturn(false);
-    when(roleRepository.findByCode(RoleCode.ADMIN)).thenReturn(Optional.of(role));
+    when(resourceLookup.findRequired(eq(RoleCode.ADMIN), any(), anyString())).thenReturn(role);
     when(passwordEncoder.encode("secret1")).thenReturn("encoded");
     when(userAccountRepository.save(any(UserAccount.class)))
         .thenAnswer(

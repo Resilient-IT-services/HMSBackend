@@ -2,17 +2,18 @@ package com.res.hms.nurse.service;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.when;
 
 import com.res.hms.common.tenant.HospitalContext;
+import com.res.hms.common.util.ResourceLookup;
 import com.res.hms.domain.Nurse;
 import com.res.hms.domain.UserAccount;
 import com.res.hms.nurse.dto.CreateNurseRequest;
 import com.res.hms.nurse.repository.NurseRepository;
 import com.res.hms.repository.UserAccountRepository;
 import java.util.List;
-import java.util.Optional;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
@@ -27,6 +28,7 @@ class NurseServiceTest {
   @Mock private NurseRepository nurseRepository;
   @Mock private UserAccountRepository userAccountRepository;
   @Mock private HospitalContext hospitalContext;
+  @Mock private ResourceLookup resourceLookup;
 
   @InjectMocks private NurseService nurseService;
 
@@ -37,7 +39,7 @@ class NurseServiceTest {
     user.setFullName("Sara");
 
     when(hospitalContext.requireHospitalId()).thenReturn(4L);
-    when(userAccountRepository.findByIdAndHospitalId(20L, 4L)).thenReturn(Optional.of(user));
+    when(resourceLookup.findRequired(eq(20L), eq(4L), any(), anyString())).thenReturn(user);
     when(nurseRepository.save(any(Nurse.class)))
         .thenAnswer(
             invocation -> {

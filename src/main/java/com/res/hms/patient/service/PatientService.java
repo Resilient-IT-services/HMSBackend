@@ -2,15 +2,14 @@ package com.res.hms.patient.service;
 
 import com.res.hms.common.api.PageResponse;
 import com.res.hms.common.audit.Auditable;
-import com.res.hms.common.exception.ApiException;
 import com.res.hms.common.tenant.HospitalContext;
+import com.res.hms.common.util.ResourceLookup;
 import com.res.hms.domain.Patient;
 import com.res.hms.patient.dto.CreatePatientRequest;
 import com.res.hms.patient.dto.PatientResponse;
 import com.res.hms.patient.repository.PatientRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.PageRequest;
-import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -20,6 +19,7 @@ public class PatientService {
 
   private final PatientRepository patientRepository;
   private final HospitalContext hospitalContext;
+  private final ResourceLookup resourceLookup;
 
   @Transactional
   @Auditable(entity = "patient", action = "CREATE")
@@ -47,18 +47,12 @@ public class PatientService {
 
   public PatientResponse get(Long id) {
     Long hospitalId = hospitalContext.requireHospitalId();
-    return toResponse(
-        patientRepository
-            .findByIdAndHospitalId(id, hospitalId)
-            .orElseThrow(
-                () -> new ApiException("NOT_FOUND", "Patient not found", HttpStatus.NOT_FOUND)));
+    return toResponse(requirePatient(id, hospitalId));
   }
 
   public Patient requirePatient(Long id, Long hospitalId) {
-    return patientRepository
-        .findByIdAndHospitalId(id, hospitalId)
-        .orElseThrow(
-            () -> new ApiException("NOT_FOUND", "Patient not found", HttpStatus.NOT_FOUND));
+    return resourceLookup.findRequired(
+        id, hospitalId, patientRepository::findByIdAndHospitalId, "Patient");
   }
 
   private PatientResponse toResponse(Patient patient) {

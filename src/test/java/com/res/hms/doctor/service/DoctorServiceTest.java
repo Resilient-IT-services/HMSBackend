@@ -3,18 +3,19 @@ package com.res.hms.doctor.service;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.when;
 
 import com.res.hms.common.exception.ApiException;
 import com.res.hms.common.tenant.HospitalContext;
+import com.res.hms.common.util.ResourceLookup;
 import com.res.hms.doctor.dto.CreateDoctorRequest;
 import com.res.hms.doctor.repository.DoctorRepository;
 import com.res.hms.domain.Doctor;
 import com.res.hms.domain.UserAccount;
 import com.res.hms.repository.UserAccountRepository;
 import java.util.List;
-import java.util.Optional;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
@@ -22,6 +23,7 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.PageRequest;
+import org.springframework.http.HttpStatus;
 
 @ExtendWith(MockitoExtension.class)
 class DoctorServiceTest {
@@ -29,6 +31,7 @@ class DoctorServiceTest {
   @Mock private DoctorRepository doctorRepository;
   @Mock private UserAccountRepository userAccountRepository;
   @Mock private HospitalContext hospitalContext;
+  @Mock private ResourceLookup resourceLookup;
 
   @InjectMocks private DoctorService doctorService;
 
@@ -39,7 +42,7 @@ class DoctorServiceTest {
     user.setFullName("Dr. Maya");
 
     when(hospitalContext.requireHospitalId()).thenReturn(4L);
-    when(userAccountRepository.findByIdAndHospitalId(10L, 4L)).thenReturn(Optional.of(user));
+    when(resourceLookup.findRequired(eq(10L), eq(4L), any(), anyString())).thenReturn(user);
     when(doctorRepository.save(any(Doctor.class)))
         .thenAnswer(
             invocation -> {
@@ -74,7 +77,8 @@ class DoctorServiceTest {
 
   @Test
   void requireDoctorRejectsMissingDoctor() {
-    when(doctorRepository.findByIdAndHospitalId(12L, 4L)).thenReturn(Optional.empty());
+    when(resourceLookup.findRequired(eq(12L), eq(4L), any(), anyString()))
+        .thenThrow(new ApiException("NOT_FOUND", "Doctor not found", HttpStatus.NOT_FOUND));
 
     ApiException exception =
         assertThrows(ApiException.class, () -> doctorService.requireDoctor(12L, 4L));
