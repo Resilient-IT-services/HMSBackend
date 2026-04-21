@@ -97,7 +97,8 @@ class AuthServiceTest {
     var response = authService.currentUser();
 
     assertEquals(2L, response.userId());
-    assertTrue(response.roles().contains(RoleCode.ADMIN));
+    assertTrue(
+        response.hospitals().stream().anyMatch(h -> h.roles().contains(RoleCode.ADMIN)));
   }
 
   @Test

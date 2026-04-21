@@ -128,15 +128,14 @@ public class AuthService {
           memberships.add(
               new HospitalMembershipResponse(
                   hospital.getId(), hospital.getName(), hospital.getCode(), entry.getValue()));
+        } else {
+          memberships.add(
+              new HospitalMembershipResponse(null, "Global Access", "GLOBAL", entry.getValue()));
         }
       }
     }
 
     return new UserProfileResponse(
-        principal.userId(),
-        principal.hospitalId(),
-        principal.username(),
-        principal.roleCodes(),
-        memberships);
+        principal.userId(), principal.hospitalId(), principal.username(), memberships);
   }
 }

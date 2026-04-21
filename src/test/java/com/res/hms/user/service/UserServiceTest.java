@@ -20,6 +20,7 @@ import com.res.hms.repository.HospitalRepository;
 import com.res.hms.repository.RoleRepository;
 import com.res.hms.repository.UserAccountRepository;
 import com.res.hms.user.dto.CreateUserRequest;
+import com.res.hms.user.dto.HospitalMembershipResponse;
 import com.res.hms.user.dto.UserResponse;
 import java.time.LocalDate;
 import java.util.List;
@@ -115,7 +116,12 @@ class UserServiceTest {
             invocation -> {
               UserAccount user = invocation.getArgument(0);
               return new UserResponse(
-                  user.getId(), user.getUsername(), user.getRoleCodes(), user.isActive(), null);
+                  user.getId(),
+                  user.getUsername(),
+                  List.of(
+                      new HospitalMembershipResponse(10L, "Test", "TEST", user.getRoleCodes())),
+                  user.isActive(),
+                  null);
             });
 
     var response =
@@ -131,7 +137,8 @@ class UserServiceTest {
                 "123"));
 
     assertEquals("admin", response.username());
-    assertTrue(response.roles().contains(RoleCode.ADMIN));
+    assertTrue(
+        response.memberships().stream().anyMatch(m -> m.roles().contains(RoleCode.ADMIN)));
   }
 
   @Test
@@ -157,13 +164,21 @@ class UserServiceTest {
             invocation -> {
               UserAccount user = invocation.getArgument(0);
               return new UserResponse(
-                  user.getId(), user.getUsername(), user.getRoleCodes(), user.isActive(), null);
+                  user.getId(),
+                  user.getUsername(),
+                  List.of(
+                      new HospitalMembershipResponse(
+                          12L, "Test Hospital", "TEST", user.getRoleCodes())),
+                  user.isActive(),
+                  null);
             });
 
     var response = userService.list();
 
     assertEquals(1, response.size());
     assertEquals("doctor", response.getFirst().username());
-    assertTrue(response.getFirst().roles().contains(RoleCode.DOCTOR));
+    assertTrue(
+        response.getFirst().memberships().stream()
+            .anyMatch(m -> m.roles().contains(RoleCode.DOCTOR)));
   }
 }

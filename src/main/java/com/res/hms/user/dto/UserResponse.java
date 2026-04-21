@@ -2,7 +2,11 @@ package com.res.hms.user.dto;
 
 import com.res.hms.domain.RoleCode;
 import java.time.LocalDateTime;
-import java.util.Set;
+import java.util.List;
 
 public record UserResponse(
-    Long id, String username, Set<RoleCode> roles, boolean active, LocalDateTime createdAt) {}
+    Long id,
+    String username,
+    List<HospitalMembershipResponse> memberships,
+    boolean active,
+    LocalDateTime createdAt) {}

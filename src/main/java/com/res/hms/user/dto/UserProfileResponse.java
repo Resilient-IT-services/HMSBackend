@@ -8,5 +8,4 @@ public record UserProfileResponse(
     Long userId,
     Long hospitalId,
     String username,
-    Set<RoleCode> roles,
     List<HospitalMembershipResponse> hospitals) {}
