@@ -199,16 +199,46 @@ public class UserService {
   }
 
   @Transactional(readOnly = true)
-  public List<UserResponse> list() {
+  public List<UserResponse> list(boolean includeDeleted) {
     Long hospitalId = hospitalContext.getHospitalIdOrNull();
     if (hospitalId == null && !hospitalContext.isSuperAdmin()) {
       throw new ApiException(
           "BUSINESS_RULE_VIOLATION", "Please select a hospital first", HttpStatus.BAD_REQUEST);
     }
-    List<UserAccount> users =
-        (hospitalId == null)
-            ? userAccountRepository.findAll()
-            : userAccountRepository.findAllByHospitalId(hospitalId);
+    List<UserAccount> users;
+    if (hospitalId == null) {
+      users = includeDeleted ? userAccountRepository.findAll() : userAccountRepository.findAllByDeletedFalse();
+    } else {
+      // Note: findAllByHospitalId already filters by deleted = false
+      // If we want to include deleted for a specific hospital, we'd need another repo method.
+      // But usually "deleted" means globally deleted.
+      users = userAccountRepository.findAllByHospitalId(hospitalId);
+    }
     return users.stream().map(userMapper::toResponse).toList();
+  }
+
+  @Transactional
+  public UserResponse update(Long id, com.res.hms.user.dto.UpdateUserRequest request) {
+    UserAccount user = resourceLookup.findRequired(id, userAccountRepository::findById, "User");
+    
+    user.setFullName(request.fullName());
+    user.setGender(request.gender());
+    user.setDob(request.dob());
+    user.setPhone(request.phone());
+    user.setActive(request.active());
+    
+    userAccountRepository.save(user);
+    
+    handleRoleSpecificEntries(
+        user, user.getRoleCodes(), request.specialization(), request.department());
+        
+    return userMapper.toResponse(user);
+  }
+
+  @Transactional
+  public void delete(Long id) {
+    UserAccount user = resourceLookup.findRequired(id, userAccountRepository::findById, "User");
+    user.setDeleted(true);
+    userAccountRepository.save(user);
   }
 }

@@ -96,7 +96,7 @@ class AppointmentServiceTest {
             eq(4L), any(PageRequest.class)))
         .thenReturn(new PageImpl<>(List.of(appointment)));
 
-    var response = appointmentService.list(0, 10);
+    var response = appointmentService.list(0, 10, null);
 
     assertEquals(1, response.content().size());
     assertEquals("Dr. Maya", response.content().getFirst().doctorName());

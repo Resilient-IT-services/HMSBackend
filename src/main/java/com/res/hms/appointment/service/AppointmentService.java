@@ -49,11 +49,20 @@ public class AppointmentService {
   }
 
   @Transactional(readOnly = true)
-  public PageResponse<AppointmentResponse> list(int page, int size) {
+  public PageResponse<AppointmentResponse> list(int page, int size, String search) {
     Long hospitalId = hospitalContext.requireHospitalId();
+    PageRequest pageRequest = PageRequest.of(page, size);
+    
+    if (search != null && !search.trim().isEmpty()) {
+      return PageResponse.from(
+          appointmentRepository
+              .search(hospitalId, search.trim(), pageRequest)
+              .map(this::toResponse));
+    }
+
     return PageResponse.from(
         appointmentRepository
-            .findAllByHospitalIdOrderByAppointmentTimeDesc(hospitalId, PageRequest.of(page, size))
+            .findAllByHospitalIdOrderByAppointmentTimeDesc(hospitalId, pageRequest)
             .map(this::toResponse));
   }
 

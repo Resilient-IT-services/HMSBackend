@@ -34,8 +34,10 @@ public class PatientController {
   @GetMapping
   @PreAuthorize("hasAnyRole('ADMIN','RECEPTIONIST','NURSE','DOCTOR')")
   public ApiResponse<PageResponse<PatientResponse>> list(
-      @RequestParam(defaultValue = "0") int page, @RequestParam(defaultValue = "20") int size) {
-    return ApiResponse.success(patientService.list(page, Math.min(size, 100)));
+      @RequestParam(defaultValue = "0") int page,
+      @RequestParam(defaultValue = "20") int size,
+      @RequestParam(required = false) String search) {
+    return ApiResponse.success(patientService.list(page, Math.min(size, 100), search));
   }
 
   @GetMapping("/{id}")

@@ -34,4 +34,12 @@ public class HospitalController {
   public ApiResponse<List<HospitalResponse>> list() {
     return ApiResponse.success(hospitalService.list());
   }
+
+  @org.springframework.web.bind.annotation.PutMapping("/{id}")
+  @PreAuthorize("hasRole('SUPER_ADMIN')")
+  public ApiResponse<HospitalResponse> update(
+      @org.springframework.web.bind.annotation.PathVariable Long id,
+      @Valid @RequestBody CreateHospitalRequest request) {
+    return ApiResponse.success(hospitalService.update(id, request));
+  }
 }

@@ -48,11 +48,20 @@ public class DoctorService {
     return toResponse(doctor);
   }
 
-  public PageResponse<DoctorResponse> list(int page, int size) {
+  public PageResponse<DoctorResponse> list(int page, int size, String search) {
     Long hospitalId = hospitalContext.requireHospitalId();
+    PageRequest pageRequest = PageRequest.of(page, size);
+    
+    if (search != null && !search.trim().isEmpty()) {
+      return PageResponse.from(
+          doctorRepository
+              .search(hospitalId, search.trim(), pageRequest)
+              .map(this::toResponse));
+    }
+
     return PageResponse.from(
         doctorRepository
-            .findAllByHospitalIdOrderByCreatedAtDesc(hospitalId, PageRequest.of(page, size))
+            .findAllByHospitalIdOrderByCreatedAtDesc(hospitalId, pageRequest)
             .map(this::toResponse));
   }
 

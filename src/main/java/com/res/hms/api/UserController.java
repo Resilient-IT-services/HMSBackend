@@ -32,13 +32,30 @@ public class UserController {
 
   @GetMapping
   @PreAuthorize("hasAnyRole('SUPER_ADMIN', 'ADMIN')")
-  public ApiResponse<List<UserResponse>> list() {
-    return ApiResponse.success(userService.list());
+  public ApiResponse<List<UserResponse>> list(
+      @org.springframework.web.bind.annotation.RequestParam(defaultValue = "false")
+          boolean includeDeleted) {
+    return ApiResponse.success(userService.list(includeDeleted));
   }
 
   @PostMapping("/allocate")
   @PreAuthorize("hasAnyRole('SUPER_ADMIN', 'ADMIN')")
   public ApiResponse<UserResponse> allocate(@Valid @RequestBody AllocateRoleRequest request) {
     return ApiResponse.success(userService.allocateRoles(request));
+  }
+
+  @org.springframework.web.bind.annotation.PutMapping("/{id}")
+  @PreAuthorize("hasAnyRole('SUPER_ADMIN', 'ADMIN')")
+  public ApiResponse<UserResponse> update(
+      @org.springframework.web.bind.annotation.PathVariable Long id,
+      @Valid @RequestBody com.res.hms.user.dto.UpdateUserRequest request) {
+    return ApiResponse.success(userService.update(id, request));
+  }
+
+  @org.springframework.web.bind.annotation.DeleteMapping("/{id}")
+  @PreAuthorize("hasAnyRole('SUPER_ADMIN', 'ADMIN')")
+  public ApiResponse<Void> delete(@org.springframework.web.bind.annotation.PathVariable Long id) {
+    userService.delete(id);
+    return ApiResponse.success(null);
   }
 }

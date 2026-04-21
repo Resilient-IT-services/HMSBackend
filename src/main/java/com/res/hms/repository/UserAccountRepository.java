@@ -12,12 +12,15 @@ public interface UserAccountRepository extends JpaRepository<UserAccount, Long> 
 
   boolean existsByUsername(String username);
 
+  List<UserAccount> findAllByDeletedFalse();
+
   @Query(
-      "SELECT DISTINCT u FROM UserAccount u JOIN u.assignments a WHERE a.hospitalId = :hospitalId ORDER BY u.createdAt DESC")
+      "SELECT DISTINCT u FROM UserAccount u JOIN u.assignments a WHERE a.hospitalId = :hospitalId AND u.deleted = false ORDER BY u.createdAt DESC")
   List<UserAccount> findAllByHospitalId(@Param("hospitalId") Long hospitalId);
 
   @Query(
-      "SELECT u FROM UserAccount u JOIN u.assignments a WHERE u.id = :id AND a.hospitalId = :hospitalId")
+      "SELECT u FROM UserAccount u JOIN u.assignments a WHERE u.id = :id AND a.hospitalId = :hospitalId AND u.deleted = false")
   Optional<UserAccount> findByIdAndHospitalId(
       @Param("id") Long id, @Param("hospitalId") Long hospitalId);
+
 }

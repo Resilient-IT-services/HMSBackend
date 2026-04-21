@@ -48,6 +48,9 @@ public class UserAccount extends BaseEntity {
   @Column(name = "is_active", nullable = false)
   private boolean active = true;
 
+  @Column(nullable = false)
+  private boolean deleted = false;
+
   @OneToOne(mappedBy = "user", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
   private Doctor doctor;
 

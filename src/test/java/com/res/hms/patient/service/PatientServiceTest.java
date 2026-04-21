@@ -5,6 +5,7 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 import com.res.hms.common.exception.ApiException;
@@ -63,7 +64,7 @@ class PatientServiceTest {
     when(patientRepository.findAllByHospitalIdOrderByCreatedAtDesc(eq(4L), any(PageRequest.class)))
         .thenReturn(new PageImpl<>(List.of(patient)));
 
-    var response = patientService.list(0, 10);
+    var response = patientService.list(0, 10, null);
 
     assertEquals(1, response.content().size());
     assertEquals("Asha", response.content().getFirst().fullName());
@@ -87,5 +88,16 @@ class PatientServiceTest {
     when(resourceLookup.findRequired(eq(9L), eq(4L), any(), anyString())).thenReturn(patient);
 
     assertEquals(9L, patientService.requirePatient(9L, 4L).getId());
+  }
+
+  @Test
+  void listCallsSearchWhenQueryProvided() {
+    when(hospitalContext.requireHospitalId()).thenReturn(4L);
+    when(patientRepository.search(eq(4L), eq("Asha"), any(PageRequest.class)))
+        .thenReturn(new org.springframework.data.domain.PageImpl<>(List.of()));
+
+    patientService.list(0, 10, "Asha");
+
+    verify(patientRepository).search(eq(4L), eq("Asha"), any(PageRequest.class));
   }
 }

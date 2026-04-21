@@ -34,10 +34,12 @@ public class AppointmentController {
   }
 
   @GetMapping
-  @PreAuthorize("hasAnyRole('ADMIN','RECEPTIONIST','DOCTOR','NURSE')")
+  @PreAuthorize("hasAnyRole('ADMIN','RECEPTIONIST','NURSE','DOCTOR')")
   public ApiResponse<PageResponse<AppointmentResponse>> list(
-      @RequestParam(defaultValue = "0") int page, @RequestParam(defaultValue = "20") int size) {
-    return ApiResponse.success(appointmentService.list(page, Math.min(size, 100)));
+      @RequestParam(defaultValue = "0") int page,
+      @RequestParam(defaultValue = "20") int size,
+      @RequestParam(required = false) String search) {
+    return ApiResponse.success(appointmentService.list(page, Math.min(size, 100), search));
   }
 
   @PostMapping("/{id}/status")

@@ -69,7 +69,7 @@ class DoctorServiceTest {
     when(doctorRepository.findAllByHospitalIdOrderByCreatedAtDesc(eq(4L), any(PageRequest.class)))
         .thenReturn(new PageImpl<>(List.of(doctor)));
 
-    var response = doctorService.list(0, 10);
+    var response = doctorService.list(0, 10, null);
 
     assertEquals(1, response.content().size());
     assertEquals("Cardiology", response.content().getFirst().specialization());

@@ -208,10 +208,15 @@ class UserServiceTest {
               return new UserResponse(
                   user.getId(),
                   user.getUsername(),
+                  user.getFullName(),
+                  user.getGender(),
+                  user.getDob(),
+                  user.getPhone(),
                   List.of(
                       new HospitalMembershipResponse(
                           10L, "Test", "TEST", user.getRoleCodes(), null, null)),
                   user.isActive(),
+                  user.isDeleted(),
                   null);
             });
 
@@ -258,19 +263,67 @@ class UserServiceTest {
               return new UserResponse(
                   user.getId(),
                   user.getUsername(),
+                  user.getFullName(),
+                  user.getGender(),
+                  user.getDob(),
+                  user.getPhone(),
                   List.of(
                       new HospitalMembershipResponse(
                           12L, "Test Hospital", "TEST", user.getRoleCodes(), null, null)),
                   user.isActive(),
+                  user.isDeleted(),
                   null);
             });
 
-    var response = userService.list();
+    var response = userService.list(false);
 
     assertEquals(1, response.size());
     assertEquals("doctor", response.getFirst().username());
     assertTrue(
         response.getFirst().memberships().stream()
             .anyMatch(m -> m.roles().contains(RoleCode.DOCTOR)));
+  }
+
+  @Test
+  void updateUpdatesUserProfile() {
+    UserAccount user = new UserAccount();
+    user.setId(5L);
+    user.setFullName("Old Name");
+
+    when(resourceLookup.findRequired(eq(5L), any(), any())).thenReturn(user);
+    when(userMapper.toResponse(any(UserAccount.class))).thenAnswer(i -> {
+        UserAccount u = i.getArgument(0);
+        return new UserResponse(u.getId(), u.getUsername(), u.getFullName(), u.getGender(), u.getDob(), u.getPhone(), List.of(), u.isActive(), u.isDeleted(), null);
+    });
+
+    var response = userService.update(5L, new com.res.hms.user.dto.UpdateUserRequest("New Name", Gender.FEMALE, LocalDate.now(), "999", true, null, null));
+
+    assertEquals("New Name", response.fullName());
+    verify(userAccountRepository).save(user);
+  }
+
+  @Test
+  void deleteSoftDeletesUser() {
+    UserAccount user = new UserAccount();
+    user.setId(5L);
+    user.setDeleted(false);
+
+    when(resourceLookup.findRequired(eq(5L), any(), any())).thenReturn(user);
+
+    userService.delete(5L);
+
+    assertTrue(user.isDeleted());
+    verify(userAccountRepository).save(user);
+  }
+
+  @Test
+  void listIncludesDeletedWhenRequested() {
+    when(hospitalContext.getHospitalIdOrNull()).thenReturn(null);
+    when(hospitalContext.isSuperAdmin()).thenReturn(true);
+    when(userAccountRepository.findAll()).thenReturn(List.of());
+
+    userService.list(true);
+
+    verify(userAccountRepository).findAll();
   }
 }

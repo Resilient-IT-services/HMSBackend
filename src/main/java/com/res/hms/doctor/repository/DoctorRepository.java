@@ -18,6 +18,16 @@ public interface DoctorRepository extends JpaRepository<Doctor, Long> {
   Page<Doctor> findAllByHospitalIdOrderByCreatedAtDesc(
       @Param("hospitalId") Long hospitalId, Pageable pageable);
 
+  @Query(
+      "SELECT d FROM Doctor d JOIN d.user u JOIN u.assignments a "
+          + "WHERE a.hospitalId = :hospitalId AND a.role.code = com.res.hms.domain.RoleCode.DOCTOR "
+          + "AND (LOWER(u.fullName) LIKE LOWER(CONCAT('%', :query, '%')) OR "
+          + "LOWER(d.specialization) LIKE LOWER(CONCAT('%', :query, '%'))) "
+          + "ORDER BY d.createdAt DESC")
+  Page<Doctor> search(
+      @Param("hospitalId") Long hospitalId, @Param("query") String query, Pageable pageable);
+
+
   Optional<Doctor> findByIdAndUserId(Long id, Long userId);
 
   @Query(

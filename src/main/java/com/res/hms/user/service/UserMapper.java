@@ -79,8 +79,13 @@ public class UserMapper {
     return new UserResponse(
         userAccount.getId(),
         userAccount.getUsername(),
+        userAccount.getFullName(),
+        userAccount.getGender(),
+        userAccount.getDob(),
+        userAccount.getPhone(),
         memberships,
         userAccount.isActive(),
+        userAccount.isDeleted(),
         userAccount.getCreatedAt());
   }
 }

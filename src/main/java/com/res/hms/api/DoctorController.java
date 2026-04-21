@@ -31,9 +31,11 @@ public class DoctorController {
   }
 
   @GetMapping
-  @PreAuthorize("hasAnyRole('ADMIN','RECEPTIONIST','DOCTOR','NURSE')")
+  @PreAuthorize("hasAnyRole('SUPER_ADMIN','ADMIN','RECEPTIONIST','NURSE','DOCTOR')")
   public ApiResponse<PageResponse<DoctorResponse>> list(
-      @RequestParam(defaultValue = "0") int page, @RequestParam(defaultValue = "20") int size) {
-    return ApiResponse.success(doctorService.list(page, Math.min(size, 100)));
+      @RequestParam(defaultValue = "0") int page,
+      @RequestParam(defaultValue = "20") int size,
+      @RequestParam(required = false) String search) {
+    return ApiResponse.success(doctorService.list(page, Math.min(size, 100), search));
   }
 }

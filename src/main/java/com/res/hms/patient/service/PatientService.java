@@ -37,11 +37,20 @@ public class PatientService {
     return toResponse(patient);
   }
 
-  public PageResponse<PatientResponse> list(int page, int size) {
+  public PageResponse<PatientResponse> list(int page, int size, String search) {
     Long hospitalId = hospitalContext.requireHospitalId();
+    PageRequest pageRequest = PageRequest.of(page, size);
+    
+    if (search != null && !search.trim().isEmpty()) {
+      return PageResponse.from(
+          patientRepository
+              .search(hospitalId, search.trim(), pageRequest)
+              .map(this::toResponse));
+    }
+
     return PageResponse.from(
         patientRepository
-            .findAllByHospitalIdOrderByCreatedAtDesc(hospitalId, PageRequest.of(page, size))
+            .findAllByHospitalIdOrderByCreatedAtDesc(hospitalId, pageRequest)
             .map(this::toResponse));
   }
 

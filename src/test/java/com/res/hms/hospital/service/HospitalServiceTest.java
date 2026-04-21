@@ -68,4 +68,22 @@ class HospitalServiceTest {
     assertEquals(1, response.size());
     assertEquals("TEST", response.getFirst().code());
   }
+
+  @Test
+  void updateUpdatesHospitalDetails() {
+    Hospital hospital = new Hospital();
+    hospital.setId(1L);
+    hospital.setName("Old Name");
+    hospital.setCode("OLD");
+
+    when(hospitalRepository.findById(1L)).thenReturn(Optional.of(hospital));
+    when(hospitalRepository.findByCode("NEW")).thenReturn(Optional.empty());
+    when(hospitalRepository.save(any(Hospital.class))).thenAnswer(i -> i.getArgument(0));
+
+    var response = hospitalService.update(1L, new CreateHospitalRequest("New Name", "NEW", "New Addr"));
+
+    assertEquals("New Name", response.name());
+    assertEquals("NEW", response.code());
+    assertEquals("New Addr", response.address());
+  }
 }
