@@ -36,5 +36,3 @@ app:
   bootstrap:
     admin-username: ${HMS_ADMIN_USERNAME:admin}
     admin-password: ${HMS_ADMIN_PASSWORD:admin123}
-    hospital-code: ${HMS_DEFAULT_HOSPITAL_CODE:DEFAULT}
-    hospital-name: ${HMS_DEFAULT_HOSPITAL_NAME:Default Hospital}

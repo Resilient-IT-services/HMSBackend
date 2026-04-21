@@ -28,23 +28,9 @@ public class BootstrapDataConfig {
       UserAccountRepository userAccountRepository,
       PasswordEncoder passwordEncoder) {
     return args -> {
-      ensureHospital(hospitalRepository);
       ensureRoles(roleRepository);
       ensureAdminUser(userAccountRepository, roleRepository, passwordEncoder);
     };
-  }
-
-  private Hospital ensureHospital(HospitalRepository hospitalRepository) {
-    return hospitalRepository
-        .findByCode(properties.hospitalCode())
-        .orElseGet(
-            () -> {
-              Hospital newHospital = new Hospital();
-              newHospital.setCode(properties.hospitalCode());
-              newHospital.setName(properties.hospitalName());
-              newHospital.setStatus("ACTIVE");
-              return hospitalRepository.save(newHospital);
-            });
   }
 
   private void ensureRoles(RoleRepository roleRepository) {
