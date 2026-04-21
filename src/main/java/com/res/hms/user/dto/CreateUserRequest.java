@@ -19,4 +19,6 @@ public record CreateUserRequest(
     @NotNull(message = "gender is required") Gender gender,
     @NotNull(message = "dob is required") LocalDate dob,
     Long hospitalId,
-    String phone) {}
+    String phone,
+    String specialization,
+    String department) {}

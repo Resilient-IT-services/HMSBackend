@@ -3,6 +3,8 @@ package com.res.hms.user.service;
 import com.res.hms.common.exception.ApiException;
 import com.res.hms.domain.Hospital;
 import com.res.hms.domain.RoleCode;
+import com.res.hms.doctor.repository.DoctorRepository;
+import com.res.hms.nurse.repository.NurseRepository;
 import com.res.hms.repository.HospitalRepository;
 import com.res.hms.user.dto.HospitalMembershipResponse;
 import com.res.hms.user.dto.LoginRequest;
@@ -26,14 +28,18 @@ import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.web.authentication.logout.SecurityContextLogoutHandler;
 import org.springframework.security.web.context.SecurityContextRepository;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 @Service
 @RequiredArgsConstructor
+@Transactional(readOnly = true)
 public class AuthService {
 
   private final AuthenticationManager authenticationManager;
   private final SecurityContextRepository securityContextRepository;
   private final HospitalRepository hospitalRepository;
+  private final DoctorRepository doctorRepository;
+  private final NurseRepository nurseRepository;
 
   public void login(
       LoginRequest request, HttpServletRequest httpRequest, HttpServletResponse httpResponse) {
@@ -123,14 +129,30 @@ public class AuthService {
     List<HospitalMembershipResponse> memberships = new ArrayList<>();
     if (principal.hospitalRoles() != null) {
       for (Map.Entry<Long, Set<RoleCode>> entry : principal.hospitalRoles().entrySet()) {
-        if (entry.getKey() != null) {
-          Hospital hospital = hospitalRepository.findById(entry.getKey()).orElseThrow();
+        Long hospitalId = entry.getKey();
+        Set<RoleCode> roles = entry.getValue();
+        String specialization = null;
+        String department = null;
+
+        if (hospitalId != null) {
+          if (roles.contains(RoleCode.DOCTOR)) {
+            specialization = doctorRepository.findByUserIdAndHospitalId(principal.userId(), hospitalId)
+                .map(d -> d.getSpecialization())
+                .orElse(null);
+          }
+          if (roles.contains(RoleCode.NURSE)) {
+            department = nurseRepository.findByUserIdAndHospitalId(principal.userId(), hospitalId)
+                .map(n -> n.getDepartment())
+                .orElse(null);
+          }
+
+          Hospital hospital = hospitalRepository.findById(hospitalId).orElseThrow();
           memberships.add(
               new HospitalMembershipResponse(
-                  hospital.getId(), hospital.getName(), hospital.getCode(), entry.getValue()));
+                  hospital.getId(), hospital.getName(), hospital.getCode(), roles, specialization, department));
         } else {
           memberships.add(
-              new HospitalMembershipResponse(null, "Global Access", "GLOBAL", entry.getValue()));
+              new HospitalMembershipResponse(null, "Global Access", "GLOBAL", roles, null, null));
         }
       }
     }

@@ -6,24 +6,32 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 import com.res.hms.common.exception.ApiException;
 import com.res.hms.common.tenant.HospitalContext;
 import com.res.hms.common.util.ResourceLookup;
 import com.res.hms.domain.Gender;
+import com.res.hms.domain.Hospital;
 import com.res.hms.domain.Role;
 import com.res.hms.domain.RoleCode;
 import com.res.hms.domain.UserAccount;
 import com.res.hms.domain.UserRoleAssignment;
+import com.res.hms.doctor.repository.DoctorRepository;
+import com.res.hms.nurse.repository.NurseRepository;
 import com.res.hms.repository.HospitalRepository;
 import com.res.hms.repository.RoleRepository;
 import com.res.hms.repository.UserAccountRepository;
+import com.res.hms.user.dto.AllocateRoleRequest;
 import com.res.hms.user.dto.CreateUserRequest;
 import com.res.hms.user.dto.HospitalMembershipResponse;
 import com.res.hms.user.dto.UserResponse;
+import com.res.hms.domain.Doctor;
+import com.res.hms.domain.Nurse;
 import java.time.LocalDate;
 import java.util.List;
+import java.util.Optional;
 import java.util.Set;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -39,12 +47,95 @@ class UserServiceTest {
   @Mock private UserAccountRepository userAccountRepository;
   @Mock private RoleRepository roleRepository;
   @Mock private HospitalRepository hospitalRepository;
+  @Mock private DoctorRepository doctorRepository;
+  @Mock private NurseRepository nurseRepository;
   @Mock private PasswordEncoder passwordEncoder;
   @Mock private HospitalContext hospitalContext;
   @Mock private UserMapper userMapper;
   @Mock private ResourceLookup resourceLookup;
 
   @InjectMocks private UserService userService;
+
+  @Test
+  void createAutomaticallyCreatesDoctorEntry() {
+    Role role = new Role();
+    role.setCode(RoleCode.DOCTOR);
+
+    when(userAccountRepository.existsByUsername("doctor1")).thenReturn(false);
+    when(hospitalContext.getHospitalIdOrNull()).thenReturn(10L);
+    when(resourceLookup.findRequired(eq(RoleCode.DOCTOR), any(), anyString())).thenReturn(role);
+    when(passwordEncoder.encode(anyString())).thenReturn("encoded");
+    when(doctorRepository.findByUserIdAndHospitalId(any(), eq(10L))).thenReturn(Optional.empty());
+
+    userService.create(
+        new CreateUserRequest(
+            "doctor1",
+            "password",
+            Set.of(RoleCode.DOCTOR),
+            "Dr. John",
+            Gender.MALE,
+            LocalDate.now(),
+            10L,
+            "123",
+            "Cardiology",
+            null));
+
+    verify(doctorRepository).save(any(Doctor.class));
+  }
+
+  @Test
+  void createAutomaticallyCreatesNurseEntry() {
+    Role role = new Role();
+    role.setCode(RoleCode.NURSE);
+
+    when(userAccountRepository.existsByUsername("nurse1")).thenReturn(false);
+    when(hospitalContext.getHospitalIdOrNull()).thenReturn(10L);
+    when(resourceLookup.findRequired(eq(RoleCode.NURSE), any(), anyString())).thenReturn(role);
+    when(passwordEncoder.encode(anyString())).thenReturn("encoded");
+    when(nurseRepository.findByUserIdAndHospitalId(any(), eq(10L))).thenReturn(Optional.empty());
+
+    userService.create(
+        new CreateUserRequest(
+            "nurse1",
+            "password",
+            Set.of(RoleCode.NURSE),
+            "Nurse Jane",
+            Gender.FEMALE,
+            LocalDate.now(),
+            10L,
+            "123",
+            null,
+            "Emergency"));
+
+    verify(nurseRepository).save(any(Nurse.class));
+  }
+
+  @Test
+  void allocateRolesAutomaticallyCreatesDoctorEntry() {
+    Role role = new Role();
+    role.setCode(RoleCode.DOCTOR);
+    
+    UserAccount user = new UserAccount();
+    user.setId(5L);
+    user.setUsername("user1");
+
+    when(hospitalContext.getHospitalIdOrNull()).thenReturn(10L);
+    when(hospitalContext.isSuperAdmin()).thenReturn(false);
+    when(resourceLookup.findRequired(eq(5L), eq(10L), any(), anyString())).thenReturn(user);
+    when(resourceLookup.findRequired(eq(10L), any(), anyString())).thenReturn(new Hospital());
+    when(resourceLookup.findRequired(eq(RoleCode.DOCTOR), any(), anyString())).thenReturn(role);
+    when(doctorRepository.findByUserIdAndHospitalId(eq(5L), eq(10L))).thenReturn(Optional.empty());
+
+    userService.allocateRoles(
+        new AllocateRoleRequest(
+            5L,
+            10L,
+            Set.of(RoleCode.DOCTOR),
+            "Neurology",
+            null));
+
+    verify(doctorRepository).save(any(Doctor.class));
+  }
 
   @Test
   void createRejectsDuplicateUsername() {
@@ -63,7 +154,9 @@ class UserServiceTest {
                         Gender.MALE,
                         LocalDate.now(),
                         10L,
-                        "123")));
+                        "123",
+                        null,
+                        null)));
 
     assertEquals(HttpStatus.CONFLICT, exception.getStatus());
     assertEquals("Username already exists", exception.getMessage());
@@ -90,7 +183,9 @@ class UserServiceTest {
                         Gender.MALE,
                         LocalDate.now(),
                         10L,
-                        "123")));
+                        "123",
+                        null,
+                        null)));
 
     assertEquals("NOT_FOUND", exception.getCode());
   }
@@ -119,7 +214,7 @@ class UserServiceTest {
                   user.getId(),
                   user.getUsername(),
                   List.of(
-                      new HospitalMembershipResponse(10L, "Test", "TEST", user.getRoleCodes())),
+                      new HospitalMembershipResponse(10L, "Test", "TEST", user.getRoleCodes(), null, null)),
                   user.isActive(),
                   null);
             });
@@ -134,7 +229,9 @@ class UserServiceTest {
                 Gender.MALE,
                 LocalDate.now(),
                 10L,
-                "123"));
+                "123",
+                null,
+                null));
 
     assertEquals("admin", response.username());
     assertTrue(
@@ -168,7 +265,7 @@ class UserServiceTest {
                   user.getUsername(),
                   List.of(
                       new HospitalMembershipResponse(
-                          12L, "Test Hospital", "TEST", user.getRoleCodes())),
+                          12L, "Test Hospital", "TEST", user.getRoleCodes(), null, null)),
                   user.isActive(),
                   null);
             });

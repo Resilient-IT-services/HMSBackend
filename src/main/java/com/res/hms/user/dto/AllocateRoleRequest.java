@@ -8,7 +8,9 @@ import java.util.Set;
 public record AllocateRoleRequest(
     @NotNull(message = "userId is required") Long userId,
     Long hospitalId, // Can be null for global roles
-    Set<RoleCode> roles // If empty, removes access for this context
+    Set<RoleCode> roles, // If empty, removes access for this context
+    String specialization,
+    String department
     ) {
   public AllocateRoleRequest {
     if (roles == null) {

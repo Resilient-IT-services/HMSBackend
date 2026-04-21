@@ -10,13 +10,19 @@ import static org.mockito.Mockito.when;
 
 import com.res.hms.common.exception.ApiException;
 import com.res.hms.domain.RoleCode;
+import com.res.hms.doctor.repository.DoctorRepository;
+import com.res.hms.nurse.repository.NurseRepository;
 import com.res.hms.repository.HospitalRepository;
 import com.res.hms.user.dto.LoginRequest;
+import com.res.hms.user.dto.HospitalMembershipResponse;
+import com.res.hms.domain.Hospital;
+import com.res.hms.domain.Doctor;
 import com.res.hms.user.security.HospitalUserPrincipal;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Optional;
 import java.util.Set;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Test;
@@ -39,6 +45,8 @@ class AuthServiceTest {
   @Mock private AuthenticationManager authenticationManager;
   @Mock private SecurityContextRepository securityContextRepository;
   @Mock private HospitalRepository hospitalRepository;
+  @Mock private DoctorRepository doctorRepository;
+  @Mock private NurseRepository nurseRepository;
   @Mock private HttpServletRequest httpServletRequest;
   @Mock private HttpServletResponse httpServletResponse;
 
@@ -47,6 +55,35 @@ class AuthServiceTest {
   @AfterEach
   void tearDown() {
     SecurityContextHolder.clearContext();
+  }
+
+  @Test
+  void currentUserReturnsRoleSpecificDetails() {
+    Map<Long, Set<RoleCode>> roles = new HashMap<>();
+    roles.put(10L, Set.of(RoleCode.DOCTOR));
+
+    Hospital hospital = new Hospital();
+    hospital.setId(10L);
+    hospital.setName("Test Hospital");
+    hospital.setCode("TEST");
+
+    Doctor doctor = new Doctor();
+    doctor.setSpecialization("Pediatrics");
+
+    SecurityContextHolder.getContext()
+        .setAuthentication(
+            new TestingAuthenticationToken(
+                new HospitalUserPrincipal(
+                    5L, "doctor1", "secret", true, roles, 10L, Set.of(RoleCode.DOCTOR)),
+                null));
+
+    when(hospitalRepository.findById(10L)).thenReturn(Optional.of(hospital));
+    when(doctorRepository.findByUserIdAndHospitalId(5L, 10L)).thenReturn(Optional.of(doctor));
+
+    var response = authService.currentUser();
+
+    assertEquals(1, response.hospitals().size());
+    assertEquals("Pediatrics", response.hospitals().getFirst().specialization());
   }
 
   @Test

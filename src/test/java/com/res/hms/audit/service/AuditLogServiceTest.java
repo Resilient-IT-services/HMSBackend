@@ -48,7 +48,7 @@ class AuditLogServiceTest {
     auditLog.setAction("CREATE");
     auditLog.setPerformedBy(77L);
     auditLog.setDetails("created");
-    when(hospitalContext.requireHospitalId()).thenReturn(5L);
+    when(hospitalContext.getHospitalIdOrNull()).thenReturn(5L);
     when(auditLogRepository.findAllByHospitalIdOrderByCreatedAtDesc(eq(5L), any(PageRequest.class)))
         .thenReturn(new PageImpl<>(List.of(auditLog)));
 

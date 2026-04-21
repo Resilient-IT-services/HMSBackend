@@ -15,7 +15,7 @@ import lombok.Setter;
 @Table(name = "nurse")
 public class Nurse extends HospitalScopedEntity {
 
-  @OneToOne(fetch = FetchType.LAZY)
+  @OneToOne(fetch = FetchType.EAGER)
   @JoinColumn(name = "user_id")
   private UserAccount user;
 

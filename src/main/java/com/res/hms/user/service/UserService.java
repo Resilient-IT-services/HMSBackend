@@ -8,6 +8,10 @@ import com.res.hms.domain.Role;
 import com.res.hms.domain.RoleCode;
 import com.res.hms.domain.UserAccount;
 import com.res.hms.domain.UserRoleAssignment;
+import com.res.hms.domain.Doctor;
+import com.res.hms.domain.Nurse;
+import com.res.hms.doctor.repository.DoctorRepository;
+import com.res.hms.nurse.repository.NurseRepository;
 import com.res.hms.repository.HospitalRepository;
 import com.res.hms.repository.RoleRepository;
 import com.res.hms.repository.UserAccountRepository;
@@ -30,6 +34,8 @@ public class UserService {
   private final UserAccountRepository userAccountRepository;
   private final RoleRepository roleRepository;
   private final HospitalRepository hospitalRepository;
+  private final DoctorRepository doctorRepository;
+  private final NurseRepository nurseRepository;
   private final PasswordEncoder passwordEncoder;
   private final HospitalContext hospitalContext;
   private final UserMapper userMapper;
@@ -57,7 +63,38 @@ public class UserService {
 
     assignRoles(userAccount, request.roles(), targetHospitalId);
     userAccountRepository.save(userAccount);
+
+    handleRoleSpecificEntries(userAccount, request.roles(), targetHospitalId, request.specialization(), request.department());
+
     return userMapper.toResponse(userAccount);
+  }
+
+  private void handleRoleSpecificEntries(UserAccount user, Set<RoleCode> roles, Long hospitalId, String specialization, String department) {
+    if (hospitalId == null) return;
+
+    if (roles.contains(RoleCode.DOCTOR)) {
+      Doctor doctor = doctorRepository.findByUserIdAndHospitalId(user.getId(), hospitalId)
+          .orElseGet(() -> {
+            Doctor newDoc = new Doctor();
+            newDoc.setUser(user);
+            newDoc.setHospitalId(hospitalId);
+            return newDoc;
+          });
+      doctor.setSpecialization(specialization != null ? specialization : "General");
+      doctorRepository.save(doctor);
+    }
+
+    if (roles.contains(RoleCode.NURSE)) {
+      Nurse nurse = nurseRepository.findByUserIdAndHospitalId(user.getId(), hospitalId)
+          .orElseGet(() -> {
+            Nurse newNurse = new Nurse();
+            newNurse.setUser(user);
+            newNurse.setHospitalId(hospitalId);
+            return newNurse;
+          });
+      nurse.setDepartment(department != null ? department : "General");
+      nurseRepository.save(nurse);
+    }
   }
 
   private void assignRoles(UserAccount user, Set<RoleCode> roleCodes, Long activeHospitalId) {
@@ -133,6 +170,9 @@ public class UserService {
 
     assignRoles(user, request.roles(), targetHospitalId);
     userAccountRepository.save(user);
+
+    handleRoleSpecificEntries(user, request.roles(), targetHospitalId, request.specialization(), request.department());
+
     return userMapper.toResponse(user);
   }
 

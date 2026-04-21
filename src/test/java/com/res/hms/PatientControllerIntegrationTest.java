@@ -33,13 +33,13 @@ class PatientControllerIntegrationTest {
   @Autowired private RoleRepository roleRepository;
   @Autowired private HospitalRepository hospitalRepository;
   @Autowired private PasswordEncoder passwordEncoder;
+  @Autowired private TestDataHelper testDataHelper;
 
   private Long testHospitalId;
 
   @BeforeEach
   void ensureHospitalAdminExists() {
-    Hospital hospital = hospitalRepository.findByCode("TEST").orElseThrow();
-    testHospitalId = hospital.getId();
+    testHospitalId = testDataHelper.createHospitalIfMissing("TEST", "Test Hospital");
 
     if (userAccountRepository.existsByUsername("hospital_admin")) {
       return;

@@ -41,9 +41,7 @@ class SecurityExhaustiveIntegrationTest {
 
   @BeforeEach
   void setup() {
-    Hospital hospital = hospitalRepository.findByCode("TEST").orElseThrow();
-    testHospitalId = hospital.getId();
-
+    testHospitalId = testDataHelper.createHospitalIfMissing("TEST", "Test Hospital");
     secondHospitalId = testDataHelper.createHospitalIfMissing("HOSP2", "Second Hospital");
 
     testDataHelper.createUserIfMissing(
