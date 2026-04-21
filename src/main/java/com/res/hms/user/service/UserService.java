@@ -38,8 +38,13 @@ public class UserService {
   @Transactional
   @Auditable(entity = "user_account", action = "CREATE")
   public UserResponse create(CreateUserRequest request) {
-    validateCreateRequest(
-        request, hospitalContext.isSuperAdmin(), hospitalContext.getHospitalIdOrNull());
+    Long activeHospitalId = hospitalContext.getHospitalIdOrNull();
+    boolean isSuperAdmin = hospitalContext.isSuperAdmin();
+    
+    // If Super Admin, use hospitalId from request, otherwise use active context
+    Long targetHospitalId = isSuperAdmin ? request.hospitalId() : activeHospitalId;
+
+    validateCreateRequest(request, isSuperAdmin, targetHospitalId);
 
     UserAccount userAccount = new UserAccount();
     userAccount.setUsername(request.username());
@@ -50,7 +55,7 @@ public class UserService {
     userAccount.setPhone(request.phone());
     userAccount.setActive(true);
 
-    assignRoles(userAccount, request.roles(), hospitalContext.getHospitalIdOrNull());
+    assignRoles(userAccount, request.roles(), targetHospitalId);
     userAccountRepository.save(userAccount);
     return userMapper.toResponse(userAccount);
   }

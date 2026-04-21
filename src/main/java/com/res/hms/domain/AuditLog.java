@@ -10,12 +10,15 @@ import lombok.Setter;
 @Setter
 @Entity
 @Table(name = "audit_log")
-public class AuditLog extends HospitalScopedEntity {
+public class AuditLog extends BaseEntity {
+
+  @Column(name = "hospital_id")
+  private Long hospitalId;
 
   @Column(name = "entity_name", nullable = false)
   private String entityName;
 
-  @Column(name = "entity_id", nullable = false)
+  @Column(name = "entity_id")
   private Long entityId;
 
   @Column(nullable = false)

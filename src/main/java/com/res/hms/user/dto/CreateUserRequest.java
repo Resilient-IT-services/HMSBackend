@@ -18,5 +18,5 @@ public record CreateUserRequest(
     @NotBlank(message = "fullName is required") String fullName,
     @NotNull(message = "gender is required") Gender gender,
     @NotNull(message = "dob is required") LocalDate dob,
-    long hospitalId,
+    Long hospitalId,
     String phone) {}

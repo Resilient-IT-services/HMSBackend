@@ -4,9 +4,12 @@ import com.res.hms.audit.dto.AuditLogResponse;
 import com.res.hms.audit.repository.AuditLogRepository;
 import com.res.hms.common.api.PageResponse;
 import com.res.hms.common.tenant.HospitalContext;
+import com.res.hms.common.exception.ApiException;
 import com.res.hms.domain.AuditLog;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
+import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 
 @Service
@@ -29,11 +32,21 @@ public class AuditLogService {
   }
 
   public PageResponse<AuditLogResponse> list(int page, int size) {
-    Long hospitalId = hospitalContext.requireHospitalId();
-    return PageResponse.from(
-        auditLogRepository
-            .findAllByHospitalIdOrderByCreatedAtDesc(hospitalId, PageRequest.of(page, size))
-            .map(this::toResponse));
+    Long hospitalId = hospitalContext.getHospitalIdOrNull();
+    Page<AuditLog> auditLogs;
+
+    if (hospitalId != null) {
+      auditLogs =
+          auditLogRepository.findAllByHospitalIdOrderByCreatedAtDesc(
+              hospitalId, PageRequest.of(page, size));
+    } else if (hospitalContext.isSuperAdmin()) {
+      auditLogs = auditLogRepository.findAllByOrderByCreatedAtDesc(PageRequest.of(page, size));
+    } else {
+      throw new ApiException(
+          "BUSINESS_RULE_VIOLATION", "Please select a hospital first", HttpStatus.BAD_REQUEST);
+    }
+
+    return PageResponse.from(auditLogs.map(this::toResponse));
   }
 
   private AuditLogResponse toResponse(AuditLog auditLog) {

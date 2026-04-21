@@ -8,6 +8,8 @@ import com.res.hms.repository.HospitalRepository;
 import com.res.hms.user.dto.HospitalMembershipResponse;
 import com.res.hms.user.dto.UserResponse;
 import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -22,12 +24,14 @@ public class UserMapper {
   private final HospitalRepository hospitalRepository;
 
   public UserResponse toResponse(UserAccount userAccount) {
-    Map<Long, Set<RoleCode>> groupedRoles =
-        userAccount.getAssignments().stream()
-            .collect(
-                Collectors.groupingBy(
-                    UserRoleAssignment::getHospitalId,
-                    Collectors.mapping(a -> a.getRole().getCode(), Collectors.toSet())));
+    Map<Long, Set<RoleCode>> groupedRoles = new HashMap<>();
+    if (userAccount.getAssignments() != null) {
+      for (UserRoleAssignment assignment : userAccount.getAssignments()) {
+        groupedRoles
+            .computeIfAbsent(assignment.getHospitalId(), k -> new HashSet<>())
+            .add(assignment.getRole().getCode());
+      }
+    }
 
     List<HospitalMembershipResponse> memberships = new ArrayList<>();
     for (Map.Entry<Long, Set<RoleCode>> entry : groupedRoles.entrySet()) {
