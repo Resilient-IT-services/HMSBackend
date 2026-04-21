@@ -136,13 +136,13 @@ public class AuthService {
 
         if (hospitalId != null) {
           if (roles.contains(RoleCode.DOCTOR)) {
-            specialization = doctorRepository.findByUserIdAndHospitalId(principal.userId(), hospitalId)
-                .map(d -> d.getSpecialization())
+            specialization = doctorRepository.findByUserId(principal.userId())
+                .map(Doctor::getSpecialization)
                 .orElse(null);
           }
           if (roles.contains(RoleCode.NURSE)) {
-            department = nurseRepository.findByUserIdAndHospitalId(principal.userId(), hospitalId)
-                .map(n -> n.getDepartment())
+            department = nurseRepository.findByUserId(principal.userId())
+                .map(Nurse::getDepartment)
                 .orElse(null);
           }
 

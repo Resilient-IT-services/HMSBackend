@@ -1,6 +1,5 @@
 package com.res.hms.config;
 
-import com.res.hms.domain.Hospital;
 import com.res.hms.domain.Role;
 import com.res.hms.domain.RoleCode;
 import com.res.hms.domain.UserAccount;
@@ -22,7 +21,7 @@ public class BootstrapDataConfig {
   private final AppBootstrapProperties properties;
 
   @Bean
-  CommandLineRunner bootstrapData(
+  public CommandLineRunner bootstrapData(
       HospitalRepository hospitalRepository,
       RoleRepository roleRepository,
       UserAccountRepository userAccountRepository,

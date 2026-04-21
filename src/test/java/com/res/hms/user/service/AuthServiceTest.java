@@ -78,7 +78,7 @@ class AuthServiceTest {
                 null));
 
     when(hospitalRepository.findById(10L)).thenReturn(Optional.of(hospital));
-    when(doctorRepository.findByUserIdAndHospitalId(5L, 10L)).thenReturn(Optional.of(doctor));
+    when(doctorRepository.findByUserId(5L)).thenReturn(Optional.of(doctor));
 
     var response = authService.currentUser();
 

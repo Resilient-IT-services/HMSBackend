@@ -15,7 +15,6 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
-import java.util.stream.Collectors;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 
@@ -46,13 +45,13 @@ public class UserMapper {
 
       if (hospitalId != null) {
         if (roles.contains(RoleCode.DOCTOR)) {
-          specialization = doctorRepository.findByUserIdAndHospitalId(userAccount.getId(), hospitalId)
-              .map(d -> d.getSpecialization())
+          specialization = doctorRepository.findByUserId(userAccount.getId())
+              .map(Doctor::getSpecialization)
               .orElse(null);
         }
         if (roles.contains(RoleCode.NURSE)) {
-          department = nurseRepository.findByUserIdAndHospitalId(userAccount.getId(), hospitalId)
-              .map(n -> n.getDepartment())
+          department = nurseRepository.findByUserId(userAccount.getId())
+              .map(Nurse::getDepartment)
               .orElse(null);
         }
 

@@ -13,10 +13,10 @@ import lombok.Setter;
 @Setter
 @Entity
 @Table(name = "nurse")
-public class Nurse extends HospitalScopedEntity {
+public class Nurse extends BaseEntity {
 
   @OneToOne(fetch = FetchType.EAGER)
-  @JoinColumn(name = "user_id")
+  @JoinColumn(name = "user_id", unique = true)
   private UserAccount user;
 
   @Column(nullable = false)

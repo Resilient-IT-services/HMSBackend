@@ -7,6 +7,7 @@ import jakarta.persistence.EnumType;
 import jakarta.persistence.Enumerated;
 import jakarta.persistence.FetchType;
 import jakarta.persistence.OneToMany;
+import jakarta.persistence.OneToOne;
 import jakarta.persistence.Table;
 import java.time.LocalDate;
 import java.util.HashSet;
@@ -46,6 +47,12 @@ public class UserAccount extends BaseEntity {
 
   @Column(name = "is_active", nullable = false)
   private boolean active = true;
+
+  @OneToOne(mappedBy = "user", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
+  private Doctor doctor;
+
+  @OneToOne(mappedBy = "user", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
+  private Nurse nurse;
 
   public Set<RoleCode> getRoleCodes() {
     return assignments.stream().map(a -> a.getRole().getCode()).collect(Collectors.toSet());

@@ -33,9 +33,12 @@ public class NurseService {
         resourceLookup.findRequired(
             request.userId(), hospitalId, userAccountRepository::findByIdAndHospitalId, "User");
 
-    Nurse nurse = new Nurse();
-    nurse.setHospitalId(hospitalId);
-    nurse.setUser(user);
+    Nurse nurse = nurseRepository.findByUserId(user.getId())
+        .orElseGet(() -> {
+          Nurse newNurse = new Nurse();
+          newNurse.setUser(user);
+          return newNurse;
+        });
     nurse.setDepartment(request.department());
     nurseRepository.save(nurse);
 
@@ -48,6 +51,11 @@ public class NurseService {
         nurseRepository
             .findAllByHospitalIdOrderByCreatedAtDesc(hospitalId, PageRequest.of(page, size))
             .map(this::toResponse));
+  }
+
+  public Nurse requireNurse(Long id, Long hospitalId) {
+    return resourceLookup.findRequired(
+        id, hospitalId, nurseRepository::findByIdAndHospitalId, "Nurse");
   }
 
   private NurseResponse toResponse(Nurse nurse) {

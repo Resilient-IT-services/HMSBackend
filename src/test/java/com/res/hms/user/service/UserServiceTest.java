@@ -65,7 +65,7 @@ class UserServiceTest {
     when(hospitalContext.getHospitalIdOrNull()).thenReturn(10L);
     when(resourceLookup.findRequired(eq(RoleCode.DOCTOR), any(), anyString())).thenReturn(role);
     when(passwordEncoder.encode(anyString())).thenReturn("encoded");
-    when(doctorRepository.findByUserIdAndHospitalId(any(), eq(10L))).thenReturn(Optional.empty());
+    when(doctorRepository.findByUserId(any())).thenReturn(Optional.empty());
 
     userService.create(
         new CreateUserRequest(
@@ -92,7 +92,7 @@ class UserServiceTest {
     when(hospitalContext.getHospitalIdOrNull()).thenReturn(10L);
     when(resourceLookup.findRequired(eq(RoleCode.NURSE), any(), anyString())).thenReturn(role);
     when(passwordEncoder.encode(anyString())).thenReturn("encoded");
-    when(nurseRepository.findByUserIdAndHospitalId(any(), eq(10L))).thenReturn(Optional.empty());
+    when(nurseRepository.findByUserId(any())).thenReturn(Optional.empty());
 
     userService.create(
         new CreateUserRequest(
@@ -124,7 +124,7 @@ class UserServiceTest {
     when(resourceLookup.findRequired(eq(5L), eq(10L), any(), anyString())).thenReturn(user);
     when(resourceLookup.findRequired(eq(10L), any(), anyString())).thenReturn(new Hospital());
     when(resourceLookup.findRequired(eq(RoleCode.DOCTOR), any(), anyString())).thenReturn(role);
-    when(doctorRepository.findByUserIdAndHospitalId(eq(5L), eq(10L))).thenReturn(Optional.empty());
+    when(doctorRepository.findByUserId(eq(5L))).thenReturn(Optional.empty());
 
     userService.allocateRoles(
         new AllocateRoleRequest(

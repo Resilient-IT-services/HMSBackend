@@ -55,7 +55,7 @@ class UserMapperTest {
     doctor.setSpecialization("Cardiology");
 
     when(hospitalRepository.findById(10L)).thenReturn(Optional.of(hospital));
-    when(doctorRepository.findByUserIdAndHospitalId(1L, 10L)).thenReturn(Optional.of(doctor));
+    when(doctorRepository.findByUserId(1L)).thenReturn(Optional.of(doctor));
 
     var response = userMapper.toResponse(user);
 
@@ -88,7 +88,7 @@ class UserMapperTest {
     nurse.setDepartment("Emergency");
 
     when(hospitalRepository.findById(10L)).thenReturn(Optional.of(hospital));
-    when(nurseRepository.findByUserIdAndHospitalId(2L, 10L)).thenReturn(Optional.of(nurse));
+    when(nurseRepository.findByUserId(2L)).thenReturn(Optional.of(nurse));
 
     var response = userMapper.toResponse(user);
 

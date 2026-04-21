@@ -64,20 +64,17 @@ public class UserService {
     assignRoles(userAccount, request.roles(), targetHospitalId);
     userAccountRepository.save(userAccount);
 
-    handleRoleSpecificEntries(userAccount, request.roles(), targetHospitalId, request.specialization(), request.department());
+    handleRoleSpecificEntries(userAccount, request.roles(), request.specialization(), request.department());
 
     return userMapper.toResponse(userAccount);
   }
 
-  private void handleRoleSpecificEntries(UserAccount user, Set<RoleCode> roles, Long hospitalId, String specialization, String department) {
-    if (hospitalId == null) return;
-
+  private void handleRoleSpecificEntries(UserAccount user, Set<RoleCode> roles, String specialization, String department) {
     if (roles.contains(RoleCode.DOCTOR)) {
-      Doctor doctor = doctorRepository.findByUserIdAndHospitalId(user.getId(), hospitalId)
+      Doctor doctor = doctorRepository.findByUserId(user.getId())
           .orElseGet(() -> {
             Doctor newDoc = new Doctor();
             newDoc.setUser(user);
-            newDoc.setHospitalId(hospitalId);
             return newDoc;
           });
       doctor.setSpecialization(specialization != null ? specialization : "General");
@@ -85,11 +82,10 @@ public class UserService {
     }
 
     if (roles.contains(RoleCode.NURSE)) {
-      Nurse nurse = nurseRepository.findByUserIdAndHospitalId(user.getId(), hospitalId)
+      Nurse nurse = nurseRepository.findByUserId(user.getId())
           .orElseGet(() -> {
             Nurse newNurse = new Nurse();
             newNurse.setUser(user);
-            newNurse.setHospitalId(hospitalId);
             return newNurse;
           });
       nurse.setDepartment(department != null ? department : "General");
@@ -171,7 +167,7 @@ public class UserService {
     assignRoles(user, request.roles(), targetHospitalId);
     userAccountRepository.save(user);
 
-    handleRoleSpecificEntries(user, request.roles(), targetHospitalId, request.specialization(), request.department());
+    handleRoleSpecificEntries(user, request.roles(), request.specialization(), request.department());
 
     return userMapper.toResponse(user);
   }
