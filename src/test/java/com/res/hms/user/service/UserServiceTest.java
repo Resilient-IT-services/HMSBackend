@@ -12,13 +12,15 @@ import static org.mockito.Mockito.when;
 import com.res.hms.common.exception.ApiException;
 import com.res.hms.common.tenant.HospitalContext;
 import com.res.hms.common.util.ResourceLookup;
+import com.res.hms.doctor.repository.DoctorRepository;
+import com.res.hms.domain.Doctor;
 import com.res.hms.domain.Gender;
 import com.res.hms.domain.Hospital;
+import com.res.hms.domain.Nurse;
 import com.res.hms.domain.Role;
 import com.res.hms.domain.RoleCode;
 import com.res.hms.domain.UserAccount;
 import com.res.hms.domain.UserRoleAssignment;
-import com.res.hms.doctor.repository.DoctorRepository;
 import com.res.hms.nurse.repository.NurseRepository;
 import com.res.hms.repository.HospitalRepository;
 import com.res.hms.repository.RoleRepository;
@@ -27,8 +29,6 @@ import com.res.hms.user.dto.AllocateRoleRequest;
 import com.res.hms.user.dto.CreateUserRequest;
 import com.res.hms.user.dto.HospitalMembershipResponse;
 import com.res.hms.user.dto.UserResponse;
-import com.res.hms.domain.Doctor;
-import com.res.hms.domain.Nurse;
 import java.time.LocalDate;
 import java.util.List;
 import java.util.Optional;
@@ -114,7 +114,7 @@ class UserServiceTest {
   void allocateRolesAutomaticallyCreatesDoctorEntry() {
     Role role = new Role();
     role.setCode(RoleCode.DOCTOR);
-    
+
     UserAccount user = new UserAccount();
     user.setId(5L);
     user.setUsername("user1");
@@ -127,12 +127,7 @@ class UserServiceTest {
     when(doctorRepository.findByUserId(eq(5L))).thenReturn(Optional.empty());
 
     userService.allocateRoles(
-        new AllocateRoleRequest(
-            5L,
-            10L,
-            Set.of(RoleCode.DOCTOR),
-            "Neurology",
-            null));
+        new AllocateRoleRequest(5L, 10L, Set.of(RoleCode.DOCTOR), "Neurology", null));
 
     verify(doctorRepository).save(any(Doctor.class));
   }
@@ -214,7 +209,8 @@ class UserServiceTest {
                   user.getId(),
                   user.getUsername(),
                   List.of(
-                      new HospitalMembershipResponse(10L, "Test", "TEST", user.getRoleCodes(), null, null)),
+                      new HospitalMembershipResponse(
+                          10L, "Test", "TEST", user.getRoleCodes(), null, null)),
                   user.isActive(),
                   null);
             });
@@ -234,8 +230,7 @@ class UserServiceTest {
                 null));
 
     assertEquals("admin", response.username());
-    assertTrue(
-        response.memberships().stream().anyMatch(m -> m.roles().contains(RoleCode.ADMIN)));
+    assertTrue(response.memberships().stream().anyMatch(m -> m.roles().contains(RoleCode.ADMIN)));
   }
 
   @Test

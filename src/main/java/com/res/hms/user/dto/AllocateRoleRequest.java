@@ -10,8 +10,7 @@ public record AllocateRoleRequest(
     Long hospitalId, // Can be null for global roles
     Set<RoleCode> roles, // If empty, removes access for this context
     String specialization,
-    String department
-    ) {
+    String department) {
   public AllocateRoleRequest {
     if (roles == null) {
       roles = new HashSet<>();

@@ -9,14 +9,13 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 import com.res.hms.common.exception.ApiException;
-import com.res.hms.domain.RoleCode;
 import com.res.hms.doctor.repository.DoctorRepository;
+import com.res.hms.domain.Doctor;
+import com.res.hms.domain.Hospital;
+import com.res.hms.domain.RoleCode;
 import com.res.hms.nurse.repository.NurseRepository;
 import com.res.hms.repository.HospitalRepository;
 import com.res.hms.user.dto.LoginRequest;
-import com.res.hms.user.dto.HospitalMembershipResponse;
-import com.res.hms.domain.Hospital;
-import com.res.hms.domain.Doctor;
 import com.res.hms.user.security.HospitalUserPrincipal;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
@@ -134,8 +133,7 @@ class AuthServiceTest {
     var response = authService.currentUser();
 
     assertEquals(2L, response.userId());
-    assertTrue(
-        response.hospitals().stream().anyMatch(h -> h.roles().contains(RoleCode.ADMIN)));
+    assertTrue(response.hospitals().stream().anyMatch(h -> h.roles().contains(RoleCode.ADMIN)));
   }
 
   @Test

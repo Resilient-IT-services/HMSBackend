@@ -33,12 +33,15 @@ public class DoctorService {
         resourceLookup.findRequired(
             request.userId(), hospitalId, userAccountRepository::findByIdAndHospitalId, "User");
 
-    Doctor doctor = doctorRepository.findByUserId(user.getId())
-        .orElseGet(() -> {
-          Doctor newDoc = new Doctor();
-          newDoc.setUser(user);
-          return newDoc;
-        });
+    Doctor doctor =
+        doctorRepository
+            .findByUserId(user.getId())
+            .orElseGet(
+                () -> {
+                  Doctor newDoc = new Doctor();
+                  newDoc.setUser(user);
+                  return newDoc;
+                });
     doctor.setSpecialization(request.specialization());
     doctorRepository.save(doctor);
 

@@ -33,12 +33,15 @@ public class NurseService {
         resourceLookup.findRequired(
             request.userId(), hospitalId, userAccountRepository::findByIdAndHospitalId, "User");
 
-    Nurse nurse = nurseRepository.findByUserId(user.getId())
-        .orElseGet(() -> {
-          Nurse newNurse = new Nurse();
-          newNurse.setUser(user);
-          return newNurse;
-        });
+    Nurse nurse =
+        nurseRepository
+            .findByUserId(user.getId())
+            .orElseGet(
+                () -> {
+                  Nurse newNurse = new Nurse();
+                  newNurse.setUser(user);
+                  return newNurse;
+                });
     nurse.setDepartment(request.department());
     nurseRepository.save(nurse);
 

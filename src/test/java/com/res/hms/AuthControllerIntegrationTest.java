@@ -53,7 +53,9 @@ class AuthControllerIntegrationTest {
         .andExpect(status().isOk())
         .andExpect(jsonPath("$.data.username").value("admin"))
         .andExpect(jsonPath("$.data.userId").exists())
-        .andExpect(jsonPath("$.data.hospitals[?(@.hospitalCode == 'GLOBAL')].roles").value(hasItem(hasItem("SUPER_ADMIN"))))
+        .andExpect(
+            jsonPath("$.data.hospitals[?(@.hospitalCode == 'GLOBAL')].roles")
+                .value(hasItem(hasItem("SUPER_ADMIN"))))
         .andExpect(jsonPath("$.data.hospitals").isArray())
         .andExpect(jsonPath("$.data.hospitalId").doesNotExist());
   }

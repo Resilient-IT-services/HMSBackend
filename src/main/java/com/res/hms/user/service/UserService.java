@@ -4,13 +4,13 @@ import com.res.hms.common.audit.Auditable;
 import com.res.hms.common.exception.ApiException;
 import com.res.hms.common.tenant.HospitalContext;
 import com.res.hms.common.util.ResourceLookup;
+import com.res.hms.doctor.repository.DoctorRepository;
+import com.res.hms.domain.Doctor;
+import com.res.hms.domain.Nurse;
 import com.res.hms.domain.Role;
 import com.res.hms.domain.RoleCode;
 import com.res.hms.domain.UserAccount;
 import com.res.hms.domain.UserRoleAssignment;
-import com.res.hms.domain.Doctor;
-import com.res.hms.domain.Nurse;
-import com.res.hms.doctor.repository.DoctorRepository;
 import com.res.hms.nurse.repository.NurseRepository;
 import com.res.hms.repository.HospitalRepository;
 import com.res.hms.repository.RoleRepository;
@@ -46,7 +46,7 @@ public class UserService {
   public UserResponse create(CreateUserRequest request) {
     Long activeHospitalId = hospitalContext.getHospitalIdOrNull();
     boolean isSuperAdmin = hospitalContext.isSuperAdmin();
-    
+
     // If Super Admin, use hospitalId from request, otherwise use active context
     Long targetHospitalId = isSuperAdmin ? request.hospitalId() : activeHospitalId;
 
@@ -64,30 +64,38 @@ public class UserService {
     assignRoles(userAccount, request.roles(), targetHospitalId);
     userAccountRepository.save(userAccount);
 
-    handleRoleSpecificEntries(userAccount, request.roles(), request.specialization(), request.department());
+    handleRoleSpecificEntries(
+        userAccount, request.roles(), request.specialization(), request.department());
 
     return userMapper.toResponse(userAccount);
   }
 
-  private void handleRoleSpecificEntries(UserAccount user, Set<RoleCode> roles, String specialization, String department) {
+  private void handleRoleSpecificEntries(
+      UserAccount user, Set<RoleCode> roles, String specialization, String department) {
     if (roles.contains(RoleCode.DOCTOR)) {
-      Doctor doctor = doctorRepository.findByUserId(user.getId())
-          .orElseGet(() -> {
-            Doctor newDoc = new Doctor();
-            newDoc.setUser(user);
-            return newDoc;
-          });
+      Doctor doctor =
+          doctorRepository
+              .findByUserId(user.getId())
+              .orElseGet(
+                  () -> {
+                    Doctor newDoc = new Doctor();
+                    newDoc.setUser(user);
+                    return newDoc;
+                  });
       doctor.setSpecialization(specialization != null ? specialization : "General");
       doctorRepository.save(doctor);
     }
 
     if (roles.contains(RoleCode.NURSE)) {
-      Nurse nurse = nurseRepository.findByUserId(user.getId())
-          .orElseGet(() -> {
-            Nurse newNurse = new Nurse();
-            newNurse.setUser(user);
-            return newNurse;
-          });
+      Nurse nurse =
+          nurseRepository
+              .findByUserId(user.getId())
+              .orElseGet(
+                  () -> {
+                    Nurse newNurse = new Nurse();
+                    newNurse.setUser(user);
+                    return newNurse;
+                  });
       nurse.setDepartment(department != null ? department : "General");
       nurseRepository.save(nurse);
     }
@@ -167,7 +175,8 @@ public class UserService {
     assignRoles(user, request.roles(), targetHospitalId);
     userAccountRepository.save(user);
 
-    handleRoleSpecificEntries(user, request.roles(), request.specialization(), request.department());
+    handleRoleSpecificEntries(
+        user, request.roles(), request.specialization(), request.department());
 
     return userMapper.toResponse(user);
   }

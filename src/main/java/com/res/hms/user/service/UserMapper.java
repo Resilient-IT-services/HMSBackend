@@ -1,10 +1,12 @@
 package com.res.hms.user.service;
 
+import com.res.hms.doctor.repository.DoctorRepository;
+import com.res.hms.domain.Doctor;
 import com.res.hms.domain.Hospital;
+import com.res.hms.domain.Nurse;
 import com.res.hms.domain.RoleCode;
 import com.res.hms.domain.UserAccount;
 import com.res.hms.domain.UserRoleAssignment;
-import com.res.hms.doctor.repository.DoctorRepository;
 import com.res.hms.nurse.repository.NurseRepository;
 import com.res.hms.repository.HospitalRepository;
 import com.res.hms.user.dto.HospitalMembershipResponse;
@@ -45,20 +47,29 @@ public class UserMapper {
 
       if (hospitalId != null) {
         if (roles.contains(RoleCode.DOCTOR)) {
-          specialization = doctorRepository.findByUserId(userAccount.getId())
-              .map(Doctor::getSpecialization)
-              .orElse(null);
+          specialization =
+              doctorRepository
+                  .findByUserId(userAccount.getId())
+                  .map(Doctor::getSpecialization)
+                  .orElse(null);
         }
         if (roles.contains(RoleCode.NURSE)) {
-          department = nurseRepository.findByUserId(userAccount.getId())
-              .map(Nurse::getDepartment)
-              .orElse(null);
+          department =
+              nurseRepository
+                  .findByUserId(userAccount.getId())
+                  .map(Nurse::getDepartment)
+                  .orElse(null);
         }
 
         Hospital hospital = hospitalRepository.findById(hospitalId).orElseThrow();
         memberships.add(
             new HospitalMembershipResponse(
-                hospital.getId(), hospital.getName(), hospital.getCode(), roles, specialization, department));
+                hospital.getId(),
+                hospital.getName(),
+                hospital.getCode(),
+                roles,
+                specialization,
+                department));
       } else {
         memberships.add(
             new HospitalMembershipResponse(null, "Global Access", "GLOBAL", roles, null, null));
