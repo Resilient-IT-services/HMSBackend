@@ -52,7 +52,7 @@ public class AppointmentService {
   public PageResponse<AppointmentResponse> list(int page, int size, String search) {
     Long hospitalId = hospitalContext.requireHospitalId();
     PageRequest pageRequest = PageRequest.of(page, size);
-    
+
     if (search != null && !search.trim().isEmpty()) {
       return PageResponse.from(
           appointmentRepository

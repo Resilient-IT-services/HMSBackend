@@ -43,6 +43,8 @@ public class DoctorService {
                   return newDoc;
                 });
     doctor.setSpecialization(request.specialization());
+    doctor.setConsultationFee(request.consultationFee());
+    doctor.setFollowUpDays(request.followUpDays());
     doctorRepository.save(doctor);
 
     return toResponse(doctor);
@@ -51,12 +53,10 @@ public class DoctorService {
   public PageResponse<DoctorResponse> list(int page, int size, String search) {
     Long hospitalId = hospitalContext.requireHospitalId();
     PageRequest pageRequest = PageRequest.of(page, size);
-    
+
     if (search != null && !search.trim().isEmpty()) {
       return PageResponse.from(
-          doctorRepository
-              .search(hospitalId, search.trim(), pageRequest)
-              .map(this::toResponse));
+          doctorRepository.search(hospitalId, search.trim(), pageRequest).map(this::toResponse));
     }
 
     return PageResponse.from(
@@ -79,6 +79,8 @@ public class DoctorService {
         user != null ? user.getDob() : null,
         user != null ? user.getPhone() : null,
         doctor.getSpecialization(),
+        doctor.getConsultationFee(),
+        doctor.getFollowUpDays(),
         doctor.getCreatedAt());
   }
 }

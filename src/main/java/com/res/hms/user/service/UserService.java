@@ -207,7 +207,10 @@ public class UserService {
     }
     List<UserAccount> users;
     if (hospitalId == null) {
-      users = includeDeleted ? userAccountRepository.findAll() : userAccountRepository.findAllByDeletedFalse();
+      users =
+          includeDeleted
+              ? userAccountRepository.findAll()
+              : userAccountRepository.findAllByDeletedFalse();
     } else {
       // Note: findAllByHospitalId already filters by deleted = false
       // If we want to include deleted for a specific hospital, we'd need another repo method.
@@ -220,18 +223,18 @@ public class UserService {
   @Transactional
   public UserResponse update(Long id, com.res.hms.user.dto.UpdateUserRequest request) {
     UserAccount user = resourceLookup.findRequired(id, userAccountRepository::findById, "User");
-    
+
     user.setFullName(request.fullName());
     user.setGender(request.gender());
     user.setDob(request.dob());
     user.setPhone(request.phone());
     user.setActive(request.active());
-    
+
     userAccountRepository.save(user);
-    
+
     handleRoleSpecificEntries(
         user, user.getRoleCodes(), request.specialization(), request.department());
-        
+
     return userMapper.toResponse(user);
   }
 

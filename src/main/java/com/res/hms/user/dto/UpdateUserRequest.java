@@ -11,5 +11,4 @@ public record UpdateUserRequest(
     String phone,
     boolean active,
     String specialization,
-    String department
-) {}
+    String department) {}

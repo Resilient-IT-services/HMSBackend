@@ -35,11 +35,15 @@ public class HospitalService {
 
   @Transactional
   public HospitalResponse update(Long id, CreateHospitalRequest request) {
-    Hospital hospital = hospitalRepository.findById(id)
-        .orElseThrow(() -> new ApiException("NOT_FOUND", "Hospital not found", HttpStatus.NOT_FOUND));
-    
+    Hospital hospital =
+        hospitalRepository
+            .findById(id)
+            .orElseThrow(
+                () -> new ApiException("NOT_FOUND", "Hospital not found", HttpStatus.NOT_FOUND));
+
     // Check if code is being changed and if it conflicts
-    if (!hospital.getCode().equals(request.code()) && hospitalRepository.findByCode(request.code()).isPresent()) {
+    if (!hospital.getCode().equals(request.code())
+        && hospitalRepository.findByCode(request.code()).isPresent()) {
       throw new ApiException(
           "BUSINESS_RULE_VIOLATION", "Hospital code already exists", HttpStatus.CONFLICT);
     }

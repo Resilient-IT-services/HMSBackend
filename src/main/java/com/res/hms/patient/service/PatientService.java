@@ -40,12 +40,10 @@ public class PatientService {
   public PageResponse<PatientResponse> list(int page, int size, String search) {
     Long hospitalId = hospitalContext.requireHospitalId();
     PageRequest pageRequest = PageRequest.of(page, size);
-    
+
     if (search != null && !search.trim().isEmpty()) {
       return PageResponse.from(
-          patientRepository
-              .search(hospitalId, search.trim(), pageRequest)
-              .map(this::toResponse));
+          patientRepository.search(hospitalId, search.trim(), pageRequest).map(this::toResponse));
     }
 
     return PageResponse.from(

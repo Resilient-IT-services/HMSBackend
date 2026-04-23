@@ -6,6 +6,7 @@ import jakarta.persistence.FetchType;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.OneToOne;
 import jakarta.persistence.Table;
+import java.math.BigDecimal;
 import lombok.Getter;
 import lombok.Setter;
 
@@ -22,7 +23,14 @@ public class Doctor extends BaseEntity {
   @Column(nullable = false)
   private String specialization;
 
+  @Column(nullable = false)
+  private BigDecimal consultationFee = BigDecimal.ZERO;
+
+  @Column(nullable = false)
+  private Integer followUpDays = 0;
+
   public String getFullName() {
+
     return user != null ? user.getFullName() : null;
   }
 }

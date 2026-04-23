@@ -291,12 +291,28 @@ class UserServiceTest {
     user.setFullName("Old Name");
 
     when(resourceLookup.findRequired(eq(5L), any(), any())).thenReturn(user);
-    when(userMapper.toResponse(any(UserAccount.class))).thenAnswer(i -> {
-        UserAccount u = i.getArgument(0);
-        return new UserResponse(u.getId(), u.getUsername(), u.getFullName(), u.getGender(), u.getDob(), u.getPhone(), List.of(), u.isActive(), u.isDeleted(), null);
-    });
+    when(userMapper.toResponse(any(UserAccount.class)))
+        .thenAnswer(
+            i -> {
+              UserAccount u = i.getArgument(0);
+              return new UserResponse(
+                  u.getId(),
+                  u.getUsername(),
+                  u.getFullName(),
+                  u.getGender(),
+                  u.getDob(),
+                  u.getPhone(),
+                  List.of(),
+                  u.isActive(),
+                  u.isDeleted(),
+                  null);
+            });
 
-    var response = userService.update(5L, new com.res.hms.user.dto.UpdateUserRequest("New Name", Gender.FEMALE, LocalDate.now(), "999", true, null, null));
+    var response =
+        userService.update(
+            5L,
+            new com.res.hms.user.dto.UpdateUserRequest(
+                "New Name", Gender.FEMALE, LocalDate.now(), "999", true, null, null));
 
     assertEquals("New Name", response.fullName());
     verify(userAccountRepository).save(user);

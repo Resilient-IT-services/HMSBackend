@@ -27,7 +27,6 @@ public interface DoctorRepository extends JpaRepository<Doctor, Long> {
   Page<Doctor> search(
       @Param("hospitalId") Long hospitalId, @Param("query") String query, Pageable pageable);
 
-
   Optional<Doctor> findByIdAndUserId(Long id, Long userId);
 
   @Query(

@@ -22,5 +22,4 @@ public interface UserAccountRepository extends JpaRepository<UserAccount, Long> 
       "SELECT u FROM UserAccount u JOIN u.assignments a WHERE u.id = :id AND a.hospitalId = :hospitalId AND u.deleted = false")
   Optional<UserAccount> findByIdAndHospitalId(
       @Param("id") Long id, @Param("hospitalId") Long hospitalId);
-
 }

@@ -8,13 +8,18 @@ import com.res.hms.billing.repository.BillingRepository;
 import com.res.hms.common.audit.Auditable;
 import com.res.hms.common.tenant.HospitalContext;
 import com.res.hms.common.util.ResourceLookup;
+import com.res.hms.doctor.service.DoctorService;
 import com.res.hms.domain.Billing;
 import com.res.hms.domain.BillingItem;
 import com.res.hms.domain.BillingSourceType;
 import com.res.hms.domain.BillingStatus;
+import com.res.hms.domain.Doctor;
 import com.res.hms.domain.Patient;
 import com.res.hms.patient.service.PatientService;
+import com.res.hms.pharmacy.repository.PrescriptionRepository;
 import java.math.BigDecimal;
+import java.time.LocalDate;
+import java.time.temporal.ChronoUnit;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -27,12 +32,35 @@ public class BillingService {
   private final PatientService patientService;
   private final HospitalContext hospitalContext;
   private final ResourceLookup resourceLookup;
+  private final DoctorService doctorService;
+  private final PrescriptionRepository prescriptionRepository;
+
+  private BigDecimal calculateConsultationFee(Doctor doctor, LocalDate lastVisitDate) {
+    if (lastVisitDate != null) {
+
+      long days = ChronoUnit.DAYS.between(lastVisitDate, LocalDate.now());
+
+      if (days <= doctor.getFollowUpDays()) {
+        return BigDecimal.ZERO;
+      }
+    }
+    return doctor.getConsultationFee();
+  }
 
   @Transactional
   @Auditable(entity = "billing", action = "CREATE")
   public BillingResponse createOpdBilling(CreateOpdBillingRequest request) {
+
     Long hospitalId = hospitalContext.requireHospitalId();
     Patient patient = patientService.requirePatient(request.patientId(), hospitalId);
+    Doctor doctor = doctorService.requireDoctor(request.doctorId(), hospitalId);
+    LocalDate lastVisitDate =
+        prescriptionRepository
+            .findTopByPatient_IdAndDoctor_IdOrderByCreatedAtDesc(
+                request.patientId(), request.doctorId())
+            .map(p -> p.getCreatedAt().toLocalDate())
+            .orElse(null);
+    BigDecimal consultationFee = calculateConsultationFee(doctor, lastVisitDate);
 
     Billing billing = new Billing();
     billing.setHospitalId(hospitalId);
@@ -40,9 +68,21 @@ public class BillingService {
     billing.setSourceType(BillingSourceType.OPD);
     billing.setStatus(BillingStatus.DRAFT);
     billing.setTotalAmount(BigDecimal.ZERO);
-    billingRepository.save(billing);
+    if (consultationFee.compareTo(BigDecimal.ZERO) > 0) {
 
-    return toResponse(billing);
+      BillingItem item = new BillingItem();
+      item.setHospitalId(hospitalId);
+      item.setBilling(billing);
+      item.setItemName("Consultation Fee");
+      item.setAmount(consultationFee);
+      item.setQuantity(1);
+      item.setSubtotal(consultationFee);
+
+      billing.getItems().add(item);
+      billing.setTotalAmount(consultationFee);
+    }
+
+    return toResponse(billingRepository.save(billing));
   }
 
   @Transactional
@@ -58,7 +98,6 @@ public class BillingService {
     item.setAmount(request.amount());
     item.setQuantity(request.quantity());
     item.setSubtotal(request.amount().multiply(BigDecimal.valueOf(request.quantity())));
-
     billing.getItems().add(item);
     billing.setTotalAmount(
         billing.getItems().stream()

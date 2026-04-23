@@ -80,7 +80,8 @@ class HospitalServiceTest {
     when(hospitalRepository.findByCode("NEW")).thenReturn(Optional.empty());
     when(hospitalRepository.save(any(Hospital.class))).thenAnswer(i -> i.getArgument(0));
 
-    var response = hospitalService.update(1L, new CreateHospitalRequest("New Name", "NEW", "New Addr"));
+    var response =
+        hospitalService.update(1L, new CreateHospitalRequest("New Name", "NEW", "New Addr"));
 
     assertEquals("New Name", response.name());
     assertEquals("NEW", response.code());

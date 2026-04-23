@@ -15,6 +15,7 @@ import com.res.hms.doctor.repository.DoctorRepository;
 import com.res.hms.domain.Doctor;
 import com.res.hms.domain.UserAccount;
 import com.res.hms.repository.UserAccountRepository;
+import java.math.BigDecimal;
 import java.util.List;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -51,7 +52,8 @@ class DoctorServiceTest {
               return doctor;
             });
 
-    var response = doctorService.create(new CreateDoctorRequest(10L, "Cardiology"));
+    var response =
+        doctorService.create(new CreateDoctorRequest(10L, "Cardiology", new BigDecimal("500"), 7));
 
     assertEquals("Dr. Maya", response.fullName());
   }

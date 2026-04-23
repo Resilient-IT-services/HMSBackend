@@ -1,6 +1,7 @@
 package com.res.hms.doctor.dto;
 
 import com.res.hms.domain.Gender;
+import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 
@@ -11,4 +12,6 @@ public record DoctorResponse(
     LocalDate dob,
     String phone,
     String specialization,
+    BigDecimal consultationFee,
+    Integer followUpDays,
     LocalDateTime createdAt) {}

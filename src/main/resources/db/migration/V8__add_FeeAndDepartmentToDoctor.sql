@@ -1,0 +1,5 @@
+ALTER TABLE doctor
+    ADD COLUMN consultation_fee NUMERIC DEFAULT 0 NOT NULL;
+
+ALTER TABLE doctor
+    ADD COLUMN follow_up_days INT DEFAULT 0 NOT NULL;

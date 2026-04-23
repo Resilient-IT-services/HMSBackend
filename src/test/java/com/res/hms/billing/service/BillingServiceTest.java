@@ -13,12 +13,16 @@ import com.res.hms.billing.repository.BillingRepository;
 import com.res.hms.common.exception.ApiException;
 import com.res.hms.common.tenant.HospitalContext;
 import com.res.hms.common.util.ResourceLookup;
+import com.res.hms.doctor.service.DoctorService;
 import com.res.hms.domain.Billing;
 import com.res.hms.domain.BillingSourceType;
 import com.res.hms.domain.BillingStatus;
+import com.res.hms.domain.Doctor;
 import com.res.hms.domain.Patient;
 import com.res.hms.patient.service.PatientService;
+import com.res.hms.pharmacy.repository.PrescriptionRepository;
 import java.math.BigDecimal;
+import java.util.Optional;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
@@ -32,6 +36,8 @@ class BillingServiceTest {
   @Mock private PatientService patientService;
   @Mock private HospitalContext hospitalContext;
   @Mock private ResourceLookup resourceLookup;
+  @Mock private DoctorService doctorService;
+  @Mock private PrescriptionRepository prescriptionRepository;
 
   @InjectMocks private BillingService billingService;
 
@@ -42,6 +48,13 @@ class BillingServiceTest {
     patient.setId(10L);
     when(hospitalContext.requireHospitalId()).thenReturn(4L);
     when(patientService.requirePatient(10L, 4L)).thenReturn(patient);
+    Doctor doctor = new Doctor();
+    doctor.setId(20L);
+    doctor.setConsultationFee(new BigDecimal("100"));
+    when(doctorService.requireDoctor(20L, 4L)).thenReturn(doctor);
+
+    when(prescriptionRepository.findTopByPatient_IdAndDoctor_IdOrderByCreatedAtDesc(10L, 20L))
+        .thenReturn(Optional.empty());
     when(billingRepository.save(any(Billing.class)))
         .thenAnswer(
             invocation -> {
@@ -50,7 +63,7 @@ class BillingServiceTest {
               return billing;
             });
 
-    var response = billingService.createOpdBilling(new CreateOpdBillingRequest(10L));
+    var response = billingService.createOpdBilling(new CreateOpdBillingRequest(10L, 20L));
 
     assertEquals(BillingStatus.DRAFT, response.status());
     assertEquals(BillingSourceType.OPD, response.sourceType());
