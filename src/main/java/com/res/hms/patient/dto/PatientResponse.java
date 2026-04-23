@@ -7,7 +7,8 @@ import java.time.LocalDateTime;
 public record PatientResponse(
     Long id,
     String fullName,
-    Gender gender,
+    String patientCode,
+    String gender,
     LocalDate dob,
     String phone,
     String address,

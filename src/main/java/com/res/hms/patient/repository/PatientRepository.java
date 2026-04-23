@@ -7,11 +7,27 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
+import java.util.Optional;
+
 public interface PatientRepository extends BaseRepository<Patient, Long> {
-  @Query(
-      "SELECT p FROM Patient p WHERE p.hospitalId = :hospitalId AND "
-          + "(LOWER(p.fullName) LIKE LOWER(CONCAT('%', :query, '%')) OR "
-          + "p.phone LIKE CONCAT('%', :query, '%'))")
-  Page<Patient> search(
-      @Param("hospitalId") Long hospitalId, @Param("query") String query, Pageable pageable);
+
+
+    // 🔥 REQUIRED for ID search
+    Optional<Patient> findByIdAndHospitalId(Long id, Long hospitalId);
+
+    // 🔥 MAIN SEARCH QUERY (name + phone + patientCode)
+    @Query(
+        "SELECT p FROM Patient p WHERE p.hospitalId = :hospitalId AND (" +
+            "LOWER(p.fullName) LIKE LOWER(CONCAT('%', :query, '%')) OR " +
+            "p.phone LIKE CONCAT('%', :query, '%') OR " +
+            "LOWER(p.patientCode) LIKE LOWER(CONCAT('%', :query, '%'))" +
+            ") ORDER BY p.createdAt DESC"
+    )
+    Page<Patient> search(
+        @Param("hospitalId") Long hospitalId,
+        @Param("query") String query,
+        Pageable pageable
+    );
+
+
 }
