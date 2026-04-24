@@ -47,11 +47,12 @@ class DoctorServiceTest {
     doctor.setId(UUID.nameUUIDFromBytes("3".getBytes()));
     doctor.setUser(user);
     doctor.setSpecialization("Cardiology");
-    
+
     UUID hospitalId = UUID.nameUUIDFromBytes("4".getBytes());
     when(hospitalContext.requireHospitalId()).thenReturn(hospitalId);
     when(hospitalContext.getHospitalIdOrNull()).thenReturn(hospitalId);
-    when(doctorRepository.findAllByHospitalIdOrderByCreatedAtDesc(eq(hospitalId), any(PageRequest.class)))
+    when(doctorRepository.findAllByHospitalIdOrderByCreatedAtDesc(
+            eq(hospitalId), any(PageRequest.class)))
         .thenReturn(new PageImpl<>(List.of(doctor)));
     when(doctorHospitalDetailsRepository.findByUserIdAndHospitalId(any(), eq(hospitalId)))
         .thenReturn(Optional.empty());
@@ -66,14 +67,12 @@ class DoctorServiceTest {
   void requireDoctorRejectsMissingDoctor() {
     UUID doctorId = UUID.nameUUIDFromBytes("12".getBytes());
     UUID hospitalId = UUID.nameUUIDFromBytes("4".getBytes());
-    
+
     when(resourceLookup.findRequired(eq(doctorId), eq(hospitalId), any(), anyString()))
         .thenThrow(new ApiException("NOT_FOUND", "Doctor not found", HttpStatus.NOT_FOUND));
 
     ApiException exception =
-        assertThrows(
-            ApiException.class,
-            () -> doctorService.requireDoctor(doctorId, hospitalId));
+        assertThrows(ApiException.class, () -> doctorService.requireDoctor(doctorId, hospitalId));
 
     assertEquals("NOT_FOUND", exception.getCode());
   }

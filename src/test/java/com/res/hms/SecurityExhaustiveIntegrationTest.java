@@ -118,7 +118,7 @@ class SecurityExhaustiveIntegrationTest {
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(
                     String.format(
-                    """
+                        """
                                 {
                                   "username": "newuser2",
                                   "password": "password",
@@ -128,7 +128,8 @@ class SecurityExhaustiveIntegrationTest {
                                   "dob": "1990-01-01",
                                   "department": "XYZ"
                                 }
-                                """, testHospitalId)))
+                                """,
+                        testHospitalId)))
         .andExpect(status().isForbidden());
   }
 
@@ -143,7 +144,7 @@ class SecurityExhaustiveIntegrationTest {
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(
                     String.format(
-                    """
+                        """
                                 {
                                   "username": "another_admin",
                                   "password": "password",
@@ -152,7 +153,8 @@ class SecurityExhaustiveIntegrationTest {
                                   "gender": "MALE",
                                   "dob": "1990-01-01"
                                 }
-                                """, testHospitalId)))
+                                """,
+                        testHospitalId)))
         .andExpect(status().isOk())
         .andExpect(jsonPath("$.data.username").value("another_admin"));
   }
@@ -168,7 +170,7 @@ class SecurityExhaustiveIntegrationTest {
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(
                     String.format(
-                    """
+                        """
                                 {
                                   "username": "hosp_doctor",
                                   "password": "password",
@@ -178,7 +180,8 @@ class SecurityExhaustiveIntegrationTest {
                                   "dob": "1990-01-01",
                                   "department": "department"
                                 }
-                                """, testHospitalId)))
+                                """,
+                        testHospitalId)))
         .andExpect(status().isConflict());
   }
 
@@ -256,7 +259,10 @@ class SecurityExhaustiveIntegrationTest {
                 .session(session)
                 .header("X-Hospital-Id", testHospitalId.toString())
                 .contentType(MediaType.APPLICATION_JSON)
-                .content(String.format("{\"username\": \"hosp2_user\", \"fullName\": \"Updated Name\", \"gender\": \"FEMALE\", \"dob\": \"1990-01-01\", \"memberships\": [{\"hospitalId\": \"%s\", \"roles\": [\"DOCTOR\"]}]}", secondHospitalId)))
+                .content(
+                    String.format(
+                        "{\"username\": \"hosp2_user\", \"fullName\": \"Updated Name\", \"gender\": \"FEMALE\", \"dob\": \"1990-01-01\", \"memberships\": [{\"hospitalId\": \"%s\", \"roles\": [\"DOCTOR\"]}]}",
+                        secondHospitalId)))
         .andExpect(status().isNotFound()); // Strict isolation: user not found in context
   }
 
@@ -312,7 +318,7 @@ class SecurityExhaustiveIntegrationTest {
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(
                     String.format(
-                    """
+                        """
                                 {
                                   "username": "noname",
                                   "password": "password",
@@ -320,7 +326,8 @@ class SecurityExhaustiveIntegrationTest {
                                   "gender": "MALE",
                                   "dob": "1990-01-01"
                                 }
-                                """, testHospitalId)))
+                                """,
+                        testHospitalId)))
         .andExpect(status().isBadRequest());
   }
 
@@ -335,7 +342,7 @@ class SecurityExhaustiveIntegrationTest {
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(
                     String.format(
-                    """
+                        """
                                 {
                                   "username": "nogender",
                                   "password": "password",
@@ -343,7 +350,8 @@ class SecurityExhaustiveIntegrationTest {
                                   "fullName": "No Gender",
                                   "dob": "1990-01-01"
                                 }
-                                """, testHospitalId)))
+                                """,
+                        testHospitalId)))
         .andExpect(status().isBadRequest());
   }
 
@@ -358,7 +366,7 @@ class SecurityExhaustiveIntegrationTest {
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(
                     String.format(
-                    """
+                        """
                                 {
                                   "username": "nodob",
                                   "password": "password",
@@ -366,7 +374,8 @@ class SecurityExhaustiveIntegrationTest {
                                   "fullName": "No DOB",
                                   "gender": "MALE"
                                 }
-                                """, testHospitalId)))
+                                """,
+                        testHospitalId)))
         .andExpect(status().isBadRequest());
   }
 }

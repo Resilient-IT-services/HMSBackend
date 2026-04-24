@@ -6,7 +6,6 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 import com.res.hms.audit.dto.AuditDetail;
-import com.res.hms.audit.dto.AuditLogResponse;
 import com.res.hms.audit.repository.AuditLogRepository;
 import com.res.hms.common.tenant.HospitalContext;
 import com.res.hms.domain.AuditLog;

@@ -11,6 +11,6 @@ import lombok.NoArgsConstructor;
 @NoArgsConstructor
 @AllArgsConstructor
 public class AuditDetail {
-    private Map<String, Object> before;
-    private Map<String, Object> after;
+  private Map<String, Object> before;
+  private Map<String, Object> after;
 }

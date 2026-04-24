@@ -19,35 +19,63 @@ import lombok.NoArgsConstructor;
 @NoArgsConstructor
 @AllArgsConstructor
 public class UserRequestDTO {
-    @NotBlank(message = "username is required")
-    private String username;
-    
-    private String password;
-    
-    @NotBlank(message = "fullName is required")
-    private String fullName;
-    
-    @NotNull(message = "gender is required")
-    private Gender gender;
-    
-    @NotNull(message = "dob is required")
-    private LocalDate dob;
-    
-    private String phone;
-    private List<MembershipRequestDTO> memberships;
-    private Boolean superuser;
-    
-    // Profile specific fields (optional, used if specific roles are assigned)
-    private String specialization;
-    private String department;
-    private BigDecimal consultationFee;
-    private Integer followUpDays;
+  @NotBlank(message = "username is required")
+  private String username;
 
-    @Data
-    @NoArgsConstructor
-    @AllArgsConstructor
-    public static class MembershipRequestDTO {
-        private UUID hospitalId;
-        private Set<RoleCode> roles;
-    }
+  private String password;
+
+  @NotBlank(message = "fullName is required")
+  private String fullName;
+
+  @NotNull(message = "gender is required")
+  private Gender gender;
+
+  @NotNull(message = "dob is required")
+  private LocalDate dob;
+
+  private String phone;
+  private List<MembershipDTO> memberships;
+  private Boolean superuser;
+
+  // Doctor specific
+  private String specialization;
+  private BigDecimal consultationFee;
+  private Integer followUpDays;
+  private String bio;
+  private String licenseNumber;
+
+  // Nurse specific
+  private String department;
+  private String nursingLicenseNo;
+  private String certificationLevel;
+
+  // Pharmacist specific
+  private String pciRegNo;
+  private String qualification;
+
+  // Lab Tech specific
+  private String labSpecialty;
+  private String labLicenseNo;
+
+  // Receptionist specific
+  private com.res.hms.user.dto.ReceptionistFluency languagesSpoken;
+  private Boolean insuranceSpecialist;
+
+  // Role-Hospital specific details (active hospital context)
+  private String officeLocation;
+  private Boolean departmentHead;
+  private String floorLocation;
+  private String shiftType;
+  private String counterLocation;
+  private String pharmacyWing;
+  private String deskLocation;
+  private String emergencyContactNumber;
+
+  @Data
+  @NoArgsConstructor
+  @AllArgsConstructor
+  public static class MembershipDTO {
+    private UUID hospitalId;
+    private Set<RoleCode> roles;
+  }
 }

@@ -48,13 +48,13 @@ public class UserController {
 
   @PostMapping
   @PreAuthorize("hasAnyRole('SUPER_ADMIN', 'ADMIN')")
-  public ApiResponse<UserSummaryDTO> create(@Valid @RequestBody UserRequestDTO request) {
+  public ApiResponse<UserFullProfileDTO> create(@Valid @RequestBody UserRequestDTO request) {
     return ApiResponse.success(userService.createUser(request));
   }
 
   @PutMapping("/{id}")
   @PreAuthorize("hasAnyRole('SUPER_ADMIN', 'ADMIN')")
-  public ApiResponse<UserSummaryDTO> update(
+  public ApiResponse<UserFullProfileDTO> update(
       @PathVariable UUID id, @Valid @RequestBody UserRequestDTO request) {
     return ApiResponse.success(userService.updateUser(id, request));
   }

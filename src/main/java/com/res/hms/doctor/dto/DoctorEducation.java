@@ -11,16 +11,16 @@ import lombok.NoArgsConstructor;
 @NoArgsConstructor
 @AllArgsConstructor
 public class DoctorEducation {
-    private List<Qualification> qualifications;
+  private List<Qualification> qualifications;
 
-    @Data
-    @Builder
-    @NoArgsConstructor
-    @AllArgsConstructor
-    public static class Qualification {
-        private String degree;
-        private String institution;
-        private Integer year;
-        private String specialization;
-    }
+  @Data
+  @Builder
+  @NoArgsConstructor
+  @AllArgsConstructor
+  public static class Qualification {
+    private String degree;
+    private String institution;
+    private Integer year;
+    private String specialization;
+  }
 }

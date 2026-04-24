@@ -60,6 +60,15 @@ public class UserAccount extends BaseEntity {
   @OneToOne(mappedBy = "user", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
   private Nurse nurse;
 
+  @OneToOne(mappedBy = "user", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
+  private PharmacistProfile pharmacistProfile;
+
+  @OneToOne(mappedBy = "user", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
+  private LabTechProfile labTechProfile;
+
+  @OneToOne(mappedBy = "user", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
+  private ReceptionistProfile receptionistProfile;
+
   public Set<RoleCode> getRoleCodes() {
     return assignments.stream().map(a -> a.getRole().getCode()).collect(Collectors.toSet());
   }

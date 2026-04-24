@@ -20,8 +20,7 @@ import lombok.Setter;
 @Table(name = "doctor_hospital_details")
 public class DoctorHospitalDetails {
 
-  @Id
-  private UUID assignmentId;
+  @Id private UUID assignmentId;
 
   @OneToOne(fetch = FetchType.LAZY)
   @MapsId

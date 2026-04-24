@@ -11,9 +11,9 @@ import lombok.NoArgsConstructor;
 @NoArgsConstructor
 @AllArgsConstructor
 public class HospitalSettings {
-    private Map<String, Object> configurations;
-    private String timezone;
-    private String currency;
-    private Boolean opdEnabled;
-    private Boolean pharmacyEnabled;
+  private Map<String, Object> configurations;
+  private String timezone;
+  private String currency;
+  private Boolean opdEnabled;
+  private Boolean pharmacyEnabled;
 }

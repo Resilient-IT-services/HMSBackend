@@ -11,7 +11,7 @@ import lombok.NoArgsConstructor;
 @NoArgsConstructor
 @AllArgsConstructor
 public class ReceptionistProfileResponse {
-    private UUID userId;
-    private ReceptionistFluency languagesSpoken;
-    private boolean insuranceSpecialist;
+  private UUID userId;
+  private ReceptionistFluency languagesSpoken;
+  private boolean insuranceSpecialist;
 }

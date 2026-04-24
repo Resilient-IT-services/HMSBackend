@@ -11,14 +11,14 @@ import lombok.NoArgsConstructor;
 @NoArgsConstructor
 @AllArgsConstructor
 public class ReceptionistFluency {
-    private List<LanguageEntry> fluencies;
+  private List<LanguageEntry> fluencies;
 
-    @Data
-    @Builder
-    @NoArgsConstructor
-    @AllArgsConstructor
-    public static class LanguageEntry {
-        private String language;
-        private String proficiency; // e.g., NATIVE, FLUENT, INTERMEDIATE
-    }
+  @Data
+  @Builder
+  @NoArgsConstructor
+  @AllArgsConstructor
+  public static class LanguageEntry {
+    private String language;
+    private String proficiency; // e.g., NATIVE, FLUENT, INTERMEDIATE
+  }
 }

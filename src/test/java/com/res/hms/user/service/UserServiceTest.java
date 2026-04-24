@@ -8,6 +8,7 @@ import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
+import static org.mockito.Mockito.lenient;
 
 import com.res.hms.common.exception.ApiException;
 import com.res.hms.common.tenant.HospitalContext;
@@ -24,7 +25,14 @@ import com.res.hms.domain.UserAccount;
 import com.res.hms.domain.UserRoleAssignment;
 import com.res.hms.nurse.repository.NurseRepository;
 import com.res.hms.repository.DoctorHospitalDetailsRepository;
+import com.res.hms.repository.AdminHospitalDetailsRepository;
+import com.res.hms.repository.NurseHospitalDetailsRepository;
+import com.res.hms.repository.PharmacistHospitalDetailsRepository;
+import com.res.hms.repository.ReceptionistHospitalDetailsRepository;
 import com.res.hms.repository.HospitalRepository;
+import com.res.hms.repository.LabTechProfileRepository;
+import com.res.hms.repository.PharmacistProfileRepository;
+import com.res.hms.repository.ReceptionistProfileRepository;
 import com.res.hms.repository.RoleRepository;
 import com.res.hms.repository.UserAccountRepository;
 import com.res.hms.user.dto.UserRequestDTO;
@@ -51,7 +59,14 @@ class UserServiceTest {
   @Mock private HospitalRepository hospitalRepository;
   @Mock private DoctorRepository doctorRepository;
   @Mock private DoctorHospitalDetailsRepository doctorHospitalDetailsRepository;
+  @Mock private AdminHospitalDetailsRepository adminHospitalDetailsRepository;
+  @Mock private NurseHospitalDetailsRepository nurseHospitalDetailsRepository;
+  @Mock private PharmacistHospitalDetailsRepository pharmacistHospitalDetailsRepository;
+  @Mock private ReceptionistHospitalDetailsRepository receptionistHospitalDetailsRepository;
   @Mock private NurseRepository nurseRepository;
+  @Mock private PharmacistProfileRepository pharmacistProfileRepository;
+  @Mock private LabTechProfileRepository labTechProfileRepository;
+  @Mock private ReceptionistProfileRepository receptionistProfileRepository;
   @Mock private PasswordEncoder passwordEncoder;
   @Mock private HospitalContext hospitalContext;
   @Mock private UserMapper userMapper;
@@ -86,7 +101,7 @@ class UserServiceTest {
             .fullName("Dr. John")
             .gender(Gender.MALE)
             .dob(LocalDate.now())
-            .memberships(List.of(new UserRequestDTO.MembershipRequestDTO(hospitalId, Set.of(RoleCode.DOCTOR))))
+            .memberships(List.of(new UserRequestDTO.MembershipDTO(hospitalId, Set.of(RoleCode.DOCTOR))))
             .specialization("Cardiology")
             .consultationFee(BigDecimal.valueOf(500))
             .followUpDays(5)
@@ -120,17 +135,18 @@ class UserServiceTest {
     when(hospitalContext.getHospitalIdOrNull()).thenReturn(hospitalId);
     when(hospitalContext.isSuperAdmin()).thenReturn(false);
     
-    // Scoped search stubbing
     when(resourceLookup.findRequired(eq(userId), eq(hospitalId), any(), anyString())).thenReturn(user);
-    // Role stubbing
-    when(resourceLookup.findRequired(eq(RoleCode.DOCTOR), any(), anyString())).thenReturn(adminRole); 
+    when(resourceLookup.findRequired(eq(RoleCode.DOCTOR), any(), anyString())).thenReturn(new Role()); 
+    
+    lenient().when(doctorRepository.findByUserId(any())).thenReturn(Optional.empty());
+    lenient().when(nurseRepository.findByUserId(any())).thenReturn(Optional.empty());
 
     userService.updateUser(userId, UserRequestDTO.builder()
         .username("user1")
         .fullName("Updated")
         .gender(Gender.MALE)
         .dob(LocalDate.now())
-        .memberships(List.of(new UserRequestDTO.MembershipRequestDTO(hospitalId, Set.of(RoleCode.DOCTOR))))
+        .memberships(List.of(new UserRequestDTO.MembershipDTO(hospitalId, Set.of(RoleCode.DOCTOR))))
         .build());
 
     // Verify other hospital membership is still there

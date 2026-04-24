@@ -14,9 +14,7 @@ import com.res.hms.domain.RoleCode;
 import com.res.hms.domain.UserAccount;
 import com.res.hms.domain.UserRoleAssignment;
 import com.res.hms.nurse.repository.NurseRepository;
-import com.res.hms.repository.HospitalRepository;
-import com.res.hms.repository.ReceptionistProfileRepository;
-import com.res.hms.repository.DoctorHospitalDetailsRepository;
+import com.res.hms.repository.*;
 import com.res.hms.user.dto.UserSummaryDTO;
 import java.util.Optional;
 import java.util.UUID;
@@ -34,12 +32,17 @@ class UserMapperTest {
   @Mock private NurseRepository nurseRepository;
   @Mock private ReceptionistProfileRepository receptionistProfileRepository;
   @Mock private DoctorHospitalDetailsRepository doctorHospitalDetailsRepository;
+  @Mock private AdminHospitalDetailsRepository adminHospitalDetailsRepository;
+  @Mock private NurseHospitalDetailsRepository nurseHospitalDetailsRepository;
+  @Mock private PharmacistHospitalDetailsRepository pharmacistHospitalDetailsRepository;
+  @Mock private ReceptionistHospitalDetailsRepository receptionistHospitalDetailsRepository;
+  @Mock private PharmacistProfileRepository pharmacistProfileRepository;
+  @Mock private LabTechProfileRepository labTechProfileRepository;
 
   @InjectMocks private UserMapper userMapper;
 
   private final UUID hospitalId = UUID.nameUUIDFromBytes("hospital".getBytes());
   private final UUID doctorUserId = UUID.nameUUIDFromBytes("doctorUser".getBytes());
-  private final UUID nurseUserId = UUID.nameUUIDFromBytes("nurseUser".getBytes());
 
   @Test
   void toSummaryDTOMapsCorrectly() {
@@ -56,15 +59,18 @@ class UserMapperTest {
     doctorRole.setCode(RoleCode.DOCTOR);
 
     UserRoleAssignment assignment = new UserRoleAssignment();
+    assignment.setId(UUID.randomUUID());
     assignment.setUser(user);
     assignment.setHospitalId(hospitalId);
     assignment.setRole(doctorRole);
     user.getAssignments().add(assignment);
 
+    when(hospitalRepository.findById(hospitalId)).thenReturn(Optional.of(hospital));
+
     var response = userMapper.toSummaryDTO(user);
 
     assertEquals(1, response.getMemberships().size());
     assertEquals(hospitalId, response.getMemberships().get(0).getHospitalId());
-    assertEquals("DOCTOR", response.getMemberships().get(0).getRoles().get(0));
+    assertEquals("DOCTOR", response.getMemberships().get(0).getRoleAssignments().get(0).getRoleCode());
   }
 }

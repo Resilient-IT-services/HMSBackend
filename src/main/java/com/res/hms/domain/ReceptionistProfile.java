@@ -21,8 +21,7 @@ import org.hibernate.annotations.Type;
 @Table(name = "receptionist_profile")
 public class ReceptionistProfile {
 
-  @Id
-  private UUID userId;
+  @Id private UUID userId;
 
   @OneToOne(fetch = FetchType.LAZY)
   @MapsId

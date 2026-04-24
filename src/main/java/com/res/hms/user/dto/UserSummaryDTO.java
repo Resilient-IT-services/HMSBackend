@@ -6,6 +6,7 @@ import java.time.LocalDateTime;
 import java.util.List;
 import java.util.UUID;
 import lombok.AllArgsConstructor;
+import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 import lombok.experimental.SuperBuilder;
@@ -33,6 +34,19 @@ public class UserSummaryDTO {
     @AllArgsConstructor
     public static class HospitalMembershipDTO {
         private UUID hospitalId;
-        private List<String> roles;
+        private String hospitalName;
+        private List<RoleAssignmentDTO> roleAssignments;
+    }
+
+    @Data
+    @Builder
+    @NoArgsConstructor
+    @AllArgsConstructor
+    public static class RoleAssignmentDTO {
+        private UUID assignmentId;
+        private String roleCode;
+        private String departmentName;
+        private boolean active;
+        private Object hospitalDetails;
     }
 }
