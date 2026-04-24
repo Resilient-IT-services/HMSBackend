@@ -7,6 +7,7 @@ import com.res.hms.billing.service.BillingService;
 import com.res.hms.common.api.ApiResponse;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
+import java.util.UUID;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -34,13 +35,13 @@ public class BillingController {
   @PostMapping("/{id}/items")
   @PreAuthorize("hasAnyRole('ADMIN','RECEPTIONIST','PHARMACIST')")
   public ApiResponse<BillingResponse> addItem(
-      @PathVariable Long id, @Valid @RequestBody AddBillingItemRequest request) {
+      @PathVariable UUID id, @Valid @RequestBody AddBillingItemRequest request) {
     return ApiResponse.success(billingService.addItem(id, request));
   }
 
   @GetMapping("/{id}")
   @PreAuthorize("hasAnyRole('ADMIN','RECEPTIONIST','PHARMACIST')")
-  public ApiResponse<BillingResponse> get(@PathVariable Long id) {
+  public ApiResponse<BillingResponse> get(@PathVariable UUID id) {
     return ApiResponse.success(billingService.get(id));
   }
 }

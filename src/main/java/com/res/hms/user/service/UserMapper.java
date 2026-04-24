@@ -17,6 +17,7 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.UUID;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 
@@ -29,7 +30,7 @@ public class UserMapper {
   private final NurseRepository nurseRepository;
 
   public UserResponse toResponse(UserAccount userAccount) {
-    Map<Long, Set<RoleCode>> groupedRoles = new HashMap<>();
+    Map<UUID, Set<RoleCode>> groupedRoles = new HashMap<>();
     if (userAccount.getAssignments() != null) {
       for (UserRoleAssignment assignment : userAccount.getAssignments()) {
         groupedRoles
@@ -39,8 +40,8 @@ public class UserMapper {
     }
 
     List<HospitalMembershipResponse> memberships = new ArrayList<>();
-    for (Map.Entry<Long, Set<RoleCode>> entry : groupedRoles.entrySet()) {
-      Long hospitalId = entry.getKey();
+    for (Map.Entry<UUID, Set<RoleCode>> entry : groupedRoles.entrySet()) {
+      UUID hospitalId = entry.getKey();
       Set<RoleCode> roles = entry.getValue();
       String specialization = null;
       String department = null;

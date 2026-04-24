@@ -3,9 +3,10 @@ package com.res.hms.patient.dto;
 import com.res.hms.domain.Gender;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.util.UUID;
 
 public record PatientResponse(
-    Long id,
+    UUID id,
     String fullName,
     Gender gender,
     LocalDate dob,

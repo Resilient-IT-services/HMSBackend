@@ -2,16 +2,17 @@ package com.res.hms.common.repository;
 
 import java.util.List;
 import java.util.Optional;
+import java.util.UUID;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.repository.NoRepositoryBean;
 
 @NoRepositoryBean
-public interface BaseRepository<T, K> extends JpaRepository<T, K> {
-  Page<T> findAllByHospitalIdOrderByCreatedAtDesc(Long hospitalId, Pageable pageable);
+public interface BaseRepository<T> extends JpaRepository<T, UUID> {
+  Page<T> findAllByHospitalIdOrderByCreatedAtDesc(UUID hospitalId, Pageable pageable);
 
-  List<T> findAllByHospitalId(Long hospitalId);
+  List<T> findAllByHospitalId(UUID hospitalId);
 
-  Optional<T> findByIdAndHospitalId(K id, Long hospitalId);
+  Optional<T> findByIdAndHospitalId(UUID id, UUID hospitalId);
 }

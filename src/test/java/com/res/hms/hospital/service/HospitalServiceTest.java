@@ -11,6 +11,7 @@ import com.res.hms.hospital.dto.CreateHospitalRequest;
 import com.res.hms.repository.HospitalRepository;
 import java.util.List;
 import java.util.Optional;
+import java.util.UUID;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
@@ -43,20 +44,20 @@ class HospitalServiceTest {
         .thenAnswer(
             invocation -> {
               Hospital hospital = invocation.getArgument(0);
-              hospital.setId(1L);
+              hospital.setId(UUID.nameUUIDFromBytes("1".getBytes()));
               return hospital;
             });
 
     var response = hospitalService.create(new CreateHospitalRequest("Res", "HMS", "Kochi"));
 
-    assertEquals(1L, response.id());
+    assertEquals(UUID.nameUUIDFromBytes("1".getBytes()), response.id());
     assertEquals("ACTIVE", response.status());
   }
 
   @Test
   void listMapsHospitals() {
     Hospital hospital = new Hospital();
-    hospital.setId(2L);
+    hospital.setId(UUID.nameUUIDFromBytes("2".getBytes()));
     hospital.setName("Res");
     hospital.setCode("TEST");
     hospital.setAddress("Calicut");
@@ -72,16 +73,19 @@ class HospitalServiceTest {
   @Test
   void updateUpdatesHospitalDetails() {
     Hospital hospital = new Hospital();
-    hospital.setId(1L);
+    hospital.setId(UUID.nameUUIDFromBytes("1".getBytes()));
     hospital.setName("Old Name");
     hospital.setCode("OLD");
 
-    when(hospitalRepository.findById(1L)).thenReturn(Optional.of(hospital));
+    when(hospitalRepository.findById(UUID.nameUUIDFromBytes("1".getBytes())))
+        .thenReturn(Optional.of(hospital));
     when(hospitalRepository.findByCode("NEW")).thenReturn(Optional.empty());
     when(hospitalRepository.save(any(Hospital.class))).thenAnswer(i -> i.getArgument(0));
 
     var response =
-        hospitalService.update(1L, new CreateHospitalRequest("New Name", "NEW", "New Addr"));
+        hospitalService.update(
+            UUID.nameUUIDFromBytes("1".getBytes()),
+            new CreateHospitalRequest("New Name", "NEW", "New Addr"));
 
     assertEquals("New Name", response.name());
     assertEquals("NEW", response.code());

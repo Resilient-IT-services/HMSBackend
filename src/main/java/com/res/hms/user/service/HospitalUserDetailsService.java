@@ -9,6 +9,7 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
+import java.util.UUID;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.authentication.DisabledException;
 import org.springframework.security.core.userdetails.UserDetails;
@@ -36,11 +37,11 @@ public class HospitalUserDetailsService implements UserDetailsService {
       throw new DisabledException("User account is inactive");
     }
 
-    Map<Long, Set<RoleCode>> hospitalRoles = new HashMap<>();
+    Map<UUID, Set<RoleCode>> hospitalRoles = new HashMap<>();
     Set<RoleCode> allRoles = new HashSet<>();
 
     for (UserRoleAssignment assignment : userAccount.getAssignments()) {
-      Long hid = assignment.getHospitalId();
+      UUID hid = assignment.getHospitalId();
       RoleCode code = assignment.getRole().getCode();
       hospitalRoles.computeIfAbsent(hid, k -> new HashSet<>()).add(code);
       allRoles.add(code);

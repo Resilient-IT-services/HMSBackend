@@ -10,6 +10,7 @@ import com.res.hms.nurse.dto.CreateNurseRequest;
 import com.res.hms.nurse.dto.NurseResponse;
 import com.res.hms.nurse.repository.NurseRepository;
 import com.res.hms.repository.UserAccountRepository;
+import java.util.UUID;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Service;
@@ -27,7 +28,7 @@ public class NurseService {
   @Transactional
   @Auditable(entity = "nurse", action = "CREATE")
   public NurseResponse create(CreateNurseRequest request) {
-    Long hospitalId = hospitalContext.requireHospitalId();
+    UUID hospitalId = hospitalContext.requireHospitalId();
 
     UserAccount user =
         resourceLookup.findRequired(
@@ -49,14 +50,14 @@ public class NurseService {
   }
 
   public PageResponse<NurseResponse> list(int page, int size) {
-    Long hospitalId = hospitalContext.requireHospitalId();
+    UUID hospitalId = hospitalContext.requireHospitalId();
     return PageResponse.from(
         nurseRepository
             .findAllByHospitalIdOrderByCreatedAtDesc(hospitalId, PageRequest.of(page, size))
             .map(this::toResponse));
   }
 
-  public Nurse requireNurse(Long id, Long hospitalId) {
+  public Nurse requireNurse(UUID id, UUID hospitalId) {
     return resourceLookup.findRequired(
         id, hospitalId, nurseRepository::findByIdAndHospitalId, "Nurse");
   }

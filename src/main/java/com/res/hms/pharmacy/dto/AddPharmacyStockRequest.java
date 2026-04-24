@@ -6,9 +6,10 @@ import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import java.math.BigDecimal;
 import java.time.LocalDate;
+import java.util.UUID;
 
 public record AddPharmacyStockRequest(
-    @NotNull(message = "medicineId is required") Long medicineId,
+    @NotNull(message = "medicineId is required") UUID medicineId,
     @NotBlank(message = "batchNumber is required") String batchNumber,
     LocalDate expiryDate,
     @NotNull(message = "quantity is required")

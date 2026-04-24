@@ -8,6 +8,7 @@ import com.res.hms.user.service.UserService;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import java.util.List;
+import java.util.UUID;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -47,14 +48,14 @@ public class UserController {
   @org.springframework.web.bind.annotation.PutMapping("/{id}")
   @PreAuthorize("hasAnyRole('SUPER_ADMIN', 'ADMIN')")
   public ApiResponse<UserResponse> update(
-      @org.springframework.web.bind.annotation.PathVariable Long id,
+      @org.springframework.web.bind.annotation.PathVariable UUID id,
       @Valid @RequestBody com.res.hms.user.dto.UpdateUserRequest request) {
     return ApiResponse.success(userService.update(id, request));
   }
 
   @org.springframework.web.bind.annotation.DeleteMapping("/{id}")
   @PreAuthorize("hasAnyRole('SUPER_ADMIN', 'ADMIN')")
-  public ApiResponse<Void> delete(@org.springframework.web.bind.annotation.PathVariable Long id) {
+  public ApiResponse<Void> delete(@org.springframework.web.bind.annotation.PathVariable UUID id) {
     userService.delete(id);
     return ApiResponse.success(null);
   }

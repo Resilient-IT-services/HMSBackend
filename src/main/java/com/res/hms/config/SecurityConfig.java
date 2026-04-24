@@ -1,5 +1,6 @@
 package com.res.hms.config;
 
+import com.res.hms.common.tenant.TenantFilter;
 import com.res.hms.user.service.HospitalUserDetailsService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Bean;
@@ -14,6 +15,7 @@ import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
+import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
 import org.springframework.security.web.context.HttpSessionSecurityContextRepository;
 import org.springframework.security.web.context.SecurityContextRepository;
 
@@ -24,6 +26,7 @@ public class SecurityConfig {
   private final HospitalUserDetailsService hospitalUserDetailsService;
   private final RestAuthenticationEntryPoint restAuthenticationEntryPoint;
   private final RestAccessDeniedHandler restAccessDeniedHandler;
+  private final TenantFilter tenantFilter;
 
   @Bean
   public PasswordEncoder passwordEncoder() {
@@ -62,6 +65,7 @@ public class SecurityConfig {
         .securityContext(context -> context.securityContextRepository(securityContextRepository))
         .sessionManagement(
             session -> session.sessionCreationPolicy(SessionCreationPolicy.IF_REQUIRED))
+        .addFilterAfter(tenantFilter, UsernamePasswordAuthenticationFilter.class)
         .authorizeHttpRequests(
             auth ->
                 auth.requestMatchers(

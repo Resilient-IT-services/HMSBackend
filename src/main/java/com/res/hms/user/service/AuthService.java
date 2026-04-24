@@ -15,10 +15,10 @@ import com.res.hms.user.security.HospitalUserPrincipal;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import java.util.ArrayList;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.UUID;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.authentication.AuthenticationManager;
@@ -42,6 +42,7 @@ public class AuthService {
   private final HospitalRepository hospitalRepository;
   private final DoctorRepository doctorRepository;
   private final NurseRepository nurseRepository;
+  private final com.res.hms.common.tenant.HospitalContext hospitalContext;
 
   public void login(
       LoginRequest request, HttpServletRequest httpRequest, HttpServletResponse httpResponse) {
@@ -65,25 +66,6 @@ public class AuthService {
     }
   }
 
-  public UserProfileResponse selectHospital(
-      Long hospitalId, HttpServletRequest httpRequest, HttpServletResponse httpResponse) {
-    HospitalUserPrincipal principal = getAuthenticatedPrincipal();
-    Set<RoleCode> selectedRoles = collectRoles(principal, hospitalId);
-
-    HospitalUserPrincipal refinedPrincipal =
-        new HospitalUserPrincipal(
-            principal.userId(),
-            principal.username(),
-            principal.password(),
-            principal.active(),
-            principal.hospitalRoles(),
-            hospitalId,
-            selectedRoles);
-
-    updateSecurityContext(refinedPrincipal, httpRequest, httpResponse);
-    return toProfileResponse(refinedPrincipal);
-  }
-
   private HospitalUserPrincipal getAuthenticatedPrincipal() {
     Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
     if (authentication == null
@@ -93,45 +75,22 @@ public class AuthService {
     return principal;
   }
 
-  private Set<RoleCode> collectRoles(HospitalUserPrincipal principal, Long hospitalId) {
-    Set<RoleCode> roles = new HashSet<>(principal.hospitalRoles().getOrDefault(null, Set.of()));
-    if (hospitalId != null) {
-      Set<RoleCode> hospitalScopedRoles = principal.hospitalRoles().get(hospitalId);
-      if (hospitalScopedRoles == null) {
-        throw new ApiException(
-            "AUTH_ERROR", "User has no access to this hospital", HttpStatus.FORBIDDEN);
-      }
-      roles.addAll(hospitalScopedRoles);
-    }
-    return roles;
-  }
-
-  private void updateSecurityContext(
-      HospitalUserPrincipal principal,
-      HttpServletRequest httpRequest,
-      HttpServletResponse httpResponse) {
-    Authentication refinedAuth =
-        new UsernamePasswordAuthenticationToken(principal, null, principal.getAuthorities());
-    SecurityContext context = SecurityContextHolder.createEmptyContext();
-    context.setAuthentication(refinedAuth);
-    SecurityContextHolder.setContext(context);
-    securityContextRepository.saveContext(context, httpRequest, httpResponse);
-  }
-
   public void logout(HttpServletRequest request, HttpServletResponse response) {
     new SecurityContextLogoutHandler()
         .logout(request, response, SecurityContextHolder.getContext().getAuthentication());
   }
 
   public UserProfileResponse currentUser() {
-    return toProfileResponse(getAuthenticatedPrincipal());
+    HospitalUserPrincipal principal = getAuthenticatedPrincipal();
+    UUID activeHospitalId = hospitalContext.getHospitalIdOrNull();
+    return toProfileResponse(principal, activeHospitalId);
   }
 
-  private UserProfileResponse toProfileResponse(HospitalUserPrincipal principal) {
+  private UserProfileResponse toProfileResponse(HospitalUserPrincipal principal, UUID activeHospitalId) {
     List<HospitalMembershipResponse> memberships = new ArrayList<>();
     if (principal.hospitalRoles() != null) {
-      for (Map.Entry<Long, Set<RoleCode>> entry : principal.hospitalRoles().entrySet()) {
-        Long hospitalId = entry.getKey();
+      for (Map.Entry<UUID, Set<RoleCode>> entry : principal.hospitalRoles().entrySet()) {
+        UUID hospitalId = entry.getKey();
         Set<RoleCode> roles = entry.getValue();
         String specialization = null;
         String department = null;
@@ -169,6 +128,6 @@ public class AuthService {
     }
 
     return new UserProfileResponse(
-        principal.userId(), principal.hospitalId(), principal.username(), memberships);
+        principal.userId(), activeHospitalId, principal.username(), memberships);
   }
 }

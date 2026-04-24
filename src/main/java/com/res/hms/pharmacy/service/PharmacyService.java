@@ -27,6 +27,7 @@ import com.res.hms.pharmacy.repository.PharmacyStockRepository;
 import com.res.hms.pharmacy.repository.PrescriptionRepository;
 import java.util.Comparator;
 import java.util.List;
+import java.util.UUID;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.http.HttpStatus;
@@ -55,7 +56,7 @@ public class PharmacyService {
   @Transactional
   @Auditable(entity = "medicine", action = "CREATE")
   public MedicineResponse createMedicine(CreateMedicineRequest request) {
-    Long hospitalId = hospitalContext.requireHospitalId();
+    UUID hospitalId = hospitalContext.requireHospitalId();
     Medicine medicine = new Medicine();
     medicine.setHospitalId(hospitalId);
     medicine.setName(request.name());
@@ -65,7 +66,7 @@ public class PharmacyService {
   }
 
   public PageResponse<MedicineResponse> listMedicines(int page, int size) {
-    Long hospitalId = hospitalContext.requireHospitalId();
+    UUID hospitalId = hospitalContext.requireHospitalId();
     return PageResponse.from(
         medicineRepository
             .findAllByHospitalIdOrderByCreatedAtDesc(hospitalId, PageRequest.of(page, size))
@@ -75,7 +76,7 @@ public class PharmacyService {
   @Transactional
   @Auditable(entity = "pharmacy_stock", action = "CREATE")
   public PharmacyStockResponse addStock(AddPharmacyStockRequest request) {
-    Long hospitalId = hospitalContext.requireHospitalId();
+    UUID hospitalId = hospitalContext.requireHospitalId();
     Medicine medicine =
         resourceLookup.findRequired(
             request.medicineId(),
@@ -105,7 +106,7 @@ public class PharmacyService {
   @Transactional
   @Auditable(entity = "prescription", action = "CREATE")
   public PrescriptionResponse createPrescription(CreatePrescriptionRequest request) {
-    Long hospitalId = hospitalContext.requireHospitalId();
+    UUID hospitalId = hospitalContext.requireHospitalId();
     Prescription prescription = new Prescription();
     prescription.setHospitalId(hospitalId);
     prescription.setPatient(patientService.requirePatient(request.patientId(), hospitalId));
@@ -116,8 +117,8 @@ public class PharmacyService {
   @Transactional
   @Auditable(entity = "prescription_item", action = "CREATE")
   public PrescriptionResponse addPrescriptionItem(
-      Long prescriptionId, AddPrescriptionItemRequest request) {
-    Long hospitalId = hospitalContext.requireHospitalId();
+      UUID prescriptionId, AddPrescriptionItemRequest request) {
+    UUID hospitalId = hospitalContext.requireHospitalId();
     Prescription p =
         resourceLookup.findRequired(
             prescriptionId,
@@ -145,7 +146,7 @@ public class PharmacyService {
   @Transactional
   @Auditable(entity = "prescription", action = "DISPENSE")
   public DispenseResponse dispense(DispensePrescriptionRequest request) {
-    Long hospitalId = hospitalContext.requireHospitalId();
+    UUID hospitalId = hospitalContext.requireHospitalId();
     Prescription prescription =
         resourceLookup.findRequired(
             request.prescriptionId(),
@@ -165,7 +166,7 @@ public class PharmacyService {
     return new DispenseResponse(prescription.getId(), billingService.get(billing.getId()));
   }
 
-  private Billing dispenseItem(Long hospitalId, Billing billing, PrescriptionItem item) {
+  private Billing dispenseItem(UUID hospitalId, Billing billing, PrescriptionItem item) {
     PharmacyStock stock = findAvailableStock(hospitalId, item.getMedicine());
     stock.setQuantity(stock.getQuantity() - 1);
     pharmacyStockRepository.save(stock);
@@ -173,7 +174,7 @@ public class PharmacyService {
         billing, item.getMedicine().getName(), stock.getPrice(), 1);
   }
 
-  private PharmacyStock findAvailableStock(Long hospitalId, Medicine medicine) {
+  private PharmacyStock findAvailableStock(UUID hospitalId, Medicine medicine) {
     return pharmacyStockRepository
         .findAllByHospitalIdAndMedicineIdOrderByExpiryDateAsc(hospitalId, medicine.getId())
         .stream()

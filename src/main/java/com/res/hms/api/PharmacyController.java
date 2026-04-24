@@ -16,6 +16,7 @@ import com.res.hms.pharmacy.service.PharmacyService;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import java.util.List;
+import java.util.UUID;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -71,7 +72,7 @@ public class PharmacyController {
   @PostMapping("/prescriptions/{id}/items")
   @PreAuthorize(SecurityConstants.HAS_ADMIN_OR_DOCTOR)
   public ApiResponse<PrescriptionResponse> addPrescriptionItem(
-      @PathVariable Long id, @Valid @RequestBody AddPrescriptionItemRequest request) {
+      @PathVariable UUID id, @Valid @RequestBody AddPrescriptionItemRequest request) {
     return ApiResponse.success(pharmacyService.addPrescriptionItem(id, request));
   }
 

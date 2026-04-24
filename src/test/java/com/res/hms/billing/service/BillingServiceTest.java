@@ -23,6 +23,7 @@ import com.res.hms.patient.service.PatientService;
 import com.res.hms.pharmacy.repository.PrescriptionRepository;
 import java.math.BigDecimal;
 import java.util.Optional;
+import java.util.UUID;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
@@ -45,25 +46,33 @@ class BillingServiceTest {
   @SuppressWarnings("unchecked")
   void createOpdBillingPersistsDraftBilling() {
     Patient patient = new Patient();
-    patient.setId(10L);
-    when(hospitalContext.requireHospitalId()).thenReturn(4L);
-    when(patientService.requirePatient(10L, 4L)).thenReturn(patient);
+    patient.setId(UUID.nameUUIDFromBytes("10".getBytes()));
+    when(hospitalContext.requireHospitalId()).thenReturn(UUID.nameUUIDFromBytes("4".getBytes()));
+    when(patientService.requirePatient(
+            UUID.nameUUIDFromBytes("10".getBytes()), UUID.nameUUIDFromBytes("4".getBytes())))
+        .thenReturn(patient);
     Doctor doctor = new Doctor();
-    doctor.setId(20L);
+    doctor.setId(UUID.nameUUIDFromBytes("20".getBytes()));
     doctor.setConsultationFee(new BigDecimal("100"));
-    when(doctorService.requireDoctor(20L, 4L)).thenReturn(doctor);
+    when(doctorService.requireDoctor(
+            UUID.nameUUIDFromBytes("20".getBytes()), UUID.nameUUIDFromBytes("4".getBytes())))
+        .thenReturn(doctor);
 
-    when(prescriptionRepository.findTopByPatient_IdAndDoctor_IdOrderByCreatedAtDesc(10L, 20L))
+    when(prescriptionRepository.findTopByPatient_IdAndDoctor_IdOrderByCreatedAtDesc(
+            UUID.nameUUIDFromBytes("10".getBytes()), UUID.nameUUIDFromBytes("20".getBytes())))
         .thenReturn(Optional.empty());
     when(billingRepository.save(any(Billing.class)))
         .thenAnswer(
             invocation -> {
               Billing billing = invocation.getArgument(0);
-              billing.setId(70L);
+              billing.setId(UUID.nameUUIDFromBytes("70".getBytes()));
               return billing;
             });
 
-    var response = billingService.createOpdBilling(new CreateOpdBillingRequest(10L, 20L));
+    var response =
+        billingService.createOpdBilling(
+            new CreateOpdBillingRequest(
+                UUID.nameUUIDFromBytes("10".getBytes()), UUID.nameUUIDFromBytes("20".getBytes())));
 
     assertEquals(BillingStatus.DRAFT, response.status());
     assertEquals(BillingSourceType.OPD, response.sourceType());
@@ -72,8 +81,12 @@ class BillingServiceTest {
   @Test
   @SuppressWarnings("unchecked")
   void addItemRejectsMissingBilling() {
-    when(hospitalContext.requireHospitalId()).thenReturn(4L);
-    when(resourceLookup.findRequired(eq(99L), eq(4L), any(), anyString()))
+    when(hospitalContext.requireHospitalId()).thenReturn(UUID.nameUUIDFromBytes("4".getBytes()));
+    when(resourceLookup.findRequired(
+            eq(UUID.nameUUIDFromBytes("99".getBytes())),
+            eq(UUID.nameUUIDFromBytes("4".getBytes())),
+            any(),
+            anyString()))
         .thenThrow(
             new ApiException(
                 "NOT_FOUND", "Billing not found", org.springframework.http.HttpStatus.NOT_FOUND));
@@ -83,7 +96,8 @@ class BillingServiceTest {
             ApiException.class,
             () ->
                 billingService.addItem(
-                    99L, new AddBillingItemRequest("Consultation", new BigDecimal("50"), 1)));
+                    UUID.nameUUIDFromBytes("99".getBytes()),
+                    new AddBillingItemRequest("Consultation", new BigDecimal("50"), 1)));
 
     assertEquals("NOT_FOUND", exception.getCode());
   }
@@ -92,20 +106,26 @@ class BillingServiceTest {
   @SuppressWarnings("unchecked")
   void addItemUpdatesTotalAndStatus() {
     Patient patient = new Patient();
-    patient.setId(10L);
+    patient.setId(UUID.nameUUIDFromBytes("10".getBytes()));
     Billing billing = new Billing();
-    billing.setId(70L);
+    billing.setId(UUID.nameUUIDFromBytes("70".getBytes()));
     billing.setPatient(patient);
     billing.setStatus(BillingStatus.DRAFT);
     billing.setTotalAmount(BigDecimal.ZERO);
-    when(hospitalContext.requireHospitalId()).thenReturn(4L);
-    when(resourceLookup.findRequired(eq(70L), eq(4L), any(), anyString())).thenReturn(billing);
+    when(hospitalContext.requireHospitalId()).thenReturn(UUID.nameUUIDFromBytes("4".getBytes()));
+    when(resourceLookup.findRequired(
+            eq(UUID.nameUUIDFromBytes("70".getBytes())),
+            eq(UUID.nameUUIDFromBytes("4".getBytes())),
+            any(),
+            anyString()))
+        .thenReturn(billing);
     when(billingRepository.save(any(Billing.class)))
         .thenAnswer(invocation -> invocation.getArgument(0));
 
     var response =
         billingService.addItem(
-            70L, new AddBillingItemRequest("Consultation", new BigDecimal("50"), 2));
+            UUID.nameUUIDFromBytes("70".getBytes()),
+            new AddBillingItemRequest("Consultation", new BigDecimal("50"), 2));
 
     assertEquals(new BigDecimal("100"), response.totalAmount());
     assertEquals(BillingStatus.GENERATED, response.status());
@@ -115,10 +135,10 @@ class BillingServiceTest {
   @Test
   void createAndAppendPharmacyBillingAccumulateTotals() {
     Patient patient = new Patient();
-    patient.setId(10L);
-    patient.setHospitalId(4L);
+    patient.setId(UUID.nameUUIDFromBytes("10".getBytes()));
+    patient.setHospitalId(UUID.nameUUIDFromBytes("4".getBytes()));
     Billing billing = new Billing();
-    billing.setId(80L);
+    billing.setId(UUID.nameUUIDFromBytes("80".getBytes()));
     billing.setPatient(patient);
     billing.setTotalAmount(BigDecimal.ZERO);
     when(billingRepository.save(any(Billing.class)))
@@ -126,7 +146,7 @@ class BillingServiceTest {
             invocation -> {
               Billing persisted = invocation.getArgument(0);
               if (persisted.getId() == null) {
-                persisted.setId(80L);
+                persisted.setId(UUID.nameUUIDFromBytes("80".getBytes()));
               }
               return persisted;
             });

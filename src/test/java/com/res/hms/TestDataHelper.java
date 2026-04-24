@@ -8,6 +8,7 @@ import com.res.hms.domain.UserRoleAssignment;
 import com.res.hms.repository.HospitalRepository;
 import com.res.hms.repository.RoleRepository;
 import com.res.hms.repository.UserAccountRepository;
+import java.util.UUID;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
@@ -20,7 +21,7 @@ public class TestDataHelper {
   @Autowired private HospitalRepository hospitalRepository;
 
   @Transactional(propagation = Propagation.REQUIRES_NEW)
-  public Long createHospitalIfMissing(String code, String name) {
+  public UUID createHospitalIfMissing(String code, String name) {
     return hospitalRepository
         .findByCode(code)
         .map(Hospital::getId)
@@ -39,7 +40,7 @@ public class TestDataHelper {
   public void createUserIfMissing(
       String username,
       RoleCode roleCode,
-      Long hospitalId,
+      UUID hospitalId,
       String password,
       PasswordEncoder encoder,
       UserAccountRepository userRepo,

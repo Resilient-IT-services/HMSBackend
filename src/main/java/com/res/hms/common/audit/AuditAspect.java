@@ -4,6 +4,7 @@ import com.res.hms.audit.service.AuditLogService;
 import com.res.hms.common.tenant.HospitalContext;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
+import java.util.UUID;
 import lombok.RequiredArgsConstructor;
 import org.aspectj.lang.JoinPoint;
 import org.aspectj.lang.annotation.AfterReturning;
@@ -20,8 +21,8 @@ public class AuditAspect {
 
   @AfterReturning(pointcut = "@annotation(auditable)", returning = "result")
   public void logAudit(JoinPoint joinPoint, Auditable auditable, Object result) {
-    Long hospitalId = hospitalContext.getHospitalIdOrNull();
-    Long entityId = extractId(result);
+    UUID hospitalId = hospitalContext.getHospitalIdOrNull();
+    UUID entityId = extractId(result);
 
     String details =
         String.format("%s %s with ID %s", auditable.action(), auditable.entity(), entityId);
@@ -29,17 +30,17 @@ public class AuditAspect {
     auditLogService.record(hospitalId, auditable.entity(), entityId, auditable.action(), details);
   }
 
-  private Long extractId(Object result) {
+  private UUID extractId(Object result) {
     if (result == null) {
       return null;
     }
     try {
       Method getId = result.getClass().getMethod("id");
-      return (Long) getId.invoke(result);
+      return (UUID) getId.invoke(result);
     } catch (NoSuchMethodException | IllegalAccessException | InvocationTargetException e) {
       try {
         Method getId = result.getClass().getMethod("getId");
-        return (Long) getId.invoke(result);
+        return (UUID) getId.invoke(result);
       } catch (NoSuchMethodException | IllegalAccessException | InvocationTargetException ex) {
         return null;
       }

@@ -6,9 +6,12 @@ import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotEmpty;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Size;
+import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.util.Set;
+import java.util.UUID;
 
+@ValidUserRole
 public record CreateUserRequest(
     @NotBlank(message = "username is required") String username,
     @NotBlank(message = "password is required")
@@ -18,7 +21,10 @@ public record CreateUserRequest(
     @NotBlank(message = "fullName is required") String fullName,
     @NotNull(message = "gender is required") Gender gender,
     @NotNull(message = "dob is required") LocalDate dob,
-    Long hospitalId,
+    UUID hospitalId,
     String phone,
     String specialization,
-    String department) {}
+    String department,
+    BigDecimal consultationFee,
+    Integer followUpDays)
+    implements UserRoleValidatable {}

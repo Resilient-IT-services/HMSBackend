@@ -7,6 +7,7 @@ import com.res.hms.hospital.service.HospitalService;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import java.util.List;
+import java.util.UUID;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -38,7 +39,7 @@ public class HospitalController {
   @org.springframework.web.bind.annotation.PutMapping("/{id}")
   @PreAuthorize("hasRole('SUPER_ADMIN')")
   public ApiResponse<HospitalResponse> update(
-      @org.springframework.web.bind.annotation.PathVariable Long id,
+      @org.springframework.web.bind.annotation.PathVariable UUID id,
       @Valid @RequestBody CreateHospitalRequest request) {
     return ApiResponse.success(hospitalService.update(id, request));
   }

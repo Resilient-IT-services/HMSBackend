@@ -8,6 +8,7 @@ import com.res.hms.common.api.ApiResponse;
 import com.res.hms.common.api.PageResponse;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
+import java.util.UUID;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -45,7 +46,7 @@ public class AppointmentController {
   @PostMapping("/{id}/status")
   @PreAuthorize("hasAnyRole('ADMIN','RECEPTIONIST','DOCTOR')")
   public ApiResponse<AppointmentResponse> updateStatus(
-      @PathVariable Long id, @Valid @RequestBody UpdateAppointmentStatusRequest request) {
+      @PathVariable UUID id, @Valid @RequestBody UpdateAppointmentStatusRequest request) {
     return ApiResponse.success(appointmentService.updateStatus(id, request));
   }
 }

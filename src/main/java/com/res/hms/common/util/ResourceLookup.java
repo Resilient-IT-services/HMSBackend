@@ -2,6 +2,7 @@ package com.res.hms.common.util;
 
 import com.res.hms.common.exception.ApiException;
 import java.util.Optional;
+import java.util.UUID;
 import java.util.function.BiFunction;
 import java.util.function.Function;
 import org.springframework.http.HttpStatus;
@@ -11,7 +12,7 @@ import org.springframework.stereotype.Component;
 public class ResourceLookup {
 
   public <T, K> T findRequired(
-      K id, Long hospitalId, BiFunction<K, Long, Optional<T>> finder, String resourceName) {
+      K id, UUID hospitalId, BiFunction<K, UUID, Optional<T>> finder, String resourceName) {
     return finder
         .apply(id, hospitalId)
         .orElseThrow(

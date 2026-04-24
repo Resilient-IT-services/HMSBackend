@@ -5,10 +5,11 @@ import com.res.hms.domain.BillingStatus;
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.UUID;
 
 public record BillingResponse(
-    Long id,
-    Long patientId,
+    UUID id,
+    UUID patientId,
     BillingSourceType sourceType,
     BillingStatus status,
     BigDecimal totalAmount,

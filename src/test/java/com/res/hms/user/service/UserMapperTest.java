@@ -15,6 +15,7 @@ import com.res.hms.domain.UserRoleAssignment;
 import com.res.hms.nurse.repository.NurseRepository;
 import com.res.hms.repository.HospitalRepository;
 import java.util.Optional;
+import java.util.UUID;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
@@ -30,14 +31,18 @@ class UserMapperTest {
 
   @InjectMocks private UserMapper userMapper;
 
+  private final UUID hospitalId = UUID.nameUUIDFromBytes("hospital".getBytes());
+  private final UUID doctorUserId = UUID.nameUUIDFromBytes("doctorUser".getBytes());
+  private final UUID nurseUserId = UUID.nameUUIDFromBytes("nurseUser".getBytes());
+
   @Test
   void toResponseMapsSpecializationForDoctor() {
     UserAccount user = new UserAccount();
-    user.setId(1L);
+    user.setId(doctorUserId);
     user.setUsername("doctor1");
 
     Hospital hospital = new Hospital();
-    hospital.setId(10L);
+    hospital.setId(hospitalId);
     hospital.setName("Test Hospital");
     hospital.setCode("TEST");
 
@@ -46,15 +51,15 @@ class UserMapperTest {
 
     UserRoleAssignment assignment = new UserRoleAssignment();
     assignment.setUser(user);
-    assignment.setHospitalId(10L);
+    assignment.setHospitalId(hospitalId);
     assignment.setRole(doctorRole);
     user.getAssignments().add(assignment);
 
     Doctor doctor = new Doctor();
     doctor.setSpecialization("Cardiology");
 
-    when(hospitalRepository.findById(10L)).thenReturn(Optional.of(hospital));
-    when(doctorRepository.findByUserId(1L)).thenReturn(Optional.of(doctor));
+    when(hospitalRepository.findById(hospitalId)).thenReturn(Optional.of(hospital));
+    when(doctorRepository.findByUserId(doctorUserId)).thenReturn(Optional.of(doctor));
 
     var response = userMapper.toResponse(user);
 
@@ -66,11 +71,11 @@ class UserMapperTest {
   @Test
   void toResponseMapsDepartmentForNurse() {
     UserAccount user = new UserAccount();
-    user.setId(2L);
+    user.setId(nurseUserId);
     user.setUsername("nurse1");
 
     Hospital hospital = new Hospital();
-    hospital.setId(10L);
+    hospital.setId(hospitalId);
     hospital.setName("Test Hospital");
     hospital.setCode("TEST");
 
@@ -79,15 +84,15 @@ class UserMapperTest {
 
     UserRoleAssignment assignment = new UserRoleAssignment();
     assignment.setUser(user);
-    assignment.setHospitalId(10L);
+    assignment.setHospitalId(hospitalId);
     assignment.setRole(nurseRole);
     user.getAssignments().add(assignment);
 
     Nurse nurse = new Nurse();
     nurse.setDepartment("Emergency");
 
-    when(hospitalRepository.findById(10L)).thenReturn(Optional.of(hospital));
-    when(nurseRepository.findByUserId(2L)).thenReturn(Optional.of(nurse));
+    when(hospitalRepository.findById(hospitalId)).thenReturn(Optional.of(hospital));
+    when(nurseRepository.findByUserId(nurseUserId)).thenReturn(Optional.of(nurse));
 
     var response = userMapper.toResponse(user);
 

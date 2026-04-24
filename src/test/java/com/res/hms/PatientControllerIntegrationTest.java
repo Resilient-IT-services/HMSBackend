@@ -11,6 +11,7 @@ import com.res.hms.domain.UserRoleAssignment;
 import com.res.hms.repository.HospitalRepository;
 import com.res.hms.repository.RoleRepository;
 import com.res.hms.repository.UserAccountRepository;
+import java.util.UUID;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -34,7 +35,7 @@ class PatientControllerIntegrationTest {
   @Autowired private PasswordEncoder passwordEncoder;
   @Autowired private TestDataHelper testDataHelper;
 
-  private Long testHospitalId;
+  private UUID testHospitalId;
 
   @BeforeEach
   void ensureHospitalAdminExists() {
@@ -92,21 +93,12 @@ class PatientControllerIntegrationTest {
         .andExpect(status().isBadRequest())
         .andExpect(jsonPath("$.error.message").value("Please select a hospital first"));
 
-    // Select hospital
-    mockMvc
-        .perform(
-            post("/api/v1/auth/select-hospital")
-                .session(session)
-                .contentType(MediaType.APPLICATION_JSON)
-                .content("{\"hospitalId\": " + testHospitalId + "}"))
-        .andExpect(status().isOk())
-        .andExpect(jsonPath("$.data.hospitalId").value(testHospitalId));
-
-    // Now it should work
+    // Now it should work by sending X-Hospital-Id header
     mockMvc
         .perform(
             post("/api/v1/patients")
                 .session(session)
+                .header("X-Hospital-Id", testHospitalId.toString())
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(
                     """
@@ -122,7 +114,10 @@ class PatientControllerIntegrationTest {
         .andExpect(jsonPath("$.data.fullName").value("Asha Nair"));
 
     mockMvc
-        .perform(get("/api/v1/patients").session(session))
+        .perform(
+            get("/api/v1/patients")
+                .session(session)
+                .header("X-Hospital-Id", testHospitalId.toString()))
         .andExpect(status().isOk())
         .andExpect(jsonPath("$.data.content[0].fullName").value("Asha Nair"));
   }

@@ -14,6 +14,7 @@ import com.res.hms.domain.AppointmentStatus;
 import com.res.hms.domain.Doctor;
 import com.res.hms.domain.Patient;
 import com.res.hms.patient.service.PatientService;
+import java.util.UUID;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Service;
@@ -32,7 +33,7 @@ public class AppointmentService {
   @Transactional
   @Auditable(entity = "appointment", action = "CREATE")
   public AppointmentResponse create(CreateAppointmentRequest request) {
-    Long hospitalId = hospitalContext.requireHospitalId();
+    UUID hospitalId = hospitalContext.requireHospitalId();
     Patient patient = patientService.requirePatient(request.patientId(), hospitalId);
     Doctor doctor = doctorService.requireDoctor(request.doctorId(), hospitalId);
 
@@ -50,7 +51,7 @@ public class AppointmentService {
 
   @Transactional(readOnly = true)
   public PageResponse<AppointmentResponse> list(int page, int size, String search) {
-    Long hospitalId = hospitalContext.requireHospitalId();
+    UUID hospitalId = hospitalContext.requireHospitalId();
     PageRequest pageRequest = PageRequest.of(page, size);
 
     if (search != null && !search.trim().isEmpty()) {
@@ -68,8 +69,8 @@ public class AppointmentService {
 
   @Transactional
   @Auditable(entity = "appointment", action = "UPDATE_STATUS")
-  public AppointmentResponse updateStatus(Long id, UpdateAppointmentStatusRequest request) {
-    Long hospitalId = hospitalContext.requireHospitalId();
+  public AppointmentResponse updateStatus(UUID id, UpdateAppointmentStatusRequest request) {
+    UUID hospitalId = hospitalContext.requireHospitalId();
     Appointment appointment =
         resourceLookup.findRequired(
             id, hospitalId, appointmentRepository::findByIdAndHospitalId, "Appointment");

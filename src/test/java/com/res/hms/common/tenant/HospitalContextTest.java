@@ -10,6 +10,7 @@ import com.res.hms.user.security.HospitalUserPrincipal;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Set;
+import java.util.UUID;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
@@ -22,25 +23,36 @@ class HospitalContextTest {
   @AfterEach
   void tearDown() {
     SecurityContextHolder.clearContext();
+    TenantContext.clear();
   }
 
   @Test
   void requireHospitalIdReturnsHospitalIdForHospitalScopedUser() {
+    UUID hospitalId = UUID.randomUUID();
+    UUID userId = UUID.randomUUID();
     HospitalUserPrincipal principal =
         new HospitalUserPrincipal(
-            7L,
+            userId,
             "admin",
             "secret",
             true,
-            Map.of(11L, Set.of(RoleCode.ADMIN)),
-            11L,
+            Map.of(hospitalId, Set.of(RoleCode.ADMIN)),
+            hospitalId,
             Set.of(RoleCode.ADMIN));
     SecurityContextHolder.getContext()
         .setAuthentication(
             UsernamePasswordAuthenticationToken.authenticated(
                 principal, null, principal.getAuthorities()));
 
-    assertEquals(11L, hospitalContext.requireHospitalId());
+    assertEquals(hospitalId, hospitalContext.requireHospitalId());
+  }
+
+  @Test
+  void requireHospitalIdReturnsTenantIdIfPresent() {
+    UUID hospitalId = UUID.randomUUID();
+    TenantContext.setHospitalId(hospitalId);
+
+    assertEquals(hospitalId, hospitalContext.requireHospitalId());
   }
 
   @Test
@@ -51,13 +63,14 @@ class HospitalContextTest {
   }
 
   @Test
-  void requireHospitalIdRejectsSuperAdmin() {
-    Map<Long, Set<RoleCode>> roles = new HashMap<>();
+  void requireHospitalIdRejectsSuperAdminWithoutSelection() {
+    UUID userId = UUID.randomUUID();
+    Map<UUID, Set<RoleCode>> roles = new HashMap<>();
     roles.put(null, Set.of(RoleCode.SUPER_ADMIN));
 
     HospitalUserPrincipal principal =
         new HospitalUserPrincipal(
-            7L, "super", "secret", true, roles, null, Set.of(RoleCode.SUPER_ADMIN));
+            userId, "super", "secret", true, roles, null, Set.of(RoleCode.SUPER_ADMIN));
     SecurityContextHolder.getContext()
         .setAuthentication(
             UsernamePasswordAuthenticationToken.authenticated(
@@ -70,21 +83,23 @@ class HospitalContextTest {
 
   @Test
   void currentUserIdOrNullReturnsUserIdForPrincipal() {
+    UUID hospitalId = UUID.randomUUID();
+    UUID userId = UUID.randomUUID();
     HospitalUserPrincipal principal =
         new HospitalUserPrincipal(
-            9L,
+            userId,
             "user",
             "secret",
             true,
-            Map.of(11L, Set.of(RoleCode.DOCTOR)),
-            11L,
+            Map.of(hospitalId, Set.of(RoleCode.DOCTOR)),
+            hospitalId,
             Set.of(RoleCode.DOCTOR));
     SecurityContextHolder.getContext()
         .setAuthentication(
             UsernamePasswordAuthenticationToken.authenticated(
                 principal, null, principal.getAuthorities()));
 
-    assertEquals(9L, hospitalContext.currentUserIdOrNull());
+    assertEquals(userId, hospitalContext.currentUserIdOrNull());
   }
 
   @Test

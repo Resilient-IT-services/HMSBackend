@@ -2,12 +2,13 @@ package com.res.hms.pharmacy.dto;
 
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.UUID;
 
 public record PrescriptionResponse(
-    Long id,
-    Long patientId,
+    UUID id,
+    UUID patientId,
     String patientName,
-    Long doctorId,
+    UUID doctorId,
     String doctorName,
     List<PrescriptionItemResponse> items,
     LocalDateTime createdAt) {}

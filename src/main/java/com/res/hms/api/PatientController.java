@@ -7,6 +7,7 @@ import com.res.hms.patient.dto.PatientResponse;
 import com.res.hms.patient.service.PatientService;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
+import java.util.UUID;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -42,7 +43,7 @@ public class PatientController {
 
   @GetMapping("/{id}")
   @PreAuthorize("hasAnyRole('ADMIN','RECEPTIONIST','NURSE','DOCTOR')")
-  public ApiResponse<PatientResponse> get(@PathVariable Long id) {
+  public ApiResponse<PatientResponse> get(@PathVariable UUID id) {
     return ApiResponse.success(patientService.get(id));
   }
 }

@@ -2,7 +2,6 @@ package com.res.hms.api;
 
 import com.res.hms.common.api.ApiResponse;
 import com.res.hms.user.dto.LoginRequest;
-import com.res.hms.user.dto.SelectHospitalRequest;
 import com.res.hms.user.dto.UserProfileResponse;
 import com.res.hms.user.service.AuthService;
 import io.swagger.v3.oas.annotations.tags.Tag;
@@ -31,15 +30,6 @@ public class AuthController {
       HttpServletResponse httpResponse) {
     authService.login(request, httpRequest, httpResponse);
     return ApiResponse.success(null);
-  }
-
-  @PostMapping("/select-hospital")
-  public ApiResponse<UserProfileResponse> selectHospital(
-      @Valid @RequestBody SelectHospitalRequest request,
-      HttpServletRequest httpRequest,
-      HttpServletResponse httpResponse) {
-    return ApiResponse.success(
-        authService.selectHospital(request.hospitalId(), httpRequest, httpResponse));
   }
 
   @PostMapping("/logout")

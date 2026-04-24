@@ -1,6 +1,7 @@
 package com.res.hms.billing.dto;
 
 import java.math.BigDecimal;
+import java.util.UUID;
 
 public record BillingItemResponse(
-    Long id, String itemName, BigDecimal amount, Integer quantity, BigDecimal subtotal) {}
+    UUID id, String itemName, BigDecimal amount, Integer quantity, BigDecimal subtotal) {}

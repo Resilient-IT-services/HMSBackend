@@ -23,6 +23,7 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
+import java.util.UUID;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -46,10 +47,14 @@ class AuthServiceTest {
   @Mock private HospitalRepository hospitalRepository;
   @Mock private DoctorRepository doctorRepository;
   @Mock private NurseRepository nurseRepository;
+  @Mock private com.res.hms.common.tenant.HospitalContext hospitalContext;
   @Mock private HttpServletRequest httpServletRequest;
   @Mock private HttpServletResponse httpServletResponse;
 
   @InjectMocks private AuthService authService;
+
+  private final UUID hospitalId = UUID.nameUUIDFromBytes("hospital".getBytes());
+  private final UUID userId = UUID.nameUUIDFromBytes("user".getBytes());
 
   @AfterEach
   void tearDown() {
@@ -58,11 +63,11 @@ class AuthServiceTest {
 
   @Test
   void currentUserReturnsRoleSpecificDetails() {
-    Map<Long, Set<RoleCode>> roles = new HashMap<>();
-    roles.put(10L, Set.of(RoleCode.DOCTOR));
+    Map<UUID, Set<RoleCode>> roles = new HashMap<>();
+    roles.put(hospitalId, Set.of(RoleCode.DOCTOR));
 
     Hospital hospital = new Hospital();
-    hospital.setId(10L);
+    hospital.setId(hospitalId);
     hospital.setName("Test Hospital");
     hospital.setCode("TEST");
 
@@ -73,11 +78,12 @@ class AuthServiceTest {
         .setAuthentication(
             new TestingAuthenticationToken(
                 new HospitalUserPrincipal(
-                    5L, "doctor1", "secret", true, roles, 10L, Set.of(RoleCode.DOCTOR)),
+                    userId, "doctor1", "secret", true, roles, hospitalId, Set.of(RoleCode.DOCTOR)),
                 null));
 
-    when(hospitalRepository.findById(10L)).thenReturn(Optional.of(hospital));
-    when(doctorRepository.findByUserId(5L)).thenReturn(Optional.of(doctor));
+    when(hospitalContext.getHospitalIdOrNull()).thenReturn(hospitalId);
+    when(hospitalRepository.findById(hospitalId)).thenReturn(Optional.of(hospital));
+    when(doctorRepository.findByUserId(userId)).thenReturn(Optional.of(doctor));
 
     var response = authService.currentUser();
 
@@ -87,12 +93,12 @@ class AuthServiceTest {
 
   @Test
   void loginAuthenticatesAndPersistsSecurityContext() {
-    Map<Long, Set<RoleCode>> roles = new HashMap<>();
+    Map<UUID, Set<RoleCode>> roles = new HashMap<>();
     roles.put(null, Set.of(RoleCode.DOCTOR));
 
     HospitalUserPrincipal principal =
         new HospitalUserPrincipal(
-            1L, "doctor", "secret", true, roles, null, Set.of(RoleCode.DOCTOR));
+            userId, "doctor", "secret", true, roles, null, Set.of(RoleCode.DOCTOR));
     Authentication authentication = new TestingAuthenticationToken(principal, null);
     when(authenticationManager.authenticate(any())).thenReturn(authentication);
 
@@ -120,19 +126,21 @@ class AuthServiceTest {
 
   @Test
   void currentUserReturnsPrincipalDetails() {
-    Map<Long, Set<RoleCode>> roles = new HashMap<>();
+    Map<UUID, Set<RoleCode>> roles = new HashMap<>();
     roles.put(null, Set.of(RoleCode.ADMIN));
 
     SecurityContextHolder.getContext()
         .setAuthentication(
             new TestingAuthenticationToken(
                 new HospitalUserPrincipal(
-                    2L, "admin", "secret", true, roles, null, Set.of(RoleCode.ADMIN)),
+                    userId, "admin", "secret", true, roles, null, Set.of(RoleCode.ADMIN)),
                 null));
+
+    when(hospitalContext.getHospitalIdOrNull()).thenReturn(null);
 
     var response = authService.currentUser();
 
-    assertEquals(2L, response.userId());
+    assertEquals(userId, response.userId());
     assertTrue(response.hospitals().stream().anyMatch(h -> h.roles().contains(RoleCode.ADMIN)));
   }
 

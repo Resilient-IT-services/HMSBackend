@@ -17,6 +17,7 @@ import com.res.hms.patient.dto.CreatePatientRequest;
 import com.res.hms.patient.repository.PatientRepository;
 import java.time.LocalDate;
 import java.util.List;
+import java.util.UUID;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
@@ -32,17 +33,22 @@ class PatientServiceTest {
   @Mock private PatientRepository patientRepository;
   @Mock private HospitalContext hospitalContext;
   @Mock private ResourceLookup resourceLookup;
-
+  UUID patientUuid = UUID.nameUUIDFromBytes("10".getBytes());
+  UUID doctorUuid = UUID.nameUUIDFromBytes("20".getBytes());
+  UUID hospitalUuid = UUID.nameUUIDFromBytes("4".getBytes());
+  UUID appointmentUUId = UUID.nameUUIDFromBytes("100".getBytes());
+  UUID currentuserID = UUID.nameUUIDFromBytes("1".getBytes());
+  UUID auditLogUUID = UUID.nameUUIDFromBytes("500".getBytes());
   @InjectMocks private PatientService patientService;
 
   @Test
   void createPersistsPatientAndAudits() {
-    when(hospitalContext.requireHospitalId()).thenReturn(4L);
+    when(hospitalContext.requireHospitalId()).thenReturn(hospitalUuid);
     when(patientRepository.save(any(Patient.class)))
         .thenAnswer(
             invocation -> {
               Patient patient = invocation.getArgument(0);
-              patient.setId(20L);
+              patient.setId(patientUuid);
               return patient;
             });
 
@@ -57,11 +63,12 @@ class PatientServiceTest {
   @Test
   void listReturnsMappedPatients() {
     Patient patient = new Patient();
-    patient.setId(2L);
+    patient.setId(patientUuid);
     patient.setFullName("Asha");
     patient.setGender(Gender.FEMALE);
-    when(hospitalContext.requireHospitalId()).thenReturn(4L);
-    when(patientRepository.findAllByHospitalIdOrderByCreatedAtDesc(eq(4L), any(PageRequest.class)))
+    when(hospitalContext.requireHospitalId()).thenReturn(hospitalUuid);
+    when(patientRepository.findAllByHospitalIdOrderByCreatedAtDesc(
+            eq(hospitalUuid), any(PageRequest.class)))
         .thenReturn(new PageImpl<>(List.of(patient)));
 
     var response = patientService.list(0, 10, null);
@@ -72,11 +79,12 @@ class PatientServiceTest {
 
   @Test
   void getRejectsMissingPatient() {
-    when(hospitalContext.requireHospitalId()).thenReturn(4L);
-    when(resourceLookup.findRequired(eq(99L), eq(4L), any(), anyString()))
+    when(hospitalContext.requireHospitalId()).thenReturn(hospitalUuid);
+    when(resourceLookup.findRequired(eq(patientUuid), eq(hospitalUuid), any(), anyString()))
         .thenThrow(new ApiException("NOT_FOUND", "Patient not found", HttpStatus.NOT_FOUND));
 
-    ApiException exception = assertThrows(ApiException.class, () -> patientService.get(99L));
+    ApiException exception =
+        assertThrows(ApiException.class, () -> patientService.get(patientUuid));
 
     assertEquals("NOT_FOUND", exception.getCode());
   }
@@ -84,20 +92,21 @@ class PatientServiceTest {
   @Test
   void requirePatientReturnsPatient() {
     Patient patient = new Patient();
-    patient.setId(9L);
-    when(resourceLookup.findRequired(eq(9L), eq(4L), any(), anyString())).thenReturn(patient);
+    patient.setId(patientUuid);
+    when(resourceLookup.findRequired(eq(patientUuid), eq(hospitalUuid), any(), anyString()))
+        .thenReturn(patient);
 
-    assertEquals(9L, patientService.requirePatient(9L, 4L).getId());
+    assertEquals(patientUuid, patientService.requirePatient(patientUuid, hospitalUuid).getId());
   }
 
   @Test
   void listCallsSearchWhenQueryProvided() {
-    when(hospitalContext.requireHospitalId()).thenReturn(4L);
-    when(patientRepository.search(eq(4L), eq("Asha"), any(PageRequest.class)))
+    when(hospitalContext.requireHospitalId()).thenReturn(hospitalUuid);
+    when(patientRepository.search(eq(hospitalUuid), eq("Asha"), any(PageRequest.class)))
         .thenReturn(new org.springframework.data.domain.PageImpl<>(List.of()));
 
     patientService.list(0, 10, "Asha");
 
-    verify(patientRepository).search(eq(4L), eq("Asha"), any(PageRequest.class));
+    verify(patientRepository).search(eq(hospitalUuid), eq("Asha"), any(PageRequest.class));
   }
 }

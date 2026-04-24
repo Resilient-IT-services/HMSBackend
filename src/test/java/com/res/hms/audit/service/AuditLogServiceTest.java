@@ -10,6 +10,7 @@ import com.res.hms.audit.repository.AuditLogRepository;
 import com.res.hms.common.tenant.HospitalContext;
 import com.res.hms.domain.AuditLog;
 import java.util.List;
+import java.util.UUID;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.ArgumentCaptor;
@@ -24,32 +25,38 @@ class AuditLogServiceTest {
 
   @Mock private AuditLogRepository auditLogRepository;
   @Mock private HospitalContext hospitalContext;
-
+  UUID patientUuid = UUID.nameUUIDFromBytes("10".getBytes());
+  UUID doctorUuid = UUID.nameUUIDFromBytes("20".getBytes());
+  UUID hospitalUuid = UUID.nameUUIDFromBytes("4".getBytes());
+  UUID appointmentUUId = UUID.nameUUIDFromBytes("100".getBytes());
+  UUID currentuserID = UUID.nameUUIDFromBytes("1".getBytes());
+  UUID auditLogUUID = UUID.nameUUIDFromBytes("500".getBytes());
   @InjectMocks private AuditLogService auditLogService;
 
   @Test
   void recordStoresAuditEntryWithCurrentUser() {
-    when(hospitalContext.currentUserIdOrNull()).thenReturn(77L);
+    when(hospitalContext.currentUserIdOrNull()).thenReturn(currentuserID);
 
-    auditLogService.record(5L, "patient", 8L, "CREATE", "created");
+    auditLogService.record(hospitalUuid, "patient", patientUuid, "CREATE", "created");
 
     ArgumentCaptor<AuditLog> captor = ArgumentCaptor.forClass(AuditLog.class);
     verify(auditLogRepository).save(captor.capture());
-    assertEquals(77L, captor.getValue().getPerformedBy());
+    assertEquals(currentuserID, captor.getValue().getPerformedBy());
     assertEquals("patient", captor.getValue().getEntityName());
   }
 
   @Test
   void listReturnsMappedAuditLogs() {
     AuditLog auditLog = new AuditLog();
-    auditLog.setId(9L);
+    auditLog.setId(auditLogUUID);
     auditLog.setEntityName("patient");
-    auditLog.setEntityId(8L);
+    auditLog.setEntityId(patientUuid);
     auditLog.setAction("CREATE");
-    auditLog.setPerformedBy(77L);
+    auditLog.setPerformedBy(currentuserID);
     auditLog.setDetails("created");
-    when(hospitalContext.getHospitalIdOrNull()).thenReturn(5L);
-    when(auditLogRepository.findAllByHospitalIdOrderByCreatedAtDesc(eq(5L), any(PageRequest.class)))
+    when(hospitalContext.getHospitalIdOrNull()).thenReturn(hospitalUuid);
+    when(auditLogRepository.findAllByHospitalIdOrderByCreatedAtDesc(
+            eq(hospitalUuid), any(PageRequest.class)))
         .thenReturn(new PageImpl<>(List.of(auditLog)));
 
     var response = auditLogService.list(0, 10);

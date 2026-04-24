@@ -1,9 +1,10 @@
 package com.res.hms.user.dto;
 
 import java.util.List;
+import java.util.UUID;
 
 public record UserResponse(
-    Long id,
+    UUID id,
     String username,
     String fullName,
     com.res.hms.domain.Gender gender,

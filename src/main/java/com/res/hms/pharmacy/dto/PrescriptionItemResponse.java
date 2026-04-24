@@ -1,4 +1,6 @@
 package com.res.hms.pharmacy.dto;
 
+import java.util.UUID;
+
 public record PrescriptionItemResponse(
-    Long id, Long medicineId, String medicineName, String dosage, String duration) {}
+    UUID id, UUID medicineId, String medicineName, String dosage, String duration) {}

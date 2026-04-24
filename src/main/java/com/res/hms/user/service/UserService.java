@@ -18,8 +18,10 @@ import com.res.hms.repository.UserAccountRepository;
 import com.res.hms.user.dto.AllocateRoleRequest;
 import com.res.hms.user.dto.CreateUserRequest;
 import com.res.hms.user.dto.UserResponse;
+import java.math.BigDecimal;
 import java.util.List;
 import java.util.Set;
+import java.util.UUID;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.crypto.password.PasswordEncoder;
@@ -44,11 +46,11 @@ public class UserService {
   @Transactional
   @Auditable(entity = "user_account", action = "CREATE")
   public UserResponse create(CreateUserRequest request) {
-    Long activeHospitalId = hospitalContext.getHospitalIdOrNull();
+    UUID activeHospitalId = hospitalContext.getHospitalIdOrNull();
     boolean isSuperAdmin = hospitalContext.isSuperAdmin();
 
     // If Super Admin, use hospitalId from request, otherwise use active context
-    Long targetHospitalId = isSuperAdmin ? request.hospitalId() : activeHospitalId;
+    UUID targetHospitalId = isSuperAdmin ? request.hospitalId() : activeHospitalId;
 
     validateCreateRequest(request, isSuperAdmin, targetHospitalId);
 
@@ -65,13 +67,23 @@ public class UserService {
     userAccountRepository.save(userAccount);
 
     handleRoleSpecificEntries(
-        userAccount, request.roles(), request.specialization(), request.department());
+        userAccount,
+        request.roles(),
+        request.specialization(),
+        request.department(),
+        request.consultationFee(),
+        request.followUpDays());
 
     return userMapper.toResponse(userAccount);
   }
 
   private void handleRoleSpecificEntries(
-      UserAccount user, Set<RoleCode> roles, String specialization, String department) {
+      UserAccount user,
+      Set<RoleCode> roles,
+      String specialization,
+      String department,
+      BigDecimal consultationFee,
+      Integer followUpDays) {
     if (roles.contains(RoleCode.DOCTOR)) {
       Doctor doctor =
           doctorRepository
@@ -83,6 +95,8 @@ public class UserService {
                     return newDoc;
                   });
       doctor.setSpecialization(specialization != null ? specialization : "General");
+      doctor.setConsultationFee(consultationFee);
+      doctor.setFollowUpDays(followUpDays);
       doctorRepository.save(doctor);
     }
 
@@ -101,7 +115,7 @@ public class UserService {
     }
   }
 
-  private void assignRoles(UserAccount user, Set<RoleCode> roleCodes, Long activeHospitalId) {
+  private void assignRoles(UserAccount user, Set<RoleCode> roleCodes, UUID activeHospitalId) {
     for (RoleCode code : roleCodes) {
       Role role = resourceLookup.findRequired(code, roleRepository::findByCode, "Role: " + code);
       UserRoleAssignment assignment = new UserRoleAssignment();
@@ -113,7 +127,7 @@ public class UserService {
   }
 
   public void validateCreateRequest(
-      CreateUserRequest request, boolean isSuperAdmin, Long hospitalId) {
+      CreateUserRequest request, boolean isSuperAdmin, UUID hospitalId) {
     validateUsernameUnique(request.username());
     validateRolesPresent(request.roles());
     validateHospitalContext(isSuperAdmin, hospitalId, request.roles());
@@ -133,7 +147,7 @@ public class UserService {
     }
   }
 
-  private void validateHospitalContext(boolean isSuperAdmin, Long hospitalId, Set<RoleCode> roles) {
+  private void validateHospitalContext(boolean isSuperAdmin, UUID hospitalId, Set<RoleCode> roles) {
     if (!isSuperAdmin) {
       if (hospitalId == null) {
         throw new ApiException(
@@ -156,11 +170,11 @@ public class UserService {
   @Transactional
   @Auditable(entity = "user_account", action = "ALLOCATE")
   public UserResponse allocateRoles(AllocateRoleRequest request) {
-    Long activeHospitalId = hospitalContext.getHospitalIdOrNull();
+    UUID activeHospitalId = hospitalContext.getHospitalIdOrNull();
     boolean isCallerSuperAdmin = hospitalContext.isSuperAdmin();
 
     UserAccount user = resolveUser(request, isCallerSuperAdmin, activeHospitalId);
-    Long targetHospitalId = isCallerSuperAdmin ? request.hospitalId() : activeHospitalId;
+    UUID targetHospitalId = isCallerSuperAdmin ? request.hospitalId() : activeHospitalId;
 
     if (targetHospitalId != null) {
       resourceLookup.findRequired(targetHospitalId, hospitalRepository::findById, "Hospital");
@@ -176,13 +190,18 @@ public class UserService {
     userAccountRepository.save(user);
 
     handleRoleSpecificEntries(
-        user, request.roles(), request.specialization(), request.department());
+        user,
+        request.roles(),
+        request.specialization(),
+        request.department(),
+        request.consultationFee(),
+        request.followUpDays());
 
     return userMapper.toResponse(user);
   }
 
   private UserAccount resolveUser(
-      AllocateRoleRequest request, boolean isSuperAdmin, Long activeHospitalId) {
+      AllocateRoleRequest request, boolean isSuperAdmin, UUID activeHospitalId) {
     if (isSuperAdmin) {
       return resourceLookup.findRequired(request.userId(), userAccountRepository::findById, "User");
     }
@@ -200,7 +219,7 @@ public class UserService {
 
   @Transactional(readOnly = true)
   public List<UserResponse> list(boolean includeDeleted) {
-    Long hospitalId = hospitalContext.getHospitalIdOrNull();
+    UUID hospitalId = hospitalContext.getHospitalIdOrNull();
     if (hospitalId == null && !hospitalContext.isSuperAdmin()) {
       throw new ApiException(
           "BUSINESS_RULE_VIOLATION", "Please select a hospital first", HttpStatus.BAD_REQUEST);
@@ -221,7 +240,7 @@ public class UserService {
   }
 
   @Transactional
-  public UserResponse update(Long id, com.res.hms.user.dto.UpdateUserRequest request) {
+  public UserResponse update(UUID id, com.res.hms.user.dto.UpdateUserRequest request) {
     UserAccount user = resourceLookup.findRequired(id, userAccountRepository::findById, "User");
 
     user.setFullName(request.fullName());
@@ -229,17 +248,12 @@ public class UserService {
     user.setDob(request.dob());
     user.setPhone(request.phone());
     user.setActive(request.active());
-
     userAccountRepository.save(user);
-
-    handleRoleSpecificEntries(
-        user, user.getRoleCodes(), request.specialization(), request.department());
-
     return userMapper.toResponse(user);
   }
 
   @Transactional
-  public void delete(Long id) {
+  public void delete(UUID id) {
     UserAccount user = resourceLookup.findRequired(id, userAccountRepository::findById, "User");
     user.setDeleted(true);
     userAccountRepository.save(user);

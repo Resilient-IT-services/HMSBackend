@@ -14,6 +14,7 @@ import com.res.hms.nurse.dto.CreateNurseRequest;
 import com.res.hms.nurse.repository.NurseRepository;
 import com.res.hms.repository.UserAccountRepository;
 import java.util.List;
+import java.util.UUID;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
@@ -35,20 +36,26 @@ class NurseServiceTest {
   @Test
   void createPersistsNurse() {
     UserAccount user = new UserAccount();
-    user.setId(20L);
+    user.setId(UUID.nameUUIDFromBytes("20".getBytes()));
     user.setFullName("Sara");
 
-    when(hospitalContext.requireHospitalId()).thenReturn(4L);
-    when(resourceLookup.findRequired(eq(20L), eq(4L), any(), anyString())).thenReturn(user);
+    when(hospitalContext.requireHospitalId()).thenReturn(UUID.nameUUIDFromBytes("4".getBytes()));
+    when(resourceLookup.findRequired(
+            eq(UUID.nameUUIDFromBytes("20".getBytes())),
+            eq(UUID.nameUUIDFromBytes("4".getBytes())),
+            any(),
+            anyString()))
+        .thenReturn(user);
     when(nurseRepository.save(any(Nurse.class)))
         .thenAnswer(
             invocation -> {
               Nurse nurse = invocation.getArgument(0);
-              nurse.setId(40L);
+              nurse.setId(UUID.nameUUIDFromBytes("40".getBytes()));
               return nurse;
             });
 
-    var response = nurseService.create(new CreateNurseRequest(20L, "ICU"));
+    var response =
+        nurseService.create(new CreateNurseRequest(UUID.nameUUIDFromBytes("20".getBytes()), "ICU"));
 
     assertEquals("Sara", response.fullName());
   }
@@ -59,11 +66,12 @@ class NurseServiceTest {
     user.setFullName("Sara");
 
     Nurse nurse = new Nurse();
-    nurse.setId(4L);
+    nurse.setId(UUID.nameUUIDFromBytes("4".getBytes()));
     nurse.setUser(user);
     nurse.setDepartment("ICU");
-    when(hospitalContext.requireHospitalId()).thenReturn(4L);
-    when(nurseRepository.findAllByHospitalIdOrderByCreatedAtDesc(eq(4L), any(PageRequest.class)))
+    when(hospitalContext.requireHospitalId()).thenReturn(UUID.nameUUIDFromBytes("4".getBytes()));
+    when(nurseRepository.findAllByHospitalIdOrderByCreatedAtDesc(
+            eq(UUID.nameUUIDFromBytes("4".getBytes())), any(PageRequest.class)))
         .thenReturn(new PageImpl<>(List.of(nurse)));
 
     var response = nurseService.list(0, 10);

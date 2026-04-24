@@ -11,6 +11,7 @@ import com.res.hms.domain.UserRoleAssignment;
 import com.res.hms.repository.HospitalRepository;
 import com.res.hms.repository.RoleRepository;
 import com.res.hms.repository.UserAccountRepository;
+import java.util.UUID;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -35,8 +36,8 @@ class SecurityExhaustiveIntegrationTest {
   @Autowired private PasswordEncoder passwordEncoder;
   @Autowired private TestDataHelper testDataHelper;
 
-  private Long testHospitalId;
-  private Long secondHospitalId;
+  private UUID testHospitalId;
+  private UUID secondHospitalId;
 
   @BeforeEach
   void setup() {
@@ -69,38 +70,17 @@ class SecurityExhaustiveIntegrationTest {
         roleRepository);
   }
 
-  private MockHttpSession loginAndSelect(String username, Long hospitalId) throws Exception {
-    MockHttpSession session =
-        (MockHttpSession)
-            mockMvc
-                .perform(
-                    post("/api/v1/auth/login")
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content(
-                            "{\"username\": \"" + username + "\", \"password\": \"password123\"}"))
-                .andExpect(status().isOk())
-                .andReturn()
-                .getRequest()
-                .getSession();
-
-    // Optional check for memberships
-    mockMvc.perform(get("/api/v1/auth/me").session(session)).andExpect(status().isOk());
-
-    if (hospitalId != null) {
-      mockMvc
-          .perform(
-              post("/api/v1/auth/select-hospital")
-                  .session(session)
-                  .contentType(MediaType.APPLICATION_JSON)
-                  .content("{\"hospitalId\": " + hospitalId + "}"))
-          .andExpect(status().isOk());
-    }
-
-    return session;
-  }
-
   private MockHttpSession login(String username) throws Exception {
-    return loginAndSelect(username, testHospitalId);
+    return (MockHttpSession)
+        mockMvc
+            .perform(
+                post("/api/v1/auth/login")
+                    .contentType(MediaType.APPLICATION_JSON)
+                    .content("{\"username\": \"" + username + "\", \"password\": \"password123\"}"))
+            .andExpect(status().isOk())
+            .andReturn()
+            .getRequest()
+            .getSession();
   }
 
   @Test
@@ -110,6 +90,7 @@ class SecurityExhaustiveIntegrationTest {
         .perform(
             post("/api/v1/users")
                 .session(session)
+                .header("X-Hospital-Id", testHospitalId.toString())
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(
                     """
@@ -132,6 +113,7 @@ class SecurityExhaustiveIntegrationTest {
         .perform(
             post("/api/v1/users")
                 .session(session)
+                .header("X-Hospital-Id", testHospitalId.toString())
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(
                     """
@@ -141,7 +123,8 @@ class SecurityExhaustiveIntegrationTest {
                                   "roles": ["NURSE"],
                                   "fullName": "New User",
                                   "gender": "MALE",
-                                  "dob": "1990-01-01"
+                                  "dob": "1990-01-01",
+                                  "department": "XYZ"
                                 }
                                 """))
         .andExpect(status().isForbidden());
@@ -154,6 +137,7 @@ class SecurityExhaustiveIntegrationTest {
         .perform(
             post("/api/v1/users")
                 .session(session)
+                .header("X-Hospital-Id", testHospitalId.toString())
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(
                     """
@@ -177,6 +161,7 @@ class SecurityExhaustiveIntegrationTest {
         .perform(
             post("/api/v1/users")
                 .session(session)
+                .header("X-Hospital-Id", testHospitalId.toString())
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(
                     """
@@ -186,7 +171,8 @@ class SecurityExhaustiveIntegrationTest {
                                   "roles": ["NURSE"],
                                   "fullName": "Dup User",
                                   "gender": "MALE",
-                                  "dob": "1990-01-01"
+                                  "dob": "1990-01-01",
+                                  "department": "department"
                                 }
                                 """))
         .andExpect(status().isConflict());
@@ -199,6 +185,7 @@ class SecurityExhaustiveIntegrationTest {
         .perform(
             post("/api/v1/hospitals")
                 .session(session)
+                .header("X-Hospital-Id", testHospitalId.toString())
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(
                     """
@@ -218,22 +205,30 @@ class SecurityExhaustiveIntegrationTest {
         .perform(
             post("/api/v1/appointments")
                 .session(session)
+                .header("X-Hospital-Id", testHospitalId.toString())
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(
-                    """
+                    String.format(
+                        """
                                 {
-                                  "patientId": 1,
-                                  "doctorId": 1,
+                                  "patientId": "%s",
+                                  "doctorId": "%s",
                                   "appointmentTime": "2026-05-01T10:00:00"
                                 }
-                                """))
+                                """,
+                        UUID.randomUUID(), UUID.randomUUID())))
         .andExpect(status().isForbidden());
   }
 
   @Test
   void hospitalAdminTriesToSeeOtherHospitals_ShouldFail() throws Exception {
     MockHttpSession session = login("hosp_admin");
-    mockMvc.perform(get("/api/v1/hospitals").session(session)).andExpect(status().isForbidden());
+    mockMvc
+        .perform(
+            get("/api/v1/hospitals")
+                .session(session)
+                .header("X-Hospital-Id", testHospitalId.toString()))
+        .andExpect(status().isForbidden());
   }
 
   @Test
@@ -247,7 +242,7 @@ class SecurityExhaustiveIntegrationTest {
         passwordEncoder,
         userAccountRepository,
         roleRepository);
-    Long hosp2UserId = userAccountRepository.findByUsername("hosp2_user").orElseThrow().getId();
+    UUID hosp2UserId = userAccountRepository.findByUsername("hosp2_user").orElseThrow().getId();
 
     // Admin from Hospital 1 tries to allocate roles to user in Hospital 2
     MockHttpSession session = login("hosp_admin");
@@ -255,8 +250,9 @@ class SecurityExhaustiveIntegrationTest {
         .perform(
             post("/api/v1/users/allocate")
                 .session(session)
+                .header("X-Hospital-Id", testHospitalId.toString())
                 .contentType(MediaType.APPLICATION_JSON)
-                .content("{\"userId\": " + hosp2UserId + ", \"roles\": [\"DOCTOR\"]}"))
+                .content("{\"userId\": \"" + hosp2UserId + "\", \"roles\": [\"DOCTOR\"]}"))
         .andExpect(status().isNotFound()); // Strict isolation: user not found in context
   }
 
@@ -279,28 +275,26 @@ class SecurityExhaustiveIntegrationTest {
     dr.getAssignments().add(h2Assignment);
     userAccountRepository.save(dr);
 
-    // 1. Login and select Hospital 1
-    MockHttpSession session = loginAndSelect("multi_dr", testHospitalId);
-    mockMvc
-        .perform(get("/api/v1/auth/me").session(session))
-        .andExpect(status().isOk())
-        .andExpect(jsonPath("$.data.hospitalId").value(testHospitalId));
+    // 1. Login
+    MockHttpSession session = login("multi_dr");
 
-    // 2. Switch to Hospital 2
+    // 2. Access with Hospital 1 header
     mockMvc
         .perform(
-            post("/api/v1/auth/select-hospital")
+            get("/api/v1/auth/me")
                 .session(session)
-                .contentType(MediaType.APPLICATION_JSON)
-                .content("{\"hospitalId\": " + secondHospitalId + "}"))
+                .header("X-Hospital-Id", testHospitalId.toString()))
         .andExpect(status().isOk())
-        .andExpect(jsonPath("$.data.hospitalId").value(secondHospitalId));
+        .andExpect(jsonPath("$.data.hospitalId").value(testHospitalId.toString()));
 
-    // 3. Verify 'me' now returns Hospital 2
+    // 3. Access with Hospital 2 header
     mockMvc
-        .perform(get("/api/v1/auth/me").session(session))
+        .perform(
+            get("/api/v1/auth/me")
+                .session(session)
+                .header("X-Hospital-Id", secondHospitalId.toString()))
         .andExpect(status().isOk())
-        .andExpect(jsonPath("$.data.hospitalId").value(secondHospitalId));
+        .andExpect(jsonPath("$.data.hospitalId").value(secondHospitalId.toString()));
   }
 
   @Test
@@ -310,6 +304,7 @@ class SecurityExhaustiveIntegrationTest {
         .perform(
             post("/api/v1/users")
                 .session(session)
+                .header("X-Hospital-Id", testHospitalId.toString())
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(
                     """
@@ -331,6 +326,7 @@ class SecurityExhaustiveIntegrationTest {
         .perform(
             post("/api/v1/users")
                 .session(session)
+                .header("X-Hospital-Id", testHospitalId.toString())
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(
                     """
@@ -352,6 +348,7 @@ class SecurityExhaustiveIntegrationTest {
         .perform(
             post("/api/v1/users")
                 .session(session)
+                .header("X-Hospital-Id", testHospitalId.toString())
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(
                     """

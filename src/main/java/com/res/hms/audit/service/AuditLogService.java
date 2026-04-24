@@ -6,6 +6,7 @@ import com.res.hms.common.api.PageResponse;
 import com.res.hms.common.exception.ApiException;
 import com.res.hms.common.tenant.HospitalContext;
 import com.res.hms.domain.AuditLog;
+import java.util.UUID;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
@@ -20,7 +21,7 @@ public class AuditLogService {
   private final HospitalContext hospitalContext;
 
   public void record(
-      Long hospitalId, String entityName, Long entityId, String action, String details) {
+      UUID hospitalId, String entityName, UUID entityId, String action, String details) {
     AuditLog auditLog = new AuditLog();
     auditLog.setHospitalId(hospitalId);
     auditLog.setEntityName(entityName);
@@ -32,7 +33,7 @@ public class AuditLogService {
   }
 
   public PageResponse<AuditLogResponse> list(int page, int size) {
-    Long hospitalId = hospitalContext.getHospitalIdOrNull();
+    UUID hospitalId = hospitalContext.getHospitalIdOrNull();
     Page<AuditLog> auditLogs;
 
     if (hospitalId != null) {

@@ -6,6 +6,7 @@ import com.res.hms.hospital.dto.CreateHospitalRequest;
 import com.res.hms.hospital.dto.HospitalResponse;
 import com.res.hms.repository.HospitalRepository;
 import java.util.List;
+import java.util.UUID;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
@@ -34,7 +35,7 @@ public class HospitalService {
   }
 
   @Transactional
-  public HospitalResponse update(Long id, CreateHospitalRequest request) {
+  public HospitalResponse update(UUID id, CreateHospitalRequest request) {
     Hospital hospital =
         hospitalRepository
             .findById(id)

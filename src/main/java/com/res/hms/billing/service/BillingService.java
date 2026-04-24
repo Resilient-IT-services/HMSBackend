@@ -20,6 +20,7 @@ import com.res.hms.pharmacy.repository.PrescriptionRepository;
 import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.temporal.ChronoUnit;
+import java.util.UUID;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -51,7 +52,7 @@ public class BillingService {
   @Auditable(entity = "billing", action = "CREATE")
   public BillingResponse createOpdBilling(CreateOpdBillingRequest request) {
 
-    Long hospitalId = hospitalContext.requireHospitalId();
+    UUID hospitalId = hospitalContext.requireHospitalId();
     Patient patient = patientService.requirePatient(request.patientId(), hospitalId);
     Doctor doctor = doctorService.requireDoctor(request.doctorId(), hospitalId);
     LocalDate lastVisitDate =
@@ -87,8 +88,8 @@ public class BillingService {
 
   @Transactional
   @Auditable(entity = "billing", action = "ADD_ITEM")
-  public BillingResponse addItem(Long billingId, AddBillingItemRequest request) {
-    Long hospitalId = hospitalContext.requireHospitalId();
+  public BillingResponse addItem(UUID billingId, AddBillingItemRequest request) {
+    UUID hospitalId = hospitalContext.requireHospitalId();
     Billing billing = requireBilling(billingId, hospitalId);
 
     BillingItem item = new BillingItem();
@@ -109,8 +110,8 @@ public class BillingService {
   }
 
   @Transactional(readOnly = true)
-  public BillingResponse get(Long billingId) {
-    Long hospitalId = hospitalContext.requireHospitalId();
+  public BillingResponse get(UUID billingId) {
+    UUID hospitalId = hospitalContext.requireHospitalId();
     return toResponse(requireBilling(billingId, hospitalId));
   }
 
@@ -139,7 +140,7 @@ public class BillingService {
     return billingRepository.save(billing);
   }
 
-  private Billing requireBilling(Long billingId, Long hospitalId) {
+  private Billing requireBilling(UUID billingId, UUID hospitalId) {
     return resourceLookup.findRequired(
         billingId, hospitalId, billingRepository::findByIdAndHospitalId, "Billing");
   }

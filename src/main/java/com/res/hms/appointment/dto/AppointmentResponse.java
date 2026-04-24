@@ -2,12 +2,13 @@ package com.res.hms.appointment.dto;
 
 import com.res.hms.domain.AppointmentStatus;
 import java.time.LocalDateTime;
+import java.util.UUID;
 
 public record AppointmentResponse(
-    Long id,
-    Long patientId,
+    UUID id,
+    UUID patientId,
     String patientName,
-    Long doctorId,
+    UUID doctorId,
     String doctorName,
     LocalDateTime appointmentTime,
     AppointmentStatus status,

@@ -18,6 +18,7 @@ import com.res.hms.inventory.repository.ItemRepository;
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.UUID;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Service;
@@ -36,7 +37,7 @@ public class InventoryService {
   @Transactional
   @Auditable(entity = "item", action = "CREATE")
   public ItemResponse createItem(CreateItemRequest request) {
-    Long hospitalId = hospitalContext.requireHospitalId();
+    UUID hospitalId = hospitalContext.requireHospitalId();
     Item item = new Item();
     item.setHospitalId(hospitalId);
     item.setName(request.name());
@@ -48,7 +49,7 @@ public class InventoryService {
   }
 
   public PageResponse<ItemResponse> listItems(int page, int size) {
-    Long hospitalId = hospitalContext.requireHospitalId();
+    UUID hospitalId = hospitalContext.requireHospitalId();
     return PageResponse.from(
         itemRepository
             .findAllByHospitalIdOrderByCreatedAtDesc(hospitalId, PageRequest.of(page, size))
@@ -58,7 +59,7 @@ public class InventoryService {
   @Transactional
   @Auditable(entity = "inventory_stock", action = "UPDATE")
   public InventoryStockResponse updateStock(UpdateInventoryStockRequest request) {
-    Long hospitalId = hospitalContext.requireHospitalId();
+    UUID hospitalId = hospitalContext.requireHospitalId();
     Item item =
         resourceLookup.findRequired(
             request.itemId(), hospitalId, itemRepository::findByIdAndHospitalId, "Inventory item");
@@ -73,7 +74,7 @@ public class InventoryService {
     return toStockResponse(stock);
   }
 
-  private InventoryStock getOrCreateStock(Long hospitalId, Item item) {
+  private InventoryStock getOrCreateStock(UUID hospitalId, Item item) {
     return inventoryStockRepository
         .findByHospitalIdAndItemId(hospitalId, item.getId())
         .orElseGet(
@@ -87,7 +88,7 @@ public class InventoryService {
             });
   }
 
-  private void recordTransaction(Long hospitalId, Item item, BigDecimal quantity) {
+  private void recordTransaction(UUID hospitalId, Item item, BigDecimal quantity) {
     InventoryTransaction transaction = new InventoryTransaction();
     transaction.setHospitalId(hospitalId);
     transaction.setItem(item);
@@ -99,7 +100,7 @@ public class InventoryService {
 
   @Transactional(readOnly = true)
   public List<InventoryStockResponse> listStock() {
-    Long hospitalId = hospitalContext.requireHospitalId();
+    UUID hospitalId = hospitalContext.requireHospitalId();
     return inventoryStockRepository.findAllByHospitalIdOrderByUpdatedAtDesc(hospitalId).stream()
         .map(this::toStockResponse)
         .toList();

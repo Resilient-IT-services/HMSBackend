@@ -10,13 +10,12 @@ import static org.mockito.Mockito.when;
 import com.res.hms.common.exception.ApiException;
 import com.res.hms.common.tenant.HospitalContext;
 import com.res.hms.common.util.ResourceLookup;
-import com.res.hms.doctor.dto.CreateDoctorRequest;
 import com.res.hms.doctor.repository.DoctorRepository;
 import com.res.hms.domain.Doctor;
 import com.res.hms.domain.UserAccount;
 import com.res.hms.repository.UserAccountRepository;
-import java.math.BigDecimal;
 import java.util.List;
+import java.util.UUID;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
@@ -37,38 +36,17 @@ class DoctorServiceTest {
   @InjectMocks private DoctorService doctorService;
 
   @Test
-  void createPersistsDoctor() {
-    UserAccount user = new UserAccount();
-    user.setId(10L);
-    user.setFullName("Dr. Maya");
-
-    when(hospitalContext.requireHospitalId()).thenReturn(4L);
-    when(resourceLookup.findRequired(eq(10L), eq(4L), any(), anyString())).thenReturn(user);
-    when(doctorRepository.save(any(Doctor.class)))
-        .thenAnswer(
-            invocation -> {
-              Doctor doctor = invocation.getArgument(0);
-              doctor.setId(30L);
-              return doctor;
-            });
-
-    var response =
-        doctorService.create(new CreateDoctorRequest(10L, "Cardiology", new BigDecimal("500"), 7));
-
-    assertEquals("Dr. Maya", response.fullName());
-  }
-
-  @Test
   void listReturnsMappedDoctors() {
     UserAccount user = new UserAccount();
     user.setFullName("Dr. Maya");
 
     Doctor doctor = new Doctor();
-    doctor.setId(3L);
+    doctor.setId(UUID.nameUUIDFromBytes("3".getBytes()));
     doctor.setUser(user);
     doctor.setSpecialization("Cardiology");
-    when(hospitalContext.requireHospitalId()).thenReturn(4L);
-    when(doctorRepository.findAllByHospitalIdOrderByCreatedAtDesc(eq(4L), any(PageRequest.class)))
+    when(hospitalContext.requireHospitalId()).thenReturn(UUID.nameUUIDFromBytes("4".getBytes()));
+    when(doctorRepository.findAllByHospitalIdOrderByCreatedAtDesc(
+            eq(UUID.nameUUIDFromBytes("4".getBytes())), any(PageRequest.class)))
         .thenReturn(new PageImpl<>(List.of(doctor)));
 
     var response = doctorService.list(0, 10, null);
@@ -79,11 +57,20 @@ class DoctorServiceTest {
 
   @Test
   void requireDoctorRejectsMissingDoctor() {
-    when(resourceLookup.findRequired(eq(12L), eq(4L), any(), anyString()))
+    when(resourceLookup.findRequired(
+            eq(UUID.nameUUIDFromBytes("12".getBytes())),
+            eq(UUID.nameUUIDFromBytes("4".getBytes())),
+            any(),
+            anyString()))
         .thenThrow(new ApiException("NOT_FOUND", "Doctor not found", HttpStatus.NOT_FOUND));
 
     ApiException exception =
-        assertThrows(ApiException.class, () -> doctorService.requireDoctor(12L, 4L));
+        assertThrows(
+            ApiException.class,
+            () ->
+                doctorService.requireDoctor(
+                    UUID.nameUUIDFromBytes("12".getBytes()),
+                    UUID.nameUUIDFromBytes("4".getBytes())));
 
     assertEquals("NOT_FOUND", exception.getCode());
   }

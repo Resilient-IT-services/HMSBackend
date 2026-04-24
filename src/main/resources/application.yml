@@ -14,7 +14,9 @@ spring:
         format_sql: true
   flyway:
     enabled: true
-    locations: classpath:db/migration
+    locations: classpath:db/migration/common,classpath:db/migration/postgres
+    placeholders:
+      uuid_gen: (md5(random()::text || clock_timestamp()::text))::uuid
   jackson:
     default-property-inclusion: non_null
 

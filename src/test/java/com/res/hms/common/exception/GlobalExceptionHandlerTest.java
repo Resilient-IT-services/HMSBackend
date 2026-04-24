@@ -10,6 +10,7 @@ import jakarta.validation.Path;
 import java.lang.reflect.Method;
 import java.util.Map;
 import java.util.Set;
+import java.util.UUID;
 import org.junit.jupiter.api.Test;
 import org.springframework.core.MethodParameter;
 import org.springframework.http.HttpStatus;
@@ -25,9 +26,10 @@ class GlobalExceptionHandlerTest {
 
   @Test
   void handleApiExceptionUsesStatusAndPayload() {
+    UUID id = UUID.randomUUID();
     ResponseEntity<?> response =
         handler.handleApiException(
-            new ApiException("NOT_FOUND", "Missing", HttpStatus.NOT_FOUND, Map.of("id", 10L)));
+            new ApiException("NOT_FOUND", "Missing", HttpStatus.NOT_FOUND, Map.of("id", id)));
 
     assertEquals(HttpStatus.NOT_FOUND, response.getStatusCode());
     assertEquals(

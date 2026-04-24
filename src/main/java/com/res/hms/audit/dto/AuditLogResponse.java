@@ -1,12 +1,13 @@
 package com.res.hms.audit.dto;
 
 import java.time.LocalDateTime;
+import java.util.UUID;
 
 public record AuditLogResponse(
-    Long id,
+    UUID id,
     String entityName,
-    Long entityId,
+    UUID entityId,
     String action,
-    Long performedBy,
+    UUID performedBy,
     String details,
     LocalDateTime createdAt) {}

@@ -22,6 +22,7 @@ import com.res.hms.domain.UserAccount;
 import com.res.hms.patient.service.PatientService;
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.UUID;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
@@ -41,33 +42,39 @@ class AppointmentServiceTest {
   @Mock private ResourceLookup resourceLookup;
 
   @InjectMocks private AppointmentService appointmentService;
+  UUID patientUuid = UUID.nameUUIDFromBytes("10".getBytes());
+  UUID doctorUuid = UUID.nameUUIDFromBytes("20".getBytes());
+  UUID hospitalUuid = UUID.nameUUIDFromBytes("4".getBytes());
+  UUID appointmentUUId = UUID.nameUUIDFromBytes("100".getBytes());
 
   @Test
   void createPersistsAppointment() {
     Patient patient = new Patient();
-    patient.setId(10L);
+    patient.setId(patientUuid);
     patient.setFullName("Asha");
 
     UserAccount user = new UserAccount();
     user.setFullName("Dr. Maya");
     Doctor doctor = new Doctor();
-    doctor.setId(11L);
+
+    doctor.setId(doctorUuid);
     doctor.setUser(user);
 
-    when(hospitalContext.requireHospitalId()).thenReturn(4L);
-    when(patientService.requirePatient(10L, 4L)).thenReturn(patient);
-    when(doctorService.requireDoctor(11L, 4L)).thenReturn(doctor);
+    when(hospitalContext.requireHospitalId()).thenReturn(hospitalUuid);
+    when(patientService.requirePatient(patientUuid, hospitalUuid)).thenReturn(patient);
+    when(doctorService.requireDoctor(doctorUuid, hospitalUuid)).thenReturn(doctor);
     when(appointmentRepository.save(any(Appointment.class)))
         .thenAnswer(
             invocation -> {
               Appointment appointment = invocation.getArgument(0);
-              appointment.setId(50L);
+              appointment.setId(appointmentUUId);
               return appointment;
             });
 
     var response =
         appointmentService.create(
-            new CreateAppointmentRequest(10L, 11L, LocalDateTime.now().plusDays(1), "Follow-up"));
+            new CreateAppointmentRequest(
+                patientUuid, doctorUuid, LocalDateTime.now().plusDays(1), "Follow-up"));
 
     assertEquals(AppointmentStatus.SCHEDULED, response.status());
   }
@@ -75,25 +82,25 @@ class AppointmentServiceTest {
   @Test
   void listReturnsMappedAppointments() {
     Patient patient = new Patient();
-    patient.setId(10L);
+    patient.setId(patientUuid);
     patient.setFullName("Asha");
 
     UserAccount user = new UserAccount();
     user.setFullName("Dr. Maya");
     Doctor doctor = new Doctor();
-    doctor.setId(11L);
+    doctor.setId(doctorUuid);
     doctor.setUser(user);
 
     Appointment appointment = new Appointment();
-    appointment.setId(50L);
+    appointment.setId(appointmentUUId);
     appointment.setPatient(patient);
     appointment.setDoctor(doctor);
     appointment.setAppointmentTime(LocalDateTime.now().plusDays(1));
     appointment.setStatus(AppointmentStatus.SCHEDULED);
     appointment.setNotes("Follow-up");
-    when(hospitalContext.requireHospitalId()).thenReturn(4L);
+    when(hospitalContext.requireHospitalId()).thenReturn(hospitalUuid);
     when(appointmentRepository.findAllByHospitalIdOrderByAppointmentTimeDesc(
-            eq(4L), any(PageRequest.class)))
+            eq(hospitalUuid), any(PageRequest.class)))
         .thenReturn(new PageImpl<>(List.of(appointment)));
 
     var response = appointmentService.list(0, 10, null);
@@ -104,8 +111,8 @@ class AppointmentServiceTest {
 
   @Test
   void updateStatusRejectsMissingAppointment() {
-    when(hospitalContext.requireHospitalId()).thenReturn(4L);
-    when(resourceLookup.findRequired(eq(99L), eq(4L), any(), anyString()))
+    when(hospitalContext.requireHospitalId()).thenReturn(hospitalUuid);
+    when(resourceLookup.findRequired(eq(appointmentUUId), eq(hospitalUuid), any(), anyString()))
         .thenThrow(new ApiException("NOT_FOUND", "Appointment not found", HttpStatus.NOT_FOUND));
 
     ApiException exception =
@@ -113,7 +120,8 @@ class AppointmentServiceTest {
             ApiException.class,
             () ->
                 appointmentService.updateStatus(
-                    99L, new UpdateAppointmentStatusRequest(AppointmentStatus.COMPLETED)));
+                    appointmentUUId,
+                    new UpdateAppointmentStatusRequest(AppointmentStatus.COMPLETED)));
 
     assertEquals("NOT_FOUND", exception.getCode());
   }
@@ -121,29 +129,30 @@ class AppointmentServiceTest {
   @Test
   void updateStatusUpdatesAppointment() {
     Patient patient = new Patient();
-    patient.setId(10L);
+    patient.setId(patientUuid);
     patient.setFullName("Asha");
 
     UserAccount user = new UserAccount();
     user.setFullName("Dr. Maya");
     Doctor doctor = new Doctor();
-    doctor.setId(11L);
+    doctor.setId(doctorUuid);
     doctor.setUser(user);
 
     Appointment appointment = new Appointment();
-    appointment.setId(50L);
+    appointment.setId(appointmentUUId);
     appointment.setPatient(patient);
     appointment.setDoctor(doctor);
     appointment.setAppointmentTime(LocalDateTime.now().plusDays(1));
     appointment.setStatus(AppointmentStatus.SCHEDULED);
-    when(hospitalContext.requireHospitalId()).thenReturn(4L);
-    when(resourceLookup.findRequired(eq(50L), eq(4L), any(), anyString())).thenReturn(appointment);
+    when(hospitalContext.requireHospitalId()).thenReturn(hospitalUuid);
+    when(resourceLookup.findRequired(eq(appointmentUUId), eq(hospitalUuid), any(), anyString()))
+        .thenReturn(appointment);
     when(appointmentRepository.save(any(Appointment.class)))
         .thenAnswer(invocation -> invocation.getArgument(0));
 
     var response =
         appointmentService.updateStatus(
-            50L, new UpdateAppointmentStatusRequest(AppointmentStatus.COMPLETED));
+            appointmentUUId, new UpdateAppointmentStatusRequest(AppointmentStatus.COMPLETED));
 
     assertEquals(AppointmentStatus.COMPLETED, response.status());
   }

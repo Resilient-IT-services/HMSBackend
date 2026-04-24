@@ -4,20 +4,21 @@ import com.res.hms.domain.RoleCode;
 import java.util.Collection;
 import java.util.Map;
 import java.util.Set;
+import java.util.UUID;
 import java.util.stream.Collectors;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetails;
 
 public record HospitalUserPrincipal(
-    Long userId,
+    UUID userId,
     String username,
     String password,
     boolean active,
     // Map of Hospital ID to Set of Roles. Hospital ID can be NULL for global roles.
-    Map<Long, Set<RoleCode>> hospitalRoles,
+    Map<UUID, Set<RoleCode>> hospitalRoles,
     // The active context for this session
-    Long hospitalId,
+    UUID hospitalId,
     Set<RoleCode> roleCodes)
     implements UserDetails {
 

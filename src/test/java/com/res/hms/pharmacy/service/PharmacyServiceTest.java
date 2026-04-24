@@ -37,6 +37,7 @@ import com.res.hms.pharmacy.repository.PrescriptionRepository;
 import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.util.List;
+import java.util.UUID;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
@@ -61,14 +62,21 @@ class PharmacyServiceTest {
 
   @InjectMocks private PharmacyService pharmacyService;
 
+  private final UUID hospitalId = UUID.nameUUIDFromBytes("hospital".getBytes());
+  private final UUID medicineId = UUID.nameUUIDFromBytes("medicine".getBytes());
+  private final UUID patientId = UUID.nameUUIDFromBytes("patient".getBytes());
+  private final UUID doctorId = UUID.nameUUIDFromBytes("doctor".getBytes());
+  private final UUID prescriptionId = UUID.nameUUIDFromBytes("prescription".getBytes());
+  private final UUID billingId = UUID.nameUUIDFromBytes("billing".getBytes());
+
   @Test
   void createMedicinePersistsMedicine() {
-    when(hospitalContext.requireHospitalId()).thenReturn(4L);
+    when(hospitalContext.requireHospitalId()).thenReturn(hospitalId);
     when(medicineRepository.save(any(Medicine.class)))
         .thenAnswer(
             invocation -> {
               Medicine medicine = invocation.getArgument(0);
-              medicine.setId(90L);
+              medicine.setId(medicineId);
               return medicine;
             });
     when(pharmacyMapper.toMedicineResponse(any(Medicine.class)))
@@ -84,15 +92,17 @@ class PharmacyServiceTest {
             new CreateMedicineRequest("Paracetamol", "Acetaminophen", "ACME"));
 
     assertEquals("Paracetamol", response.name());
+    assertEquals(medicineId, response.id());
   }
 
   @Test
   void listMedicinesReturnsMappedResults() {
     Medicine medicine = new Medicine();
-    medicine.setId(1L);
+    medicine.setId(medicineId);
     medicine.setName("Paracetamol");
-    when(hospitalContext.requireHospitalId()).thenReturn(4L);
-    when(medicineRepository.findAllByHospitalIdOrderByCreatedAtDesc(eq(4L), any(PageRequest.class)))
+    when(hospitalContext.requireHospitalId()).thenReturn(hospitalId);
+    when(medicineRepository.findAllByHospitalIdOrderByCreatedAtDesc(
+            eq(hospitalId), any(PageRequest.class)))
         .thenReturn(new PageImpl<>(List.of(medicine)));
     when(pharmacyMapper.toMedicineResponse(any(Medicine.class)))
         .thenAnswer(
@@ -110,8 +120,8 @@ class PharmacyServiceTest {
 
   @Test
   void addStockRejectsMissingMedicine() {
-    when(hospitalContext.requireHospitalId()).thenReturn(4L);
-    when(resourceLookup.findRequired(eq(2L), eq(4L), any(), anyString()))
+    when(hospitalContext.requireHospitalId()).thenReturn(hospitalId);
+    when(resourceLookup.findRequired(eq(medicineId), eq(hospitalId), any(), anyString()))
         .thenThrow(new ApiException("NOT_FOUND", "Medicine not found", HttpStatus.NOT_FOUND));
 
     ApiException exception =
@@ -120,7 +130,7 @@ class PharmacyServiceTest {
             () ->
                 pharmacyService.addStock(
                     new AddPharmacyStockRequest(
-                        2L, "B1", LocalDate.now().plusMonths(3), 5, BigDecimal.TEN)));
+                        medicineId, "B1", LocalDate.now().plusMonths(3), 5, BigDecimal.TEN)));
 
     assertEquals("NOT_FOUND", exception.getCode());
   }
@@ -128,15 +138,16 @@ class PharmacyServiceTest {
   @Test
   void addStockPersistsBatch() {
     Medicine medicine = new Medicine();
-    medicine.setId(2L);
+    medicine.setId(medicineId);
     medicine.setName("Paracetamol");
-    when(hospitalContext.requireHospitalId()).thenReturn(4L);
-    when(resourceLookup.findRequired(eq(2L), eq(4L), any(), anyString())).thenReturn(medicine);
+    when(hospitalContext.requireHospitalId()).thenReturn(hospitalId);
+    when(resourceLookup.findRequired(eq(medicineId), eq(hospitalId), any(), anyString()))
+        .thenReturn(medicine);
     when(pharmacyStockRepository.save(any(PharmacyStock.class)))
         .thenAnswer(
             invocation -> {
               PharmacyStock stock = invocation.getArgument(0);
-              stock.setId(100L);
+              stock.setId(UUID.randomUUID());
               return stock;
             });
     when(pharmacyMapper.toPharmacyStockResponse(any(PharmacyStock.class)))
@@ -156,7 +167,7 @@ class PharmacyServiceTest {
     var response =
         pharmacyService.addStock(
             new AddPharmacyStockRequest(
-                2L, "B1", LocalDate.now().plusMonths(3), 5, new BigDecimal("12.50")));
+                medicineId, "B1", LocalDate.now().plusMonths(3), 5, new BigDecimal("12.50")));
 
     assertEquals("B1", response.batchNumber());
   }
@@ -164,16 +175,16 @@ class PharmacyServiceTest {
   @Test
   void listStockReturnsMappedBatches() {
     Medicine medicine = new Medicine();
-    medicine.setId(2L);
+    medicine.setId(medicineId);
     medicine.setName("Paracetamol");
     PharmacyStock stock = new PharmacyStock();
-    stock.setId(100L);
+    stock.setId(UUID.randomUUID());
     stock.setMedicine(medicine);
     stock.setBatchNumber("B1");
     stock.setQuantity(5);
     stock.setPrice(new BigDecimal("12.50"));
-    when(hospitalContext.requireHospitalId()).thenReturn(4L);
-    when(pharmacyStockRepository.findAllByHospitalIdOrderByExpiryDateAsc(4L))
+    when(hospitalContext.requireHospitalId()).thenReturn(hospitalId);
+    when(pharmacyStockRepository.findAllByHospitalIdOrderByExpiryDateAsc(hospitalId))
         .thenReturn(List.of(stock));
     when(pharmacyMapper.toPharmacyStockResponse(any(PharmacyStock.class)))
         .thenAnswer(
@@ -198,23 +209,23 @@ class PharmacyServiceTest {
   @Test
   void createPrescriptionPersistsPrescription() {
     Patient patient = new Patient();
-    patient.setId(10L);
+    patient.setId(patientId);
     patient.setFullName("Asha");
 
     UserAccount user = new UserAccount();
     user.setFullName("Dr. Maya");
     Doctor doctor = new Doctor();
-    doctor.setId(11L);
+    doctor.setId(doctorId);
     doctor.setUser(user);
 
-    when(hospitalContext.requireHospitalId()).thenReturn(4L);
-    when(patientService.requirePatient(10L, 4L)).thenReturn(patient);
-    when(doctorService.requireDoctor(11L, 4L)).thenReturn(doctor);
+    when(hospitalContext.requireHospitalId()).thenReturn(hospitalId);
+    when(patientService.requirePatient(patientId, hospitalId)).thenReturn(patient);
+    when(doctorService.requireDoctor(doctorId, hospitalId)).thenReturn(doctor);
     when(prescriptionRepository.save(any(Prescription.class)))
         .thenAnswer(
             invocation -> {
               Prescription prescription = invocation.getArgument(0);
-              prescription.setId(110L);
+              prescription.setId(prescriptionId);
               return prescription;
             });
     when(pharmacyMapper.toPrescriptionResponse(any(Prescription.class)))
@@ -231,34 +242,37 @@ class PharmacyServiceTest {
                   null);
             });
 
-    var response = pharmacyService.createPrescription(new CreatePrescriptionRequest(10L, 11L));
+    var response =
+        pharmacyService.createPrescription(new CreatePrescriptionRequest(patientId, doctorId));
 
     assertEquals("Asha", response.patientName());
+    assertEquals(prescriptionId, response.id());
   }
 
   @Test
   void addPrescriptionItemAddsMedicineToPrescription() {
     Patient patient = new Patient();
-    patient.setId(10L);
+    patient.setId(patientId);
     patient.setFullName("Asha");
 
     UserAccount user = new UserAccount();
     user.setFullName("Dr. Maya");
     Doctor doctor = new Doctor();
-    doctor.setId(11L);
+    doctor.setId(doctorId);
     doctor.setUser(user);
 
     Medicine medicine = new Medicine();
-    medicine.setId(2L);
+    medicine.setId(medicineId);
     medicine.setName("Paracetamol");
     Prescription prescription = new Prescription();
-    prescription.setId(110L);
+    prescription.setId(prescriptionId);
     prescription.setPatient(patient);
     prescription.setDoctor(doctor);
-    when(hospitalContext.requireHospitalId()).thenReturn(4L);
-    when(resourceLookup.findRequired(eq(110L), eq(4L), any(), anyString()))
+    when(hospitalContext.requireHospitalId()).thenReturn(hospitalId);
+    when(resourceLookup.findRequired(eq(prescriptionId), eq(hospitalId), any(), anyString()))
         .thenReturn(prescription);
-    when(resourceLookup.findRequired(eq(2L), eq(4L), any(), anyString())).thenReturn(medicine);
+    when(resourceLookup.findRequired(eq(medicineId), eq(hospitalId), any(), anyString()))
+        .thenReturn(medicine);
     when(prescriptionRepository.save(any(Prescription.class)))
         .thenAnswer(invocation -> invocation.getArgument(0));
     when(pharmacyMapper.toPrescriptionResponse(any(Prescription.class)))
@@ -286,7 +300,7 @@ class PharmacyServiceTest {
 
     var response =
         pharmacyService.addPrescriptionItem(
-            110L, new AddPrescriptionItemRequest(2L, "1-0-1", "5 days"));
+            prescriptionId, new AddPrescriptionItemRequest(medicineId, "1-0-1", "5 days"));
 
     assertEquals(1, response.items().size());
     assertEquals("Paracetamol", response.items().getFirst().medicineName());
@@ -295,15 +309,15 @@ class PharmacyServiceTest {
   @Test
   void dispenseRejectsEmptyPrescription() {
     Prescription prescription = new Prescription();
-    prescription.setId(110L);
-    when(hospitalContext.requireHospitalId()).thenReturn(4L);
-    when(resourceLookup.findRequired(eq(110L), eq(4L), any(), anyString()))
+    prescription.setId(prescriptionId);
+    when(hospitalContext.requireHospitalId()).thenReturn(hospitalId);
+    when(resourceLookup.findRequired(eq(prescriptionId), eq(hospitalId), any(), anyString()))
         .thenReturn(prescription);
 
     ApiException exception =
         assertThrows(
             ApiException.class,
-            () -> pharmacyService.dispense(new DispensePrescriptionRequest(110L)));
+            () -> pharmacyService.dispense(new DispensePrescriptionRequest(prescriptionId)));
 
     assertEquals("BUSINESS_RULE_VIOLATION", exception.getCode());
   }
@@ -311,37 +325,38 @@ class PharmacyServiceTest {
   @Test
   void dispenseRejectsInsufficientStock() {
     Patient patient = new Patient();
-    patient.setId(10L);
+    patient.setId(patientId);
 
     UserAccount user = new UserAccount();
     user.setFullName("Dr. Maya");
     Doctor doctor = new Doctor();
-    doctor.setId(11L);
+    doctor.setId(doctorId);
     doctor.setUser(user);
 
     Medicine medicine = new Medicine();
-    medicine.setId(2L);
+    medicine.setId(medicineId);
     medicine.setName("Paracetamol");
     PrescriptionItem item = new PrescriptionItem();
     item.setMedicine(medicine);
     Prescription prescription = new Prescription();
-    prescription.setId(110L);
+    prescription.setId(prescriptionId);
     prescription.setPatient(patient);
     prescription.setDoctor(doctor);
     prescription.getItems().add(item);
     Billing billing = new Billing();
-    billing.setId(200L);
-    when(hospitalContext.requireHospitalId()).thenReturn(4L);
-    when(resourceLookup.findRequired(eq(110L), eq(4L), any(), anyString()))
+    billing.setId(billingId);
+    when(hospitalContext.requireHospitalId()).thenReturn(hospitalId);
+    when(resourceLookup.findRequired(eq(prescriptionId), eq(hospitalId), any(), anyString()))
         .thenReturn(prescription);
     when(billingService.createPharmacyBilling(patient)).thenReturn(billing);
-    when(pharmacyStockRepository.findAllByHospitalIdAndMedicineIdOrderByExpiryDateAsc(4L, 2L))
+    when(pharmacyStockRepository.findAllByHospitalIdAndMedicineIdOrderByExpiryDateAsc(
+            hospitalId, medicineId))
         .thenReturn(List.of());
 
     ApiException exception =
         assertThrows(
             ApiException.class,
-            () -> pharmacyService.dispense(new DispensePrescriptionRequest(110L)));
+            () -> pharmacyService.dispense(new DispensePrescriptionRequest(prescriptionId)));
 
     assertEquals("BUSINESS_RULE_VIOLATION", exception.getCode());
   }
@@ -349,24 +364,24 @@ class PharmacyServiceTest {
   @Test
   void dispenseConsumesEarliestValidBatchAndReturnsBilling() {
     Patient patient = new Patient();
-    patient.setId(10L);
-    patient.setHospitalId(4L);
+    patient.setId(patientId);
+    patient.setHospitalId(hospitalId);
 
     UserAccount user = new UserAccount();
     user.setFullName("Dr. Maya");
     Doctor doctor = new Doctor();
-    doctor.setId(11L);
+    doctor.setId(doctorId);
     doctor.setUser(user);
 
     Medicine medicine = new Medicine();
-    medicine.setId(2L);
+    medicine.setId(medicineId);
     medicine.setName("Paracetamol");
     PrescriptionItem item = new PrescriptionItem();
     item.setMedicine(medicine);
     item.setDosage("1-0-1");
     item.setDuration("5 days");
     Prescription prescription = new Prescription();
-    prescription.setId(110L);
+    prescription.setId(prescriptionId);
     prescription.setPatient(patient);
     prescription.setDoctor(doctor);
     prescription.getItems().add(item);
@@ -381,24 +396,26 @@ class PharmacyServiceTest {
     usable.setQuantity(2);
     usable.setPrice(new BigDecimal("12.50"));
     Billing billing = new Billing();
-    billing.setId(200L);
+    billing.setId(billingId);
     BillingResponse billingResponse =
-        new BillingResponse(200L, 10L, null, null, new BigDecimal("12.50"), List.of(), null);
-    when(hospitalContext.requireHospitalId()).thenReturn(4L);
-    when(resourceLookup.findRequired(eq(110L), eq(4L), any(), anyString()))
+        new BillingResponse(
+            billingId, patientId, null, null, new BigDecimal("12.50"), List.of(), null);
+    when(hospitalContext.requireHospitalId()).thenReturn(hospitalId);
+    when(resourceLookup.findRequired(eq(prescriptionId), eq(hospitalId), any(), anyString()))
         .thenReturn(prescription);
     when(billingService.createPharmacyBilling(patient)).thenReturn(billing);
-    when(pharmacyStockRepository.findAllByHospitalIdAndMedicineIdOrderByExpiryDateAsc(4L, 2L))
+    when(pharmacyStockRepository.findAllByHospitalIdAndMedicineIdOrderByExpiryDateAsc(
+            hospitalId, medicineId))
         .thenReturn(List.of(exhausted, usable));
     when(pharmacyStockRepository.save(any(PharmacyStock.class)))
         .thenAnswer(invocation -> invocation.getArgument(0));
     when(billingService.appendPharmacyItem(billing, "Paracetamol", new BigDecimal("12.50"), 1))
         .thenReturn(billing);
-    when(billingService.get(200L)).thenReturn(billingResponse);
+    when(billingService.get(billingId)).thenReturn(billingResponse);
 
-    var response = pharmacyService.dispense(new DispensePrescriptionRequest(110L));
+    var response = pharmacyService.dispense(new DispensePrescriptionRequest(prescriptionId));
 
-    assertEquals(110L, response.prescriptionId());
+    assertEquals(prescriptionId, response.prescriptionId());
     assertEquals(new BigDecimal("12.50"), response.billing().totalAmount());
     assertEquals(1, usable.getQuantity());
   }

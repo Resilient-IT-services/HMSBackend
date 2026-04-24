@@ -8,6 +8,7 @@ import com.res.hms.domain.Patient;
 import com.res.hms.patient.dto.CreatePatientRequest;
 import com.res.hms.patient.dto.PatientResponse;
 import com.res.hms.patient.repository.PatientRepository;
+import java.util.UUID;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Service;
@@ -24,7 +25,7 @@ public class PatientService {
   @Transactional
   @Auditable(entity = "patient", action = "CREATE")
   public PatientResponse create(CreatePatientRequest request) {
-    Long hospitalId = hospitalContext.requireHospitalId();
+    UUID hospitalId = hospitalContext.requireHospitalId();
     Patient patient = new Patient();
     patient.setHospitalId(hospitalId);
     patient.setFullName(request.fullName());
@@ -38,7 +39,7 @@ public class PatientService {
   }
 
   public PageResponse<PatientResponse> list(int page, int size, String search) {
-    Long hospitalId = hospitalContext.requireHospitalId();
+    UUID hospitalId = hospitalContext.requireHospitalId();
     PageRequest pageRequest = PageRequest.of(page, size);
 
     if (search != null && !search.trim().isEmpty()) {
@@ -52,12 +53,12 @@ public class PatientService {
             .map(this::toResponse));
   }
 
-  public PatientResponse get(Long id) {
-    Long hospitalId = hospitalContext.requireHospitalId();
+  public PatientResponse get(UUID id) {
+    UUID hospitalId = hospitalContext.requireHospitalId();
     return toResponse(requirePatient(id, hospitalId));
   }
 
-  public Patient requirePatient(Long id, Long hospitalId) {
+  public Patient requirePatient(UUID id, UUID hospitalId) {
     return resourceLookup.findRequired(
         id, hospitalId, patientRepository::findByIdAndHospitalId, "Patient");
   }

@@ -6,6 +6,7 @@ import jakarta.persistence.FetchType;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.Table;
+import java.util.UUID;
 import lombok.Getter;
 import lombok.Setter;
 
@@ -20,7 +21,7 @@ public class UserRoleAssignment extends BaseEntity {
   private UserAccount user;
 
   @Column(name = "hospital_id")
-  private Long hospitalId;
+  private UUID hospitalId;
 
   @ManyToOne(fetch = FetchType.EAGER, optional = false)
   @JoinColumn(name = "role_id", nullable = false)

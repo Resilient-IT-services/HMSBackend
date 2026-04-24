@@ -29,10 +29,12 @@ import com.res.hms.user.dto.AllocateRoleRequest;
 import com.res.hms.user.dto.CreateUserRequest;
 import com.res.hms.user.dto.HospitalMembershipResponse;
 import com.res.hms.user.dto.UserResponse;
+import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.util.List;
 import java.util.Optional;
 import java.util.Set;
+import java.util.UUID;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
@@ -56,13 +58,16 @@ class UserServiceTest {
 
   @InjectMocks private UserService userService;
 
+  private final UUID hospitalId = UUID.nameUUIDFromBytes("hospital".getBytes());
+  private final UUID userId = UUID.nameUUIDFromBytes("user".getBytes());
+
   @Test
   void createAutomaticallyCreatesDoctorEntry() {
     Role role = new Role();
     role.setCode(RoleCode.DOCTOR);
 
     when(userAccountRepository.existsByUsername("doctor1")).thenReturn(false);
-    when(hospitalContext.getHospitalIdOrNull()).thenReturn(10L);
+    when(hospitalContext.getHospitalIdOrNull()).thenReturn(hospitalId);
     when(resourceLookup.findRequired(eq(RoleCode.DOCTOR), any(), anyString())).thenReturn(role);
     when(passwordEncoder.encode(anyString())).thenReturn("encoded");
     when(doctorRepository.findByUserId(any())).thenReturn(Optional.empty());
@@ -75,10 +80,12 @@ class UserServiceTest {
             "Dr. John",
             Gender.MALE,
             LocalDate.now(),
-            10L,
+            hospitalId,
             "123",
             "Cardiology",
-            null));
+            null,
+            BigDecimal.valueOf(500),
+            5));
 
     verify(doctorRepository).save(any(Doctor.class));
   }
@@ -89,7 +96,7 @@ class UserServiceTest {
     role.setCode(RoleCode.NURSE);
 
     when(userAccountRepository.existsByUsername("nurse1")).thenReturn(false);
-    when(hospitalContext.getHospitalIdOrNull()).thenReturn(10L);
+    when(hospitalContext.getHospitalIdOrNull()).thenReturn(hospitalId);
     when(resourceLookup.findRequired(eq(RoleCode.NURSE), any(), anyString())).thenReturn(role);
     when(passwordEncoder.encode(anyString())).thenReturn("encoded");
     when(nurseRepository.findByUserId(any())).thenReturn(Optional.empty());
@@ -102,10 +109,12 @@ class UserServiceTest {
             "Nurse Jane",
             Gender.FEMALE,
             LocalDate.now(),
-            10L,
+            hospitalId,
             "123",
             null,
-            "Emergency"));
+            "Emergency",
+            BigDecimal.valueOf(500),
+            5));
 
     verify(nurseRepository).save(any(Nurse.class));
   }
@@ -116,18 +125,27 @@ class UserServiceTest {
     role.setCode(RoleCode.DOCTOR);
 
     UserAccount user = new UserAccount();
-    user.setId(5L);
+    user.setId(userId);
     user.setUsername("user1");
 
-    when(hospitalContext.getHospitalIdOrNull()).thenReturn(10L);
+    when(hospitalContext.getHospitalIdOrNull()).thenReturn(hospitalId);
     when(hospitalContext.isSuperAdmin()).thenReturn(false);
-    when(resourceLookup.findRequired(eq(5L), eq(10L), any(), anyString())).thenReturn(user);
-    when(resourceLookup.findRequired(eq(10L), any(), anyString())).thenReturn(new Hospital());
+    when(resourceLookup.findRequired(eq(userId), eq(hospitalId), any(), anyString()))
+        .thenReturn(user);
+    when(resourceLookup.findRequired(eq(hospitalId), any(), anyString()))
+        .thenReturn(new Hospital());
     when(resourceLookup.findRequired(eq(RoleCode.DOCTOR), any(), anyString())).thenReturn(role);
-    when(doctorRepository.findByUserId(eq(5L))).thenReturn(Optional.empty());
+    when(doctorRepository.findByUserId(eq(userId))).thenReturn(Optional.empty());
 
     userService.allocateRoles(
-        new AllocateRoleRequest(5L, 10L, Set.of(RoleCode.DOCTOR), "Neurology", null));
+        new AllocateRoleRequest(
+            userId,
+            hospitalId,
+            Set.of(RoleCode.DOCTOR),
+            "Neurology",
+            null,
+            BigDecimal.valueOf(500),
+            5));
 
     verify(doctorRepository).save(any(Doctor.class));
   }
@@ -148,10 +166,12 @@ class UserServiceTest {
                         "Admin",
                         Gender.MALE,
                         LocalDate.now(),
-                        10L,
+                        hospitalId,
                         "123",
                         null,
-                        null)));
+                        null,
+                        BigDecimal.valueOf(500),
+                        5)));
 
     assertEquals(HttpStatus.CONFLICT, exception.getStatus());
     assertEquals("Username already exists", exception.getMessage());
@@ -160,7 +180,7 @@ class UserServiceTest {
   @Test
   void createRejectsUnknownRole() {
     when(userAccountRepository.existsByUsername("admin")).thenReturn(false);
-    when(hospitalContext.getHospitalIdOrNull()).thenReturn(10L);
+    when(hospitalContext.getHospitalIdOrNull()).thenReturn(hospitalId);
     when(hospitalContext.isSuperAdmin()).thenReturn(false);
     when(resourceLookup.findRequired(eq(RoleCode.ADMIN), any(), anyString()))
         .thenThrow(new ApiException("NOT_FOUND", "Role not found", HttpStatus.NOT_FOUND));
@@ -177,10 +197,12 @@ class UserServiceTest {
                         "Admin",
                         Gender.MALE,
                         LocalDate.now(),
-                        10L,
+                        hospitalId,
                         "123",
                         null,
-                        null)));
+                        null,
+                        BigDecimal.valueOf(500),
+                        5)));
 
     assertEquals("NOT_FOUND", exception.getCode());
   }
@@ -190,7 +212,7 @@ class UserServiceTest {
     Role role = new Role();
     role.setCode(RoleCode.ADMIN);
     when(userAccountRepository.existsByUsername("admin")).thenReturn(false);
-    when(hospitalContext.getHospitalIdOrNull()).thenReturn(10L);
+    when(hospitalContext.getHospitalIdOrNull()).thenReturn(hospitalId);
     when(hospitalContext.isSuperAdmin()).thenReturn(false);
     when(resourceLookup.findRequired(eq(RoleCode.ADMIN), any(), anyString())).thenReturn(role);
     when(passwordEncoder.encode("secret1")).thenReturn("encoded");
@@ -198,7 +220,7 @@ class UserServiceTest {
         .thenAnswer(
             invocation -> {
               UserAccount userAccount = invocation.getArgument(0);
-              userAccount.setId(99L);
+              userAccount.setId(userId);
               return userAccount;
             });
     when(userMapper.toResponse(any(UserAccount.class)))
@@ -214,7 +236,7 @@ class UserServiceTest {
                   user.getPhone(),
                   List.of(
                       new HospitalMembershipResponse(
-                          10L, "Test", "TEST", user.getRoleCodes(), null, null)),
+                          hospitalId, "Test", "TEST", user.getRoleCodes(), null, null)),
                   user.isActive(),
                   user.isDeleted(),
                   null);
@@ -229,10 +251,12 @@ class UserServiceTest {
                 "Admin User",
                 Gender.MALE,
                 LocalDate.now(),
-                10L,
+                hospitalId,
                 "123",
                 null,
-                null));
+                null,
+                BigDecimal.valueOf(500),
+                5));
 
     assertEquals("admin", response.username());
     assertTrue(response.memberships().stream().anyMatch(m -> m.roles().contains(RoleCode.ADMIN)));
@@ -244,18 +268,18 @@ class UserServiceTest {
     role.setCode(RoleCode.DOCTOR);
 
     UserAccount userAccount = new UserAccount();
-    userAccount.setId(5L);
+    userAccount.setId(userId);
     userAccount.setUsername("doctor");
     userAccount.setActive(true);
 
     UserRoleAssignment assignment = new UserRoleAssignment();
-    assignment.setHospitalId(12L);
+    assignment.setHospitalId(hospitalId);
     assignment.setRole(role);
     assignment.setUser(userAccount);
     userAccount.getAssignments().add(assignment);
 
-    when(hospitalContext.getHospitalIdOrNull()).thenReturn(12L);
-    when(userAccountRepository.findAllByHospitalId(12L)).thenReturn(List.of(userAccount));
+    when(hospitalContext.getHospitalIdOrNull()).thenReturn(hospitalId);
+    when(userAccountRepository.findAllByHospitalId(hospitalId)).thenReturn(List.of(userAccount));
     when(userMapper.toResponse(any(UserAccount.class)))
         .thenAnswer(
             invocation -> {
@@ -269,7 +293,7 @@ class UserServiceTest {
                   user.getPhone(),
                   List.of(
                       new HospitalMembershipResponse(
-                          12L, "Test Hospital", "TEST", user.getRoleCodes(), null, null)),
+                          hospitalId, "Test Hospital", "TEST", user.getRoleCodes(), null, null)),
                   user.isActive(),
                   user.isDeleted(),
                   null);
@@ -287,10 +311,10 @@ class UserServiceTest {
   @Test
   void updateUpdatesUserProfile() {
     UserAccount user = new UserAccount();
-    user.setId(5L);
+    user.setId(userId);
     user.setFullName("Old Name");
 
-    when(resourceLookup.findRequired(eq(5L), any(), any())).thenReturn(user);
+    when(resourceLookup.findRequired(eq(userId), any(), any())).thenReturn(user);
     when(userMapper.toResponse(any(UserAccount.class)))
         .thenAnswer(
             i -> {
@@ -310,9 +334,9 @@ class UserServiceTest {
 
     var response =
         userService.update(
-            5L,
+            userId,
             new com.res.hms.user.dto.UpdateUserRequest(
-                "New Name", Gender.FEMALE, LocalDate.now(), "999", true, null, null));
+                "New Name", Gender.FEMALE, LocalDate.now(), "999", true));
 
     assertEquals("New Name", response.fullName());
     verify(userAccountRepository).save(user);
@@ -321,12 +345,12 @@ class UserServiceTest {
   @Test
   void deleteSoftDeletesUser() {
     UserAccount user = new UserAccount();
-    user.setId(5L);
+    user.setId(userId);
     user.setDeleted(false);
 
-    when(resourceLookup.findRequired(eq(5L), any(), any())).thenReturn(user);
+    when(resourceLookup.findRequired(eq(userId), any(), any())).thenReturn(user);
 
-    userService.delete(5L);
+    userService.delete(userId);
 
     assertTrue(user.isDeleted());
     verify(userAccountRepository).save(user);

@@ -21,6 +21,7 @@ import com.res.hms.inventory.repository.ItemRepository;
 import java.math.BigDecimal;
 import java.util.List;
 import java.util.Optional;
+import java.util.UUID;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
@@ -43,12 +44,12 @@ class InventoryServiceTest {
 
   @Test
   void createItemPersistsItem() {
-    when(hospitalContext.requireHospitalId()).thenReturn(4L);
+    when(hospitalContext.requireHospitalId()).thenReturn(UUID.nameUUIDFromBytes("4".getBytes()));
     when(itemRepository.save(any(Item.class)))
         .thenAnswer(
             invocation -> {
               Item item = invocation.getArgument(0);
-              item.setId(60L);
+              item.setId(UUID.nameUUIDFromBytes("60".getBytes()));
               return item;
             });
 
@@ -61,12 +62,13 @@ class InventoryServiceTest {
   @Test
   void listItemsReturnsMappedItems() {
     Item item = new Item();
-    item.setId(1L);
+    item.setId(UUID.nameUUIDFromBytes("1".getBytes()));
     item.setName("Bandage");
     item.setCategory("Consumable");
     item.setUnit("pcs");
-    when(hospitalContext.requireHospitalId()).thenReturn(4L);
-    when(itemRepository.findAllByHospitalIdOrderByCreatedAtDesc(eq(4L), any(PageRequest.class)))
+    when(hospitalContext.requireHospitalId()).thenReturn(UUID.nameUUIDFromBytes("4".getBytes()));
+    when(itemRepository.findAllByHospitalIdOrderByCreatedAtDesc(
+            eq(UUID.nameUUIDFromBytes("4".getBytes())), any(PageRequest.class)))
         .thenReturn(new PageImpl<>(List.of(item)));
 
     var response = inventoryService.listItems(0, 10);
@@ -77,15 +79,21 @@ class InventoryServiceTest {
 
   @Test
   void updateStockRejectsMissingItem() {
-    when(hospitalContext.requireHospitalId()).thenReturn(4L);
-    when(resourceLookup.findRequired(eq(99L), eq(4L), any(), anyString()))
+    when(hospitalContext.requireHospitalId()).thenReturn(UUID.nameUUIDFromBytes("4".getBytes()));
+    when(resourceLookup.findRequired(
+            eq(UUID.nameUUIDFromBytes("99".getBytes())),
+            eq(UUID.nameUUIDFromBytes("4".getBytes())),
+            any(),
+            anyString()))
         .thenThrow(new ApiException("NOT_FOUND", "Item not found", HttpStatus.NOT_FOUND));
 
     ApiException exception =
         assertThrows(
             ApiException.class,
             () ->
-                inventoryService.updateStock(new UpdateInventoryStockRequest(99L, BigDecimal.ONE)));
+                inventoryService.updateStock(
+                    new UpdateInventoryStockRequest(
+                        UUID.nameUUIDFromBytes("99".getBytes()), BigDecimal.ONE)));
 
     assertEquals("NOT_FOUND", exception.getCode());
   }
@@ -93,16 +101,25 @@ class InventoryServiceTest {
   @Test
   void updateStockCreatesNewStockWhenMissing() {
     Item item = new Item();
-    item.setId(1L);
+    item.setId(UUID.nameUUIDFromBytes("1".getBytes()));
     item.setName("Bandage");
-    when(hospitalContext.requireHospitalId()).thenReturn(4L);
-    when(resourceLookup.findRequired(eq(1L), eq(4L), any(), anyString())).thenReturn(item);
-    when(inventoryStockRepository.findByHospitalIdAndItemId(4L, 1L)).thenReturn(Optional.empty());
+    when(hospitalContext.requireHospitalId()).thenReturn(UUID.nameUUIDFromBytes("4".getBytes()));
+    when(resourceLookup.findRequired(
+            eq(UUID.nameUUIDFromBytes("1".getBytes())),
+            eq(UUID.nameUUIDFromBytes("4".getBytes())),
+            any(),
+            anyString()))
+        .thenReturn(item);
+    when(inventoryStockRepository.findByHospitalIdAndItemId(
+            UUID.nameUUIDFromBytes("4".getBytes()), UUID.nameUUIDFromBytes("1".getBytes())))
+        .thenReturn(Optional.empty());
     when(inventoryStockRepository.save(any(InventoryStock.class)))
         .thenAnswer(invocation -> invocation.getArgument(0));
 
     var response =
-        inventoryService.updateStock(new UpdateInventoryStockRequest(1L, new BigDecimal("5.5")));
+        inventoryService.updateStock(
+            new UpdateInventoryStockRequest(
+                UUID.nameUUIDFromBytes("1".getBytes()), new BigDecimal("5.5")));
 
     assertEquals(new BigDecimal("5.5"), response.quantity());
     verify(inventoryTransactionRepository).save(any());
@@ -111,20 +128,29 @@ class InventoryServiceTest {
   @Test
   void updateStockAddsQuantityToExistingStock() {
     Item item = new Item();
-    item.setId(1L);
+    item.setId(UUID.nameUUIDFromBytes("1".getBytes()));
     item.setName("Bandage");
     InventoryStock stock = new InventoryStock();
-    stock.setHospitalId(4L);
+    stock.setHospitalId(UUID.nameUUIDFromBytes("4".getBytes()));
     stock.setItem(item);
     stock.setQuantity(new BigDecimal("2.0"));
-    when(hospitalContext.requireHospitalId()).thenReturn(4L);
-    when(resourceLookup.findRequired(eq(1L), eq(4L), any(), anyString())).thenReturn(item);
-    when(inventoryStockRepository.findByHospitalIdAndItemId(4L, 1L)).thenReturn(Optional.of(stock));
+    when(hospitalContext.requireHospitalId()).thenReturn(UUID.nameUUIDFromBytes("4".getBytes()));
+    when(resourceLookup.findRequired(
+            eq(UUID.nameUUIDFromBytes("1".getBytes())),
+            eq(UUID.nameUUIDFromBytes("4".getBytes())),
+            any(),
+            anyString()))
+        .thenReturn(item);
+    when(inventoryStockRepository.findByHospitalIdAndItemId(
+            UUID.nameUUIDFromBytes("4".getBytes()), UUID.nameUUIDFromBytes("1".getBytes())))
+        .thenReturn(Optional.of(stock));
     when(inventoryStockRepository.save(any(InventoryStock.class)))
         .thenAnswer(invocation -> invocation.getArgument(0));
 
     var response =
-        inventoryService.updateStock(new UpdateInventoryStockRequest(1L, new BigDecimal("3.0")));
+        inventoryService.updateStock(
+            new UpdateInventoryStockRequest(
+                UUID.nameUUIDFromBytes("1".getBytes()), new BigDecimal("3.0")));
 
     assertEquals(new BigDecimal("5.0"), response.quantity());
   }
@@ -132,13 +158,14 @@ class InventoryServiceTest {
   @Test
   void listStockReturnsMappedStock() {
     Item item = new Item();
-    item.setId(1L);
+    item.setId(UUID.nameUUIDFromBytes("1".getBytes()));
     item.setName("Bandage");
     InventoryStock stock = new InventoryStock();
     stock.setItem(item);
     stock.setQuantity(new BigDecimal("5.0"));
-    when(hospitalContext.requireHospitalId()).thenReturn(4L);
-    when(inventoryStockRepository.findAllByHospitalIdOrderByUpdatedAtDesc(4L))
+    when(hospitalContext.requireHospitalId()).thenReturn(UUID.nameUUIDFromBytes("4".getBytes()));
+    when(inventoryStockRepository.findAllByHospitalIdOrderByUpdatedAtDesc(
+            UUID.nameUUIDFromBytes("4".getBytes())))
         .thenReturn(List.of(stock));
 
     var response = inventoryService.listStock();

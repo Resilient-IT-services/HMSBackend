@@ -3,6 +3,7 @@ package com.res.hms.common.tenant;
 import com.res.hms.common.exception.ApiException;
 import com.res.hms.user.security.HospitalUserPrincipal;
 import java.util.Optional;
+import java.util.UUID;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.authentication.AnonymousAuthenticationToken;
 import org.springframework.security.core.Authentication;
@@ -12,7 +13,12 @@ import org.springframework.stereotype.Component;
 @Component
 public class HospitalContext {
 
-  public Long requireHospitalId() {
+  public UUID requireHospitalId() {
+    UUID tenantHospitalId = TenantContext.getHospitalId();
+    if (tenantHospitalId != null) {
+      return tenantHospitalId;
+    }
+
     HospitalUserPrincipal principal =
         getPrincipal()
             .orElseThrow(
@@ -35,7 +41,11 @@ public class HospitalContext {
         "BUSINESS_RULE_VIOLATION", "Please select a hospital first", HttpStatus.BAD_REQUEST);
   }
 
-  public Long getHospitalIdOrNull() {
+  public UUID getHospitalIdOrNull() {
+    UUID tenantHospitalId = TenantContext.getHospitalId();
+    if (tenantHospitalId != null) {
+      return tenantHospitalId;
+    }
     return getPrincipal().map(HospitalUserPrincipal::hospitalId).orElse(null);
   }
 
@@ -43,7 +53,7 @@ public class HospitalContext {
     return getPrincipal().map(HospitalUserPrincipal::isSuperAdmin).orElse(false);
   }
 
-  public Long currentUserIdOrNull() {
+  public UUID currentUserIdOrNull() {
     return getPrincipal().map(HospitalUserPrincipal::userId).orElse(null);
   }
 
