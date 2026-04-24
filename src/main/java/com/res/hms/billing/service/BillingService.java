@@ -14,12 +14,15 @@ import com.res.hms.domain.BillingItem;
 import com.res.hms.domain.BillingSourceType;
 import com.res.hms.domain.BillingStatus;
 import com.res.hms.domain.Doctor;
+import com.res.hms.domain.DoctorHospitalDetails;
 import com.res.hms.domain.Patient;
 import com.res.hms.patient.service.PatientService;
 import com.res.hms.pharmacy.repository.PrescriptionRepository;
+import com.res.hms.repository.DoctorHospitalDetailsRepository;
 import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.temporal.ChronoUnit;
+import java.util.Optional;
 import java.util.UUID;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
@@ -35,23 +38,33 @@ public class BillingService {
   private final ResourceLookup resourceLookup;
   private final DoctorService doctorService;
   private final PrescriptionRepository prescriptionRepository;
+  private final DoctorHospitalDetailsRepository doctorHospitalDetailsRepository;
 
-  private BigDecimal calculateConsultationFee(Doctor doctor, LocalDate lastVisitDate) {
+  private BigDecimal calculateConsultationFee(Doctor doctor, UUID hospitalId, LocalDate lastVisitDate) {
+    BigDecimal fee = BigDecimal.ZERO;
+    int followUpDays = 0;
+
+    if (doctor.getUser() != null) {
+      Optional<DoctorHospitalDetails> details =
+          doctorHospitalDetailsRepository.findByUserIdAndHospitalId(doctor.getUser().getId(), hospitalId);
+      if (details.isPresent()) {
+        fee = details.get().getConsultationFee();
+        followUpDays = details.get().getFollowUpDays();
+      }
+    }
+
     if (lastVisitDate != null) {
-
       long days = ChronoUnit.DAYS.between(lastVisitDate, LocalDate.now());
-
-      if (days <= doctor.getFollowUpDays()) {
+      if (days <= followUpDays) {
         return BigDecimal.ZERO;
       }
     }
-    return doctor.getConsultationFee();
+    return fee;
   }
 
   @Transactional
   @Auditable(entity = "billing", action = "CREATE")
   public BillingResponse createOpdBilling(CreateOpdBillingRequest request) {
-
     UUID hospitalId = hospitalContext.requireHospitalId();
     Patient patient = patientService.requirePatient(request.patientId(), hospitalId);
     Doctor doctor = doctorService.requireDoctor(request.doctorId(), hospitalId);
@@ -61,7 +74,7 @@ public class BillingService {
                 request.patientId(), request.doctorId())
             .map(p -> p.getCreatedAt().toLocalDate())
             .orElse(null);
-    BigDecimal consultationFee = calculateConsultationFee(doctor, lastVisitDate);
+    BigDecimal consultationFee = calculateConsultationFee(doctor, hospitalId, lastVisitDate);
 
     Billing billing = new Billing();
     billing.setHospitalId(hospitalId);
@@ -70,7 +83,6 @@ public class BillingService {
     billing.setStatus(BillingStatus.DRAFT);
     billing.setTotalAmount(BigDecimal.ZERO);
     if (consultationFee.compareTo(BigDecimal.ZERO) > 0) {
-
       BillingItem item = new BillingItem();
       item.setHospitalId(hospitalId);
       item.setBilling(billing);

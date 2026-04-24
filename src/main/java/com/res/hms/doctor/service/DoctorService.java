@@ -6,34 +6,31 @@ import com.res.hms.common.util.ResourceLookup;
 import com.res.hms.doctor.dto.DoctorResponse;
 import com.res.hms.doctor.repository.DoctorRepository;
 import com.res.hms.domain.Doctor;
+import com.res.hms.domain.DoctorHospitalDetails;
 import com.res.hms.domain.UserAccount;
-import com.res.hms.repository.UserAccountRepository;
+import com.res.hms.repository.DoctorHospitalDetailsRepository;
+import java.math.BigDecimal;
+import java.util.Optional;
 import java.util.UUID;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 @Service
 @RequiredArgsConstructor
 public class DoctorService {
 
   private final DoctorRepository doctorRepository;
-  private final UserAccountRepository userAccountRepository;
+  private final DoctorHospitalDetailsRepository doctorHospitalDetailsRepository;
   private final HospitalContext hospitalContext;
   private final ResourceLookup resourceLookup;
 
-  public PageResponse<DoctorResponse> list(int page, int size, String search) {
+  public PageResponse<DoctorResponse> list(int page, int size) {
     UUID hospitalId = hospitalContext.requireHospitalId();
-    PageRequest pageRequest = PageRequest.of(page, size);
-
-    if (search != null && !search.trim().isEmpty()) {
-      return PageResponse.from(
-          doctorRepository.search(hospitalId, search.trim(), pageRequest).map(this::toResponse));
-    }
-
     return PageResponse.from(
         doctorRepository
-            .findAllByHospitalIdOrderByCreatedAtDesc(hospitalId, pageRequest)
+            .findAllByHospitalIdOrderByCreatedAtDesc(hospitalId, PageRequest.of(page, size))
             .map(this::toResponse));
   }
 
@@ -44,6 +41,20 @@ public class DoctorService {
 
   private DoctorResponse toResponse(Doctor doctor) {
     UserAccount user = doctor.getUser();
+    UUID activeHospitalId = hospitalContext.getHospitalIdOrNull();
+
+    BigDecimal consultationFee = BigDecimal.ZERO;
+    Integer followUpDays = 0;
+
+    if (activeHospitalId != null && user != null) {
+      Optional<DoctorHospitalDetails> details =
+          doctorHospitalDetailsRepository.findByUserIdAndHospitalId(user.getId(), activeHospitalId);
+      if (details.isPresent()) {
+        consultationFee = details.get().getConsultationFee();
+        followUpDays = details.get().getFollowUpDays();
+      }
+    }
+
     return new DoctorResponse(
         doctor.getId(),
         user != null ? user.getFullName() : "N/A",
@@ -51,8 +62,9 @@ public class DoctorService {
         user != null ? user.getDob() : null,
         user != null ? user.getPhone() : null,
         doctor.getSpecialization(),
-        doctor.getConsultationFee(),
-        doctor.getFollowUpDays(),
+        consultationFee,
+        followUpDays,
+        doctor.getEducation(),
         doctor.getCreatedAt());
   }
 }

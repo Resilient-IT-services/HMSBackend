@@ -1,5 +1,7 @@
 package com.res.hms.domain;
 
+import com.res.hms.doctor.dto.DoctorEducation;
+import io.hypersistence.utils.hibernate.type.json.JsonType;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.FetchType;
@@ -9,6 +11,7 @@ import jakarta.persistence.Table;
 import java.math.BigDecimal;
 import lombok.Getter;
 import lombok.Setter;
+import org.hibernate.annotations.Type;
 
 @Getter
 @Setter
@@ -23,11 +26,15 @@ public class Doctor extends BaseEntity {
   @Column(nullable = false)
   private String specialization;
 
-  @Column(nullable = false)
-  private BigDecimal consultationFee = BigDecimal.ZERO;
+  @Column(name = "license_number", unique = true)
+  private String licenseNumber;
 
-  @Column(nullable = false)
-  private Integer followUpDays = 0;
+  @Column(columnDefinition = "text")
+  private String bio;
+
+  @Type(JsonType.class)
+  @Column(name = "education_json", columnDefinition = "jsonb")
+  private DoctorEducation education;
 
   public String getFullName() {
 

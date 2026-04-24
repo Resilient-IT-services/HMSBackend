@@ -1,23 +1,25 @@
 package com.res.hms.api;
 
 import com.res.hms.common.api.ApiResponse;
-import com.res.hms.user.dto.AllocateRoleRequest;
-import com.res.hms.user.dto.CreateUserRequest;
-import com.res.hms.user.dto.UserResponse;
+import com.res.hms.user.dto.UserFullProfileDTO;
+import com.res.hms.user.dto.UserRequestDTO;
+import com.res.hms.user.dto.UserSummaryDTO;
 import com.res.hms.user.service.UserService;
-import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import java.util.List;
 import java.util.UUID;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
-@Tag(name = "Users")
 @RestController
 @RequestMapping("/api/v1/users")
 @RequiredArgsConstructor
@@ -25,38 +27,42 @@ public class UserController {
 
   private final UserService userService;
 
-  @PostMapping
-  @PreAuthorize("hasAnyRole('SUPER_ADMIN', 'ADMIN')")
-  public ApiResponse<UserResponse> create(@Valid @RequestBody CreateUserRequest request) {
-    return ApiResponse.success(userService.create(request));
-  }
-
   @GetMapping
   @PreAuthorize("hasAnyRole('SUPER_ADMIN', 'ADMIN')")
-  public ApiResponse<List<UserResponse>> list(
-      @org.springframework.web.bind.annotation.RequestParam(defaultValue = "false")
-          boolean includeDeleted) {
-    return ApiResponse.success(userService.list(includeDeleted));
+  public ApiResponse<List<UserSummaryDTO>> list(
+      @RequestParam(defaultValue = "false") boolean includeDeleted) {
+    return ApiResponse.success(userService.listUsers(includeDeleted));
   }
 
-  @PostMapping("/allocate")
+  @GetMapping("/{id}")
   @PreAuthorize("hasAnyRole('SUPER_ADMIN', 'ADMIN')")
-  public ApiResponse<UserResponse> allocate(@Valid @RequestBody AllocateRoleRequest request) {
-    return ApiResponse.success(userService.allocateRoles(request));
+  public ApiResponse<UserSummaryDTO> get(@PathVariable UUID id) {
+    return ApiResponse.success(userService.getUser(id));
   }
 
-  @org.springframework.web.bind.annotation.PutMapping("/{id}")
+  @GetMapping("/{id}/full-profile")
   @PreAuthorize("hasAnyRole('SUPER_ADMIN', 'ADMIN')")
-  public ApiResponse<UserResponse> update(
-      @org.springframework.web.bind.annotation.PathVariable UUID id,
-      @Valid @RequestBody com.res.hms.user.dto.UpdateUserRequest request) {
-    return ApiResponse.success(userService.update(id, request));
+  public ApiResponse<UserFullProfileDTO> getFullProfile(@PathVariable UUID id) {
+    return ApiResponse.success(userService.getFullProfile(id));
   }
 
-  @org.springframework.web.bind.annotation.DeleteMapping("/{id}")
+  @PostMapping
   @PreAuthorize("hasAnyRole('SUPER_ADMIN', 'ADMIN')")
-  public ApiResponse<Void> delete(@org.springframework.web.bind.annotation.PathVariable UUID id) {
-    userService.delete(id);
+  public ApiResponse<UserSummaryDTO> create(@Valid @RequestBody UserRequestDTO request) {
+    return ApiResponse.success(userService.createUser(request));
+  }
+
+  @PutMapping("/{id}")
+  @PreAuthorize("hasAnyRole('SUPER_ADMIN', 'ADMIN')")
+  public ApiResponse<UserSummaryDTO> update(
+      @PathVariable UUID id, @Valid @RequestBody UserRequestDTO request) {
+    return ApiResponse.success(userService.updateUser(id, request));
+  }
+
+  @DeleteMapping("/{id}")
+  @PreAuthorize("hasAnyRole('SUPER_ADMIN', 'ADMIN')")
+  public ApiResponse<Void> delete(@PathVariable UUID id) {
+    userService.deleteUser(id);
     return ApiResponse.success(null);
   }
 }

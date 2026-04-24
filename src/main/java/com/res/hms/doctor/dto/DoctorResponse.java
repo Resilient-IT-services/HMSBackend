@@ -15,4 +15,5 @@ public record DoctorResponse(
     String specialization,
     BigDecimal consultationFee,
     Integer followUpDays,
+    DoctorEducation education,
     LocalDateTime createdAt) {}

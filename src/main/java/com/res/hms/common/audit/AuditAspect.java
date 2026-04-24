@@ -1,9 +1,11 @@
 package com.res.hms.common.audit;
 
+import com.res.hms.audit.dto.AuditDetail;
 import com.res.hms.audit.service.AuditLogService;
 import com.res.hms.common.tenant.HospitalContext;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
+import java.util.Map;
 import java.util.UUID;
 import lombok.RequiredArgsConstructor;
 import org.aspectj.lang.JoinPoint;
@@ -24,8 +26,9 @@ public class AuditAspect {
     UUID hospitalId = hospitalContext.getHospitalIdOrNull();
     UUID entityId = extractId(result);
 
-    String details =
-        String.format("%s %s with ID %s", auditable.action(), auditable.entity(), entityId);
+    AuditDetail details = AuditDetail.builder()
+        .after(result != null ? Map.of("data", result) : null)
+        .build();
 
     auditLogService.record(hospitalId, auditable.entity(), entityId, auditable.action(), details);
   }

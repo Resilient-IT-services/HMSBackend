@@ -1,11 +1,14 @@
 package com.res.hms.domain;
 
+import com.res.hms.audit.dto.AuditDetail;
+import io.hypersistence.utils.hibernate.type.json.JsonType;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.Table;
 import java.util.UUID;
 import lombok.Getter;
 import lombok.Setter;
+import org.hibernate.annotations.Type;
 
 @Getter
 @Setter
@@ -28,6 +31,7 @@ public class AuditLog extends BaseEntity {
   @Column(name = "performed_by")
   private UUID performedBy;
 
-  @Column(name = "details", length = 4000)
-  private String details;
+  @Type(JsonType.class)
+  @Column(name = "details", columnDefinition = "jsonb")
+  private AuditDetail details;
 }

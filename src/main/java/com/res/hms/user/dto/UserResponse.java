@@ -14,4 +14,5 @@ public record UserResponse(
     boolean active,
     boolean deleted,
     boolean superuser,
+    ReceptionistProfileResponse receptionistProfile,
     java.time.LocalDateTime createdAt) {}

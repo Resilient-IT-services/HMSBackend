@@ -38,6 +38,7 @@ dependencies {
     implementation("org.flywaydb:flyway-core:10.13.0")
     implementation("org.flywaydb:flyway-database-postgresql:10.13.0")
     implementation("org.springdoc:springdoc-openapi-starter-webmvc-ui:2.5.0")
+    implementation("io.hypersistence:hypersistence-utils-hibernate-63:3.8.2")
     compileOnly("org.projectlombok:lombok")
     developmentOnly("org.springframework.boot:spring-boot-devtools")
     runtimeOnly("org.postgresql:postgresql")

@@ -9,5 +9,5 @@ public record AuditLogResponse(
     UUID entityId,
     String action,
     UUID performedBy,
-    String details,
+    AuditDetail details,
     LocalDateTime createdAt) {}

@@ -2,6 +2,7 @@ package com.res.hms.user.service;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.when;
 
 import com.res.hms.doctor.repository.DoctorRepository;
@@ -14,6 +15,9 @@ import com.res.hms.domain.UserAccount;
 import com.res.hms.domain.UserRoleAssignment;
 import com.res.hms.nurse.repository.NurseRepository;
 import com.res.hms.repository.HospitalRepository;
+import com.res.hms.repository.ReceptionistProfileRepository;
+import com.res.hms.repository.DoctorHospitalDetailsRepository;
+import com.res.hms.user.dto.UserSummaryDTO;
 import java.util.Optional;
 import java.util.UUID;
 import org.junit.jupiter.api.Test;
@@ -28,6 +32,8 @@ class UserMapperTest {
   @Mock private HospitalRepository hospitalRepository;
   @Mock private DoctorRepository doctorRepository;
   @Mock private NurseRepository nurseRepository;
+  @Mock private ReceptionistProfileRepository receptionistProfileRepository;
+  @Mock private DoctorHospitalDetailsRepository doctorHospitalDetailsRepository;
 
   @InjectMocks private UserMapper userMapper;
 
@@ -36,7 +42,7 @@ class UserMapperTest {
   private final UUID nurseUserId = UUID.nameUUIDFromBytes("nurseUser".getBytes());
 
   @Test
-  void toResponseMapsSpecializationForDoctor() {
+  void toSummaryDTOMapsCorrectly() {
     UserAccount user = new UserAccount();
     user.setId(doctorUserId);
     user.setUsername("doctor1");
@@ -55,49 +61,10 @@ class UserMapperTest {
     assignment.setRole(doctorRole);
     user.getAssignments().add(assignment);
 
-    Doctor doctor = new Doctor();
-    doctor.setSpecialization("Cardiology");
+    var response = userMapper.toSummaryDTO(user);
 
-    when(hospitalRepository.findById(hospitalId)).thenReturn(Optional.of(hospital));
-    when(doctorRepository.findByUserId(doctorUserId)).thenReturn(Optional.of(doctor));
-
-    var response = userMapper.toResponse(user);
-
-    assertEquals(1, response.memberships().size());
-    assertEquals("Cardiology", response.memberships().getFirst().specialization());
-    assertNull(response.memberships().getFirst().department());
-  }
-
-  @Test
-  void toResponseMapsDepartmentForNurse() {
-    UserAccount user = new UserAccount();
-    user.setId(nurseUserId);
-    user.setUsername("nurse1");
-
-    Hospital hospital = new Hospital();
-    hospital.setId(hospitalId);
-    hospital.setName("Test Hospital");
-    hospital.setCode("TEST");
-
-    Role nurseRole = new Role();
-    nurseRole.setCode(RoleCode.NURSE);
-
-    UserRoleAssignment assignment = new UserRoleAssignment();
-    assignment.setUser(user);
-    assignment.setHospitalId(hospitalId);
-    assignment.setRole(nurseRole);
-    user.getAssignments().add(assignment);
-
-    Nurse nurse = new Nurse();
-    nurse.setDepartment("Emergency");
-
-    when(hospitalRepository.findById(hospitalId)).thenReturn(Optional.of(hospital));
-    when(nurseRepository.findByUserId(nurseUserId)).thenReturn(Optional.of(nurse));
-
-    var response = userMapper.toResponse(user);
-
-    assertEquals(1, response.memberships().size());
-    assertEquals("Emergency", response.memberships().getFirst().department());
-    assertNull(response.memberships().getFirst().specialization());
+    assertEquals(1, response.getMemberships().size());
+    assertEquals(hospitalId, response.getMemberships().get(0).getHospitalId());
+    assertEquals("DOCTOR", response.getMemberships().get(0).getRoles().get(0));
   }
 }

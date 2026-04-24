@@ -23,6 +23,12 @@ public class UserRoleAssignment extends BaseEntity {
   @Column(name = "hospital_id")
   private UUID hospitalId;
 
+  @Column(name = "department_name")
+  private String departmentName;
+
+  @Column(name = "is_active", nullable = false)
+  private boolean active = true;
+
   @ManyToOne(fetch = FetchType.EAGER, optional = false)
   @JoinColumn(name = "role_id", nullable = false)
   private Role role;

@@ -22,6 +22,12 @@ public class Nurse extends BaseEntity {
   @Column(nullable = false)
   private String department;
 
+  @Column(name = "nursing_license_no", unique = true)
+  private String nursingLicenseNo;
+
+  @Column(name = "certification_level")
+  private String certificationLevel;
+
   public String getFullName() {
     return user != null ? user.getFullName() : null;
   }

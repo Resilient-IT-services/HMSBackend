@@ -2,6 +2,7 @@ package com.res.hms;
 
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.put;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
@@ -97,7 +98,7 @@ class SecurityExhaustiveIntegrationTest {
                                 {
                                   "username": "newuser1",
                                   "password": "password",
-                                  "roles": [],
+                                  "memberships": [],
                                   "fullName": "New User",
                                   "gender": "MALE",
                                   "dob": "1990-01-01"
@@ -116,17 +117,18 @@ class SecurityExhaustiveIntegrationTest {
                 .header("X-Hospital-Id", testHospitalId.toString())
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(
+                    String.format(
                     """
                                 {
                                   "username": "newuser2",
                                   "password": "password",
-                                  "roles": ["NURSE"],
+                                  "memberships": [{"hospitalId": "%s", "roles": ["NURSE"]}],
                                   "fullName": "New User",
                                   "gender": "MALE",
                                   "dob": "1990-01-01",
                                   "department": "XYZ"
                                 }
-                                """))
+                                """, testHospitalId)))
         .andExpect(status().isForbidden());
   }
 
@@ -140,16 +142,17 @@ class SecurityExhaustiveIntegrationTest {
                 .header("X-Hospital-Id", testHospitalId.toString())
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(
+                    String.format(
                     """
                                 {
                                   "username": "another_admin",
                                   "password": "password",
-                                  "roles": ["ADMIN"],
+                                  "memberships": [{"hospitalId": "%s", "roles": ["ADMIN"]}],
                                   "fullName": "Another Admin",
                                   "gender": "MALE",
                                   "dob": "1990-01-01"
                                 }
-                                """))
+                                """, testHospitalId)))
         .andExpect(status().isOk())
         .andExpect(jsonPath("$.data.username").value("another_admin"));
   }
@@ -164,17 +167,18 @@ class SecurityExhaustiveIntegrationTest {
                 .header("X-Hospital-Id", testHospitalId.toString())
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(
+                    String.format(
                     """
                                 {
                                   "username": "hosp_doctor",
                                   "password": "password",
-                                  "roles": ["NURSE"],
+                                  "memberships": [{"hospitalId": "%s", "roles": ["NURSE"]}],
                                   "fullName": "Dup User",
                                   "gender": "MALE",
                                   "dob": "1990-01-01",
                                   "department": "department"
                                 }
-                                """))
+                                """, testHospitalId)))
         .andExpect(status().isConflict());
   }
 
@@ -232,7 +236,7 @@ class SecurityExhaustiveIntegrationTest {
   }
 
   @Test
-  void hospitalAdminTriesToAllocateRoleInDifferentHospital_ShouldFail() throws Exception {
+  void hospitalAdminTriesToUpdateUserInDifferentHospital_ShouldFail() throws Exception {
     // Create a user in Hospital 2
     testDataHelper.createUserIfMissing(
         "hosp2_user",
@@ -244,20 +248,20 @@ class SecurityExhaustiveIntegrationTest {
         roleRepository);
     UUID hosp2UserId = userAccountRepository.findByUsername("hosp2_user").orElseThrow().getId();
 
-    // Admin from Hospital 1 tries to allocate roles to user in Hospital 2
+    // Admin from Hospital 1 tries to update user from Hospital 2
     MockHttpSession session = login("hosp_admin");
     mockMvc
         .perform(
-            post("/api/v1/users/allocate")
+            put("/api/v1/users/" + hosp2UserId)
                 .session(session)
                 .header("X-Hospital-Id", testHospitalId.toString())
                 .contentType(MediaType.APPLICATION_JSON)
-                .content("{\"userId\": \"" + hosp2UserId + "\", \"roles\": [\"DOCTOR\"]}"))
+                .content(String.format("{\"username\": \"hosp2_user\", \"fullName\": \"Updated Name\", \"gender\": \"FEMALE\", \"dob\": \"1990-01-01\", \"memberships\": [{\"hospitalId\": \"%s\", \"roles\": [\"DOCTOR\"]}]}", secondHospitalId)))
         .andExpect(status().isNotFound()); // Strict isolation: user not found in context
   }
 
   @Test
-  void doctorSwitchingHospitals_ShouldUpdateSession() throws Exception {
+  void doctorProvidingDifferentHeaders_ShouldReturnDifferentContexts() throws Exception {
     // Create a doctor with access to two hospitals
     testDataHelper.createUserIfMissing(
         "multi_dr",
@@ -307,15 +311,16 @@ class SecurityExhaustiveIntegrationTest {
                 .header("X-Hospital-Id", testHospitalId.toString())
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(
+                    String.format(
                     """
                                 {
                                   "username": "noname",
                                   "password": "password",
-                                  "roles": ["NURSE"],
+                                  "memberships": [{"hospitalId": "%s", "roles": ["NURSE"]}],
                                   "gender": "MALE",
                                   "dob": "1990-01-01"
                                 }
-                                """))
+                                """, testHospitalId)))
         .andExpect(status().isBadRequest());
   }
 
@@ -329,15 +334,16 @@ class SecurityExhaustiveIntegrationTest {
                 .header("X-Hospital-Id", testHospitalId.toString())
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(
+                    String.format(
                     """
                                 {
                                   "username": "nogender",
                                   "password": "password",
-                                  "roles": ["NURSE"],
+                                  "memberships": [{"hospitalId": "%s", "roles": ["NURSE"]}],
                                   "fullName": "No Gender",
                                   "dob": "1990-01-01"
                                 }
-                                """))
+                                """, testHospitalId)))
         .andExpect(status().isBadRequest());
   }
 
@@ -351,15 +357,16 @@ class SecurityExhaustiveIntegrationTest {
                 .header("X-Hospital-Id", testHospitalId.toString())
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(
+                    String.format(
                     """
                                 {
                                   "username": "nodob",
                                   "password": "password",
-                                  "roles": ["NURSE"],
+                                  "memberships": [{"hospitalId": "%s", "roles": ["NURSE"]}],
                                   "fullName": "No DOB",
                                   "gender": "MALE"
                                 }
-                                """))
+                                """, testHospitalId)))
         .andExpect(status().isBadRequest());
   }
 }

@@ -68,6 +68,7 @@ public class HospitalService {
         hospital.getCode(),
         hospital.getAddress(),
         hospital.getStatus(),
+        hospital.getSettings(),
         hospital.getCreatedAt());
   }
 }

@@ -13,8 +13,10 @@ import com.res.hms.common.util.ResourceLookup;
 import com.res.hms.doctor.repository.DoctorRepository;
 import com.res.hms.domain.Doctor;
 import com.res.hms.domain.UserAccount;
+import com.res.hms.repository.DoctorHospitalDetailsRepository;
 import com.res.hms.repository.UserAccountRepository;
 import java.util.List;
+import java.util.Optional;
 import java.util.UUID;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -29,6 +31,7 @@ import org.springframework.http.HttpStatus;
 class DoctorServiceTest {
 
   @Mock private DoctorRepository doctorRepository;
+  @Mock private DoctorHospitalDetailsRepository doctorHospitalDetailsRepository;
   @Mock private UserAccountRepository userAccountRepository;
   @Mock private HospitalContext hospitalContext;
   @Mock private ResourceLookup resourceLookup;
@@ -44,12 +47,16 @@ class DoctorServiceTest {
     doctor.setId(UUID.nameUUIDFromBytes("3".getBytes()));
     doctor.setUser(user);
     doctor.setSpecialization("Cardiology");
-    when(hospitalContext.requireHospitalId()).thenReturn(UUID.nameUUIDFromBytes("4".getBytes()));
-    when(doctorRepository.findAllByHospitalIdOrderByCreatedAtDesc(
-            eq(UUID.nameUUIDFromBytes("4".getBytes())), any(PageRequest.class)))
+    
+    UUID hospitalId = UUID.nameUUIDFromBytes("4".getBytes());
+    when(hospitalContext.requireHospitalId()).thenReturn(hospitalId);
+    when(hospitalContext.getHospitalIdOrNull()).thenReturn(hospitalId);
+    when(doctorRepository.findAllByHospitalIdOrderByCreatedAtDesc(eq(hospitalId), any(PageRequest.class)))
         .thenReturn(new PageImpl<>(List.of(doctor)));
+    when(doctorHospitalDetailsRepository.findByUserIdAndHospitalId(any(), eq(hospitalId)))
+        .thenReturn(Optional.empty());
 
-    var response = doctorService.list(0, 10, null);
+    var response = doctorService.list(0, 10);
 
     assertEquals(1, response.content().size());
     assertEquals("Cardiology", response.content().getFirst().specialization());
@@ -57,20 +64,16 @@ class DoctorServiceTest {
 
   @Test
   void requireDoctorRejectsMissingDoctor() {
-    when(resourceLookup.findRequired(
-            eq(UUID.nameUUIDFromBytes("12".getBytes())),
-            eq(UUID.nameUUIDFromBytes("4".getBytes())),
-            any(),
-            anyString()))
+    UUID doctorId = UUID.nameUUIDFromBytes("12".getBytes());
+    UUID hospitalId = UUID.nameUUIDFromBytes("4".getBytes());
+    
+    when(resourceLookup.findRequired(eq(doctorId), eq(hospitalId), any(), anyString()))
         .thenThrow(new ApiException("NOT_FOUND", "Doctor not found", HttpStatus.NOT_FOUND));
 
     ApiException exception =
         assertThrows(
             ApiException.class,
-            () ->
-                doctorService.requireDoctor(
-                    UUID.nameUUIDFromBytes("12".getBytes()),
-                    UUID.nameUUIDFromBytes("4".getBytes())));
+            () -> doctorService.requireDoctor(doctorId, hospitalId));
 
     assertEquals("NOT_FOUND", exception.getCode());
   }

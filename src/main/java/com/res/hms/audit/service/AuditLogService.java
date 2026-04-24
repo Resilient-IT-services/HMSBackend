@@ -1,5 +1,6 @@
 package com.res.hms.audit.service;
 
+import com.res.hms.audit.dto.AuditDetail;
 import com.res.hms.audit.dto.AuditLogResponse;
 import com.res.hms.audit.repository.AuditLogRepository;
 import com.res.hms.common.api.PageResponse;
@@ -21,7 +22,7 @@ public class AuditLogService {
   private final HospitalContext hospitalContext;
 
   public void record(
-      UUID hospitalId, String entityName, UUID entityId, String action, String details) {
+      UUID hospitalId, String entityName, UUID entityId, String action, AuditDetail details) {
     AuditLog auditLog = new AuditLog();
     auditLog.setHospitalId(hospitalId);
     auditLog.setEntityName(entityName);

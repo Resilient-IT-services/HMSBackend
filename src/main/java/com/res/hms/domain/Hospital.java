@@ -1,10 +1,13 @@
 package com.res.hms.domain;
 
+import com.res.hms.hospital.dto.HospitalSettings;
+import io.hypersistence.utils.hibernate.type.json.JsonType;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.Table;
 import lombok.Getter;
 import lombok.Setter;
+import org.hibernate.annotations.Type;
 
 @Getter
 @Setter
@@ -22,4 +25,8 @@ public class Hospital extends BaseEntity {
 
   @Column(nullable = false)
   private String status;
+
+  @Type(JsonType.class)
+  @Column(name = "settings", columnDefinition = "jsonb")
+  private HospitalSettings settings;
 }

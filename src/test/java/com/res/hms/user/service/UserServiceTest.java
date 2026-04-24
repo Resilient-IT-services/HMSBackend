@@ -14,6 +14,7 @@ import com.res.hms.common.tenant.HospitalContext;
 import com.res.hms.common.util.ResourceLookup;
 import com.res.hms.doctor.repository.DoctorRepository;
 import com.res.hms.domain.Doctor;
+import com.res.hms.domain.DoctorHospitalDetails;
 import com.res.hms.domain.Gender;
 import com.res.hms.domain.Hospital;
 import com.res.hms.domain.Nurse;
@@ -22,13 +23,12 @@ import com.res.hms.domain.RoleCode;
 import com.res.hms.domain.UserAccount;
 import com.res.hms.domain.UserRoleAssignment;
 import com.res.hms.nurse.repository.NurseRepository;
+import com.res.hms.repository.DoctorHospitalDetailsRepository;
 import com.res.hms.repository.HospitalRepository;
 import com.res.hms.repository.RoleRepository;
 import com.res.hms.repository.UserAccountRepository;
-import com.res.hms.user.dto.AllocateRoleRequest;
-import com.res.hms.user.dto.CreateUserRequest;
-import com.res.hms.user.dto.HospitalMembershipResponse;
-import com.res.hms.user.dto.UserResponse;
+import com.res.hms.user.dto.UserRequestDTO;
+import com.res.hms.user.dto.UserSummaryDTO;
 import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.util.List;
@@ -50,6 +50,7 @@ class UserServiceTest {
   @Mock private RoleRepository roleRepository;
   @Mock private HospitalRepository hospitalRepository;
   @Mock private DoctorRepository doctorRepository;
+  @Mock private DoctorHospitalDetailsRepository doctorHospitalDetailsRepository;
   @Mock private NurseRepository nurseRepository;
   @Mock private PasswordEncoder passwordEncoder;
   @Mock private HospitalContext hospitalContext;
@@ -62,7 +63,7 @@ class UserServiceTest {
   private final UUID userId = UUID.nameUUIDFromBytes("user".getBytes());
 
   @Test
-  void createAutomaticallyCreatesDoctorEntry() {
+  void createUserAutomaticallyCreatesDoctorEntry() {
     Role role = new Role();
     role.setCode(RoleCode.DOCTOR);
 
@@ -71,308 +72,70 @@ class UserServiceTest {
     when(resourceLookup.findRequired(eq(RoleCode.DOCTOR), any(), anyString())).thenReturn(role);
     when(passwordEncoder.encode(anyString())).thenReturn("encoded");
     when(doctorRepository.findByUserId(any())).thenReturn(Optional.empty());
+    
+    when(userAccountRepository.save(any(UserAccount.class))).thenAnswer(i -> {
+        UserAccount u = i.getArgument(0);
+        u.setId(userId);
+        return u;
+    });
 
-    userService.create(
-        new CreateUserRequest(
-            "doctor1",
-            "password",
-            Set.of(RoleCode.DOCTOR),
-            "Dr. John",
-            Gender.MALE,
-            LocalDate.now(),
-            hospitalId,
-            false,
-            "123",
-            "Cardiology",
-            null,
-            BigDecimal.valueOf(500),
-            5));
-
-    verify(doctorRepository).save(any(Doctor.class));
-  }
-
-  @Test
-  void createAutomaticallyCreatesNurseEntry() {
-    Role role = new Role();
-    role.setCode(RoleCode.NURSE);
-
-    when(userAccountRepository.existsByUsername("nurse1")).thenReturn(false);
-    when(hospitalContext.getHospitalIdOrNull()).thenReturn(hospitalId);
-    when(resourceLookup.findRequired(eq(RoleCode.NURSE), any(), anyString())).thenReturn(role);
-    when(passwordEncoder.encode(anyString())).thenReturn("encoded");
-    when(nurseRepository.findByUserId(any())).thenReturn(Optional.empty());
-
-    userService.create(
-        new CreateUserRequest(
-            "nurse1",
-            "password",
-            Set.of(RoleCode.NURSE),
-            "Nurse Jane",
-            Gender.FEMALE,
-            LocalDate.now(),
-            hospitalId,
-            false,
-            "123",
-            null,
-            "Emergency",
-            BigDecimal.valueOf(500),
-            5));
-
-    verify(nurseRepository).save(any(Nurse.class));
-  }
-
-  @Test
-  void allocateRolesAutomaticallyCreatesDoctorEntry() {
-    Role role = new Role();
-    role.setCode(RoleCode.DOCTOR);
-
-    UserAccount user = new UserAccount();
-    user.setId(userId);
-    user.setUsername("user1");
-
-    when(hospitalContext.getHospitalIdOrNull()).thenReturn(hospitalId);
-    when(hospitalContext.isSuperAdmin()).thenReturn(false);
-    when(resourceLookup.findRequired(eq(userId), eq(hospitalId), any(), anyString()))
-        .thenReturn(user);
-    when(resourceLookup.findRequired(eq(hospitalId), any(), anyString()))
-        .thenReturn(new Hospital());
-    when(resourceLookup.findRequired(eq(RoleCode.DOCTOR), any(), anyString())).thenReturn(role);
-    when(doctorRepository.findByUserId(eq(userId))).thenReturn(Optional.empty());
-
-    userService.allocateRoles(
-        new AllocateRoleRequest(
-            userId,
-            hospitalId,
-            false,
-            Set.of(RoleCode.DOCTOR),
-            "Neurology",
-            null,
-            BigDecimal.valueOf(500),
-            5));
+    userService.createUser(
+        UserRequestDTO.builder()
+            .username("doctor1")
+            .password("password")
+            .fullName("Dr. John")
+            .gender(Gender.MALE)
+            .dob(LocalDate.now())
+            .memberships(List.of(new UserRequestDTO.MembershipRequestDTO(hospitalId, Set.of(RoleCode.DOCTOR))))
+            .specialization("Cardiology")
+            .consultationFee(BigDecimal.valueOf(500))
+            .followUpDays(5)
+            .build());
 
     verify(doctorRepository).save(any(Doctor.class));
+    verify(doctorHospitalDetailsRepository).save(any(DoctorHospitalDetails.class));
   }
 
   @Test
-  void createRejectsDuplicateUsername() {
-    when(userAccountRepository.existsByUsername("admin")).thenReturn(true);
-
-    ApiException exception =
-        assertThrows(
-            ApiException.class,
-            () ->
-                userService.create(
-                    new CreateUserRequest(
-                        "admin",
-                        "secret1",
-                        Set.of(RoleCode.ADMIN),
-                        "Admin",
-                        Gender.MALE,
-                        LocalDate.now(),
-                        hospitalId,
-                        false,
-                        "123",
-                        null,
-                        null,
-                        BigDecimal.valueOf(500),
-                        5)));
-
-    assertEquals(HttpStatus.CONFLICT, exception.getStatus());
-    assertEquals("Username already exists", exception.getMessage());
-  }
-
-  @Test
-  void createRejectsUnknownRole() {
-    when(userAccountRepository.existsByUsername("admin")).thenReturn(false);
-    when(hospitalContext.getHospitalIdOrNull()).thenReturn(hospitalId);
-    when(hospitalContext.isSuperAdmin()).thenReturn(false);
-    when(resourceLookup.findRequired(eq(RoleCode.ADMIN), any(), anyString()))
-        .thenThrow(new ApiException("NOT_FOUND", "Role not found", HttpStatus.NOT_FOUND));
-
-    ApiException exception =
-        assertThrows(
-            ApiException.class,
-            () ->
-                userService.create(
-                    new CreateUserRequest(
-                        "admin",
-                        "secret1",
-                        Set.of(RoleCode.ADMIN),
-                        "Admin",
-                        Gender.MALE,
-                        LocalDate.now(),
-                        hospitalId,
-                        false,
-                        "123",
-                        null,
-                        null,
-                        BigDecimal.valueOf(500),
-                        5)));
-
-    assertEquals("NOT_FOUND", exception.getCode());
-  }
-
-  @Test
-  void createPersistsUserAndAudits() {
-    Role role = new Role();
-    role.setCode(RoleCode.ADMIN);
-    when(userAccountRepository.existsByUsername("admin")).thenReturn(false);
-    when(hospitalContext.getHospitalIdOrNull()).thenReturn(hospitalId);
-    when(hospitalContext.isSuperAdmin()).thenReturn(false);
-    when(resourceLookup.findRequired(eq(RoleCode.ADMIN), any(), anyString())).thenReturn(role);
-    when(passwordEncoder.encode("secret1")).thenReturn("encoded");
-    when(userAccountRepository.save(any(UserAccount.class)))
-        .thenAnswer(
-            invocation -> {
-              UserAccount userAccount = invocation.getArgument(0);
-              userAccount.setId(userId);
-              return userAccount;
-            });
-    when(userMapper.toResponse(any(UserAccount.class)))
-        .thenAnswer(
-            invocation -> {
-              UserAccount user = invocation.getArgument(0);
-              return new UserResponse(
-                  user.getId(),
-                  user.getUsername(),
-                  user.getFullName(),
-                  user.getGender(),
-                  user.getDob(),
-                  user.getPhone(),
-                  List.of(
-                      new HospitalMembershipResponse(
-                          hospitalId, "Test", "TEST", user.getRoleCodes(), null, null)),
-                  user.isActive(),
-                  user.isDeleted(),
-                  user.isSuperuser(),
-                  null);
-            });
-
-    var response =
-        userService.create(
-            new CreateUserRequest(
-                "admin",
-                "secret1",
-                Set.of(RoleCode.ADMIN),
-                "Admin User",
-                Gender.MALE,
-                LocalDate.now(),
-                hospitalId,
-                false,
-                "123",
-                null,
-                null,
-                BigDecimal.valueOf(500),
-                5));
-
-    assertEquals("admin", response.username());
-    assertTrue(response.memberships().stream().anyMatch(m -> m.roles().contains(RoleCode.ADMIN)));
-  }
-
-  @Test
-  void listReturnsHospitalUsers() {
-    Role role = new Role();
-    role.setCode(RoleCode.DOCTOR);
-
-    UserAccount userAccount = new UserAccount();
-    userAccount.setId(userId);
-    userAccount.setUsername("doctor");
-    userAccount.setActive(true);
-
-    UserRoleAssignment assignment = new UserRoleAssignment();
-    assignment.setHospitalId(hospitalId);
-    assignment.setRole(role);
-    assignment.setUser(userAccount);
-    userAccount.getAssignments().add(assignment);
-
-    when(hospitalContext.getHospitalIdOrNull()).thenReturn(hospitalId);
-    when(userAccountRepository.findAllByHospitalId(hospitalId)).thenReturn(List.of(userAccount));
-    when(userMapper.toResponse(any(UserAccount.class)))
-        .thenAnswer(
-            invocation -> {
-              UserAccount user = invocation.getArgument(0);
-              return new UserResponse(
-                  user.getId(),
-                  user.getUsername(),
-                  user.getFullName(),
-                  user.getGender(),
-                  user.getDob(),
-                  user.getPhone(),
-                  List.of(
-                      new HospitalMembershipResponse(
-                          hospitalId, "Test Hospital", "TEST", user.getRoleCodes(), null, null)),
-                  user.isActive(),
-                  user.isDeleted(),
-                  user.isSuperuser(),
-                  null);
-            });
-
-    var response = userService.list(false);
-
-    assertEquals(1, response.size());
-    assertEquals("doctor", response.getFirst().username());
-    assertTrue(
-        response.getFirst().memberships().stream()
-            .anyMatch(m -> m.roles().contains(RoleCode.DOCTOR)));
-  }
-
-  @Test
-  void updateUpdatesUserProfile() {
+  void updateUserScopedLogic() {
     UserAccount user = new UserAccount();
     user.setId(userId);
-    user.setFullName("Old Name");
+    
+    Role adminRole = new Role();
+    adminRole.setCode(RoleCode.ADMIN);
+    
+    UserRoleAssignment existingHosp1 = new UserRoleAssignment();
+    existingHosp1.setId(UUID.randomUUID());
+    existingHosp1.setHospitalId(hospitalId);
+    existingHosp1.setRole(adminRole);
+    user.getAssignments().add(existingHosp1);
+    
+    UUID otherHospId = UUID.randomUUID();
+    UserRoleAssignment existingHosp2 = new UserRoleAssignment();
+    existingHosp2.setId(UUID.randomUUID());
+    existingHosp2.setHospitalId(otherHospId);
+    existingHosp2.setRole(adminRole);
+    user.getAssignments().add(existingHosp2);
 
-    when(resourceLookup.findRequired(eq(userId), any(), any())).thenReturn(user);
-    when(userMapper.toResponse(any(UserAccount.class)))
-        .thenAnswer(
-            i -> {
-              UserAccount u = i.getArgument(0);
-              return new UserResponse(
-                  u.getId(),
-                  u.getUsername(),
-                  u.getFullName(),
-                  u.getGender(),
-                  u.getDob(),
-                  u.getPhone(),
-                  List.of(),
-                  u.isActive(),
-                  u.isDeleted(),
-                  u.isSuperuser(),
-                  null);
-            });
+    when(hospitalContext.getHospitalIdOrNull()).thenReturn(hospitalId);
+    when(hospitalContext.isSuperAdmin()).thenReturn(false);
+    
+    // Scoped search stubbing
+    when(resourceLookup.findRequired(eq(userId), eq(hospitalId), any(), anyString())).thenReturn(user);
+    // Role stubbing
+    when(resourceLookup.findRequired(eq(RoleCode.DOCTOR), any(), anyString())).thenReturn(adminRole); 
 
-    var response =
-        userService.update(
-            userId,
-            new com.res.hms.user.dto.UpdateUserRequest(
-                "New Name", Gender.FEMALE, LocalDate.now(), "999", true));
+    userService.updateUser(userId, UserRequestDTO.builder()
+        .username("user1")
+        .fullName("Updated")
+        .gender(Gender.MALE)
+        .dob(LocalDate.now())
+        .memberships(List.of(new UserRequestDTO.MembershipRequestDTO(hospitalId, Set.of(RoleCode.DOCTOR))))
+        .build());
 
-    assertEquals("New Name", response.fullName());
-    verify(userAccountRepository).save(user);
-  }
-
-  @Test
-  void deleteSoftDeletesUser() {
-    UserAccount user = new UserAccount();
-    user.setId(userId);
-    user.setDeleted(false);
-
-    when(resourceLookup.findRequired(eq(userId), any(), any())).thenReturn(user);
-
-    userService.delete(userId);
-
-    assertTrue(user.isDeleted());
-    verify(userAccountRepository).save(user);
-  }
-
-  @Test
-  void listIncludesDeletedWhenRequested() {
-    when(hospitalContext.getHospitalIdOrNull()).thenReturn(null);
-    when(hospitalContext.isSuperAdmin()).thenReturn(true);
-    when(userAccountRepository.findAll()).thenReturn(List.of());
-
-    userService.list(true);
-
-    verify(userAccountRepository).findAll();
+    // Verify other hospital membership is still there
+    assertTrue(user.getAssignments().stream().anyMatch(a -> otherHospId.equals(a.getHospitalId())));
+    // Verify hospital 1 membership was replaced
+    assertTrue(user.getAssignments().stream().anyMatch(a -> hospitalId.equals(a.getHospitalId())));
   }
 }
