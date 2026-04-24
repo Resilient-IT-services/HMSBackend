@@ -2,6 +2,8 @@ package com.res.hms.domain;
 
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
+import jakarta.persistence.EnumType;
+import jakarta.persistence.Enumerated;
 import jakarta.persistence.FetchType;
 import jakarta.persistence.Id;
 import jakarta.persistence.JoinColumn;
@@ -29,8 +31,9 @@ public class NurseHospitalDetails {
   @Column(name = "floor_location")
   private String floorLocation;
 
+  @Enumerated(EnumType.STRING)
   @Column(name = "shift_type")
-  private String shiftType;
+  private ShiftType shiftType;
 
   @Column(name = "updated_at", nullable = false)
   private LocalDateTime updatedAt = LocalDateTime.now();

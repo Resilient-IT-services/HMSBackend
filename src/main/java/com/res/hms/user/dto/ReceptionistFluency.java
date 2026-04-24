@@ -1,5 +1,6 @@
 package com.res.hms.user.dto;
 
+import com.res.hms.domain.ProficiencyLevel;
 import java.util.List;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -19,6 +20,6 @@ public class ReceptionistFluency {
   @AllArgsConstructor
   public static class LanguageEntry {
     private String language;
-    private String proficiency; // e.g., NATIVE, FLUENT, INTERMEDIATE
+    private ProficiencyLevel proficiency; // e.g., NATIVE, FLUENT, INTERMEDIATE
   }
 }

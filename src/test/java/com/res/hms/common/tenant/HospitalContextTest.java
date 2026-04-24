@@ -34,6 +34,7 @@ class HospitalContextTest {
         new HospitalUserPrincipal(
             userId,
             "admin",
+            "admin@test.com",
             "secret",
             true,
             false,
@@ -69,7 +70,7 @@ class HospitalContextTest {
     Map<UUID, Set<RoleCode>> roles = new HashMap<>();
     // No specific roles assigned, but is superuser
     HospitalUserPrincipal principal =
-        new HospitalUserPrincipal(userId, "super", "secret", true, true, roles, null, Set.of());
+        new HospitalUserPrincipal(userId, "super", "super@test.com", "secret", true, true, roles, null, Set.of());
     SecurityContextHolder.getContext()
         .setAuthentication(
             UsernamePasswordAuthenticationToken.authenticated(
@@ -88,6 +89,7 @@ class HospitalContextTest {
         new HospitalUserPrincipal(
             userId,
             "user",
+            "user@test.com",
             "secret",
             true,
             false,

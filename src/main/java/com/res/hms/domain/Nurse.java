@@ -2,6 +2,8 @@ package com.res.hms.domain;
 
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
+import jakarta.persistence.EnumType;
+import jakarta.persistence.Enumerated;
 import jakarta.persistence.FetchType;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.OneToOne;
@@ -25,8 +27,9 @@ public class Nurse extends BaseEntity {
   @Column(name = "nursing_license_no", unique = true)
   private String nursingLicenseNo;
 
+  @Enumerated(EnumType.STRING)
   @Column(name = "certification_level")
-  private String certificationLevel;
+  private CertificationLevel certificationLevel;
 
   public String getFullName() {
     return user != null ? user.getFullName() : null;

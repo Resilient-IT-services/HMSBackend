@@ -14,6 +14,7 @@ import org.springframework.security.core.userdetails.UserDetails;
 public record HospitalUserPrincipal(
     UUID userId,
     String username,
+    String email,
     String password,
     boolean active,
     boolean superuser,

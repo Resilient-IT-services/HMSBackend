@@ -50,6 +50,7 @@ public class HospitalUserDetailsService implements UserDetailsService {
     return new HospitalUserPrincipal(
         userAccount.getId(),
         userAccount.getUsername(),
+        userAccount.getEmail(),
         userAccount.getPasswordHash(),
         userAccount.isActive(),
         userAccount.isSuperuser(),

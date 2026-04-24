@@ -15,6 +15,7 @@ CREATE TABLE hospital (
 CREATE TABLE user_account (
     id uuid PRIMARY KEY,
     username varchar(100) UNIQUE NOT NULL,
+    email varchar(255) UNIQUE,
     password_hash varchar(255) NOT NULL,
     full_name varchar(255) NULL,
     gender varchar(20) NULL,

@@ -1,22 +1,14 @@
 package com.res.hms.user.service;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertNull;
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.Mockito.when;
 
 import com.res.hms.doctor.repository.DoctorRepository;
-import com.res.hms.domain.Doctor;
-import com.res.hms.domain.Hospital;
-import com.res.hms.domain.Nurse;
 import com.res.hms.domain.Role;
 import com.res.hms.domain.RoleCode;
 import com.res.hms.domain.UserAccount;
 import com.res.hms.domain.UserRoleAssignment;
 import com.res.hms.nurse.repository.NurseRepository;
 import com.res.hms.repository.*;
-import com.res.hms.user.dto.UserSummaryDTO;
-import java.util.Optional;
 import java.util.UUID;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;

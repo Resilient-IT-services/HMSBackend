@@ -1,5 +1,6 @@
 package com.res.hms.user.dto;
 
+import com.res.hms.domain.CommissionType;
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import lombok.AllArgsConstructor;
@@ -12,10 +13,10 @@ import lombok.NoArgsConstructor;
 @NoArgsConstructor
 @AllArgsConstructor
 public class DoctorHospitalDetailsDTO {
-    private BigDecimal consultationFee;
-    private Integer followUpDays;
-    private String commissionType;
-    private BigDecimal commissionValue;
-    private boolean visitingConsultant;
-    private LocalDateTime updatedAt;
+  private BigDecimal consultationFee;
+  private Integer followUpDays;
+  private CommissionType commissionType;
+  private BigDecimal commissionValue;
+  private boolean visitingConsultant;
+  private LocalDateTime updatedAt;
 }

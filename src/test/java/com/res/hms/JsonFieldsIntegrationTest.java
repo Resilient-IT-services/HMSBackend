@@ -10,6 +10,7 @@ import com.res.hms.doctor.repository.DoctorRepository;
 import com.res.hms.domain.AuditLog;
 import com.res.hms.domain.Doctor;
 import com.res.hms.domain.Hospital;
+import com.res.hms.domain.ProficiencyLevel;
 import com.res.hms.domain.ReceptionistProfile;
 import com.res.hms.domain.UserAccount;
 import com.res.hms.hospital.dto.HospitalSettings;
@@ -130,8 +131,8 @@ class JsonFieldsIntegrationTest {
         ReceptionistFluency.builder()
             .fluencies(
                 List.of(
-                    new ReceptionistFluency.LanguageEntry("English", "NATIVE"),
-                    new ReceptionistFluency.LanguageEntry("Spanish", "INTERMEDIATE")))
+                    new ReceptionistFluency.LanguageEntry("English", ProficiencyLevel.NATIVE),
+                    new ReceptionistFluency.LanguageEntry("Spanish", ProficiencyLevel.FLUENT)))
             .build();
     profile.setLanguagesSpoken(fluency);
 

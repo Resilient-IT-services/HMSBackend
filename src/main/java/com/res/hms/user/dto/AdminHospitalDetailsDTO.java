@@ -11,7 +11,7 @@ import lombok.NoArgsConstructor;
 @NoArgsConstructor
 @AllArgsConstructor
 public class AdminHospitalDetailsDTO {
-    private String officeLocation;
-    private boolean departmentHead;
-    private LocalDateTime updatedAt;
+  private String officeLocation;
+  private boolean departmentHead;
+  private LocalDateTime updatedAt;
 }

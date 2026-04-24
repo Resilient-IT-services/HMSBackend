@@ -132,6 +132,7 @@ public class AuthService {
         principal.userId(),
         activeHospitalId,
         principal.username(),
+        principal.email(),
         principal.superuser(),
         memberships);
   }

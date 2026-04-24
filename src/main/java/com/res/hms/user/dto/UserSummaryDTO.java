@@ -15,23 +15,24 @@ import lombok.experimental.SuperBuilder;
 @NoArgsConstructor
 @AllArgsConstructor
 public class UserSummaryDTO {
-    private UUID id;
-    private String username;
-    private String fullName;
-    private Gender gender;
-    private LocalDate dob;
-    private String phone;
-    private boolean active;
-    private boolean deleted;
-    private boolean superuser;
-    private LocalDateTime createdAt;
-    private List<HospitalMembershipDTO> memberships;
+  private UUID id;
+  private String username;
+  private String email;
+  private String fullName;
+  private Gender gender;
+  private LocalDate dob;
+  private String phone;
+  private boolean active;
+  private boolean deleted;
+  private boolean superuser;
+  private LocalDateTime createdAt;
+  private List<HospitalMembershipDTO> memberships;
 
-    @Data
-    @NoArgsConstructor
-    @AllArgsConstructor
-    public static class HospitalMembershipDTO {
-        private UUID hospitalId;
-        private List<String> roles;
-    }
+  @Data
+  @NoArgsConstructor
+  @AllArgsConstructor
+  public static class HospitalMembershipDTO {
+    private UUID hospitalId;
+    private List<String> roles;
+  }
 }
