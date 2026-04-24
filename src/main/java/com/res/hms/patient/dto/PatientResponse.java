@@ -8,7 +8,8 @@ import java.util.UUID;
 public record PatientResponse(
     UUID id,
     String fullName,
-    Gender gender,
+    String patientCode,
+    String gender,
     LocalDate dob,
     String phone,
     String address,
