@@ -51,4 +51,23 @@ public class ArchitectureTest {
           .haveSimpleNameEndingWith("Repository")
           .should()
           .resideInAPackage("..repository..");
+
+  @ArchTest
+  static final ArchRule entities_should_have_uuid_id =
+      classes()
+          .that()
+          .areAnnotatedWith("jakarta.persistence.Entity")
+          .should(new com.tngtech.archunit.lang.ArchCondition<com.tngtech.archunit.core.domain.JavaClass>("have a UUID ID") {
+            @Override
+            public void check(com.tngtech.archunit.core.domain.JavaClass item, com.tngtech.archunit.lang.ConditionEvents events) {
+              boolean hasUuidId = item.getAllFields().stream()
+                  .filter(field -> field.isAnnotatedWith("jakarta.persistence.Id"))
+                  .anyMatch(field -> field.getRawType().isAssignableTo(java.util.UUID.class));
+              
+              if (!hasUuidId) {
+                String message = String.format("Entity %s does not have a UUID ID", item.getName());
+                events.add(com.tngtech.archunit.lang.SimpleConditionEvent.violated(item, message));
+              }
+            }
+          });
 }

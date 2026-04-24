@@ -22,11 +22,13 @@ import lombok.Setter;
 @Table(name = "doctor_hospital_details")
 public class DoctorHospitalDetails {
 
-  @Id private UUID assignmentId;
+  @Id
+  @Column(name = "id")
+  private UUID id;
 
   @OneToOne(fetch = FetchType.LAZY)
   @MapsId
-  @JoinColumn(name = "assignment_id")
+  @JoinColumn(name = "id")
   private UserRoleAssignment assignment;
 
   @Column(name = "consultation_fee", nullable = false)

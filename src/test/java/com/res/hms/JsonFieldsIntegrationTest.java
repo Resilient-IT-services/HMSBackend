@@ -138,7 +138,7 @@ class JsonFieldsIntegrationTest {
 
     ReceptionistProfile saved = receptionistProfileRepository.save(profile);
     ReceptionistProfile fetched =
-        receptionistProfileRepository.findById(saved.getUserId()).orElseThrow();
+        receptionistProfileRepository.findById(saved.getId()).orElseThrow();
 
     assertEquals(2, fetched.getLanguagesSpoken().getFluencies().size());
     assertEquals("English", fetched.getLanguagesSpoken().getFluencies().get(0).getLanguage());

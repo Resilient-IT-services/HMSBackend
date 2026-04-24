@@ -18,11 +18,13 @@ import lombok.Setter;
 @Table(name = "lab_tech_profile")
 public class LabTechProfile {
 
-  @Id private UUID userId;
+  @Id
+  @Column(name = "id")
+  private UUID id;
 
   @OneToOne(fetch = FetchType.LAZY)
   @MapsId
-  @JoinColumn(name = "user_id")
+  @JoinColumn(name = "id")
   private UserAccount user;
 
   private String specialty;

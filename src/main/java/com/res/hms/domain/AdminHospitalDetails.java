@@ -19,11 +19,13 @@ import lombok.Setter;
 @Table(name = "admin_hospital_details")
 public class AdminHospitalDetails {
 
-  @Id private UUID assignmentId;
+  @Id
+  @Column(name = "id")
+  private UUID id;
 
   @OneToOne(fetch = FetchType.LAZY)
   @MapsId
-  @JoinColumn(name = "assignment_id")
+  @JoinColumn(name = "id")
   private UserRoleAssignment assignment;
 
   @Column(name = "office_location")

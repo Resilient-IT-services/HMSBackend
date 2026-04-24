@@ -18,7 +18,7 @@ import lombok.Setter;
 public abstract class BaseEntity {
 
   @Id
-  @GeneratedValue(strategy = GenerationType.AUTO)
+  @GeneratedValue(strategy = GenerationType.UUID)
   private UUID id;
 
   @Column(name = "created_at", nullable = false, updatable = false)

@@ -21,11 +21,13 @@ import org.hibernate.annotations.Type;
 @Table(name = "receptionist_profile")
 public class ReceptionistProfile {
 
-  @Id private UUID userId;
+  @Id
+  @Column(name = "id")
+  private UUID id;
 
   @OneToOne(fetch = FetchType.LAZY)
   @MapsId
-  @JoinColumn(name = "user_id")
+  @JoinColumn(name = "id")
   private UserAccount user;
 
   @Type(JsonType.class)

@@ -18,11 +18,13 @@ import lombok.Setter;
 @Table(name = "pharmacist_profile")
 public class PharmacistProfile {
 
-  @Id private UUID userId;
+  @Id
+  @Column(name = "id")
+  private UUID id;
 
   @OneToOne(fetch = FetchType.LAZY)
   @MapsId
-  @JoinColumn(name = "user_id")
+  @JoinColumn(name = "id")
   private UserAccount user;
 
   @Column(name = "pci_reg_no", unique = true, nullable = false)
