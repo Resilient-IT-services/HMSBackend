@@ -47,36 +47,17 @@ public class UserMapper {
   private final ReceptionistProfileRepository receptionistProfileRepository;
 
   public UserSummaryDTO toSummaryDTO(UserAccount user) {
-    Map<UUID, List<UserSummaryDTO.RoleAssignmentDTO>> groupedAssignments = new HashMap<>();
-    
+    Map<UUID, Set<RoleCode>> rolesByHospital = new HashMap<>();
     if (user.getAssignments() != null) {
-        for (UserRoleAssignment a : user.getAssignments()) {
-            UserSummaryDTO.RoleAssignmentDTO roleDto = UserSummaryDTO.RoleAssignmentDTO.builder()
-                    .assignmentId(a.getId())
-                    .roleCode(a.getRole().getCode().name())
-                    .departmentName(a.getDepartmentName())
-                    .active(a.isActive())
-                    .hospitalDetails(fetchHospitalDetails(a))
-                    .build();
-            
-            groupedAssignments.computeIfAbsent(a.getHospitalId(), k -> new ArrayList<>()).add(roleDto);
-        }
+      for (UserRoleAssignment assignment : user.getAssignments()) {
+        rolesByHospital
+            .computeIfAbsent(assignment.getHospitalId(), k -> new HashSet<>())
+            .add(assignment.getRole().getCode());
+      }
     }
 
-    List<UserSummaryDTO.HospitalMembershipDTO> memberships = groupedAssignments.entrySet().stream()
-        .map(e -> {
-            String hospitalName = null;
-            if (e.getKey() != null) {
-                hospitalName = hospitalRepository.findById(e.getKey()).map(Hospital::getName).orElse("Unknown");
-            } else {
-                hospitalName = "Global Access";
-            }
-            return UserSummaryDTO.HospitalMembershipDTO.builder()
-                    .hospitalId(e.getKey())
-                    .hospitalName(hospitalName)
-                    .roleAssignments(e.getValue())
-                    .build();
-        })
+    List<UserSummaryDTO.HospitalMembershipDTO> memberships = rolesByHospital.entrySet().stream()
+        .map(e -> new UserSummaryDTO.HospitalMembershipDTO(e.getKey(), e.getValue().stream().map(Enum::name).toList()))
         .collect(Collectors.toList());
 
     return UserSummaryDTO.builder()
@@ -97,6 +78,39 @@ public class UserMapper {
   public UserFullProfileDTO toFullProfileDTO(UserAccount user) {
     UserSummaryDTO summary = toSummaryDTO(user);
     
+    // Group assignments for Detailed view
+    Map<UUID, List<UserFullProfileDTO.DetailedRoleAssignmentDTO>> groupedDetailedAssignments = new HashMap<>();
+    if (user.getAssignments() != null) {
+        for (UserRoleAssignment a : user.getAssignments()) {
+            UserFullProfileDTO.DetailedRoleAssignmentDTO roleDto = UserFullProfileDTO.DetailedRoleAssignmentDTO.builder()
+                    .assignmentId(a.getId())
+                    .roleCode(a.getRole().getCode().name())
+                    .departmentName(a.getDepartmentName())
+                    .active(a.isActive())
+                    .build();
+            
+            mapDetailedHospitalInfo(a, roleDto);
+            
+            groupedDetailedAssignments.computeIfAbsent(a.getHospitalId(), k -> new ArrayList<>()).add(roleDto);
+        }
+    }
+
+    List<UserFullProfileDTO.DetailedHospitalMembershipDTO> detailedMemberships = groupedDetailedAssignments.entrySet().stream()
+        .map(e -> {
+            String hospitalName = null;
+            if (e.getKey() != null) {
+                hospitalName = hospitalRepository.findById(e.getKey()).map(Hospital::getName).orElse("Unknown");
+            } else {
+                hospitalName = "Global Access";
+            }
+            return UserFullProfileDTO.DetailedHospitalMembershipDTO.builder()
+                    .hospitalId(e.getKey())
+                    .hospitalName(hospitalName)
+                    .roleAssignments(e.getValue())
+                    .build();
+        })
+        .collect(Collectors.toList());
+
     UserFullProfileDTO.DoctorInfo doctorInfo = doctorRepository.findByUserId(user.getId())
         .map(d -> UserFullProfileDTO.DoctorInfo.builder()
             .specialization(d.getSpecialization())
@@ -146,7 +160,8 @@ public class UserMapper {
         .deleted(summary.isDeleted())
         .superuser(summary.isSuperuser())
         .createdAt(summary.getCreatedAt())
-        .memberships(summary.getMemberships())
+        .memberships(summary.getMemberships()) // Lightweight memberships
+        .detailedMemberships(detailedMemberships) // Heavyweight nested memberships
         .doctorInfo(doctorInfo)
         .nurseInfo(nurseInfo)
         .pharmacistInfo(pharmacistInfo)
@@ -155,35 +170,42 @@ public class UserMapper {
         .build();
   }
 
-  private Object fetchHospitalDetails(UserRoleAssignment a) {
+  private void mapDetailedHospitalInfo(UserRoleAssignment a, UserFullProfileDTO.DetailedRoleAssignmentDTO roleDto) {
       RoleCode code = a.getRole().getCode();
       switch (code) {
-          case DOCTOR -> {
-              return doctorHospitalDetailsRepository.findById(a.getId())
-                      .map(d -> new DoctorHospitalDetailsDTO(d.getConsultationFee(), d.getFollowUpDays()))
-                      .orElse(null);
-          }
-          case ADMIN -> {
-              return adminHospitalDetailsRepository.findById(a.getId())
-                      .map(d -> new AdminHospitalDetailsDTO(d.getOfficeLocation(), d.isDepartmentHead()))
-                      .orElse(null);
-          }
-          case NURSE -> {
-              return nurseHospitalDetailsRepository.findById(a.getId())
-                      .map(d -> new NurseHospitalDetailsDTO(d.getFloorLocation(), d.getShiftType()))
-                      .orElse(null);
-          }
-          case PHARMACIST -> {
-              return pharmacistHospitalDetailsRepository.findById(a.getId())
-                      .map(d -> new PharmacistHospitalDetailsDTO(d.getCounterLocation(), d.getPharmacyWing()))
-                      .orElse(null);
-          }
-          case RECEPTIONIST -> {
-              return receptionistHospitalDetailsRepository.findById(a.getId())
-                      .map(d -> new ReceptionistHospitalDetailsDTO(d.getDeskLocation(), d.getEmergencyContactNumber()))
-                      .orElse(null);
-          }
-          default -> { return null; }
+          case DOCTOR -> doctorHospitalDetailsRepository.findById(a.getId())
+                  .ifPresent(d -> roleDto.setDoctorDetails(DoctorHospitalDetailsDTO.builder()
+                          .consultationFee(d.getConsultationFee())
+                          .followUpDays(d.getFollowUpDays())
+                          .commissionType(d.getCommissionType())
+                          .commissionValue(d.getCommissionValue())
+                          .visitingConsultant(d.isVisitingConsultant())
+                          .updatedAt(d.getUpdatedAt())
+                          .build()));
+          case ADMIN -> adminHospitalDetailsRepository.findById(a.getId())
+                  .ifPresent(d -> roleDto.setAdminDetails(AdminHospitalDetailsDTO.builder()
+                          .officeLocation(d.getOfficeLocation())
+                          .departmentHead(d.isDepartmentHead())
+                          .updatedAt(d.getUpdatedAt())
+                          .build()));
+          case NURSE -> nurseHospitalDetailsRepository.findById(a.getId())
+                  .ifPresent(d -> roleDto.setNurseDetails(NurseHospitalDetailsDTO.builder()
+                          .floorLocation(d.getFloorLocation())
+                          .shiftType(d.getShiftType())
+                          .updatedAt(d.getUpdatedAt())
+                          .build()));
+          case PHARMACIST -> pharmacistHospitalDetailsRepository.findById(a.getId())
+                  .ifPresent(d -> roleDto.setPharmacistDetails(PharmacistHospitalDetailsDTO.builder()
+                          .counterLocation(d.getCounterLocation())
+                          .pharmacyWing(d.getPharmacyWing())
+                          .updatedAt(d.getUpdatedAt())
+                          .build()));
+          case RECEPTIONIST -> receptionistHospitalDetailsRepository.findById(a.getId())
+                  .ifPresent(d -> roleDto.setReceptionistDetails(ReceptionistHospitalDetailsDTO.builder()
+                          .deskLocation(d.getDeskLocation())
+                          .emergencyContactNumber(d.getEmergencyContactNumber())
+                          .updatedAt(d.getUpdatedAt())
+                          .build()));
       }
   }
 }

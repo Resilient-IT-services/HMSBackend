@@ -55,18 +55,16 @@ class RoleHospitalDetailsIntegrationTest {
         assertNotNull(fetched.getNurseInfo());
         assertEquals("Pediatrics", fetched.getNurseInfo().getDepartment());
 
-        // Check Nurse Hospital Specific Details (Nested)
-        UserSummaryDTO.RoleAssignmentDTO assignment = fetched.getMemberships().stream()
+        // Check Nurse Hospital Specific Details (Nested in detailedMemberships)
+        UserFullProfileDTO.DetailedRoleAssignmentDTO assignment = fetched.getDetailedMemberships().stream()
                 .filter(m -> hospitalId.equals(m.getHospitalId()))
                 .flatMap(m -> m.getRoleAssignments().stream())
                 .filter(ra -> "NURSE".equals(ra.getRoleCode()))
                 .findFirst().orElseThrow();
         
-        assertNotNull(assignment.getHospitalDetails());
-        assertTrue(assignment.getHospitalDetails() instanceof NurseHospitalDetailsDTO);
-        NurseHospitalDetailsDTO details = (NurseHospitalDetailsDTO) assignment.getHospitalDetails();
-        assertEquals("2nd Floor", details.getFloorLocation());
-        assertEquals("NIGHT", details.getShiftType());
+        assertNotNull(assignment.getNurseDetails());
+        assertEquals("2nd Floor", assignment.getNurseDetails().getFloorLocation());
+        assertEquals("NIGHT", assignment.getNurseDetails().getShiftType());
     }
 
     @Test
@@ -85,16 +83,15 @@ class RoleHospitalDetailsIntegrationTest {
         UserFullProfileDTO saved = userService.createUser(request);
         UserFullProfileDTO fetched = userService.getFullProfile(saved.getId());
 
-        UserSummaryDTO.RoleAssignmentDTO assignment = fetched.getMemberships().stream()
+        UserFullProfileDTO.DetailedRoleAssignmentDTO assignment = fetched.getDetailedMemberships().stream()
                 .filter(m -> hospitalId.equals(m.getHospitalId()))
                 .flatMap(m -> m.getRoleAssignments().stream())
                 .filter(ra -> "RECEPTIONIST".equals(ra.getRoleCode()))
                 .findFirst().orElseThrow();
 
-        assertNotNull(assignment.getHospitalDetails());
-        ReceptionistHospitalDetailsDTO details = (ReceptionistHospitalDetailsDTO) assignment.getHospitalDetails();
-        assertEquals("Main Lobby A", details.getDeskLocation());
-        assertEquals("1234567890", details.getEmergencyContactNumber());
+        assertNotNull(assignment.getReceptionistDetails());
+        assertEquals("Main Lobby A", assignment.getReceptionistDetails().getDeskLocation());
+        assertEquals("1234567890", assignment.getReceptionistDetails().getEmergencyContactNumber());
     }
 
     @Test
@@ -113,15 +110,14 @@ class RoleHospitalDetailsIntegrationTest {
         UserFullProfileDTO saved = userService.createUser(request);
         UserFullProfileDTO fetched = userService.getFullProfile(saved.getId());
 
-        UserSummaryDTO.RoleAssignmentDTO assignment = fetched.getMemberships().stream()
+        UserFullProfileDTO.DetailedRoleAssignmentDTO assignment = fetched.getDetailedMemberships().stream()
                 .filter(m -> hospitalId.equals(m.getHospitalId()))
                 .flatMap(m -> m.getRoleAssignments().stream())
                 .filter(ra -> "ADMIN".equals(ra.getRoleCode()))
                 .findFirst().orElseThrow();
 
-        assertNotNull(assignment.getHospitalDetails());
-        AdminHospitalDetailsDTO details = (AdminHospitalDetailsDTO) assignment.getHospitalDetails();
-        assertEquals("Room 101", details.getOfficeLocation());
-        assertTrue(details.isDepartmentHead());
+        assertNotNull(assignment.getAdminDetails());
+        assertEquals("Room 101", assignment.getAdminDetails().getOfficeLocation());
+        assertTrue(assignment.getAdminDetails().isDepartmentHead());
     }
 }

@@ -5,6 +5,7 @@ import java.util.List;
 import java.util.UUID;
 import java.time.LocalDateTime;
 import lombok.AllArgsConstructor;
+import lombok.Builder;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.NoArgsConstructor;
@@ -23,6 +24,36 @@ public class UserFullProfileDTO extends UserSummaryDTO {
     private LabTechInfo labTechInfo;
     private ReceptionistInfo receptionistInfo;
     
+    private List<DetailedHospitalMembershipDTO> detailedMemberships;
+    
+    @Data
+    @SuperBuilder
+    @NoArgsConstructor
+    @AllArgsConstructor
+    public static class DetailedHospitalMembershipDTO {
+        private UUID hospitalId;
+        private String hospitalName;
+        private List<DetailedRoleAssignmentDTO> roleAssignments;
+    }
+
+    @Data
+    @Builder
+    @NoArgsConstructor
+    @AllArgsConstructor
+    public static class DetailedRoleAssignmentDTO {
+        private UUID assignmentId;
+        private String roleCode;
+        private String departmentName;
+        private boolean active;
+        
+        // Explicit role-specific hospital details
+        private DoctorHospitalDetailsDTO doctorDetails;
+        private NurseHospitalDetailsDTO nurseDetails;
+        private AdminHospitalDetailsDTO adminDetails;
+        private PharmacistHospitalDetailsDTO pharmacistDetails;
+        private ReceptionistHospitalDetailsDTO receptionistDetails;
+    }
+
     @Data
     @SuperBuilder
     @NoArgsConstructor

@@ -7,7 +7,6 @@ import java.math.BigDecimal;
 import java.util.Set;
 import java.util.UUID;
 
-@ValidUserRole
 public record RoleBaseUserRecord(
     UUID hospitalId, // Can be null for global roles
     Set<RoleCode> roles, // If empty, removes access for this context

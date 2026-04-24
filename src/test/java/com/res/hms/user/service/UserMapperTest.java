@@ -50,11 +50,6 @@ class UserMapperTest {
     user.setId(doctorUserId);
     user.setUsername("doctor1");
 
-    Hospital hospital = new Hospital();
-    hospital.setId(hospitalId);
-    hospital.setName("Test Hospital");
-    hospital.setCode("TEST");
-
     Role doctorRole = new Role();
     doctorRole.setCode(RoleCode.DOCTOR);
 
@@ -65,12 +60,10 @@ class UserMapperTest {
     assignment.setRole(doctorRole);
     user.getAssignments().add(assignment);
 
-    when(hospitalRepository.findById(hospitalId)).thenReturn(Optional.of(hospital));
-
     var response = userMapper.toSummaryDTO(user);
 
     assertEquals(1, response.getMemberships().size());
     assertEquals(hospitalId, response.getMemberships().get(0).getHospitalId());
-    assertEquals("DOCTOR", response.getMemberships().get(0).getRoleAssignments().get(0).getRoleCode());
+    assertEquals("DOCTOR", response.getMemberships().get(0).getRoles().get(0));
   }
 }
