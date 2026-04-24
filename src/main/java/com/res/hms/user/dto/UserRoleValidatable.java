@@ -15,6 +15,8 @@ public interface UserRoleValidatable {
 
   UUID hospitalId();
 
+  Boolean isSuperuser();
+
   Integer followUpDays();
 
   BigDecimal consultationFee();

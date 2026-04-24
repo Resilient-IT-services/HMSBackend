@@ -45,6 +45,9 @@ public class UserAccount extends BaseEntity {
       fetch = FetchType.EAGER)
   private Set<UserRoleAssignment> assignments = new HashSet<>();
 
+  @Column(name = "is_superuser", nullable = false)
+  private boolean superuser = false;
+
   @Column(name = "is_active", nullable = false)
   private boolean active = true;
 

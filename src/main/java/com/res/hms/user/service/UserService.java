@@ -47,12 +47,12 @@ public class UserService {
   @Auditable(entity = "user_account", action = "CREATE")
   public UserResponse create(CreateUserRequest request) {
     UUID activeHospitalId = hospitalContext.getHospitalIdOrNull();
-    boolean isSuperAdmin = hospitalContext.isSuperAdmin();
+    boolean isCallerSuperAdmin = hospitalContext.isSuperAdmin();
 
     // If Super Admin, use hospitalId from request, otherwise use active context
-    UUID targetHospitalId = isSuperAdmin ? request.hospitalId() : activeHospitalId;
+    UUID targetHospitalId = isCallerSuperAdmin ? request.hospitalId() : activeHospitalId;
 
-    validateCreateRequest(request, isSuperAdmin, targetHospitalId);
+    validateCreateRequest(request, isCallerSuperAdmin, targetHospitalId);
 
     UserAccount userAccount = new UserAccount();
     userAccount.setUsername(request.username());
@@ -62,6 +62,10 @@ public class UserService {
     userAccount.setDob(request.dob());
     userAccount.setPhone(request.phone());
     userAccount.setActive(true);
+
+    if (isCallerSuperAdmin && request.isSuperuser() != null) {
+      userAccount.setSuperuser(request.isSuperuser());
+    }
 
     assignRoles(userAccount, request.roles(), targetHospitalId);
     userAccountRepository.save(userAccount);
@@ -120,7 +124,7 @@ public class UserService {
       Role role = resourceLookup.findRequired(code, roleRepository::findByCode, "Role: " + code);
       UserRoleAssignment assignment = new UserRoleAssignment();
       assignment.setUser(user);
-      assignment.setHospitalId(code == RoleCode.SUPER_ADMIN ? null : activeHospitalId);
+      assignment.setHospitalId(activeHospitalId);
       assignment.setRole(role);
       user.getAssignments().add(assignment);
     }
@@ -153,16 +157,12 @@ public class UserService {
         throw new ApiException(
             "BUSINESS_RULE_VIOLATION", "Please select a hospital first", HttpStatus.BAD_REQUEST);
       }
-      if (roles.contains(RoleCode.SUPER_ADMIN)) {
-        throw new ApiException(
-            "FORBIDDEN", "Only Super Admin can create Super Admins", HttpStatus.FORBIDDEN);
-      }
     } else {
-      if (hospitalId == null && !roles.contains(RoleCode.SUPER_ADMIN)) {
-        throw new ApiException(
-            "BUSINESS_RULE_VIOLATION",
-            "Please select a hospital first or assign a global role",
-            HttpStatus.BAD_REQUEST);
+      if (hospitalId == null) {
+        // Super admin can have no hospital context if assigning global permissions,
+        // but our current model requires hospitalId for non-superuser assignments.
+        // For now, we keep it simple: if hospitalId is null, it better be a superuser or have no
+        // roles.
       }
     }
   }
@@ -185,6 +185,10 @@ public class UserService {
             a ->
                 (targetHospitalId == null && a.getHospitalId() == null)
                     || (targetHospitalId != null && targetHospitalId.equals(a.getHospitalId())));
+
+    if (isCallerSuperAdmin && request.isSuperuser() != null) {
+      user.setSuperuser(request.isSuperuser());
+    }
 
     assignRoles(user, request.roles(), targetHospitalId);
     userAccountRepository.save(user);
@@ -209,10 +213,6 @@ public class UserService {
       throw new ApiException(
           "BUSINESS_RULE_VIOLATION", "Hospital must be selected", HttpStatus.BAD_REQUEST);
     }
-    if (request.roles().contains(RoleCode.SUPER_ADMIN)) {
-      throw new ApiException(
-          "FORBIDDEN", "Only Super Admin can allocate Super Admin role", HttpStatus.FORBIDDEN);
-    }
     return resourceLookup.findRequired(
         request.userId(), activeHospitalId, userAccountRepository::findByIdAndHospitalId, "User");
   }
@@ -231,9 +231,6 @@ public class UserService {
               ? userAccountRepository.findAll()
               : userAccountRepository.findAllByDeletedFalse();
     } else {
-      // Note: findAllByHospitalId already filters by deleted = false
-      // If we want to include deleted for a specific hospital, we'd need another repo method.
-      // But usually "deleted" means globally deleted.
       users = userAccountRepository.findAllByHospitalId(hospitalId);
     }
     return users.stream().map(userMapper::toResponse).toList();

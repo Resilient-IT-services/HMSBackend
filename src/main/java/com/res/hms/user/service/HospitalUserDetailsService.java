@@ -52,6 +52,7 @@ public class HospitalUserDetailsService implements UserDetailsService {
         userAccount.getUsername(),
         userAccount.getPasswordHash(),
         userAccount.isActive(),
+        userAccount.isSuperuser(),
         hospitalRoles,
         null, // Active hospitalId
         allRoles // We load ALL roles so @PreAuthorize works

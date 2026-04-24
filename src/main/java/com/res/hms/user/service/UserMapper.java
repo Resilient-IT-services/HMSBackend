@@ -87,6 +87,7 @@ public class UserMapper {
         memberships,
         userAccount.isActive(),
         userAccount.isDeleted(),
+        userAccount.isSuperuser(),
         userAccount.getCreatedAt());
   }
 }

@@ -10,6 +10,7 @@ import java.util.UUID;
 public record AllocateRoleRequest(
     @NotNull(message = "userId is required") UUID userId,
     UUID hospitalId, // Can be null for global roles
+    Boolean isSuperuser,
     Set<RoleCode> roles, // If empty, removes access for this context
     String specialization,
     String department,

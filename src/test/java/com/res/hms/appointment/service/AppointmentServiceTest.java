@@ -42,10 +42,10 @@ class AppointmentServiceTest {
   @Mock private ResourceLookup resourceLookup;
 
   @InjectMocks private AppointmentService appointmentService;
-  UUID patientUuid = UUID.nameUUIDFromBytes("10".getBytes());
-  UUID doctorUuid = UUID.nameUUIDFromBytes("20".getBytes());
-  UUID hospitalUuid = UUID.nameUUIDFromBytes("4".getBytes());
-  UUID appointmentUUId = UUID.nameUUIDFromBytes("100".getBytes());
+  private final UUID patientUuid = UUID.nameUUIDFromBytes("10".getBytes());
+  private final UUID doctorUuid = UUID.nameUUIDFromBytes("20".getBytes());
+  private final UUID hospitalUuid = UUID.nameUUIDFromBytes("4".getBytes());
+  private final UUID appointmentUUId = UUID.nameUUIDFromBytes("100".getBytes());
 
   @Test
   void createPersistsAppointment() {

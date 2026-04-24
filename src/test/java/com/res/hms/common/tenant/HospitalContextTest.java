@@ -36,6 +36,7 @@ class HospitalContextTest {
             "admin",
             "secret",
             true,
+            false,
             Map.of(hospitalId, Set.of(RoleCode.ADMIN)),
             hospitalId,
             Set.of(RoleCode.ADMIN));
@@ -66,11 +67,9 @@ class HospitalContextTest {
   void requireHospitalIdRejectsSuperAdminWithoutSelection() {
     UUID userId = UUID.randomUUID();
     Map<UUID, Set<RoleCode>> roles = new HashMap<>();
-    roles.put(null, Set.of(RoleCode.SUPER_ADMIN));
-
+    // No specific roles assigned, but is superuser
     HospitalUserPrincipal principal =
-        new HospitalUserPrincipal(
-            userId, "super", "secret", true, roles, null, Set.of(RoleCode.SUPER_ADMIN));
+        new HospitalUserPrincipal(userId, "super", "secret", true, true, roles, null, Set.of());
     SecurityContextHolder.getContext()
         .setAuthentication(
             UsernamePasswordAuthenticationToken.authenticated(
@@ -91,6 +90,7 @@ class HospitalContextTest {
             "user",
             "secret",
             true,
+            false,
             Map.of(hospitalId, Set.of(RoleCode.DOCTOR)),
             hospitalId,
             Set.of(RoleCode.DOCTOR));

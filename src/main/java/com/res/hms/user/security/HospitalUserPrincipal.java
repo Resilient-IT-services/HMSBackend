@@ -2,6 +2,7 @@ package com.res.hms.user.security;
 
 import com.res.hms.domain.RoleCode;
 import java.util.Collection;
+import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
@@ -15,6 +16,7 @@ public record HospitalUserPrincipal(
     String username,
     String password,
     boolean active,
+    boolean superuser,
     // Map of Hospital ID to Set of Roles. Hospital ID can be NULL for global roles.
     Map<UUID, Set<RoleCode>> hospitalRoles,
     // The active context for this session
@@ -24,12 +26,17 @@ public record HospitalUserPrincipal(
 
   @Override
   public Collection<? extends GrantedAuthority> getAuthorities() {
-    if (roleCodes == null) {
-      return Set.of();
+    Set<GrantedAuthority> authorities = new HashSet<>();
+    if (roleCodes != null) {
+      authorities.addAll(
+          roleCodes.stream()
+              .map(code -> new SimpleGrantedAuthority("ROLE_" + code.name()))
+              .collect(Collectors.toSet()));
     }
-    return roleCodes.stream()
-        .map(code -> new SimpleGrantedAuthority("ROLE_" + code.name()))
-        .collect(Collectors.toSet());
+    if (superuser) {
+      authorities.add(new SimpleGrantedAuthority("ROLE_SUPER_ADMIN"));
+    }
+    return authorities;
   }
 
   @Override
@@ -63,6 +70,6 @@ public record HospitalUserPrincipal(
   }
 
   public boolean isSuperAdmin() {
-    return roleCodes != null && roleCodes.contains(RoleCode.SUPER_ADMIN);
+    return superuser;
   }
 }

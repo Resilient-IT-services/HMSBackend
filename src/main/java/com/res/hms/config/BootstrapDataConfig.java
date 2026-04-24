@@ -3,7 +3,6 @@ package com.res.hms.config;
 import com.res.hms.domain.Role;
 import com.res.hms.domain.RoleCode;
 import com.res.hms.domain.UserAccount;
-import com.res.hms.domain.UserRoleAssignment;
 import com.res.hms.repository.HospitalRepository;
 import com.res.hms.repository.RoleRepository;
 import com.res.hms.repository.UserAccountRepository;
@@ -59,13 +58,7 @@ public class BootstrapDataConfig {
       admin.setUsername(properties.adminUsername());
       admin.setPasswordHash(passwordEncoder.encode(properties.adminPassword()));
       admin.setActive(true);
-      admin.setFullName("Super Admin");
-
-      UserRoleAssignment assignment = new UserRoleAssignment();
-      assignment.setUser(admin);
-      assignment.setHospitalId(null);
-      assignment.setRole(roleRepository.findByCode(RoleCode.SUPER_ADMIN).orElseThrow());
-      admin.getAssignments().add(assignment);
+      admin.setSuperuser(true);
 
       userAccountRepository.save(admin);
     }

@@ -77,6 +77,7 @@ CREATE TABLE patient (
                          hospital_id uuid NOT NULL,
                          full_name varchar(255) NOT NULL,
                          gender varchar(20) NULL,
+                         patient_code varchar(30) NULL,
                          dob date NULL,
                          phone varchar(20) NULL,
                          address varchar(1000) NULL,
@@ -227,6 +228,7 @@ CREATE TABLE pharmacy_stock (
                                 CONSTRAINT fk_phrs_hosp FOREIGN KEY (hospital_id) REFERENCES hospital(id),
                                 CONSTRAINT fk_phrs_med FOREIGN KEY (medicine_id) REFERENCES medicine(id)
 );
+ALTER TABLE user_account ADD COLUMN is_superuser BOOLEAN DEFAULT FALSE NOT NULL;
 
 CREATE INDEX idx_invt_hosp ON inventory_transaction (hospital_id);
 CREATE INDEX idx_invt_item ON inventory_transaction (item_id);

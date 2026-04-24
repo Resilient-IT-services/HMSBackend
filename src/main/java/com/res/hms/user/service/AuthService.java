@@ -86,7 +86,8 @@ public class AuthService {
     return toProfileResponse(principal, activeHospitalId);
   }
 
-  private UserProfileResponse toProfileResponse(HospitalUserPrincipal principal, UUID activeHospitalId) {
+  private UserProfileResponse toProfileResponse(
+      HospitalUserPrincipal principal, UUID activeHospitalId) {
     List<HospitalMembershipResponse> memberships = new ArrayList<>();
     if (principal.hospitalRoles() != null) {
       for (Map.Entry<UUID, Set<RoleCode>> entry : principal.hospitalRoles().entrySet()) {
@@ -128,6 +129,10 @@ public class AuthService {
     }
 
     return new UserProfileResponse(
-        principal.userId(), activeHospitalId, principal.username(), memberships);
+        principal.userId(),
+        activeHospitalId,
+        principal.username(),
+        principal.superuser(),
+        memberships);
   }
 }

@@ -25,23 +25,21 @@ class AuditLogServiceTest {
 
   @Mock private AuditLogRepository auditLogRepository;
   @Mock private HospitalContext hospitalContext;
-  UUID patientUuid = UUID.nameUUIDFromBytes("10".getBytes());
-  UUID doctorUuid = UUID.nameUUIDFromBytes("20".getBytes());
-  UUID hospitalUuid = UUID.nameUUIDFromBytes("4".getBytes());
-  UUID appointmentUUId = UUID.nameUUIDFromBytes("100".getBytes());
-  UUID currentuserID = UUID.nameUUIDFromBytes("1".getBytes());
-  UUID auditLogUUID = UUID.nameUUIDFromBytes("500".getBytes());
+  private final UUID patientUuid = UUID.nameUUIDFromBytes("10".getBytes());
+  private final UUID hospitalUuid = UUID.nameUUIDFromBytes("4".getBytes());
+  private final UUID currentUserID = UUID.nameUUIDFromBytes("1".getBytes());
+  private final UUID auditLogUUID = UUID.nameUUIDFromBytes("500".getBytes());
   @InjectMocks private AuditLogService auditLogService;
 
   @Test
   void recordStoresAuditEntryWithCurrentUser() {
-    when(hospitalContext.currentUserIdOrNull()).thenReturn(currentuserID);
+    when(hospitalContext.currentUserIdOrNull()).thenReturn(currentUserID);
 
     auditLogService.record(hospitalUuid, "patient", patientUuid, "CREATE", "created");
 
     ArgumentCaptor<AuditLog> captor = ArgumentCaptor.forClass(AuditLog.class);
     verify(auditLogRepository).save(captor.capture());
-    assertEquals(currentuserID, captor.getValue().getPerformedBy());
+    assertEquals(currentUserID, captor.getValue().getPerformedBy());
     assertEquals("patient", captor.getValue().getEntityName());
   }
 
@@ -52,7 +50,7 @@ class AuditLogServiceTest {
     auditLog.setEntityName("patient");
     auditLog.setEntityId(patientUuid);
     auditLog.setAction("CREATE");
-    auditLog.setPerformedBy(currentuserID);
+    auditLog.setPerformedBy(currentUserID);
     auditLog.setDetails("created");
     when(hospitalContext.getHospitalIdOrNull()).thenReturn(hospitalUuid);
     when(auditLogRepository.findAllByHospitalIdOrderByCreatedAtDesc(

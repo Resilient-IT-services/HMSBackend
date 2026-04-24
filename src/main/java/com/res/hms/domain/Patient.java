@@ -17,8 +17,10 @@ public class Patient extends HospitalScopedEntity {
 
   @Column(name = "full_name", nullable = false)
   private String fullName;
+
   @Column(name = "patient_code", unique = true)
   private String patientCode;
+
   @Enumerated(EnumType.STRING)
   private Gender gender;
 

@@ -81,6 +81,7 @@ class UserServiceTest {
             Gender.MALE,
             LocalDate.now(),
             hospitalId,
+            false,
             "123",
             "Cardiology",
             null,
@@ -110,6 +111,7 @@ class UserServiceTest {
             Gender.FEMALE,
             LocalDate.now(),
             hospitalId,
+            false,
             "123",
             null,
             "Emergency",
@@ -141,6 +143,7 @@ class UserServiceTest {
         new AllocateRoleRequest(
             userId,
             hospitalId,
+            false,
             Set.of(RoleCode.DOCTOR),
             "Neurology",
             null,
@@ -167,6 +170,7 @@ class UserServiceTest {
                         Gender.MALE,
                         LocalDate.now(),
                         hospitalId,
+                        false,
                         "123",
                         null,
                         null,
@@ -198,6 +202,7 @@ class UserServiceTest {
                         Gender.MALE,
                         LocalDate.now(),
                         hospitalId,
+                        false,
                         "123",
                         null,
                         null,
@@ -239,6 +244,7 @@ class UserServiceTest {
                           hospitalId, "Test", "TEST", user.getRoleCodes(), null, null)),
                   user.isActive(),
                   user.isDeleted(),
+                  user.isSuperuser(),
                   null);
             });
 
@@ -252,6 +258,7 @@ class UserServiceTest {
                 Gender.MALE,
                 LocalDate.now(),
                 hospitalId,
+                false,
                 "123",
                 null,
                 null,
@@ -296,6 +303,7 @@ class UserServiceTest {
                           hospitalId, "Test Hospital", "TEST", user.getRoleCodes(), null, null)),
                   user.isActive(),
                   user.isDeleted(),
+                  user.isSuperuser(),
                   null);
             });
 
@@ -329,6 +337,7 @@ class UserServiceTest {
                   List.of(),
                   u.isActive(),
                   u.isDeleted(),
+                  u.isSuperuser(),
                   null);
             });
 

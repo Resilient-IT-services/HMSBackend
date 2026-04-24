@@ -78,7 +78,14 @@ class AuthServiceTest {
         .setAuthentication(
             new TestingAuthenticationToken(
                 new HospitalUserPrincipal(
-                    userId, "doctor1", "secret", true, roles, hospitalId, Set.of(RoleCode.DOCTOR)),
+                    userId,
+                    "doctor1",
+                    "secret",
+                    true,
+                    false,
+                    roles,
+                    hospitalId,
+                    Set.of(RoleCode.DOCTOR)),
                 null));
 
     when(hospitalContext.getHospitalIdOrNull()).thenReturn(hospitalId);
@@ -98,7 +105,7 @@ class AuthServiceTest {
 
     HospitalUserPrincipal principal =
         new HospitalUserPrincipal(
-            userId, "doctor", "secret", true, roles, null, Set.of(RoleCode.DOCTOR));
+            userId, "doctor", "secret", true, false, roles, null, Set.of(RoleCode.DOCTOR));
     Authentication authentication = new TestingAuthenticationToken(principal, null);
     when(authenticationManager.authenticate(any())).thenReturn(authentication);
 
@@ -133,7 +140,7 @@ class AuthServiceTest {
         .setAuthentication(
             new TestingAuthenticationToken(
                 new HospitalUserPrincipal(
-                    userId, "admin", "secret", true, roles, null, Set.of(RoleCode.ADMIN)),
+                    userId, "admin", "secret", true, false, roles, null, Set.of(RoleCode.ADMIN)),
                 null));
 
     when(hospitalContext.getHospitalIdOrNull()).thenReturn(null);

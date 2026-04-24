@@ -13,4 +13,5 @@ public record UserResponse(
     List<HospitalMembershipResponse> memberships,
     boolean active,
     boolean deleted,
+    boolean superuser,
     java.time.LocalDateTime createdAt) {}

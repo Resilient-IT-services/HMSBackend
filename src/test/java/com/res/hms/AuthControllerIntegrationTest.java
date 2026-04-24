@@ -1,6 +1,5 @@
 package com.res.hms;
 
-import static org.hamcrest.Matchers.hasItem;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
@@ -53,9 +52,7 @@ class AuthControllerIntegrationTest {
         .andExpect(status().isOk())
         .andExpect(jsonPath("$.data.username").value("admin"))
         .andExpect(jsonPath("$.data.userId").exists())
-        .andExpect(
-            jsonPath("$.data.hospitals[?(@.hospitalCode == 'GLOBAL')].roles")
-                .value(hasItem(hasItem("SUPER_ADMIN"))))
+        .andExpect(jsonPath("$.data.superuser").value(true))
         .andExpect(jsonPath("$.data.hospitals").isArray())
         .andExpect(jsonPath("$.data.hospitalId").doesNotExist());
   }

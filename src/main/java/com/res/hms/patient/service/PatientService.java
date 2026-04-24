@@ -67,7 +67,8 @@ public class PatientService {
     return new PatientResponse(
         patient.getId(),
         patient.getFullName(),
-        patient.getGender(),
+        patient.getPatientCode(),
+        patient.getGender() != null ? patient.getGender().name() : null,
         patient.getDob(),
         patient.getPhone(),
         patient.getAddress(),
