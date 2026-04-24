@@ -34,12 +34,6 @@ public class UserController {
     return ApiResponse.success(userService.listUsers(includeDeleted));
   }
 
-  @GetMapping("/{id}")
-  @PreAuthorize("hasAnyRole('SUPER_ADMIN', 'ADMIN')")
-  public ApiResponse<UserSummaryDTO> get(@PathVariable UUID id) {
-    return ApiResponse.success(userService.getUser(id));
-  }
-
   @GetMapping("/{id}/full-profile")
   @PreAuthorize("hasAnyRole('SUPER_ADMIN', 'ADMIN')")
   public ApiResponse<UserFullProfileDTO> getFullProfile(@PathVariable UUID id) {

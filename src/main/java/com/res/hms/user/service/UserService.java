@@ -5,32 +5,9 @@ import com.res.hms.common.exception.ApiException;
 import com.res.hms.common.tenant.HospitalContext;
 import com.res.hms.common.util.ResourceLookup;
 import com.res.hms.doctor.repository.DoctorRepository;
-import com.res.hms.domain.AdminHospitalDetails;
-import com.res.hms.domain.Doctor;
-import com.res.hms.domain.DoctorHospitalDetails;
-import com.res.hms.domain.LabTechProfile;
-import com.res.hms.domain.Nurse;
-import com.res.hms.domain.NurseHospitalDetails;
-import com.res.hms.domain.PharmacistHospitalDetails;
-import com.res.hms.domain.PharmacistProfile;
-import com.res.hms.domain.ReceptionistHospitalDetails;
-import com.res.hms.domain.ReceptionistProfile;
-import com.res.hms.domain.Role;
-import com.res.hms.domain.RoleCode;
-import com.res.hms.domain.UserAccount;
-import com.res.hms.domain.UserRoleAssignment;
+import com.res.hms.domain.*;
 import com.res.hms.nurse.repository.NurseRepository;
-import com.res.hms.repository.AdminHospitalDetailsRepository;
-import com.res.hms.repository.DoctorHospitalDetailsRepository;
-import com.res.hms.repository.HospitalRepository;
-import com.res.hms.repository.LabTechProfileRepository;
-import com.res.hms.repository.NurseHospitalDetailsRepository;
-import com.res.hms.repository.PharmacistHospitalDetailsRepository;
-import com.res.hms.repository.PharmacistProfileRepository;
-import com.res.hms.repository.ReceptionistHospitalDetailsRepository;
-import com.res.hms.repository.ReceptionistProfileRepository;
-import com.res.hms.repository.RoleRepository;
-import com.res.hms.repository.UserAccountRepository;
+import com.res.hms.repository.*;
 import com.res.hms.user.dto.UserFullProfileDTO;
 import com.res.hms.user.dto.UserRequestDTO;
 import com.res.hms.user.dto.UserSummaryDTO;
@@ -90,37 +67,24 @@ public class UserService {
       user.setSuperuser(request.getSuperuser());
     }
 
-    if (request.getMemberships() != null) {
-      for (UserRequestDTO.MembershipDTO memRequest : request.getMemberships()) {
-        // For creation, we take the hospitalId from the membership entry
-        // but if the caller is a hospital admin, they can only create in their own hospital
-        UUID targetHid = memRequest.getHospitalId();
+    if (request.getDetailedMemberships() != null) {
+      for (UserFullProfileDTO.DetailedHospitalMembershipDTO memRequest : request.getDetailedMemberships()) {
+        UUID hospitalId = memRequest.getHospitalId();
+        // If caller is not super admin, they can only create assignments in their active hospital
         if (!isCallerSuperAdmin && activeHospitalId != null) {
-          targetHid = activeHospitalId;
+            hospitalId = activeHospitalId;
         }
-
-        if (targetHid != null) {
-          assignRolesFromDTO(user, memRequest, targetHid);
+        
+        if (hospitalId != null && memRequest.getRoleAssignments() != null) {
+            for (UserFullProfileDTO.DetailedRoleAssignmentDTO ra : memRequest.getRoleAssignments()) {
+                assignRole(user, hospitalId, ra.getRoleCode(), ra.getDepartmentName());
+            }
         }
       }
     }
 
     userAccountRepository.save(user);
-
-    // Handle role specific profile data for all assigned hospitals
-    Set<UUID> hospitalIds =
-        user.getAssignments().stream()
-            .map(UserRoleAssignment::getHospitalId)
-            .filter(java.util.Objects::nonNull)
-            .collect(Collectors.toSet());
-
-    if (hospitalIds.isEmpty()) {
-      handleProfileUpdate(user, request, null);
-    } else {
-      for (UUID hid : hospitalIds) {
-        handleProfileUpdate(user, request, hid);
-      }
-    }
+    handleProfileUpdate(user, request);
 
     return userMapper.toFullProfileDTO(user);
   }
@@ -139,266 +103,226 @@ public class UserService {
         throw new ApiException(
             "AUTH_ERROR", "Hospital context required for update", HttpStatus.FORBIDDEN);
       }
-      user =
-          resourceLookup.findRequired(
-              userId, activeHospitalId, userAccountRepository::findByIdAndHospitalId, "User");
+      user = resourceLookup.findRequired(userId, activeHospitalId, userAccountRepository::findByIdAndHospitalId, "User");
     }
 
-    // 1. Update basic user info
     if (request.getFullName() != null) user.setFullName(request.getFullName());
     if (request.getGender() != null) user.setGender(request.getGender());
     if (request.getDob() != null) user.setDob(request.getDob());
     if (request.getPhone() != null) user.setPhone(request.getPhone());
+    if (request.getEmail() != null) user.setEmail(request.getEmail());
 
     if (isSuperAdmin && request.getSuperuser() != null) {
       user.setSuperuser(request.getSuperuser());
     }
 
-    // 2. Scoped Update Logic for Memberships
-    if (request.getMemberships() != null) {
+    // Scoped Update Logic for Memberships
+    if (request.getDetailedMemberships() != null) {
       if (!isSuperAdmin) {
         // Remove existing assignments ONLY for the active hospital
         user.getAssignments().removeIf(a -> activeHospitalId.equals(a.getHospitalId()));
 
         // Add new assignments for the active hospital from the request
-        request.getMemberships().stream()
+        request.getDetailedMemberships().stream()
             .filter(m -> activeHospitalId.equals(m.getHospitalId()))
-            .forEach(m -> assignRolesFromDTO(user, m, activeHospitalId));
+            .flatMap(m -> m.getRoleAssignments().stream())
+            .forEach(ra -> assignRole(user, activeHospitalId, ra.getRoleCode(), ra.getDepartmentName()));
       } else {
         // SuperAdmin can update everything.
         user.getAssignments().clear();
-        request.getMemberships().forEach(m -> assignRolesFromDTO(user, m, m.getHospitalId()));
+        for (UserFullProfileDTO.DetailedHospitalMembershipDTO m : request.getDetailedMemberships()) {
+            if (m.getRoleAssignments() != null) {
+                m.getRoleAssignments().forEach(ra -> assignRole(user, m.getHospitalId(), ra.getRoleCode(), ra.getDepartmentName()));
+            }
+        }
       }
     }
 
     userAccountRepository.save(user);
-
-    // For update, we only update profile details for the active context
-    handleProfileUpdate(user, request, activeHospitalId);
+    handleProfileUpdate(user, request);
 
     return userMapper.toFullProfileDTO(user);
   }
 
-  private void assignRolesFromDTO(
-      UserAccount user, UserRequestDTO.MembershipDTO memRequest, UUID hospitalId) {
-    if (memRequest.getRoles() != null) {
-      for (RoleCode code : memRequest.getRoles()) {
-        Role role = resourceLookup.findRequired(code, roleRepository::findByCode, "Role");
-        UserRoleAssignment assignment = new UserRoleAssignment();
-        assignment.setUser(user);
-        assignment.setHospitalId(hospitalId);
-        assignment.setRole(role);
-        user.getAssignments().add(assignment);
-      }
-    }
+  private void assignRole(UserAccount user, UUID hospitalId, String roleCode, String departmentName) {
+      RoleCode code = RoleCode.valueOf(roleCode);
+      Role role = resourceLookup.findRequired(code, roleRepository::findByCode, "Role");
+      UserRoleAssignment assignment = new UserRoleAssignment();
+      assignment.setUser(user);
+      assignment.setHospitalId(hospitalId);
+      assignment.setRole(role);
+      assignment.setDepartmentName(departmentName);
+      user.getAssignments().add(assignment);
   }
 
-  private void handleProfileUpdate(
-      UserAccount user, UserRequestDTO request, UUID activeHospitalId) {
+  private void handleProfileUpdate(UserAccount user, UserRequestDTO request) {
     Set<RoleCode> allRoles = user.getRoleCodes();
 
-    // 1. Doctor Profile & Hospital Details
-    if (allRoles.contains(RoleCode.DOCTOR)) {
-      Doctor doctor =
-          doctorRepository
-              .findByUserId(user.getId())
-              .orElseGet(
-                  () -> {
-                    Doctor d = new Doctor();
-                    d.setUser(user);
-                    return d;
-                  });
-      if (request.getSpecialization() != null)
-        doctor.setSpecialization(request.getSpecialization());
-      if (request.getBio() != null) doctor.setBio(request.getBio());
-      if (request.getLicenseNumber() != null) doctor.setLicenseNumber(request.getLicenseNumber());
+    // 1. Doctor Profile
+    if (allRoles.contains(RoleCode.DOCTOR) && request.getDoctorInfo() != null) {
+      Doctor doctor = doctorRepository.findByUserId(user.getId()).orElseGet(() -> {
+          Doctor d = new Doctor();
+          d.setUser(user);
+          return d;
+      });
+      UserFullProfileDTO.DoctorInfo info = request.getDoctorInfo();
+      if (info.getSpecialization() != null) doctor.setSpecialization(info.getSpecialization());
+      if (info.getBio() != null) doctor.setBio(info.getBio());
+      if (info.getLicenseNumber() != null) doctor.setLicenseNumber(info.getLicenseNumber());
       doctorRepository.save(doctor);
-
-      if (activeHospitalId != null) {
-        findAssignment(user, activeHospitalId, RoleCode.DOCTOR)
-            .ifPresent(
-                a -> {
-                  DoctorHospitalDetails det =
-                      doctorHospitalDetailsRepository
-                          .findById(a.getId())
-                          .orElseGet(
-                              () -> {
-                                DoctorHospitalDetails d = new DoctorHospitalDetails();
-                                d.setAssignment(a);
-                                return d;
-                              });
-                  if (request.getConsultationFee() != null)
-                    det.setConsultationFee(request.getConsultationFee());
-                  if (request.getFollowUpDays() != null)
-                    det.setFollowUpDays(request.getFollowUpDays());
-                  det.setUpdatedAt(LocalDateTime.now());
-                  doctorHospitalDetailsRepository.save(det);
-                });
-      }
     }
 
-    // 2. Nurse Profile & Hospital Details
-    if (allRoles.contains(RoleCode.NURSE)) {
-      Nurse nurse =
-          nurseRepository
-              .findByUserId(user.getId())
-              .orElseGet(
-                  () -> {
-                    Nurse n = new Nurse();
-                    n.setUser(user);
-                    return n;
-                  });
-      if (request.getDepartment() != null) nurse.setDepartment(request.getDepartment());
-      if (request.getNursingLicenseNo() != null)
-        nurse.setNursingLicenseNo(request.getNursingLicenseNo());
-      if (request.getCertificationLevel() != null)
-        nurse.setCertificationLevel(request.getCertificationLevel());
+    // 2. Nurse Profile
+    if (allRoles.contains(RoleCode.NURSE) && request.getNurseInfo() != null) {
+      Nurse nurse = nurseRepository.findByUserId(user.getId()).orElseGet(() -> {
+          Nurse n = new Nurse();
+          n.setUser(user);
+          return n;
+      });
+      UserFullProfileDTO.NurseInfo info = request.getNurseInfo();
+      if (info.getDepartment() != null) nurse.setDepartment(info.getDepartment());
+      if (info.getNursingLicenseNo() != null) nurse.setNursingLicenseNo(info.getNursingLicenseNo());
+      if (info.getCertificationLevel() != null) nurse.setCertificationLevel(info.getCertificationLevel());
       nurseRepository.save(nurse);
-
-      if (activeHospitalId != null) {
-        findAssignment(user, activeHospitalId, RoleCode.NURSE)
-            .ifPresent(
-                a -> {
-                  NurseHospitalDetails det =
-                      nurseHospitalDetailsRepository
-                          .findById(a.getId())
-                          .orElseGet(
-                              () -> {
-                                NurseHospitalDetails d = new NurseHospitalDetails();
-                                d.setAssignment(a);
-                                return d;
-                              });
-                  if (request.getFloorLocation() != null)
-                    det.setFloorLocation(request.getFloorLocation());
-                  if (request.getShiftType() != null) det.setShiftType(request.getShiftType());
-                  det.setUpdatedAt(LocalDateTime.now());
-                  nurseHospitalDetailsRepository.save(det);
-                });
-      }
     }
 
-    // 3. Pharmacist Profile & Hospital Details
-    if (allRoles.contains(RoleCode.PHARMACIST)) {
-      PharmacistProfile profile =
-          pharmacistProfileRepository
-              .findById(user.getId())
-              .orElseGet(
-                  () -> {
-                    PharmacistProfile p = new PharmacistProfile();
-                    p.setUser(user);
-                    return p;
-                  });
-      if (request.getPciRegNo() != null) profile.setPciRegNo(request.getPciRegNo());
-      if (request.getQualification() != null) profile.setQualification(request.getQualification());
+    // 3. Pharmacist Profile
+    if (allRoles.contains(RoleCode.PHARMACIST) && request.getPharmacistInfo() != null) {
+      PharmacistProfile profile = pharmacistProfileRepository.findById(user.getId()).orElseGet(() -> {
+          PharmacistProfile p = new PharmacistProfile();
+          p.setUser(user);
+          return p;
+      });
+      UserFullProfileDTO.PharmacistInfo info = request.getPharmacistInfo();
+      if (info.getPciRegNo() != null) profile.setPciRegNo(info.getPciRegNo());
+      if (info.getQualification() != null) profile.setQualification(info.getQualification());
       pharmacistProfileRepository.save(profile);
-
-      if (activeHospitalId != null) {
-        findAssignment(user, activeHospitalId, RoleCode.PHARMACIST)
-            .ifPresent(
-                a -> {
-                  PharmacistHospitalDetails det =
-                      pharmacistHospitalDetailsRepository
-                          .findById(a.getId())
-                          .orElseGet(
-                              () -> {
-                                PharmacistHospitalDetails d = new PharmacistHospitalDetails();
-                                d.setAssignment(a);
-                                return d;
-                              });
-                  if (request.getCounterLocation() != null)
-                    det.setCounterLocation(request.getCounterLocation());
-                  if (request.getPharmacyWing() != null)
-                    det.setPharmacyWing(request.getPharmacyWing());
-                  det.setUpdatedAt(LocalDateTime.now());
-                  pharmacistHospitalDetailsRepository.save(det);
-                });
-      }
     }
 
     // 4. Lab Tech Profile
-    if (request.getLabSpecialty() != null || request.getLabLicenseNo() != null) {
-      LabTechProfile profile =
-          labTechProfileRepository
-              .findById(user.getId())
-              .orElseGet(
-                  () -> {
-                    LabTechProfile p = new LabTechProfile();
-                    p.setUser(user);
-                    return p;
-                  });
-      if (request.getLabSpecialty() != null) profile.setSpecialty(request.getLabSpecialty());
-      if (request.getLabLicenseNo() != null) profile.setLicenseNo(request.getLabLicenseNo());
+    if (request.getLabTechInfo() != null) {
+      LabTechProfile profile = labTechProfileRepository.findById(user.getId()).orElseGet(() -> {
+          LabTechProfile p = new LabTechProfile();
+          p.setUser(user);
+          return p;
+      });
+      UserFullProfileDTO.LabTechInfo info = request.getLabTechInfo();
+      if (info.getSpecialty() != null) profile.setSpecialty(info.getSpecialty());
+      if (info.getLicenseNo() != null) profile.setLicenseNo(info.getLicenseNo());
       labTechProfileRepository.save(profile);
     }
 
-    // 5. Receptionist Profile & Hospital Details
-    if (allRoles.contains(RoleCode.RECEPTIONIST)) {
-      ReceptionistProfile profile =
-          receptionistProfileRepository
-              .findById(user.getId())
-              .orElseGet(
-                  () -> {
-                    ReceptionistProfile p = new ReceptionistProfile();
-                    p.setUser(user);
-                    return p;
-                  });
-      if (request.getLanguagesSpoken() != null)
-        profile.setLanguagesSpoken(request.getLanguagesSpoken());
-      if (request.getInsuranceSpecialist() != null)
-        profile.setInsuranceSpecialist(request.getInsuranceSpecialist());
+    // 5. Receptionist Profile
+    if (allRoles.contains(RoleCode.RECEPTIONIST) && request.getReceptionistInfo() != null) {
+      ReceptionistProfile profile = receptionistProfileRepository.findById(user.getId()).orElseGet(() -> {
+          ReceptionistProfile p = new ReceptionistProfile();
+          p.setUser(user);
+          return p;
+      });
+      UserFullProfileDTO.ReceptionistInfo info = request.getReceptionistInfo();
+      if (info.getLanguagesSpoken() != null) profile.setLanguagesSpoken(info.getLanguagesSpoken());
+      profile.setInsuranceSpecialist(info.isInsuranceSpecialist());
       receptionistProfileRepository.save(profile);
-
-      if (activeHospitalId != null) {
-        findAssignment(user, activeHospitalId, RoleCode.RECEPTIONIST)
-            .ifPresent(
-                a -> {
-                  ReceptionistHospitalDetails det =
-                      receptionistHospitalDetailsRepository
-                          .findById(a.getId())
-                          .orElseGet(
-                              () -> {
-                                ReceptionistHospitalDetails d = new ReceptionistHospitalDetails();
-                                d.setAssignment(a);
-                                return d;
-                              });
-                  if (request.getDeskLocation() != null)
-                    det.setDeskLocation(request.getDeskLocation());
-                  if (request.getEmergencyContactNumber() != null)
-                    det.setEmergencyContactNumber(request.getEmergencyContactNumber());
-                  det.setUpdatedAt(LocalDateTime.now());
-                  receptionistHospitalDetailsRepository.save(det);
-                });
-      }
     }
 
-    // 6. Admin Hospital Details
-    if (allRoles.contains(RoleCode.ADMIN) && activeHospitalId != null) {
-      findAssignment(user, activeHospitalId, RoleCode.ADMIN)
-          .ifPresent(
-              a -> {
-                AdminHospitalDetails det =
-                    adminHospitalDetailsRepository
-                        .findById(a.getId())
-                        .orElseGet(
-                            () -> {
-                              AdminHospitalDetails d = new AdminHospitalDetails();
-                              d.setAssignment(a);
-                              return d;
-                            });
-                if (request.getOfficeLocation() != null)
-                  det.setOfficeLocation(request.getOfficeLocation());
-                if (request.getDepartmentHead() != null)
-                  det.setDepartmentHead(request.getDepartmentHead());
-                det.setUpdatedAt(LocalDateTime.now());
-                adminHospitalDetailsRepository.save(det);
-              });
+    // 6. Hospital Specific Details (Nested in detailedMemberships)
+    if (request.getDetailedMemberships() != null) {
+        for (UserFullProfileDTO.DetailedHospitalMembershipDTO m : request.getDetailedMemberships()) {
+            if (m.getRoleAssignments() != null) {
+                for (UserFullProfileDTO.DetailedRoleAssignmentDTO ra : m.getRoleAssignments()) {
+                    updateRoleSpecificHospitalDetails(user, m.getHospitalId(), ra);
+                }
+            }
+        }
     }
+  }
+
+  private void updateRoleSpecificHospitalDetails(UserAccount user, UUID hospitalId, UserFullProfileDTO.DetailedRoleAssignmentDTO raDto) {
+      RoleCode code = RoleCode.valueOf(raDto.getRoleCode());
+      findAssignment(user, hospitalId, code).ifPresent(a -> {
+          switch (code) {
+              case DOCTOR -> {
+                  if (raDto.getDoctorDetails() != null) {
+                      DoctorHospitalDetails det = doctorHospitalDetailsRepository.findById(a.getId()).orElseGet(() -> {
+                          DoctorHospitalDetails d = new DoctorHospitalDetails();
+                          d.setAssignment(a);
+                          return d;
+                      });
+                      var d = raDto.getDoctorDetails();
+                      if (d.getConsultationFee() != null) det.setConsultationFee(d.getConsultationFee());
+                      if (d.getFollowUpDays() != null) det.setFollowUpDays(d.getFollowUpDays());
+                      if (d.getCommissionType() != null) det.setCommissionType(d.getCommissionType());
+                      if (d.getCommissionValue() != null) det.setCommissionValue(d.getCommissionValue());
+                      det.setVisitingConsultant(d.isVisitingConsultant());
+                      det.setUpdatedAt(LocalDateTime.now());
+                      doctorHospitalDetailsRepository.save(det);
+                  }
+              }
+              case NURSE -> {
+                  if (raDto.getNurseDetails() != null) {
+                      NurseHospitalDetails det = nurseHospitalDetailsRepository.findById(a.getId()).orElseGet(() -> {
+                          NurseHospitalDetails d = new NurseHospitalDetails();
+                          d.setAssignment(a);
+                          return d;
+                      });
+                      var n = raDto.getNurseDetails();
+                      if (n.getFloorLocation() != null) det.setFloorLocation(n.getFloorLocation());
+                      if (n.getShiftType() != null) det.setShiftType(n.getShiftType());
+                      det.setUpdatedAt(LocalDateTime.now());
+                      nurseHospitalDetailsRepository.save(det);
+                  }
+              }
+              case PHARMACIST -> {
+                  if (raDto.getPharmacistDetails() != null) {
+                      PharmacistHospitalDetails det = pharmacistHospitalDetailsRepository.findById(a.getId()).orElseGet(() -> {
+                          PharmacistHospitalDetails d = new PharmacistHospitalDetails();
+                          d.setAssignment(a);
+                          return d;
+                      });
+                      var p = raDto.getPharmacistDetails();
+                      if (p.getCounterLocation() != null) det.setCounterLocation(p.getCounterLocation());
+                      if (p.getPharmacyWing() != null) det.setPharmacyWing(p.getPharmacyWing());
+                      det.setUpdatedAt(LocalDateTime.now());
+                      pharmacistHospitalDetailsRepository.save(det);
+                  }
+              }
+              case RECEPTIONIST -> {
+                  if (raDto.getReceptionistDetails() != null) {
+                      ReceptionistHospitalDetails det = receptionistHospitalDetailsRepository.findById(a.getId()).orElseGet(() -> {
+                          ReceptionistHospitalDetails d = new ReceptionistHospitalDetails();
+                          d.setAssignment(a);
+                          return d;
+                      });
+                      var r = raDto.getReceptionistDetails();
+                      if (r.getDeskLocation() != null) det.setDeskLocation(r.getDeskLocation());
+                      if (r.getEmergencyContactNumber() != null) det.setEmergencyContactNumber(r.getEmergencyContactNumber());
+                      det.setUpdatedAt(LocalDateTime.now());
+                      receptionistHospitalDetailsRepository.save(det);
+                  }
+              }
+              case ADMIN -> {
+                  if (raDto.getAdminDetails() != null) {
+                      AdminHospitalDetails det = adminHospitalDetailsRepository.findById(a.getId()).orElseGet(() -> {
+                          AdminHospitalDetails d = new AdminHospitalDetails();
+                          d.setAssignment(a);
+                          return d;
+                      });
+                      var ad = raDto.getAdminDetails();
+                      if (ad.getOfficeLocation() != null) det.setOfficeLocation(ad.getOfficeLocation());
+                      det.setDepartmentHead(ad.isDepartmentHead());
+                      det.setUpdatedAt(LocalDateTime.now());
+                      adminHospitalDetailsRepository.save(det);
+                  }
+              }
+          }
+      });
   }
 
   private java.util.Optional<UserRoleAssignment> findAssignment(
       UserAccount user, UUID hospitalId, RoleCode code) {
     return user.getAssignments().stream()
-        .filter(a -> hospitalId.equals(a.getHospitalId()) && a.getRole().getCode() == code)
+        .filter(a -> (hospitalId == null ? a.getHospitalId() == null : hospitalId.equals(a.getHospitalId())) 
+                && a.getRole().getCode() == code)
         .findFirst();
   }
 
@@ -431,18 +355,12 @@ public class UserService {
     return userMapper.toFullProfileDTO(user);
   }
 
-  @Transactional(readOnly = true)
-  public UserSummaryDTO getUser(UUID userId) {
-    UserAccount user = resourceLookup.findRequired(userId, userAccountRepository::findById, "User");
-    return userMapper.toSummaryDTO(user);
-  }
-
   private void validateCreateRequest(UserRequestDTO request) {
     if (userAccountRepository.existsByUsername(request.getUsername())) {
       throw new ApiException(
           "BUSINESS_RULE_VIOLATION", "Username already exists", HttpStatus.CONFLICT);
     }
-    if (request.getMemberships() == null || request.getMemberships().isEmpty()) {
+    if (request.getDetailedMemberships() == null || request.getDetailedMemberships().isEmpty()) {
       if (request.getSuperuser() == null || !request.getSuperuser()) {
         throw new ApiException(
             "VALIDATION_ERROR",

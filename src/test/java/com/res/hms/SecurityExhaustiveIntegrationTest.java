@@ -98,7 +98,7 @@ class SecurityExhaustiveIntegrationTest {
                                 {
                                   "username": "newuser1",
                                   "password": "password",
-                                  "memberships": [],
+                                  "detailedMemberships": [],
                                   "fullName": "New User",
                                   "gender": "MALE",
                                   "dob": "1990-01-01"
@@ -122,11 +122,11 @@ class SecurityExhaustiveIntegrationTest {
                                 {
                                   "username": "newuser2",
                                   "password": "password",
-                                  "memberships": [{"hospitalId": "%s", "roles": ["NURSE"]}],
+                                  "detailedMemberships": [{"hospitalId": "%s", "roleAssignments": [{"roleCode": "NURSE"}]}],
                                   "fullName": "New User",
                                   "gender": "MALE",
                                   "dob": "1990-01-01",
-                                  "department": "XYZ"
+                                  "nurseInfo": {"department": "XYZ"}
                                 }
                                 """,
                         testHospitalId)))
@@ -148,7 +148,7 @@ class SecurityExhaustiveIntegrationTest {
                                 {
                                   "username": "another_admin",
                                   "password": "password",
-                                  "memberships": [{"hospitalId": "%s", "roles": ["ADMIN"]}],
+                                  "detailedMemberships": [{"hospitalId": "%s", "roleAssignments": [{"roleCode": "ADMIN"}]}],
                                   "fullName": "Another Admin",
                                   "gender": "MALE",
                                   "dob": "1990-01-01"
@@ -174,11 +174,11 @@ class SecurityExhaustiveIntegrationTest {
                                 {
                                   "username": "hosp_doctor",
                                   "password": "password",
-                                  "memberships": [{"hospitalId": "%s", "roles": ["NURSE"]}],
+                                  "detailedMemberships": [{"hospitalId": "%s", "roleAssignments": [{"roleCode": "NURSE"}]}],
                                   "fullName": "Dup User",
                                   "gender": "MALE",
                                   "dob": "1990-01-01",
-                                  "department": "department"
+                                  "nurseInfo": {"department": "department"}
                                 }
                                 """,
                         testHospitalId)))
@@ -261,7 +261,7 @@ class SecurityExhaustiveIntegrationTest {
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(
                     String.format(
-                        "{\"username\": \"hosp2_user\", \"fullName\": \"Updated Name\", \"gender\": \"FEMALE\", \"dob\": \"1990-01-01\", \"memberships\": [{\"hospitalId\": \"%s\", \"roles\": [\"DOCTOR\"]}]}",
+                        "{\"username\": \"hosp2_user\", \"fullName\": \"Updated Name\", \"gender\": \"FEMALE\", \"dob\": \"1990-01-01\", \"detailedMemberships\": [{\"hospitalId\": \"%s\", \"roleAssignments\": [{\"roleCode\": \"DOCTOR\"}]}]}",
                         secondHospitalId)))
         .andExpect(status().isNotFound()); // Strict isolation: user not found in context
   }
@@ -322,7 +322,7 @@ class SecurityExhaustiveIntegrationTest {
                                 {
                                   "username": "noname",
                                   "password": "password",
-                                  "memberships": [{"hospitalId": "%s", "roles": ["NURSE"]}],
+                                  "detailedMemberships": [{"hospitalId": "%s", "roleAssignments": [{"roleCode": "NURSE"}]}],
                                   "gender": "MALE",
                                   "dob": "1990-01-01"
                                 }
@@ -346,7 +346,7 @@ class SecurityExhaustiveIntegrationTest {
                                 {
                                   "username": "nogender",
                                   "password": "password",
-                                  "memberships": [{"hospitalId": "%s", "roles": ["NURSE"]}],
+                                  "detailedMemberships": [{"hospitalId": "%s", "roleAssignments": [{"roleCode": "NURSE"}]}],
                                   "fullName": "No Gender",
                                   "dob": "1990-01-01"
                                 }
@@ -370,7 +370,7 @@ class SecurityExhaustiveIntegrationTest {
                                 {
                                   "username": "nodob",
                                   "password": "password",
-                                  "memberships": [{"hospitalId": "%s", "roles": ["NURSE"]}],
+                                  "detailedMemberships": [{"hospitalId": "%s", "roleAssignments": [{"roleCode": "NURSE"}]}],
                                   "fullName": "No DOB",
                                   "gender": "MALE"
                                 }
