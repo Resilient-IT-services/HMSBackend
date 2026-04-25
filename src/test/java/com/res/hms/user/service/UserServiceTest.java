@@ -79,7 +79,7 @@ class UserServiceTest {
   void listUsersReturnsPaginatedResults() {
     when(hospitalContext.getHospitalIdOrNull()).thenReturn(hospitalId);
     when(hospitalContext.isSuperAdmin()).thenReturn(false);
-    
+
     UserAccount user = new UserAccount();
     user.setId(userId);
     user.setFullName("Test User");
@@ -88,7 +88,7 @@ class UserServiceTest {
         .thenReturn(new PageImpl<>(List.of(user)));
     when(userMapper.toSummaryDTO(user)).thenReturn(UserSummaryDTO.builder().id(userId).fullName("Test User").build());
 
-    var response = userService.listUsers(0, 10, "test", RoleCode.DOCTOR, true, false);
+    var response = userService.listUsers(0, 10, "test", RoleCode.DOCTOR.name(), true, false);
 
     assertEquals(1, response.totalElements());
     assertEquals("Test User", response.content().getFirst().getFullName());
@@ -176,7 +176,7 @@ class UserServiceTest {
 
     lenient().when(doctorRepository.findByUserId(any())).thenReturn(Optional.empty());
     lenient().when(nurseRepository.findByUserId(any())).thenReturn(Optional.empty());
-    
+
     when(userAccountRepository.saveAndFlush(any(UserAccount.class))).thenReturn(user);
     when(userAccountRepository.findById(userId)).thenReturn(Optional.of(user));
     when(userMapper.toFullProfileDTO(any())).thenReturn(UserFullProfileDTO.builder().id(userId).build());
