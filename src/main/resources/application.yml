@@ -8,7 +8,7 @@ spring:
   jpa:
     hibernate:
       ddl-auto: validate
-    show-sql: ${SPRING_JPA_SHOW_SQL:true}
+    show-sql: ${SPRING_JPA_SHOW_SQL:false}
     open-in-view: false
     properties:
       hibernate:
@@ -24,8 +24,8 @@ spring:
 
 logging:
   level:
-    org.hibernate.SQL: ${LOG_SQL_LEVEL:DEBUG}
-    org.hibernate.orm.jdbc.bind: ${LOG_BIND_LEVEL:TRACE}
+    org.hibernate.SQL: ${LOG_SQL_LEVEL:ERROR}
+    org.hibernate.orm.jdbc.bind: ${LOG_BIND_LEVEL:ERROR}
 
 server:
   port: ${SERVER_PORT:8081}

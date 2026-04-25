@@ -85,9 +85,9 @@ public class GlobalExceptionHandler {
       } else if (rootMsg.contains("hospital_code_key")) {
         message = "Hospital code already exists";
       } else if (rootMsg.contains("nurse_nursing_license_no_key")) {
-          message = "Nurse license number already exists";
+        message = "Nurse license number already exists";
       } else if (rootMsg.contains("pharmacist_profile_pci_reg_no_key")) {
-          message = "Pharmacist PCI registration number already exists";
+        message = "Pharmacist PCI registration number already exists";
       }
     }
 

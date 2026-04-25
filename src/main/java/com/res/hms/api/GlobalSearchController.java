@@ -16,20 +16,20 @@ import org.springframework.web.bind.annotation.RestController;
 @RequiredArgsConstructor
 public class GlobalSearchController {
 
-    private final GlobalSearchService globalSearchService;
-    private final HospitalContext hospitalContext;
+  private final GlobalSearchService globalSearchService;
+  private final HospitalContext hospitalContext;
 
-    @GetMapping
-    public ApiResponse<PageResponse<SearchResultDTO>> search(
-            @RequestParam String query,
-            @RequestParam(defaultValue = "0") int page,
-            @RequestParam(defaultValue = "20") int size) {
-        return ApiResponse.success(globalSearchService.search(
+  @GetMapping
+  public ApiResponse<PageResponse<SearchResultDTO>> search(
+      @RequestParam String query,
+      @RequestParam(defaultValue = "0") int page,
+      @RequestParam(defaultValue = "20") int size) {
+    return ApiResponse.success(
+        globalSearchService.search(
             query,
             hospitalContext.getHospitalIdOrNull(),
             hospitalContext.isSuperAdmin(),
             page,
-            Math.min(size, 100)
-        ));
-    }
+            Math.min(size, 100)));
+  }
 }

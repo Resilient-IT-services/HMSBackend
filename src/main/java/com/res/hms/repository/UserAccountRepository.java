@@ -25,19 +25,19 @@ public interface UserAccountRepository
   List<UserAccount> findAllByDeletedFalse();
 
   @Query(
-      "SELECT DISTINCT u FROM UserAccount u " +
-      "LEFT JOIN u.assignments a " +
-      "LEFT JOIN a.role r " +
-      "LEFT JOIN Hospital h ON a.hospitalId = h.id " +
-      "WHERE (:hospitalId IS NULL OR a.hospitalId = :hospitalId) " +
-      "AND (:active IS NULL OR u.active = :active) " +
-      "AND (:deleted IS NULL OR u.deleted = :deleted) " +
-      "AND (:roleCode IS NULL OR r.code = :roleCode) " +
-      "AND (:search IS NULL OR " +
-      "     LOWER(u.fullName) LIKE :search OR " +
-      "     LOWER(u.email) LIKE :search OR " +
-      "     LOWER(u.username) LIKE :search OR " +
-      "     LOWER(h.name) LIKE :search)")
+      "SELECT DISTINCT u FROM UserAccount u "
+          + "LEFT JOIN u.assignments a "
+          + "LEFT JOIN a.role r "
+          + "LEFT JOIN Hospital h ON a.hospitalId = h.id "
+          + "WHERE (:hospitalId IS NULL OR a.hospitalId = :hospitalId) "
+          + "AND (:active IS NULL OR u.active = :active) "
+          + "AND (:deleted IS NULL OR u.deleted = :deleted) "
+          + "AND (:roleCode IS NULL OR r.code = :roleCode) "
+          + "AND (:search IS NULL OR "
+          + "     LOWER(u.fullName) LIKE :search OR "
+          + "     LOWER(u.email) LIKE :search OR "
+          + "     LOWER(u.username) LIKE :search OR "
+          + "     LOWER(h.name) LIKE :search)")
   Page<UserAccount> searchUsers(
       @Param("hospitalId") UUID hospitalId,
       @Param("active") Boolean active,

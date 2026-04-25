@@ -74,9 +74,7 @@ public abstract class UserMapper {
             entry -> {
               UUID hospitalId = entry.getKey();
               var hospital =
-                  hospitalId == null
-                      ? null
-                      : hospitalRepository.findById(hospitalId).orElse(null);
+                  hospitalId == null ? null : hospitalRepository.findById(hospitalId).orElse(null);
 
               Set<RoleCode> roles =
                   entry.getValue().stream()
@@ -145,17 +143,18 @@ public abstract class UserMapper {
             e -> {
               UUID hospitalId = e.getKey();
               List<UserRoleAssignment> hospitalAssignments = e.getValue();
-              
-              List<String> roles = hospitalAssignments.stream()
-                  .map(a -> a.getRole().getCode().name())
-                  .toList();
-                  
-              String specialization = user.getDoctor() != null ? user.getDoctor().getSpecialization() : null;
-              String departmentName = hospitalAssignments.stream()
-                  .map(UserRoleAssignment::getDepartmentName)
-                  .filter(d -> d != null && !d.isBlank())
-                  .findFirst()
-                  .orElse(null);
+
+              List<String> roles =
+                  hospitalAssignments.stream().map(a -> a.getRole().getCode().name()).toList();
+
+              String specialization =
+                  user.getDoctor() != null ? user.getDoctor().getSpecialization() : null;
+              String departmentName =
+                  hospitalAssignments.stream()
+                      .map(UserRoleAssignment::getDepartmentName)
+                      .filter(d -> d != null && !d.isBlank())
+                      .findFirst()
+                      .orElse(null);
 
               return new UserSummaryDTO.HospitalMembershipDTO(
                   hospitalId, roles, specialization, departmentName);
@@ -177,9 +176,7 @@ public abstract class UserMapper {
             entry -> {
               UUID hospitalId = entry.getKey();
               var hospital =
-                  hospitalId == null
-                      ? null
-                      : hospitalRepository.findById(hospitalId).orElse(null);
+                  hospitalId == null ? null : hospitalRepository.findById(hospitalId).orElse(null);
 
               String hospitalName = hospital != null ? hospital.getName() : "Global Access";
               String hospitalCode = hospital != null ? hospital.getCode() : "GLOBAL";

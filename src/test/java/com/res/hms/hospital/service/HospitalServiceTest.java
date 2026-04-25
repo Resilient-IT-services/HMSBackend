@@ -66,7 +66,7 @@ class HospitalServiceTest {
     hospital.setCode("TEST");
     hospital.setAddress("Calicut");
     hospital.setStatus(HospitalStatus.ACTIVE);
-    
+
     when(hospitalRepository.findAll(any(Specification.class), any(Pageable.class)))
         .thenReturn(new PageImpl<>(List.of(hospital)));
 
@@ -85,7 +85,8 @@ class HospitalServiceTest {
 
     when(hospitalRepository.findById(UUID.nameUUIDFromBytes("1".getBytes())))
         .thenReturn(Optional.of(hospital));
-    when(hospitalRepository.existsByCodeAndIdNot("NEW", UUID.nameUUIDFromBytes("1".getBytes()))).thenReturn(false);
+    when(hospitalRepository.existsByCodeAndIdNot("NEW", UUID.nameUUIDFromBytes("1".getBytes())))
+        .thenReturn(false);
     when(hospitalRepository.save(any(Hospital.class))).thenAnswer(i -> i.getArgument(0));
 
     var response =

@@ -65,8 +65,7 @@ public class AuthService {
     return userAccountRepository
         .findById(principal.userId())
         .map(userMapper::toFullProfileDTO)
-        .orElseThrow(
-            () -> new ApiException("NOT_FOUND", "User not found", HttpStatus.NOT_FOUND));
+        .orElseThrow(() -> new ApiException("NOT_FOUND", "User not found", HttpStatus.NOT_FOUND));
   }
 
   public HospitalUserPrincipal getAuthenticatedPrincipal() {
@@ -82,5 +81,4 @@ public class AuthService {
     new SecurityContextLogoutHandler()
         .logout(request, response, SecurityContextHolder.getContext().getAuthentication());
   }
-
 }

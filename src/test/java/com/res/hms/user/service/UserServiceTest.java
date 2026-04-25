@@ -92,7 +92,8 @@ class UserServiceTest {
             eq("%test%"),
             any(Pageable.class)))
         .thenReturn(new PageImpl<>(List.of(user)));
-    when(userMapper.toSummaryDTO(user)).thenReturn(UserSummaryDTO.builder().id(userId).fullName("Test User").build());
+    when(userMapper.toSummaryDTO(user))
+        .thenReturn(UserSummaryDTO.builder().id(userId).fullName("Test User").build());
 
     var response = userService.listUsers(0, 10, "test", RoleCode.DOCTOR.name(), true, false);
 
@@ -119,7 +120,8 @@ class UserServiceTest {
               return u;
             });
     when(userAccountRepository.findById(userId)).thenReturn(Optional.of(new UserAccount()));
-    when(userMapper.toFullProfileDTO(any())).thenReturn(UserFullProfileDTO.builder().id(userId).build());
+    when(userMapper.toFullProfileDTO(any()))
+        .thenReturn(UserFullProfileDTO.builder().id(userId).build());
 
     userService.createUser(
         UserRequestDTO.builder()
@@ -185,7 +187,8 @@ class UserServiceTest {
 
     when(userAccountRepository.saveAndFlush(any(UserAccount.class))).thenReturn(user);
     when(userAccountRepository.findById(userId)).thenReturn(Optional.of(user));
-    when(userMapper.toFullProfileDTO(any())).thenReturn(UserFullProfileDTO.builder().id(userId).build());
+    when(userMapper.toFullProfileDTO(any()))
+        .thenReturn(UserFullProfileDTO.builder().id(userId).build());
 
     userService.updateUser(
         userId,

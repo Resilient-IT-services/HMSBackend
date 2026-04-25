@@ -10,14 +10,14 @@ import static org.mockito.Mockito.when;
 
 import com.res.hms.common.exception.ApiException;
 import com.res.hms.doctor.repository.DoctorRepository;
-import com.res.hms.nurse.repository.NurseRepository;
-import com.res.hms.repository.HospitalRepository;
 import com.res.hms.domain.RoleCode;
 import com.res.hms.domain.UserAccount;
+import com.res.hms.nurse.repository.NurseRepository;
+import com.res.hms.repository.HospitalRepository;
+import com.res.hms.repository.UserAccountRepository;
 import com.res.hms.user.dto.LoginRequest;
 import com.res.hms.user.dto.UserFullProfileDTO;
 import com.res.hms.user.dto.UserSummaryDTO;
-import com.res.hms.repository.UserAccountRepository;
 import com.res.hms.user.security.HospitalUserPrincipal;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
@@ -85,14 +85,18 @@ class AuthServiceTest {
 
     UserAccount user = new UserAccount();
     user.setId(userId);
-    UserFullProfileDTO mappedResponse = UserFullProfileDTO.builder()
-        .id(userId)
-        .hospitalId(hospitalId)
-        .username("doctor1")
-        .email("doctor@test.com")
-        .superuser(false)
-        .memberships(List.of(new UserSummaryDTO.HospitalMembershipDTO(hospitalId, List.of("DOCTOR"), null, null)))
-        .build();
+    UserFullProfileDTO mappedResponse =
+        UserFullProfileDTO.builder()
+            .id(userId)
+            .hospitalId(hospitalId)
+            .username("doctor1")
+            .email("doctor@test.com")
+            .superuser(false)
+            .memberships(
+                List.of(
+                    new UserSummaryDTO.HospitalMembershipDTO(
+                        hospitalId, List.of("DOCTOR"), null, null)))
+            .build();
 
     when(userAccountRepository.findById(userId)).thenReturn(Optional.of(user));
     when(userMapper.toFullProfileDTO(user)).thenReturn(mappedResponse);
@@ -162,13 +166,16 @@ class AuthServiceTest {
 
     UserAccount user = new UserAccount();
     user.setId(userId);
-    UserFullProfileDTO mappedResponse = UserFullProfileDTO.builder()
-        .id(userId)
-        .username("admin")
-        .email("admin@test.com")
-        .superuser(false)
-        .memberships(List.of(new UserSummaryDTO.HospitalMembershipDTO(null, List.of("ADMIN"), null, null)))
-        .build();
+    UserFullProfileDTO mappedResponse =
+        UserFullProfileDTO.builder()
+            .id(userId)
+            .username("admin")
+            .email("admin@test.com")
+            .superuser(false)
+            .memberships(
+                List.of(
+                    new UserSummaryDTO.HospitalMembershipDTO(null, List.of("ADMIN"), null, null)))
+            .build();
 
     when(userAccountRepository.findById(userId)).thenReturn(Optional.of(user));
     when(userMapper.toFullProfileDTO(user)).thenReturn(mappedResponse);

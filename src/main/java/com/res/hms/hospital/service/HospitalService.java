@@ -1,7 +1,7 @@
 package com.res.hms.hospital.service;
 
-import com.res.hms.common.exception.ApiException;
 import com.res.hms.common.api.PageResponse;
+import com.res.hms.common.exception.ApiException;
 import com.res.hms.domain.Hospital;
 import com.res.hms.domain.HospitalStatus;
 import com.res.hms.hospital.dto.CreateHospitalRequest;
@@ -69,8 +69,7 @@ public class HospitalService {
   }
 
   @Transactional(readOnly = true)
-  public PageResponse<HospitalResponse> list(
-      int page, int size, String name, String status) {
+  public PageResponse<HospitalResponse> list(int page, int size, String name, String status) {
     Specification<Hospital> spec = Specification.where(null);
     if (name != null && !name.isBlank()) {
       spec =
@@ -83,7 +82,8 @@ public class HospitalService {
         HospitalStatus hospitalStatus = HospitalStatus.valueOf(status.toUpperCase());
         spec = spec.and((root, query, cb) -> cb.equal(root.get("status"), hospitalStatus));
       } catch (IllegalArgumentException e) {
-        throw new ApiException("VALIDATION_ERROR", "Invalid hospital status: " + status, HttpStatus.BAD_REQUEST);
+        throw new ApiException(
+            "VALIDATION_ERROR", "Invalid hospital status: " + status, HttpStatus.BAD_REQUEST);
       }
     }
 

@@ -11,6 +11,9 @@ public interface PharmacistProfileRepository extends JpaRepository<PharmacistPro
 
   boolean existsByPciRegNoAndIdNot(String pciRegNo, UUID id);
 
-  @org.springframework.data.jpa.repository.Query("SELECT COUNT(p) > 0 FROM PharmacistProfile p WHERE p.pciRegNo = :pciRegNo AND p.user.id <> :userId")
-  boolean existsByPciRegNoAndUserIdNot(@org.springframework.data.repository.query.Param("pciRegNo") String pciRegNo, @org.springframework.data.repository.query.Param("userId") java.util.UUID userId);
+  @org.springframework.data.jpa.repository.Query(
+      "SELECT COUNT(p) > 0 FROM PharmacistProfile p WHERE p.pciRegNo = :pciRegNo AND p.user.id <> :userId")
+  boolean existsByPciRegNoAndUserIdNot(
+      @org.springframework.data.repository.query.Param("pciRegNo") String pciRegNo,
+      @org.springframework.data.repository.query.Param("userId") java.util.UUID userId);
 }
