@@ -25,7 +25,6 @@ public class UserSummaryDTO {
   private boolean active;
   private boolean deleted;
   private boolean superuser;
-  private boolean isSuperAdmin;
   private LocalDateTime createdAt;
   private List<HospitalMembershipDTO> memberships;
 
