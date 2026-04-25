@@ -18,6 +18,9 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.data.domain.PageImpl;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.jpa.domain.Specification;
 
 @ExtendWith(MockitoExtension.class)
 class HospitalServiceTest {
@@ -63,11 +66,13 @@ class HospitalServiceTest {
     hospital.setCode("TEST");
     hospital.setAddress("Calicut");
     hospital.setStatus(HospitalStatus.ACTIVE);
-    when(hospitalRepository.findAll()).thenReturn(List.of(hospital));
+    
+    when(hospitalRepository.findAll(any(Specification.class), any(Pageable.class)))
+        .thenReturn(new PageImpl<>(List.of(hospital)));
 
-    var response = hospitalService.list(1,10,null,null);
+    var response = hospitalService.list(0, 10, null, null);
 
-    assertEquals(1, response.size());
+    assertEquals(1, response.totalElements());
     assertEquals("TEST", response.content().getFirst().code());
   }
 

@@ -1,11 +1,40 @@
 package com.res.hms.user.service;
 
-import com.res.hms.domain.*;
+import com.res.hms.domain.AdminHospitalDetails;
+import com.res.hms.domain.Doctor;
+import com.res.hms.domain.DoctorHospitalDetails;
+import com.res.hms.domain.LabTechProfile;
+import com.res.hms.domain.Nurse;
+import com.res.hms.domain.NurseHospitalDetails;
+import com.res.hms.domain.PharmacistHospitalDetails;
+import com.res.hms.domain.PharmacistProfile;
+import com.res.hms.domain.ReceptionistHospitalDetails;
+import com.res.hms.domain.ReceptionistProfile;
+import com.res.hms.domain.RoleCode;
+import com.res.hms.domain.UserAccount;
+import com.res.hms.domain.UserRoleAssignment;
 import com.res.hms.repository.HospitalRepository;
-import com.res.hms.user.dto.*;
-import java.util.*;
+import com.res.hms.user.dto.AdminHospitalDetailsDTO;
+import com.res.hms.user.dto.DoctorHospitalDetailsDTO;
+import com.res.hms.user.dto.HospitalMembershipResponse;
+import com.res.hms.user.dto.NurseHospitalDetailsDTO;
+import com.res.hms.user.dto.PharmacistHospitalDetailsDTO;
+import com.res.hms.user.dto.ReceptionistHospitalDetailsDTO;
+import com.res.hms.user.dto.UserFullProfileDTO;
+import com.res.hms.user.dto.UserProfileResponse;
+import com.res.hms.user.dto.UserSummaryDTO;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+import java.util.UUID;
 import java.util.stream.Collectors;
-import org.mapstruct.*;
+import org.mapstruct.InjectionStrategy;
+import org.mapstruct.Mapper;
+import org.mapstruct.Mapping;
+import org.mapstruct.ReportingPolicy;
 import org.springframework.beans.factory.annotation.Autowired;
 
 @Mapper(
@@ -36,7 +65,9 @@ public abstract class UserMapper {
   public abstract UserProfileResponse toUserProfileResponse(UserAccount user);
 
   protected List<HospitalMembershipResponse> mapHospitalMemberships(UserAccount user) {
-    if (user.getAssignments() == null) return Collections.emptyList();
+    if (user.getAssignments() == null) {
+      return Collections.emptyList();
+    }
 
     return user.getAssignments().stream()
         .collect(Collectors.groupingBy(UserRoleAssignment::getHospitalId))
@@ -105,7 +136,9 @@ public abstract class UserMapper {
       ReceptionistHospitalDetails details);
 
   protected List<UserSummaryDTO.HospitalMembershipDTO> mapMemberships(UserAccount user) {
-    if (user.getAssignments() == null) return Collections.emptyList();
+    if (user.getAssignments() == null) {
+      return Collections.emptyList();
+    }
 
     Map<UUID, Set<RoleCode>> rolesByHospital = new HashMap<>();
     for (UserRoleAssignment assignment : user.getAssignments()) {
@@ -124,7 +157,9 @@ public abstract class UserMapper {
 
   protected List<UserFullProfileDTO.DetailedHospitalMembershipDTO> mapDetailedMemberships(
       UserAccount user) {
-    if (user.getAssignments() == null) return Collections.emptyList();
+    if (user.getAssignments() == null) {
+      return Collections.emptyList();
+    }
 
     return user.getAssignments().stream()
         .collect(Collectors.groupingBy(UserRoleAssignment::getHospitalId))

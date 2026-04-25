@@ -7,7 +7,6 @@ import com.res.hms.domain.HospitalStatus;
 import com.res.hms.hospital.dto.CreateHospitalRequest;
 import com.res.hms.hospital.dto.HospitalResponse;
 import com.res.hms.repository.HospitalRepository;
-import java.util.List;
 import java.util.UUID;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.PageRequest;
@@ -61,10 +60,14 @@ public class HospitalService {
   }
 
   @Transactional(readOnly = true)
-  public PageResponse<HospitalResponse> list(int page, int size, String name, HospitalStatus status) {
+  public PageResponse<HospitalResponse> list(
+      int page, int size, String name, HospitalStatus status) {
     Specification<Hospital> spec = Specification.where(null);
     if (name != null && !name.isBlank()) {
-      spec = spec.and((root, query, cb) -> cb.like(cb.lower(root.get("name")), "%" + name.toLowerCase() + "%"));
+      spec =
+          spec.and(
+              (root, query, cb) ->
+                  cb.like(cb.lower(root.get("name")), "%" + name.toLowerCase() + "%"));
     }
     if (status != null) {
       spec = spec.and((root, query, cb) -> cb.equal(root.get("status"), status));

@@ -33,12 +33,12 @@ class PatientServiceTest {
   @Mock private PatientRepository patientRepository;
   @Mock private HospitalContext hospitalContext;
   @Mock private ResourceLookup resourceLookup;
-  UUID patientUuid = UUID.nameUUIDFromBytes("10".getBytes());
-  UUID doctorUuid = UUID.nameUUIDFromBytes("20".getBytes());
-  UUID hospitalUuid = UUID.nameUUIDFromBytes("4".getBytes());
-  UUID appointmentUUId = UUID.nameUUIDFromBytes("100".getBytes());
-  UUID currentuserID = UUID.nameUUIDFromBytes("1".getBytes());
-  UUID auditLogUUID = UUID.nameUUIDFromBytes("500".getBytes());
+  private final UUID patientUuid = UUID.nameUUIDFromBytes("10".getBytes());
+  private final UUID doctorUuid = UUID.nameUUIDFromBytes("20".getBytes());
+  private final UUID hospitalUuid = UUID.nameUUIDFromBytes("4".getBytes());
+  private final UUID appointmentUUId = UUID.nameUUIDFromBytes("100".getBytes());
+  private final UUID currentuserID = UUID.nameUUIDFromBytes("1".getBytes());
+  private final UUID auditLogUUID = UUID.nameUUIDFromBytes("500".getBytes());
   @InjectMocks private PatientService patientService;
 
   @Test

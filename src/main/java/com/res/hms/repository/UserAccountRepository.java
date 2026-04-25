@@ -1,6 +1,5 @@
 package com.res.hms.repository;
 
-import com.res.hms.domain.Hospital;
 import com.res.hms.domain.RoleCode;
 import com.res.hms.domain.UserAccount;
 import java.util.List;

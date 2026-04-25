@@ -8,7 +8,6 @@ import com.res.hms.user.dto.UserRequestDTO;
 import com.res.hms.user.dto.UserSummaryDTO;
 import com.res.hms.user.service.UserService;
 import jakarta.validation.Valid;
-import java.util.List;
 import java.util.UUID;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.access.prepost.PreAuthorize;

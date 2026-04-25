@@ -1,5 +1,6 @@
 package com.res.hms.user.service;
 
+import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyString;
@@ -30,7 +31,10 @@ import com.res.hms.repository.ReceptionistHospitalDetailsRepository;
 import com.res.hms.repository.ReceptionistProfileRepository;
 import com.res.hms.repository.RoleRepository;
 import com.res.hms.repository.UserAccountRepository;
-import com.res.hms.user.dto.*;
+import com.res.hms.user.dto.DoctorHospitalDetailsDTO;
+import com.res.hms.user.dto.UserFullProfileDTO;
+import com.res.hms.user.dto.UserRequestDTO;
+import com.res.hms.user.dto.UserSummaryDTO;
 import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.util.List;
@@ -41,6 +45,8 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.data.domain.PageImpl;
+import org.springframework.data.domain.Pageable;
 import org.springframework.security.crypto.password.PasswordEncoder;
 
 @ExtendWith(MockitoExtension.class)
@@ -68,6 +74,25 @@ class UserServiceTest {
 
   private final UUID hospitalId = UUID.nameUUIDFromBytes("hospital".getBytes());
   private final UUID userId = UUID.nameUUIDFromBytes("user".getBytes());
+
+  @Test
+  void listUsersReturnsPaginatedResults() {
+    when(hospitalContext.getHospitalIdOrNull()).thenReturn(hospitalId);
+    when(hospitalContext.isSuperAdmin()).thenReturn(false);
+    
+    UserAccount user = new UserAccount();
+    user.setId(userId);
+    user.setFullName("Test User");
+
+    when(userAccountRepository.searchUsers(eq(hospitalId), eq(true), eq(false), eq(RoleCode.DOCTOR), eq("test"), any(Pageable.class)))
+        .thenReturn(new PageImpl<>(List.of(user)));
+    when(userMapper.toSummaryDTO(user)).thenReturn(UserSummaryDTO.builder().id(userId).fullName("Test User").build());
+
+    var response = userService.listUsers(0, 10, "test", RoleCode.DOCTOR, true, false);
+
+    assertEquals(1, response.totalElements());
+    assertEquals("Test User", response.content().getFirst().getFullName());
+  }
 
   @Test
   void createUserAutomaticallyCreatesDoctorEntry() {
