@@ -7,8 +7,8 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 import com.res.hms.user.dto.AdminHospitalDetailsDTO;
 import com.res.hms.user.dto.NurseHospitalDetailsDTO;
 import com.res.hms.user.dto.ReceptionistHospitalDetailsDTO;
-import com.res.hms.user.dto.UserFullProfileDTO;
-import com.res.hms.user.dto.UserRequestDTO;
+import com.res.hms.user.dto.UserDetailsDTO;
+import com.res.hms.user.service.UserAggregateService;
 import com.res.hms.user.service.UserService;
 import java.util.List;
 import java.util.UUID;
@@ -25,6 +25,7 @@ import org.springframework.transaction.annotation.Transactional;
 class RoleHospitalDetailsIntegrationTest {
 
   @Autowired private UserService userService;
+  @Autowired private UserAggregateService userAggregateService;
   @Autowired private TestDataHelper testDataHelper;
 
   private UUID hospitalId;
@@ -36,21 +37,21 @@ class RoleHospitalDetailsIntegrationTest {
 
   @Test
   void createNurseWithHospitalDetails() {
-    UserRequestDTO request =
-        UserRequestDTO.builder()
+    UserDetailsDTO request =
+        UserDetailsDTO.builder()
             .username("nurse_test")
             .password("pass")
             .fullName("Nurse Joy")
             .gender(com.res.hms.domain.Gender.FEMALE)
             .dob(java.time.LocalDate.of(1990, 1, 1))
-            .nurseInfo(UserFullProfileDTO.NurseInfo.builder().department("Pediatrics").build())
-            .detailedMemberships(
+            .nurseInfo(UserDetailsDTO.NurseInfo.builder().department("Pediatrics").build())
+            .memberships(
                 List.of(
-                    UserFullProfileDTO.DetailedHospitalMembershipDTO.builder()
+                    UserDetailsDTO.HospitalMembershipDTO.builder()
                         .hospitalId(hospitalId)
                         .roleAssignments(
                             List.of(
-                                UserFullProfileDTO.DetailedRoleAssignmentDTO.builder()
+                                UserDetailsDTO.RoleAssignmentDTO.builder()
                                     .roleCode("NURSE")
                                     .nurseDetails(
                                         NurseHospitalDetailsDTO.builder()
@@ -61,20 +62,18 @@ class RoleHospitalDetailsIntegrationTest {
                         .build()))
             .build();
 
-    UserFullProfileDTO saved = userService.createUser(request);
+    UserDetailsDTO saved = userAggregateService.saveUserAggregate(request);
     assertNotNull(saved.getId());
 
-    System.out.println("Detailed Memberships: " + saved.getDetailedMemberships());
-
-    UserFullProfileDTO fetched = userService.getFullProfile(saved.getId());
+    UserDetailsDTO fetched = userService.getFullProfile(saved.getId());
 
     // Check Nurse Global Profile
     assertNotNull(fetched.getNurseInfo());
     assertEquals("Pediatrics", fetched.getNurseInfo().getDepartment());
 
-    // Check Nurse Hospital Specific Details (Nested in detailedMemberships)
-    UserFullProfileDTO.DetailedRoleAssignmentDTO assignment =
-        fetched.getDetailedMemberships().stream()
+    // Check Nurse Hospital Specific Details
+    UserDetailsDTO.RoleAssignmentDTO assignment =
+        fetched.getMemberships().stream()
             .filter(m -> hospitalId.equals(m.getHospitalId()))
             .flatMap(m -> m.getRoleAssignments().stream())
             .filter(ra -> "NURSE".equals(ra.getRoleCode()))
@@ -88,20 +87,20 @@ class RoleHospitalDetailsIntegrationTest {
 
   @Test
   void createReceptionistWithHospitalDetails() {
-    UserRequestDTO request =
-        UserRequestDTO.builder()
+    UserDetailsDTO request =
+        UserDetailsDTO.builder()
             .username("recep_test")
             .password("pass")
             .fullName("Recep One")
             .gender(com.res.hms.domain.Gender.MALE)
             .dob(java.time.LocalDate.of(1995, 5, 5))
-            .detailedMemberships(
+            .memberships(
                 List.of(
-                    UserFullProfileDTO.DetailedHospitalMembershipDTO.builder()
+                    UserDetailsDTO.HospitalMembershipDTO.builder()
                         .hospitalId(hospitalId)
                         .roleAssignments(
                             List.of(
-                                UserFullProfileDTO.DetailedRoleAssignmentDTO.builder()
+                                UserDetailsDTO.RoleAssignmentDTO.builder()
                                     .roleCode("RECEPTIONIST")
                                     .receptionistDetails(
                                         ReceptionistHospitalDetailsDTO.builder()
@@ -112,11 +111,11 @@ class RoleHospitalDetailsIntegrationTest {
                         .build()))
             .build();
 
-    UserFullProfileDTO saved = userService.createUser(request);
-    UserFullProfileDTO fetched = userService.getFullProfile(saved.getId());
+    UserDetailsDTO saved = userAggregateService.saveUserAggregate(request);
+    UserDetailsDTO fetched = userService.getFullProfile(saved.getId());
 
-    UserFullProfileDTO.DetailedRoleAssignmentDTO assignment =
-        fetched.getDetailedMemberships().stream()
+    UserDetailsDTO.RoleAssignmentDTO assignment =
+        fetched.getMemberships().stream()
             .filter(m -> hospitalId.equals(m.getHospitalId()))
             .flatMap(m -> m.getRoleAssignments().stream())
             .filter(ra -> "RECEPTIONIST".equals(ra.getRoleCode()))
@@ -130,20 +129,20 @@ class RoleHospitalDetailsIntegrationTest {
 
   @Test
   void createAdminWithHospitalDetails() {
-    UserRequestDTO request =
-        UserRequestDTO.builder()
+    UserDetailsDTO request =
+        UserDetailsDTO.builder()
             .username("admin_test")
             .password("pass")
             .fullName("Admin One")
             .gender(com.res.hms.domain.Gender.MALE)
             .dob(java.time.LocalDate.of(1985, 10, 10))
-            .detailedMemberships(
+            .memberships(
                 List.of(
-                    UserFullProfileDTO.DetailedHospitalMembershipDTO.builder()
+                    UserDetailsDTO.HospitalMembershipDTO.builder()
                         .hospitalId(hospitalId)
                         .roleAssignments(
                             List.of(
-                                UserFullProfileDTO.DetailedRoleAssignmentDTO.builder()
+                                UserDetailsDTO.RoleAssignmentDTO.builder()
                                     .roleCode("ADMIN")
                                     .adminDetails(
                                         AdminHospitalDetailsDTO.builder()
@@ -154,11 +153,11 @@ class RoleHospitalDetailsIntegrationTest {
                         .build()))
             .build();
 
-    UserFullProfileDTO saved = userService.createUser(request);
-    UserFullProfileDTO fetched = userService.getFullProfile(saved.getId());
+    UserDetailsDTO saved = userAggregateService.saveUserAggregate(request);
+    UserDetailsDTO fetched = userService.getFullProfile(saved.getId());
 
-    UserFullProfileDTO.DetailedRoleAssignmentDTO assignment =
-        fetched.getDetailedMemberships().stream()
+    UserDetailsDTO.RoleAssignmentDTO assignment =
+        fetched.getMemberships().stream()
             .filter(m -> hospitalId.equals(m.getHospitalId()))
             .flatMap(m -> m.getRoleAssignments().stream())
             .filter(ra -> "ADMIN".equals(ra.getRoleCode()))

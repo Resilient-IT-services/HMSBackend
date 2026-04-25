@@ -1,20 +1,18 @@
 package com.res.hms.nurse.service;
 
 import com.res.hms.common.api.PageResponse;
-import com.res.hms.common.audit.Auditable;
 import com.res.hms.common.tenant.HospitalContext;
 import com.res.hms.common.util.ResourceLookup;
 import com.res.hms.domain.Nurse;
 import com.res.hms.domain.NurseHospitalDetails;
 import com.res.hms.domain.UserAccount;
 import com.res.hms.domain.UserRoleAssignment;
-import com.res.hms.nurse.dto.CreateNurseRequest;
 import com.res.hms.nurse.dto.NurseResponse;
 import com.res.hms.nurse.repository.NurseRepository;
 import com.res.hms.repository.NurseHospitalDetailsRepository;
 import com.res.hms.repository.UserAccountRepository;
 import com.res.hms.user.dto.NurseHospitalDetailsDTO;
-import com.res.hms.user.dto.UserFullProfileDTO;
+import com.res.hms.user.dto.UserDetailsDTO;
 import java.time.LocalDateTime;
 import java.util.UUID;
 import lombok.RequiredArgsConstructor;
@@ -33,7 +31,7 @@ public class NurseService {
   private final ResourceLookup resourceLookup;
 
   @Transactional
-  public void updateProfile(UserAccount user, UserFullProfileDTO.NurseInfo info) {
+  public void updateProfile(UserAccount user, UserDetailsDTO.NurseInfo info) {
     if (info == null) {
       return;
     }
@@ -84,41 +82,12 @@ public class NurseService {
     assignment.setNurseDetails(det);
   }
 
-  @Transactional
-  @Auditable(entity = "nurse", action = "CREATE")
-  public NurseResponse create(CreateNurseRequest request) {
-    UUID hospitalId = hospitalContext.requireHospitalId();
-
-    UserAccount user =
-        resourceLookup.findRequired(
-            request.userId(), hospitalId, userAccountRepository::findByIdAndHospitalId, "User");
-
-    Nurse nurse =
-        nurseRepository
-            .findByUserId(user.getId())
-            .orElseGet(
-                () -> {
-                  Nurse newNurse = new Nurse();
-                  newNurse.setUser(user);
-                  return newNurse;
-                });
-    nurse.setDepartment(request.department());
-    nurseRepository.save(nurse);
-
-    return toResponse(nurse);
-  }
-
   public PageResponse<NurseResponse> list(int page, int size) {
     UUID hospitalId = hospitalContext.requireHospitalId();
     return PageResponse.from(
         nurseRepository
             .findAllByHospitalIdOrderByCreatedAtDesc(hospitalId, PageRequest.of(page, size))
             .map(this::toResponse));
-  }
-
-  public Nurse requireNurse(UUID id, UUID hospitalId) {
-    return resourceLookup.findRequired(
-        id, hospitalId, nurseRepository::findByIdAndHospitalId, "Nurse");
   }
 
   private NurseResponse toResponse(Nurse nurse) {

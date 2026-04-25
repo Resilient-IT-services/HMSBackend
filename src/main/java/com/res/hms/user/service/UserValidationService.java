@@ -5,7 +5,7 @@ import com.res.hms.doctor.repository.DoctorRepository;
 import com.res.hms.nurse.repository.NurseRepository;
 import com.res.hms.repository.LabTechProfileRepository;
 import com.res.hms.repository.PharmacistProfileRepository;
-import com.res.hms.user.dto.UserRequestDTO;
+import com.res.hms.user.dto.UserDetailsDTO;
 import java.util.UUID;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
@@ -20,7 +20,7 @@ public class UserValidationService {
   private final PharmacistProfileRepository pharmacistProfileRepository;
   private final LabTechProfileRepository labTechProfileRepository;
 
-  public void validateProfileUniqueness(UserRequestDTO request, UUID userId) {
+  public void validateProfileUniqueness(UserDetailsDTO request, UUID userId) {
     if (request.getDoctorInfo() != null && request.getDoctorInfo().getLicenseNumber() != null) {
       String ln = request.getDoctorInfo().getLicenseNumber();
       boolean exists =

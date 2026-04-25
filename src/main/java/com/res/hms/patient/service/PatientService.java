@@ -1,18 +1,15 @@
 package com.res.hms.patient.service;
 
 import com.res.hms.common.api.PageResponse;
-import com.res.hms.common.audit.Auditable;
 import com.res.hms.common.tenant.HospitalContext;
 import com.res.hms.common.util.ResourceLookup;
 import com.res.hms.domain.Patient;
-import com.res.hms.patient.dto.CreatePatientRequest;
-import com.res.hms.patient.dto.PatientResponse;
+import com.res.hms.patient.dto.PatientDTO;
 import com.res.hms.patient.repository.PatientRepository;
 import java.util.UUID;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
 
 @Service
 @RequiredArgsConstructor
@@ -22,41 +19,25 @@ public class PatientService {
   private final HospitalContext hospitalContext;
   private final ResourceLookup resourceLookup;
 
-  @Transactional
-  @Auditable(entity = "patient", action = "CREATE")
-  public PatientResponse create(CreatePatientRequest request) {
-    UUID hospitalId = hospitalContext.requireHospitalId();
-    Patient patient = new Patient();
-    patient.setHospitalId(hospitalId);
-    patient.setFullName(request.fullName());
-    patient.setGender(request.gender());
-    patient.setDob(request.dob());
-    patient.setPhone(request.phone());
-    patient.setAddress(request.address());
-    patientRepository.save(patient);
-
-    return toResponse(patient);
-  }
-
-  public PageResponse<PatientResponse> list(int page, int size, String search) {
+  public PageResponse<PatientDTO> list(int page, int size, String search) {
     UUID hospitalId = hospitalContext.requireHospitalId();
     PageRequest pageRequest = PageRequest.of(page, size);
 
     if (search != null && !search.trim().isEmpty()) {
       String searchPattern = "%" + search.trim().toLowerCase() + "%";
       return PageResponse.from(
-          patientRepository.search(hospitalId, searchPattern, pageRequest).map(this::toResponse));
+          patientRepository.search(hospitalId, searchPattern, pageRequest).map(this::toDto));
     }
 
     return PageResponse.from(
         patientRepository
             .findAllByHospitalIdOrderByCreatedAtDesc(hospitalId, pageRequest)
-            .map(this::toResponse));
+            .map(this::toDto));
   }
 
-  public PatientResponse get(UUID id) {
+  public PatientDTO get(UUID id) {
     UUID hospitalId = hospitalContext.requireHospitalId();
-    return toResponse(requirePatient(id, hospitalId));
+    return toDto(requirePatient(id, hospitalId));
   }
 
   public Patient requirePatient(UUID id, UUID hospitalId) {
@@ -64,15 +45,16 @@ public class PatientService {
         id, hospitalId, patientRepository::findByIdAndHospitalId, "Patient");
   }
 
-  private PatientResponse toResponse(Patient patient) {
-    return new PatientResponse(
-        patient.getId(),
-        patient.getFullName(),
-        patient.getPatientCode(),
-        patient.getGender() != null ? patient.getGender().name() : null,
-        patient.getDob(),
-        patient.getPhone(),
-        patient.getAddress(),
-        patient.getCreatedAt());
+  public PatientDTO toDto(Patient patient) {
+    return PatientDTO.builder()
+        .id(patient.getId())
+        .fullName(patient.getFullName())
+        .patientCode(patient.getPatientCode())
+        .gender(patient.getGender())
+        .dob(patient.getDob())
+        .phone(patient.getPhone())
+        .address(patient.getAddress())
+        .createdAt(patient.getCreatedAt())
+        .build();
   }
 }

@@ -8,7 +8,7 @@ import com.res.hms.domain.ReceptionistHospitalDetails;
 import com.res.hms.repository.ReceptionistHospitalDetailsRepository;
 import com.res.hms.repository.ReceptionistProfileRepository;
 import com.res.hms.user.dto.ReceptionistHospitalDetailsDTO;
-import com.res.hms.user.dto.UserFullProfileDTO;
+import com.res.hms.user.dto.UserDetailsDTO;
 import java.time.LocalDateTime;
 import java.util.Set;
 import lombok.RequiredArgsConstructor;
@@ -23,7 +23,7 @@ public class ReceptionistProfileService {
   private final ReceptionistHospitalDetailsRepository receptionistHospitalDetailsRepository;
 
   @Transactional
-  public void updateProfile(UserAccount user, UserFullProfileDTO.ReceptionistInfo info, Set<RoleCode> roles) {
+  public void updateProfile(UserAccount user, UserDetailsDTO.ReceptionistInfo info, Set<RoleCode> roles) {
     if (roles.contains(RoleCode.RECEPTIONIST) && info != null) {
       ReceptionistProfile profile = receptionistProfileRepository.findById(user.getId())
           .orElseGet(() -> {

@@ -11,7 +11,7 @@ import com.res.hms.domain.UserAccount;
 import com.res.hms.domain.UserRoleAssignment;
 import com.res.hms.repository.DoctorHospitalDetailsRepository;
 import com.res.hms.user.dto.DoctorHospitalDetailsDTO;
-import com.res.hms.user.dto.UserFullProfileDTO;
+import com.res.hms.user.dto.UserDetailsDTO;
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.Optional;
@@ -31,7 +31,7 @@ public class DoctorService {
   private final ResourceLookup resourceLookup;
 
   @Transactional
-  public void updateProfile(UserAccount user, UserFullProfileDTO.DoctorInfo info) {
+  public void updateProfile(UserAccount user, UserDetailsDTO.DoctorInfo info) {
     if (info == null) {
       return;
     }

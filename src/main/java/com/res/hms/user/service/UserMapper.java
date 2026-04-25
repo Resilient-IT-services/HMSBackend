@@ -20,7 +20,7 @@ import com.res.hms.user.dto.HospitalMembershipResponse;
 import com.res.hms.user.dto.NurseHospitalDetailsDTO;
 import com.res.hms.user.dto.PharmacistHospitalDetailsDTO;
 import com.res.hms.user.dto.ReceptionistHospitalDetailsDTO;
-import com.res.hms.user.dto.UserFullProfileDTO;
+import com.res.hms.user.dto.UserDetailsDTO;
 import com.res.hms.user.dto.UserProfileResponse;
 import com.res.hms.user.dto.UserSummaryDTO;
 import java.util.Collections;
@@ -43,18 +43,16 @@ public abstract class UserMapper {
   @Autowired protected HospitalRepository hospitalRepository;
   @Autowired protected com.res.hms.common.tenant.HospitalContext hospitalContext;
 
-  @Mapping(target = "memberships", expression = "java(mapMemberships(user))")
+  @Mapping(target = "memberships", expression = "java(mapSummaryMemberships(user))")
   public abstract UserSummaryDTO toSummaryDTO(UserAccount user);
 
   @Mapping(target = "memberships", expression = "java(mapMemberships(user))")
-  @Mapping(target = "detailedMemberships", expression = "java(mapDetailedMemberships(user))")
-  @Mapping(target = "hospitalId", expression = "java(hospitalContext.getHospitalIdOrNull())")
   @Mapping(target = "doctorInfo", source = "doctor")
   @Mapping(target = "nurseInfo", source = "nurse")
   @Mapping(target = "pharmacistInfo", source = "pharmacistProfile")
   @Mapping(target = "labTechInfo", source = "labTechProfile")
   @Mapping(target = "receptionistInfo", source = "receptionistProfile")
-  public abstract UserFullProfileDTO toFullProfileDTO(UserAccount user);
+  public abstract UserDetailsDTO toDetailsDTO(UserAccount user);
 
   @Mapping(target = "userId", source = "id")
   @Mapping(target = "hospitalId", expression = "java(hospitalContext.getHospitalIdOrNull())")
@@ -103,19 +101,18 @@ public abstract class UserMapper {
   @Mapping(target = "adminDetails", source = "adminDetails")
   @Mapping(target = "pharmacistDetails", source = "pharmacistDetails")
   @Mapping(target = "receptionistDetails", source = "receptionistDetails")
-  public abstract UserFullProfileDTO.DetailedRoleAssignmentDTO toDetailedRoleAssignmentDTO(
+  public abstract UserDetailsDTO.RoleAssignmentDTO toRoleAssignmentDTO(
       UserRoleAssignment assignment);
 
-  public abstract UserFullProfileDTO.DoctorInfo toDoctorInfo(Doctor doctor);
+  public abstract UserDetailsDTO.DoctorInfo toDoctorInfo(Doctor doctor);
 
-  public abstract UserFullProfileDTO.NurseInfo toNurseInfo(Nurse nurse);
+  public abstract UserDetailsDTO.NurseInfo toNurseInfo(Nurse nurse);
 
-  public abstract UserFullProfileDTO.PharmacistInfo toPharmacistInfo(PharmacistProfile profile);
+  public abstract UserDetailsDTO.PharmacistInfo toPharmacistInfo(PharmacistProfile profile);
 
-  public abstract UserFullProfileDTO.LabTechInfo toLabTechInfo(LabTechProfile profile);
+  public abstract UserDetailsDTO.LabTechInfo toLabTechInfo(LabTechProfile profile);
 
-  public abstract UserFullProfileDTO.ReceptionistInfo toReceptionistInfo(
-      ReceptionistProfile profile);
+  public abstract UserDetailsDTO.ReceptionistInfo toReceptionistInfo(ReceptionistProfile profile);
 
   public abstract DoctorHospitalDetailsDTO toDoctorHospitalDetailsDTO(
       DoctorHospitalDetails details);
@@ -130,7 +127,7 @@ public abstract class UserMapper {
   public abstract ReceptionistHospitalDetailsDTO toReceptionistHospitalDetailsDTO(
       ReceptionistHospitalDetails details);
 
-  protected List<UserSummaryDTO.HospitalMembershipDTO> mapMemberships(UserAccount user) {
+  protected List<UserSummaryDTO.HospitalMembershipDTO> mapSummaryMemberships(UserAccount user) {
     if (user.getAssignments() == null) {
       return Collections.emptyList();
     }
@@ -162,8 +159,7 @@ public abstract class UserMapper {
         .collect(Collectors.toList());
   }
 
-  protected List<UserFullProfileDTO.DetailedHospitalMembershipDTO> mapDetailedMemberships(
-      UserAccount user) {
+  protected List<UserDetailsDTO.HospitalMembershipDTO> mapMemberships(UserAccount user) {
     if (user.getAssignments() == null) {
       return Collections.emptyList();
     }
@@ -181,10 +177,10 @@ public abstract class UserMapper {
               String hospitalName = hospital != null ? hospital.getName() : "Global Access";
               String hospitalCode = hospital != null ? hospital.getCode() : "GLOBAL";
 
-              List<UserFullProfileDTO.DetailedRoleAssignmentDTO> roleAssignments =
-                  entry.getValue().stream().map(this::toDetailedRoleAssignmentDTO).toList();
+              List<UserDetailsDTO.RoleAssignmentDTO> roleAssignments =
+                  entry.getValue().stream().map(this::toRoleAssignmentDTO).toList();
 
-              return UserFullProfileDTO.DetailedHospitalMembershipDTO.builder()
+              return UserDetailsDTO.HospitalMembershipDTO.builder()
                   .hospitalId(hospitalId)
                   .hospitalName(hospitalName)
                   .hospitalCode(hospitalCode)

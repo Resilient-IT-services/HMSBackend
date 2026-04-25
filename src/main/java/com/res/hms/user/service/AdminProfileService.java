@@ -20,12 +20,15 @@ public class AdminProfileService {
     if (ad == null) {
       return;
     }
-    AdminHospitalDetails det = adminHospitalDetailsRepository.findById(a.getId())
-        .orElseGet(() -> {
-          AdminHospitalDetails newDet = new AdminHospitalDetails();
-          newDet.setAssignment(a);
-          return newDet;
-        });
+    AdminHospitalDetails det =
+        adminHospitalDetailsRepository
+            .findById(a.getId())
+            .orElseGet(
+                () -> {
+                  AdminHospitalDetails newDet = new AdminHospitalDetails();
+                  newDet.setAssignment(a);
+                  return newDet;
+                });
     if (ad.getOfficeLocation() != null) {
       det.setOfficeLocation(ad.getOfficeLocation());
     }

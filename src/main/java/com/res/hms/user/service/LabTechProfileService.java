@@ -3,7 +3,7 @@ package com.res.hms.user.service;
 import com.res.hms.domain.LabTechProfile;
 import com.res.hms.domain.UserAccount;
 import com.res.hms.repository.LabTechProfileRepository;
-import com.res.hms.user.dto.UserFullProfileDTO;
+import com.res.hms.user.dto.UserDetailsDTO;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -15,7 +15,7 @@ public class LabTechProfileService {
   private final LabTechProfileRepository labTechProfileRepository;
 
   @Transactional
-  public void updateProfile(UserAccount user, UserFullProfileDTO.LabTechInfo info) {
+  public void updateProfile(UserAccount user, UserDetailsDTO.LabTechInfo info) {
     if (info != null) {
       LabTechProfile profile = labTechProfileRepository.findById(user.getId())
           .orElseGet(() -> {

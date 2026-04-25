@@ -6,7 +6,7 @@ import com.res.hms.nurse.repository.NurseRepository;
 import com.res.hms.repository.HospitalRepository;
 import com.res.hms.repository.UserAccountRepository;
 import com.res.hms.user.dto.LoginRequest;
-import com.res.hms.user.dto.UserFullProfileDTO;
+import com.res.hms.user.dto.UserDetailsDTO;
 import com.res.hms.user.security.HospitalUserPrincipal;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
@@ -60,11 +60,11 @@ public class AuthService {
     }
   }
 
-  public UserFullProfileDTO currentUser() {
+  public UserDetailsDTO currentUser() {
     HospitalUserPrincipal principal = getAuthenticatedPrincipal();
     return userAccountRepository
         .findById(principal.userId())
-        .map(userMapper::toFullProfileDTO)
+        .map(userMapper::toDetailsDTO)
         .orElseThrow(() -> new ApiException("NOT_FOUND", "User not found", HttpStatus.NOT_FOUND));
   }
 

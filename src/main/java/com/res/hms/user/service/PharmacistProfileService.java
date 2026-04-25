@@ -8,7 +8,7 @@ import com.res.hms.domain.PharmacistHospitalDetails;
 import com.res.hms.repository.PharmacistHospitalDetailsRepository;
 import com.res.hms.repository.PharmacistProfileRepository;
 import com.res.hms.user.dto.PharmacistHospitalDetailsDTO;
-import com.res.hms.user.dto.UserFullProfileDTO;
+import com.res.hms.user.dto.UserDetailsDTO;
 import java.time.LocalDateTime;
 import java.util.Set;
 import lombok.RequiredArgsConstructor;
@@ -23,7 +23,7 @@ public class PharmacistProfileService {
   private final PharmacistHospitalDetailsRepository pharmacistHospitalDetailsRepository;
 
   @Transactional
-  public void updateProfile(UserAccount user, UserFullProfileDTO.PharmacistInfo info, Set<RoleCode> roles) {
+  public void updateProfile(UserAccount user, UserDetailsDTO.PharmacistInfo info, Set<RoleCode> roles) {
     if (roles.contains(RoleCode.PHARMACIST) && info != null) {
       PharmacistProfile profile = pharmacistProfileRepository.findById(user.getId())
           .orElseGet(() -> {
