@@ -7,6 +7,7 @@ import static org.mockito.Mockito.when;
 
 import com.res.hms.common.exception.ApiException;
 import com.res.hms.domain.Hospital;
+import com.res.hms.domain.HospitalStatus;
 import com.res.hms.hospital.dto.CreateHospitalRequest;
 import com.res.hms.repository.HospitalRepository;
 import java.util.List;
@@ -51,7 +52,7 @@ class HospitalServiceTest {
     var response = hospitalService.create(new CreateHospitalRequest("Res", "HMS", "Kochi"));
 
     assertEquals(UUID.nameUUIDFromBytes("1".getBytes()), response.id());
-    assertEquals("ACTIVE", response.status());
+    assertEquals(HospitalStatus.ACTIVE, response.status());
   }
 
   @Test
@@ -61,7 +62,7 @@ class HospitalServiceTest {
     hospital.setName("Res");
     hospital.setCode("TEST");
     hospital.setAddress("Calicut");
-    hospital.setStatus("ACTIVE");
+    hospital.setStatus(HospitalStatus.ACTIVE);
     when(hospitalRepository.findAll()).thenReturn(List.of(hospital));
 
     var response = hospitalService.list();

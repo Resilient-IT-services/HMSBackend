@@ -6,6 +6,7 @@ import com.res.hms.audit.repository.AuditLogRepository;
 import com.res.hms.common.api.PageResponse;
 import com.res.hms.common.exception.ApiException;
 import com.res.hms.common.tenant.HospitalContext;
+import com.res.hms.domain.AuditAction;
 import com.res.hms.domain.AuditLog;
 import java.util.UUID;
 import lombok.RequiredArgsConstructor;
@@ -22,7 +23,7 @@ public class AuditLogService {
   private final HospitalContext hospitalContext;
 
   public void record(
-      UUID hospitalId, String entityName, UUID entityId, String action, AuditDetail details) {
+      UUID hospitalId, String entityName, UUID entityId, AuditAction action, AuditDetail details) {
     AuditLog auditLog = new AuditLog();
     auditLog.setHospitalId(hospitalId);
     auditLog.setEntityName(entityName);

@@ -70,11 +70,11 @@ public class AuthService {
     }
   }
 
-  public UserProfileResponse currentUser() {
+  public UserFullProfileDTO currentUser() {
     HospitalUserPrincipal principal = getAuthenticatedPrincipal();
     return userAccountRepository
         .findById(principal.userId())
-        .map(userMapper::toUserProfileResponse)
+        .map(userMapper::toFullProfileDTO)
         .orElseThrow(
             () -> new ApiException("NOT_FOUND", "User not found", HttpStatus.NOT_FOUND));
   }

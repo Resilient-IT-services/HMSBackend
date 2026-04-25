@@ -49,11 +49,12 @@ class AuthControllerIntegrationTest {
     // 2. Must call /me to get profile
     mockMvc
         .perform(get("/api/v1/auth/me").session(session))
+        .andDo(org.springframework.test.web.servlet.result.MockMvcResultHandlers.print())
         .andExpect(status().isOk())
         .andExpect(jsonPath("$.data.username").value("admin"))
-        .andExpect(jsonPath("$.data.userId").exists())
+        .andExpect(jsonPath("$.data.id").exists())
         .andExpect(jsonPath("$.data.superuser").value(true))
-        .andExpect(jsonPath("$.data.hospitals").isArray())
-        .andExpect(jsonPath("$.data.hospitalId").doesNotExist());
+        .andExpect(jsonPath("$.data.memberships").isArray())
+        .andExpect(jsonPath("$.data.detailed_memberships").isArray());
   }
 }

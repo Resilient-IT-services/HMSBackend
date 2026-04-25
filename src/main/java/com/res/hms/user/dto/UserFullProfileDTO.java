@@ -17,6 +17,7 @@ import lombok.experimental.SuperBuilder;
 @EqualsAndHashCode(callSuper = true)
 public class UserFullProfileDTO extends UserSummaryDTO {
 
+  private UUID hospitalId;
   private DoctorInfo doctorInfo;
   private NurseInfo nurseInfo;
   private PharmacistInfo pharmacistInfo;
@@ -32,6 +33,7 @@ public class UserFullProfileDTO extends UserSummaryDTO {
   public static class DetailedHospitalMembershipDTO {
     private UUID hospitalId;
     private String hospitalName;
+    private String hospitalCode;
     private List<DetailedRoleAssignmentDTO> roleAssignments;
   }
 

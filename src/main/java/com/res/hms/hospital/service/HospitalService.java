@@ -2,6 +2,7 @@ package com.res.hms.hospital.service;
 
 import com.res.hms.common.exception.ApiException;
 import com.res.hms.domain.Hospital;
+import com.res.hms.domain.HospitalStatus;
 import com.res.hms.hospital.dto.CreateHospitalRequest;
 import com.res.hms.hospital.dto.HospitalResponse;
 import com.res.hms.repository.HospitalRepository;
@@ -29,7 +30,7 @@ public class HospitalService {
     hospital.setName(request.name());
     hospital.setCode(request.code());
     hospital.setAddress(request.address());
-    hospital.setStatus("ACTIVE");
+    hospital.setStatus(HospitalStatus.ACTIVE);
     hospitalRepository.save(hospital);
     return toResponse(hospital);
   }

@@ -83,10 +83,15 @@ public class UserService {
       }
     }
 
-    userAccountRepository.save(user);
+    userAccountRepository.saveAndFlush(user);
     handleProfileUpdate(user, request);
+    userAccountRepository.flush();
+    
+    // Explicitly re-fetch to ensure all bidirectional relationships are populated in the persistence context
+    UserAccount refreshedUser = userAccountRepository.findById(user.getId())
+        .orElseThrow(() -> new ApiException("NOT_FOUND", "User not found after save", HttpStatus.INTERNAL_SERVER_ERROR));
 
-    return userMapper.toFullProfileDTO(user);
+    return userMapper.toFullProfileDTO(refreshedUser);
   }
 
   @Transactional
@@ -146,10 +151,15 @@ public class UserService {
       }
     }
 
-    userAccountRepository.save(user);
+    userAccountRepository.saveAndFlush(user);
     handleProfileUpdate(user, request);
+    userAccountRepository.flush();
+    
+    // Explicitly re-fetch to ensure all bidirectional relationships are populated in the persistence context
+    UserAccount refreshedUser = userAccountRepository.findById(user.getId())
+        .orElseThrow(() -> new ApiException("NOT_FOUND", "User not found after save", HttpStatus.INTERNAL_SERVER_ERROR));
 
-    return userMapper.toFullProfileDTO(user);
+    return userMapper.toFullProfileDTO(refreshedUser);
   }
 
   private void assignRole(
@@ -183,6 +193,7 @@ public class UserService {
       if (info.getBio() != null) doctor.setBio(info.getBio());
       if (info.getLicenseNumber() != null) doctor.setLicenseNumber(info.getLicenseNumber());
       doctorRepository.save(doctor);
+      user.setDoctor(doctor);
     }
 
     // 2. Nurse Profile
@@ -202,6 +213,7 @@ public class UserService {
       if (info.getCertificationLevel() != null)
         nurse.setCertificationLevel(info.getCertificationLevel());
       nurseRepository.save(nurse);
+      user.setNurse(nurse);
     }
 
     // 3. Pharmacist Profile
@@ -219,6 +231,7 @@ public class UserService {
       if (info.getPciRegNo() != null) profile.setPciRegNo(info.getPciRegNo());
       if (info.getQualification() != null) profile.setQualification(info.getQualification());
       pharmacistProfileRepository.save(profile);
+      user.setPharmacistProfile(profile);
     }
 
     // 4. Lab Tech Profile
@@ -236,6 +249,7 @@ public class UserService {
       if (info.getSpecialty() != null) profile.setSpecialty(info.getSpecialty());
       if (info.getLicenseNo() != null) profile.setLicenseNo(info.getLicenseNo());
       labTechProfileRepository.save(profile);
+      user.setLabTechProfile(profile);
     }
 
     // 5. Receptionist Profile
@@ -253,6 +267,7 @@ public class UserService {
       if (info.getLanguagesSpoken() != null) profile.setLanguagesSpoken(info.getLanguagesSpoken());
       profile.setInsuranceSpecialist(info.isInsuranceSpecialist());
       receptionistProfileRepository.save(profile);
+      user.setReceptionistProfile(profile);
     }
 
     // 6. Hospital Specific Details (Nested in detailedMemberships)
@@ -295,6 +310,7 @@ public class UserService {
                     det.setVisitingConsultant(d.isVisitingConsultant());
                     det.setUpdatedAt(LocalDateTime.now());
                     doctorHospitalDetailsRepository.save(det);
+                    a.setDoctorDetails(det);
                   }
                 }
                 case NURSE -> {
@@ -313,6 +329,7 @@ public class UserService {
                     if (n.getShiftType() != null) det.setShiftType(n.getShiftType());
                     det.setUpdatedAt(LocalDateTime.now());
                     nurseHospitalDetailsRepository.save(det);
+                    a.setNurseDetails(det);
                   }
                 }
                 case PHARMACIST -> {
@@ -332,6 +349,7 @@ public class UserService {
                     if (p.getPharmacyWing() != null) det.setPharmacyWing(p.getPharmacyWing());
                     det.setUpdatedAt(LocalDateTime.now());
                     pharmacistHospitalDetailsRepository.save(det);
+                    a.setPharmacistDetails(det);
                   }
                 }
                 case RECEPTIONIST -> {
@@ -351,6 +369,7 @@ public class UserService {
                       det.setEmergencyContactNumber(r.getEmergencyContactNumber());
                     det.setUpdatedAt(LocalDateTime.now());
                     receptionistHospitalDetailsRepository.save(det);
+                    a.setReceptionistDetails(det);
                   }
                 }
                 case ADMIN -> {
@@ -370,6 +389,7 @@ public class UserService {
                     det.setDepartmentHead(ad.isDepartmentHead());
                     det.setUpdatedAt(LocalDateTime.now());
                     adminHospitalDetailsRepository.save(det);
+                    a.setAdminDetails(det);
                   }
                 }
               }

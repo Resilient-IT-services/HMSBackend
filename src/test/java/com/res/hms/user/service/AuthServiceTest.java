@@ -18,7 +18,8 @@ import com.res.hms.repository.HospitalRepository;
 import com.res.hms.domain.UserAccount;
 import com.res.hms.user.dto.HospitalMembershipResponse;
 import com.res.hms.user.dto.LoginRequest;
-import com.res.hms.user.dto.UserProfileResponse;
+import com.res.hms.user.dto.UserFullProfileDTO;
+import com.res.hms.user.dto.UserSummaryDTO;
 import com.res.hms.repository.UserAccountRepository;
 import java.util.List;
 import com.res.hms.user.security.HospitalUserPrincipal;
@@ -87,18 +88,21 @@ class AuthServiceTest {
 
     UserAccount user = new UserAccount();
     user.setId(userId);
-    UserProfileResponse mappedResponse = new UserProfileResponse(
-        userId, hospitalId, "doctor1", "doctor@test.com", false,
-        List.of(new HospitalMembershipResponse(hospitalId, "Test Hospital", "TEST", Set.of(RoleCode.DOCTOR), "Pediatrics", null))
-    );
+    UserFullProfileDTO mappedResponse = UserFullProfileDTO.builder()
+        .id(userId)
+        .hospitalId(hospitalId)
+        .username("doctor1")
+        .email("doctor@test.com")
+        .superuser(false)
+        .memberships(List.of(new UserSummaryDTO.HospitalMembershipDTO(hospitalId, List.of("DOCTOR"))))
+        .build();
 
     when(userAccountRepository.findById(userId)).thenReturn(Optional.of(user));
-    when(userMapper.toUserProfileResponse(user)).thenReturn(mappedResponse);
+    when(userMapper.toFullProfileDTO(user)).thenReturn(mappedResponse);
 
     var response = authService.currentUser();
 
-    assertEquals(1, response.hospitals().size());
-    assertEquals("Pediatrics", response.hospitals().getFirst().specialization());
+    assertEquals(1, response.getMemberships().size());
   }
 
   @Test
@@ -161,18 +165,21 @@ class AuthServiceTest {
 
     UserAccount user = new UserAccount();
     user.setId(userId);
-    UserProfileResponse mappedResponse = new UserProfileResponse(
-        userId, null, "admin", "admin@test.com", false,
-        List.of(new HospitalMembershipResponse(null, "Global Access", "GLOBAL", Set.of(RoleCode.ADMIN), null, null))
-    );
+    UserFullProfileDTO mappedResponse = UserFullProfileDTO.builder()
+        .id(userId)
+        .username("admin")
+        .email("admin@test.com")
+        .superuser(false)
+        .memberships(List.of(new UserSummaryDTO.HospitalMembershipDTO(null, List.of("ADMIN"))))
+        .build();
 
     when(userAccountRepository.findById(userId)).thenReturn(Optional.of(user));
-    when(userMapper.toUserProfileResponse(user)).thenReturn(mappedResponse);
+    when(userMapper.toFullProfileDTO(user)).thenReturn(mappedResponse);
 
     var response = authService.currentUser();
 
-    assertEquals(userId, response.userId());
-    assertTrue(response.hospitals().stream().anyMatch(h -> h.roles().contains(RoleCode.ADMIN)));
+    assertEquals(userId, response.getId());
+    assertTrue(response.getMemberships().stream().anyMatch(h -> h.getRoles().contains("ADMIN")));
   }
 
   @Test

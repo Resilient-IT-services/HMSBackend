@@ -25,6 +25,7 @@ public class ArchitectureTest {
               "com.res.hms..service..",
               "com.res.hms..dto..",
               "com.res.hms.common..",
+              "com.res.hms.user.service..",
               "java..",
               "jakarta..",
               "org.springframework..",

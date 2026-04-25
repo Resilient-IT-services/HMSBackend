@@ -10,6 +10,7 @@ import com.res.hms.doctor.repository.DoctorRepository;
 import com.res.hms.domain.AuditLog;
 import com.res.hms.domain.Doctor;
 import com.res.hms.domain.Hospital;
+import com.res.hms.domain.HospitalStatus;
 import com.res.hms.domain.ProficiencyLevel;
 import com.res.hms.domain.ReceptionistProfile;
 import com.res.hms.domain.UserAccount;
@@ -42,7 +43,7 @@ class JsonFieldsIntegrationTest {
   void auditLogDetailsJsonMapping() {
     AuditLog log = new AuditLog();
     log.setEntityName("TestEntity");
-    log.setAction("CREATE");
+    log.setAction(com.res.hms.domain.AuditAction.CREATE);
     log.setCreatedAt(LocalDateTime.now());
     log.setUpdatedAt(LocalDateTime.now());
 
@@ -95,7 +96,7 @@ class JsonFieldsIntegrationTest {
     Hospital hospital = new Hospital();
     hospital.setName("JSON Hospital");
     hospital.setCode("JHOSP");
-    hospital.setStatus("ACTIVE");
+    hospital.setStatus(HospitalStatus.ACTIVE);
     hospital.setCreatedAt(LocalDateTime.now());
     hospital.setUpdatedAt(LocalDateTime.now());
 

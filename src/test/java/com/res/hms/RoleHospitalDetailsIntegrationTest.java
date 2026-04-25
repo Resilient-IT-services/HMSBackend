@@ -59,6 +59,8 @@ class RoleHospitalDetailsIntegrationTest {
 
     UserFullProfileDTO saved = userService.createUser(request);
     assertNotNull(saved.getId());
+    
+    System.out.println("Detailed Memberships: " + saved.getDetailedMemberships());
 
     UserFullProfileDTO fetched = userService.getFullProfile(saved.getId());
 

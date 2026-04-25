@@ -80,13 +80,15 @@ class UserServiceTest {
     when(passwordEncoder.encode(anyString())).thenReturn("encoded");
     when(doctorRepository.findByUserId(any())).thenReturn(Optional.empty());
 
-    when(userAccountRepository.save(any(UserAccount.class)))
+    when(userAccountRepository.saveAndFlush(any(UserAccount.class)))
         .thenAnswer(
             i -> {
               UserAccount u = i.getArgument(0);
               u.setId(userId);
               return u;
             });
+    when(userAccountRepository.findById(userId)).thenReturn(Optional.of(new UserAccount()));
+    when(userMapper.toFullProfileDTO(any())).thenReturn(UserFullProfileDTO.builder().id(userId).build());
 
     userService.createUser(
         UserRequestDTO.builder()
@@ -149,6 +151,10 @@ class UserServiceTest {
 
     lenient().when(doctorRepository.findByUserId(any())).thenReturn(Optional.empty());
     lenient().when(nurseRepository.findByUserId(any())).thenReturn(Optional.empty());
+    
+    when(userAccountRepository.saveAndFlush(any(UserAccount.class))).thenReturn(user);
+    when(userAccountRepository.findById(userId)).thenReturn(Optional.of(user));
+    when(userMapper.toFullProfileDTO(any())).thenReturn(UserFullProfileDTO.builder().id(userId).build());
 
     userService.updateUser(
         userId,

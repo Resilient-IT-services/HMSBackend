@@ -8,6 +8,7 @@ import static org.mockito.Mockito.when;
 import com.res.hms.audit.dto.AuditDetail;
 import com.res.hms.audit.repository.AuditLogRepository;
 import com.res.hms.common.tenant.HospitalContext;
+import com.res.hms.domain.AuditAction;
 import com.res.hms.domain.AuditLog;
 import java.time.LocalDateTime;
 import java.util.List;
@@ -35,7 +36,7 @@ class AuditLogServiceTest {
   @Test
   void recordSavesAuditLog() {
     AuditDetail detail = AuditDetail.builder().after(Map.of("msg", "created")).build();
-    auditLogService.record(hospitalUuid, "patient", patientUuid, "CREATE", detail);
+    auditLogService.record(hospitalUuid, "patient", patientUuid, AuditAction.CREATE, detail);
 
     verify(auditLogRepository).save(any(AuditLog.class));
   }
@@ -45,6 +46,7 @@ class AuditLogServiceTest {
     AuditLog auditLog = new AuditLog();
     auditLog.setDetails(AuditDetail.builder().after(Map.of("msg", "created")).build());
     auditLog.setCreatedAt(LocalDateTime.now());
+    auditLog.setAction(AuditAction.CREATE);
 
     when(hospitalContext.getHospitalIdOrNull()).thenReturn(hospitalUuid);
     when(auditLogRepository.findAllByHospitalIdOrderByCreatedAtDesc(

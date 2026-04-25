@@ -4,6 +4,8 @@ import com.res.hms.audit.dto.AuditDetail;
 import io.hypersistence.utils.hibernate.type.json.JsonType;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
+import jakarta.persistence.EnumType;
+import jakarta.persistence.Enumerated;
 import jakarta.persistence.Table;
 import java.util.UUID;
 import lombok.Getter;
@@ -25,8 +27,9 @@ public class AuditLog extends BaseEntity {
   @Column(name = "entity_id")
   private UUID entityId;
 
+  @Enumerated(EnumType.STRING)
   @Column(nullable = false)
-  private String action;
+  private AuditAction action;
 
   @Column(name = "performed_by")
   private UUID performedBy;

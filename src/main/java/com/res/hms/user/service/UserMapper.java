@@ -15,12 +15,14 @@ import org.springframework.beans.factory.annotation.Autowired;
 public abstract class UserMapper {
 
   @Autowired protected HospitalRepository hospitalRepository;
+  @Autowired protected com.res.hms.common.tenant.HospitalContext hospitalContext;
 
   @Mapping(target = "memberships", expression = "java(mapMemberships(user))")
   public abstract UserSummaryDTO toSummaryDTO(UserAccount user);
 
   @Mapping(target = "memberships", expression = "java(mapMemberships(user))")
   @Mapping(target = "detailedMemberships", expression = "java(mapDetailedMemberships(user))")
+  @Mapping(target = "hospitalId", expression = "java(hospitalContext.getHospitalIdOrNull())")
   @Mapping(target = "doctorInfo", source = "doctor")
   @Mapping(target = "nurseInfo", source = "nurse")
   @Mapping(target = "pharmacistInfo", source = "pharmacistProfile")
@@ -29,6 +31,7 @@ public abstract class UserMapper {
   public abstract UserFullProfileDTO toFullProfileDTO(UserAccount user);
 
   @Mapping(target = "userId", source = "id")
+  @Mapping(target = "hospitalId", expression = "java(hospitalContext.getHospitalIdOrNull())")
   @Mapping(target = "hospitals", expression = "java(mapHospitalMemberships(user))")
   public abstract UserProfileResponse toUserProfileResponse(UserAccount user);
 
@@ -69,6 +72,11 @@ public abstract class UserMapper {
 
   @Mapping(target = "assignmentId", source = "id")
   @Mapping(target = "roleCode", expression = "java(assignment.getRole().getCode().name())")
+  @Mapping(target = "doctorDetails", source = "doctorDetails")
+  @Mapping(target = "nurseDetails", source = "nurseDetails")
+  @Mapping(target = "adminDetails", source = "adminDetails")
+  @Mapping(target = "pharmacistDetails", source = "pharmacistDetails")
+  @Mapping(target = "receptionistDetails", source = "receptionistDetails")
   public abstract UserFullProfileDTO.DetailedRoleAssignmentDTO toDetailedRoleAssignmentDTO(
       UserRoleAssignment assignment);
 
@@ -125,13 +133,13 @@ public abstract class UserMapper {
         .map(
             entry -> {
               UUID hospitalId = entry.getKey();
-              String hospitalName =
+              var hospital =
                   hospitalId == null
-                      ? "Global Access"
-                      : hospitalRepository
-                          .findById(hospitalId)
-                          .map(Hospital::getName)
-                          .orElse("Unknown");
+                      ? null
+                      : hospitalRepository.findById(hospitalId).orElse(null);
+
+              String hospitalName = hospital != null ? hospital.getName() : "Global Access";
+              String hospitalCode = hospital != null ? hospital.getCode() : "GLOBAL";
 
               List<UserFullProfileDTO.DetailedRoleAssignmentDTO> roleAssignments =
                   entry.getValue().stream().map(this::toDetailedRoleAssignmentDTO).toList();
@@ -139,6 +147,7 @@ public abstract class UserMapper {
               return UserFullProfileDTO.DetailedHospitalMembershipDTO.builder()
                   .hospitalId(hospitalId)
                   .hospitalName(hospitalName)
+                  .hospitalCode(hospitalCode)
                   .roleAssignments(roleAssignments)
                   .build();
             })

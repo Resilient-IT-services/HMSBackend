@@ -1,6 +1,7 @@
 package com.res.hms;
 
 import com.res.hms.domain.Hospital;
+import com.res.hms.domain.HospitalStatus;
 import com.res.hms.domain.Role;
 import com.res.hms.domain.RoleCode;
 import com.res.hms.domain.UserAccount;
@@ -31,7 +32,7 @@ public class TestDataHelper {
               h.setCode(code);
               h.setName(name);
               h.setAddress("Address");
-              h.setStatus("ACTIVE");
+              h.setStatus(HospitalStatus.ACTIVE);
               return hospitalRepository.save(h).getId();
             });
   }
