@@ -5,11 +5,17 @@ import com.res.hms.common.audit.Auditable;
 import com.res.hms.common.tenant.HospitalContext;
 import com.res.hms.common.util.ResourceLookup;
 import com.res.hms.domain.Nurse;
+import com.res.hms.domain.NurseHospitalDetails;
 import com.res.hms.domain.UserAccount;
+import com.res.hms.domain.UserRoleAssignment;
 import com.res.hms.nurse.dto.CreateNurseRequest;
 import com.res.hms.nurse.dto.NurseResponse;
 import com.res.hms.nurse.repository.NurseRepository;
+import com.res.hms.repository.NurseHospitalDetailsRepository;
 import com.res.hms.repository.UserAccountRepository;
+import com.res.hms.user.dto.NurseHospitalDetailsDTO;
+import com.res.hms.user.dto.UserFullProfileDTO;
+import java.time.LocalDateTime;
 import java.util.UUID;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.PageRequest;
@@ -21,9 +27,62 @@ import org.springframework.transaction.annotation.Transactional;
 public class NurseService {
 
   private final NurseRepository nurseRepository;
+  private final NurseHospitalDetailsRepository nurseHospitalDetailsRepository;
   private final UserAccountRepository userAccountRepository;
   private final HospitalContext hospitalContext;
   private final ResourceLookup resourceLookup;
+
+  @Transactional
+  public void updateProfile(UserAccount user, UserFullProfileDTO.NurseInfo info) {
+    if (info == null) {
+      return;
+    }
+    Nurse nurse =
+        nurseRepository
+            .findByUserId(user.getId())
+            .orElseGet(
+                () -> {
+                  Nurse n = new Nurse();
+                  n.setUser(user);
+                  return n;
+                });
+    if (info.getDepartment() != null) {
+      nurse.setDepartment(info.getDepartment());
+    }
+    if (info.getNursingLicenseNo() != null) {
+      nurse.setNursingLicenseNo(info.getNursingLicenseNo());
+    }
+    if (info.getCertificationLevel() != null) {
+      nurse.setCertificationLevel(info.getCertificationLevel());
+    }
+    nurseRepository.save(nurse);
+    user.setNurse(nurse);
+  }
+
+  @Transactional
+  public void updateHospitalDetails(UserRoleAssignment assignment, NurseHospitalDetailsDTO n) {
+    if (n == null) {
+      return;
+    }
+    NurseHospitalDetails det =
+        nurseHospitalDetailsRepository
+            .findById(assignment.getId())
+            .orElseGet(
+                () -> {
+                  NurseHospitalDetails newDet = new NurseHospitalDetails();
+                  newDet.setAssignment(assignment);
+                  return newDet;
+                });
+    if (n.getFloorLocation() != null) {
+      det.setFloorLocation(n.getFloorLocation());
+    }
+    if (n.getShiftType() != null) {
+      det.setShiftType(n.getShiftType());
+    }
+    det.setUpdatedAt(LocalDateTime.now());
+    nurseHospitalDetailsRepository.save(det);
+    assignment.setNurseDetails(det);
+  }
 
   @Transactional
   @Auditable(entity = "nurse", action = "CREATE")

@@ -16,6 +16,9 @@ public interface DoctorRepository extends JpaRepository<Doctor, UUID> {
 
   boolean existsByLicenseNumberAndIdNot(String licenseNumber, UUID id);
 
+  @Query("SELECT COUNT(d) > 0 FROM Doctor d WHERE d.licenseNumber = :licenseNumber AND d.user.id <> :userId")
+  boolean existsByLicenseNumberAndUserIdNot(@Param("licenseNumber") String licenseNumber, @Param("userId") UUID userId);
+
   @Query(
       "SELECT d FROM Doctor d JOIN d.user u JOIN u.assignments a "
           + "WHERE a.hospitalId = :hospitalId AND a.role.code = com.res.hms.domain.RoleCode.DOCTOR "

@@ -2,8 +2,6 @@ package com.res.hms.search.service;
 
 import com.res.hms.common.api.PageResponse;
 import com.res.hms.domain.Hospital;
-import com.res.hms.domain.Patient;
-import com.res.hms.domain.UserAccount;
 import com.res.hms.patient.repository.PatientRepository;
 import com.res.hms.repository.HospitalRepository;
 import com.res.hms.repository.UserAccountRepository;

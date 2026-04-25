@@ -8,13 +8,18 @@ import com.res.hms.doctor.repository.DoctorRepository;
 import com.res.hms.domain.Doctor;
 import com.res.hms.domain.DoctorHospitalDetails;
 import com.res.hms.domain.UserAccount;
+import com.res.hms.domain.UserRoleAssignment;
 import com.res.hms.repository.DoctorHospitalDetailsRepository;
+import com.res.hms.user.dto.DoctorHospitalDetailsDTO;
+import com.res.hms.user.dto.UserFullProfileDTO;
 import java.math.BigDecimal;
+import java.time.LocalDateTime;
 import java.util.Optional;
 import java.util.UUID;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 @Service
 @RequiredArgsConstructor
@@ -24,6 +29,65 @@ public class DoctorService {
   private final DoctorHospitalDetailsRepository doctorHospitalDetailsRepository;
   private final HospitalContext hospitalContext;
   private final ResourceLookup resourceLookup;
+
+  @Transactional
+  public void updateProfile(UserAccount user, UserFullProfileDTO.DoctorInfo info) {
+    if (info == null) {
+      return;
+    }
+    Doctor doctor =
+        doctorRepository
+            .findByUserId(user.getId())
+            .orElseGet(
+                () -> {
+                  Doctor d = new Doctor();
+                  d.setUser(user);
+                  return d;
+                });
+    if (info.getSpecialization() != null) {
+      doctor.setSpecialization(info.getSpecialization());
+    }
+    if (info.getBio() != null) {
+      doctor.setBio(info.getBio());
+    }
+    if (info.getLicenseNumber() != null) {
+      doctor.setLicenseNumber(info.getLicenseNumber());
+    }
+    doctorRepository.save(doctor);
+    user.setDoctor(doctor);
+  }
+
+  @Transactional
+  public void updateHospitalDetails(UserRoleAssignment assignment, DoctorHospitalDetailsDTO d) {
+    if (d == null) {
+      return;
+    }
+    DoctorHospitalDetails det =
+        doctorHospitalDetailsRepository
+            .findById(assignment.getId())
+            .orElseGet(
+                () -> {
+                  DoctorHospitalDetails newDet = new DoctorHospitalDetails();
+                  newDet.setAssignment(assignment);
+                  return newDet;
+                });
+    if (d.getConsultationFee() != null) {
+      det.setConsultationFee(d.getConsultationFee());
+    }
+    if (d.getFollowUpDays() != null) {
+      det.setFollowUpDays(d.getFollowUpDays());
+    }
+    if (d.getCommissionType() != null) {
+      det.setCommissionType(d.getCommissionType());
+    }
+    if (d.getCommissionValue() != null) {
+      det.setCommissionValue(d.getCommissionValue());
+    }
+    det.setVisitingConsultant(d.isVisitingConsultant());
+    det.setUpdatedAt(LocalDateTime.now());
+    doctorHospitalDetailsRepository.save(det);
+    assignment.setDoctorDetails(det);
+  }
 
   public PageResponse<DoctorResponse> list(int page, int size) {
     UUID hospitalId = hospitalContext.requireHospitalId();
