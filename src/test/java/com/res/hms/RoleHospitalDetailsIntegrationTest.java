@@ -3,7 +3,9 @@ package com.res.hms;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.mockito.Mockito.when;
 
+import com.res.hms.common.tenant.HospitalContext;
 import com.res.hms.user.dto.AdminHospitalDetailsDTO;
 import com.res.hms.user.dto.NurseHospitalDetailsDTO;
 import com.res.hms.user.dto.ReceptionistHospitalDetailsDTO;
@@ -16,6 +18,7 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -27,12 +30,14 @@ class RoleHospitalDetailsIntegrationTest {
   @Autowired private UserService userService;
   @Autowired private UserAggregateService userAggregateService;
   @Autowired private TestDataHelper testDataHelper;
+  @MockBean private HospitalContext hospitalContext;
 
   private UUID hospitalId;
 
   @BeforeEach
   void setup() {
     hospitalId = testDataHelper.createHospitalIfMissing("H1", "Hospital One");
+    when(hospitalContext.isSuperAdmin()).thenReturn(true);
   }
 
   @Test

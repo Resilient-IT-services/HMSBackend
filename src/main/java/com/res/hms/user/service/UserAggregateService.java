@@ -17,6 +17,7 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import java.util.UUID;
+import java.util.Objects;
 
 @Slf4j
 @Service
@@ -44,9 +45,9 @@ public class UserAggregateService {
       user = createBaseUser(dto);
     } else {
       user = findUser(dto.getId(), activeId, isSuper);
-      updateBaseUser(user, dto, isSuper);
     }
 
+    updateBaseUser(user, dto, isSuper);
     userValidationService.validateProfileUniqueness(dto, user.getId());
     mergeMemberships(user, dto, isSuper, activeId);
 
@@ -87,7 +88,7 @@ public class UserAggregateService {
 
   private void updateBaseUser(UserAccount user, UserDetailsDTO dto, boolean isSuper) {
     if (dto.getEmail() != null) {
-      if (userAccountRepository.existsByEmailAndIdNot(dto.getEmail(), user.getId())) {
+      if (user.getId() != null && userAccountRepository.existsByEmailAndIdNot(dto.getEmail(), user.getId())) {
         throw new ApiException("CONFLICT", "Email already exists", HttpStatus.CONFLICT);
       }
       user.setEmail(dto.getEmail());
@@ -115,7 +116,7 @@ public class UserAggregateService {
     }
 
     java.util.List<UserDetailsDTO.RoleAssignmentDTO> incoming = dto.getMemberships().stream()
-        .filter(m -> isSuper || activeId.equals(m.getHospitalId()))
+        .filter(m -> isSuper || Objects.equals(activeId, m.getHospitalId()))
         .flatMap(m -> m.getRoleAssignments().stream().peek(ra -> ra.setHospitalId(m.getHospitalId())))
         .toList();
 
@@ -127,7 +128,7 @@ public class UserAggregateService {
         raDto -> createRoleAssignment(user, raDto),
         this::updateRoleAssignment,
         ra -> {
-          if (isSuper || activeId.equals(ra.getHospitalId())) {
+          if (isSuper || Objects.equals(activeId, ra.getHospitalId())) {
             user.getAssignments().remove(ra);
           }
         }

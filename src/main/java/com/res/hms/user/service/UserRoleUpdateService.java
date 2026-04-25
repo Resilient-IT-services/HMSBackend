@@ -24,8 +24,7 @@ public class UserRoleUpdateService {
   private final AdminProfileService adminProfileService;
 
   @Transactional
-  public void handleProfileUpdate(
-      UserAccount user, UserDetailsDTO request, boolean isSuper, UUID activeId) {
+  public void handleProfileUpdate(UserAccount user, UserDetailsDTO request, boolean isSuper, UUID activeId) {
     Set<RoleCode> allRoles = user.getRoleCodes();
 
     doctorService.updateProfile(user, request.getDoctorInfo());
@@ -53,30 +52,23 @@ public class UserRoleUpdateService {
       UserAccount user, UUID hospitalId, UserDetailsDTO.RoleAssignmentDTO raDto) {
     RoleCode code = RoleCode.valueOf(raDto.getRoleCode());
     findAssignment(user, hospitalId, code)
-        .ifPresent(
-            a -> {
-              switch (code) {
-                case DOCTOR -> doctorService.updateHospitalDetails(a, raDto.getDoctorDetails());
-                case NURSE -> nurseService.updateHospitalDetails(a, raDto.getNurseDetails());
-                case PHARMACIST ->
-                    pharmacistProfileService.updateHospitalDetails(a, raDto.getPharmacistDetails());
-                case RECEPTIONIST ->
-                    receptionistProfileService.updateHospitalDetails(
-                        a, raDto.getReceptionistDetails());
-                case ADMIN -> adminProfileService.updateHospitalDetails(a, raDto.getAdminDetails());
-                default -> {}
-              }
-            });
+        .ifPresent(a -> {
+          switch (code) {
+            case DOCTOR -> doctorService.updateHospitalDetails(a, raDto.getDoctorDetails());
+            case NURSE -> nurseService.updateHospitalDetails(a, raDto.getNurseDetails());
+            case PHARMACIST -> pharmacistProfileService.updateHospitalDetails(a, raDto.getPharmacistDetails());
+            case RECEPTIONIST -> receptionistProfileService.updateHospitalDetails(a, raDto.getReceptionistDetails());
+            case ADMIN -> adminProfileService.updateHospitalDetails(a, raDto.getAdminDetails());
+            default -> {
+            }
+          }
+        });
   }
 
   private java.util.Optional<UserRoleAssignment> findAssignment(
       UserAccount user, UUID hospitalId, RoleCode code) {
     return user.getAssignments().stream()
-        .filter(
-            a ->
-                (hospitalId == null
-                        ? a.getHospitalId() == null
-                        : hospitalId.equals(a.getHospitalId()))
+        .filter(a -> (hospitalId == null ? a.getHospitalId() == null : hospitalId.equals(a.getHospitalId()))
                     && a.getRole().getCode() == code)
         .findFirst();
   }
