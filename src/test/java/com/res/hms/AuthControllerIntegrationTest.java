@@ -55,6 +55,6 @@ class AuthControllerIntegrationTest {
         .andExpect(jsonPath("$.data.id").exists())
         .andExpect(jsonPath("$.data.superuser").value(true))
         .andExpect(jsonPath("$.data.memberships").isArray())
-        .andExpect(jsonPath("$.data.detailed_memberships").isArray());
+        .andExpect(jsonPath("$.data.detailedMemberships").isArray());
   }
 }

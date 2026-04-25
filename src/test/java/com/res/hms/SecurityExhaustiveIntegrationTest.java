@@ -98,8 +98,8 @@ class SecurityExhaustiveIntegrationTest {
                                 {
                                   "username": "newuser1",
                                   "password": "password",
-                                  "detailed_memberships": [],
-                                  "full_name": "New User",
+                                  "detailedMemberships": [],
+                                  "fullName": "New User",
                                   "gender": "MALE",
                                   "dob": "1990-01-01"
                                 }
@@ -122,11 +122,11 @@ class SecurityExhaustiveIntegrationTest {
                                 {
                                   "username": "newuser2",
                                   "password": "password",
-                                  "detailed_memberships": [{"hospital_id": "%s", "role_assignments": [{"role_code": "NURSE"}]}],
-                                  "full_name": "New User",
+                                  "detailedMemberships": [{"hospitalId": "%s", "roleAssignments": [{"roleCode": "NURSE"}]}],
+                                  "fullName": "New User",
                                   "gender": "MALE",
                                   "dob": "1990-01-01",
-                                  "nurse_info": {"department": "XYZ"}
+                                  "nurseInfo": {"department": "XYZ"}
                                 }
                                 """,
                         testHospitalId)))
@@ -148,8 +148,8 @@ class SecurityExhaustiveIntegrationTest {
                                 {
                                   "username": "another_admin",
                                   "password": "password",
-                                  "detailed_memberships": [{"hospital_id": "%s", "role_assignments": [{"role_code": "ADMIN"}]}],
-                                  "full_name": "Another Admin",
+                                  "detailedMemberships": [{"hospitalId": "%s", "roleAssignments": [{"roleCode": "ADMIN"}]}],
+                                  "fullName": "Another Admin",
                                   "gender": "MALE",
                                   "dob": "1990-01-01"
                                 }
@@ -174,11 +174,11 @@ class SecurityExhaustiveIntegrationTest {
                                 {
                                   "username": "hosp_doctor",
                                   "password": "password",
-                                  "detailed_memberships": [{"hospital_id": "%s", "role_assignments": [{"role_code": "NURSE"}]}],
-                                  "full_name": "Dup User",
+                                  "detailedMemberships": [{"hospitalId": "%s", "roleAssignments": [{"roleCode": "NURSE"}]}],
+                                  "fullName": "Dup User",
                                   "gender": "MALE",
                                   "dob": "1990-01-01",
-                                  "nurse_info": {"department": "department"}
+                                  "nurseInfo": {"department": "department"}
                                 }
                                 """,
                         testHospitalId)))
@@ -218,9 +218,9 @@ class SecurityExhaustiveIntegrationTest {
                     String.format(
                         """
                                 {
-                                  "patient_id": "%s",
-                                  "doctor_id": "%s",
-                                  "appointment_time": "2026-05-01T10:00:00"
+                                  "patientId": "%s",
+                                  "doctorId": "%s",
+                                  "appointmentTime": "2026-05-01T10:00:00"
                                 }
                                 """,
                         UUID.randomUUID(), UUID.randomUUID())))
@@ -295,7 +295,7 @@ class SecurityExhaustiveIntegrationTest {
                 .session(session)
                 .header("X-Hospital-Id", testHospitalId.toString()))
         .andExpect(status().isOk())
-        .andExpect(jsonPath("$.data.hospital_id").value(testHospitalId.toString()));
+        .andExpect(jsonPath("$.data.hospitalId").value(testHospitalId.toString()));
 
     // 3. Access with Hospital 2 header
     mockMvc
@@ -304,7 +304,7 @@ class SecurityExhaustiveIntegrationTest {
                 .session(session)
                 .header("X-Hospital-Id", secondHospitalId.toString()))
         .andExpect(status().isOk())
-        .andExpect(jsonPath("$.data.hospital_id").value(secondHospitalId.toString()));
+        .andExpect(jsonPath("$.data.hospitalId").value(secondHospitalId.toString()));
   }
 
   @Test
@@ -322,7 +322,7 @@ class SecurityExhaustiveIntegrationTest {
                                 {
                                   "username": "noname",
                                   "password": "password",
-                                  "detailed_memberships": [{"hospital_id": "%s", "role_assignments": [{"role_code": "NURSE"}]}],
+                                  "detailedMemberships": [{"hospitalId": "%s", "roleAssignments": [{"roleCode": "NURSE"}]}],
                                   "gender": "MALE",
                                   "dob": "1990-01-01"
                                 }
@@ -346,8 +346,8 @@ class SecurityExhaustiveIntegrationTest {
                                 {
                                   "username": "nogender",
                                   "password": "password",
-                                  "detailed_memberships": [{"hospital_id": "%s", "role_assignments": [{"role_code": "NURSE"}]}],
-                                  "full_name": "No Gender",
+                                  "detailedMemberships": [{"hospitalId": "%s", "roleAssignments": [{"roleCode": "NURSE"}]}],
+                                  "fullName": "No Gender",
                                   "dob": "1990-01-01"
                                 }
                                 """,
@@ -370,8 +370,8 @@ class SecurityExhaustiveIntegrationTest {
                                 {
                                   "username": "nodob",
                                   "password": "password",
-                                  "detailed_memberships": [{"hospital_id": "%s", "role_assignments": [{"role_code": "NURSE"}]}],
-                                  "full_name": "No DOB",
+                                  "detailedMemberships": [{"hospitalId": "%s", "roleAssignments": [{"roleCode": "NURSE"}]}],
+                                  "fullName": "No DOB",
                                   "gender": "MALE"
                                 }
                                 """,

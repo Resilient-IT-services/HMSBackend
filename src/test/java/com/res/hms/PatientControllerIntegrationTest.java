@@ -85,7 +85,7 @@ class PatientControllerIntegrationTest {
     mockMvc
         .perform(get("/api/v1/auth/me").session(session))
         .andExpect(status().isOk())
-        .andExpect(jsonPath("$.data.detailed_memberships[0].hospital_code").value("TEST"));
+        .andExpect(jsonPath("$.data.detailedMemberships[0].hospitalCode").value("TEST"));
 
     // Try to access patients without selecting hospital -> should fail with 400
     mockMvc
@@ -111,7 +111,7 @@ class PatientControllerIntegrationTest {
                                 }
                                 """))
         .andExpect(status().isOk())
-        .andExpect(jsonPath("$.data.full_name").value("Asha Nair"));
+        .andExpect(jsonPath("$.data.fullName").value("Asha Nair"));
 
     mockMvc
         .perform(
@@ -119,6 +119,6 @@ class PatientControllerIntegrationTest {
                 .session(session)
                 .header("X-Hospital-Id", testHospitalId.toString()))
         .andExpect(status().isOk())
-        .andExpect(jsonPath("$.data.content[0].full_name").value("Asha Nair"));
+        .andExpect(jsonPath("$.data.content[0].fullName").value("Asha Nair"));
   }
 }
