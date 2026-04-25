@@ -4,7 +4,9 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
-import com.res.hms.user.dto.DoctorHospitalDetailsDTO;
+import com.res.hms.user.dto.AdminHospitalDetailsDTO;
+import com.res.hms.user.dto.NurseHospitalDetailsDTO;
+import com.res.hms.user.dto.ReceptionistHospitalDetailsDTO;
 import com.res.hms.user.dto.UserFullProfileDTO;
 import com.res.hms.user.dto.UserRequestDTO;
 import com.res.hms.user.service.UserService;

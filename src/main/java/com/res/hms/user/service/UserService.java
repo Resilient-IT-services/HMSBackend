@@ -536,7 +536,7 @@ public class UserService {
 
   @Transactional(readOnly = true)
   public PageResponse<UserSummaryDTO> listUsers(
-      int page, int size, String search, RoleCode role, Boolean active, boolean includeDeleted) {
+      int page, int size, String search, String role, Boolean active, boolean includeDeleted) {
     UUID hospitalId = hospitalContext.getHospitalIdOrNull();
     boolean isSuperAdmin = hospitalContext.isSuperAdmin();
 
@@ -545,13 +545,22 @@ public class UserService {
           "BUSINESS_RULE_VIOLATION", "Please select a hospital first", HttpStatus.BAD_REQUEST);
     }
 
+    RoleCode roleCode = null;
+    if (role != null && !role.isBlank()) {
+      try {
+        roleCode = RoleCode.valueOf(role.toUpperCase());
+      } catch (IllegalArgumentException e) {
+        throw new ApiException("VALIDATION_ERROR", "Invalid role code: " + role, HttpStatus.BAD_REQUEST);
+      }
+    }
+
     Boolean deleted = includeDeleted ? null : false;
     String searchTrimmed = (search != null && !search.isBlank()) ? search.trim() : null;
 
     return PageResponse.from(
         userAccountRepository
             .searchUsers(
-                hospitalId, active, deleted, role, searchTrimmed, PageRequest.of(page, size))
+                hospitalId, active, deleted, roleCode, searchTrimmed, PageRequest.of(page, size))
             .map(userMapper::toSummaryDTO));
   }
 

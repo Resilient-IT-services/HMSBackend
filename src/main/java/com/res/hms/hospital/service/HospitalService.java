@@ -61,7 +61,7 @@ public class HospitalService {
 
   @Transactional(readOnly = true)
   public PageResponse<HospitalResponse> list(
-      int page, int size, String name, HospitalStatus status) {
+      int page, int size, String name, String status) {
     Specification<Hospital> spec = Specification.where(null);
     if (name != null && !name.isBlank()) {
       spec =
@@ -69,8 +69,13 @@ public class HospitalService {
               (root, query, cb) ->
                   cb.like(cb.lower(root.get("name")), "%" + name.toLowerCase() + "%"));
     }
-    if (status != null) {
-      spec = spec.and((root, query, cb) -> cb.equal(root.get("status"), status));
+    if (status != null && !status.isBlank()) {
+      try {
+        HospitalStatus hospitalStatus = HospitalStatus.valueOf(status.toUpperCase());
+        spec = spec.and((root, query, cb) -> cb.equal(root.get("status"), hospitalStatus));
+      } catch (IllegalArgumentException e) {
+        throw new ApiException("VALIDATION_ERROR", "Invalid hospital status: " + status, HttpStatus.BAD_REQUEST);
+      }
     }
 
     return PageResponse.from(

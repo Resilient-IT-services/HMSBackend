@@ -2,7 +2,6 @@ package com.res.hms.api;
 
 import com.res.hms.common.api.ApiResponse;
 import com.res.hms.common.api.PageResponse;
-import com.res.hms.domain.HospitalStatus;
 import com.res.hms.hospital.dto.CreateHospitalRequest;
 import com.res.hms.hospital.dto.HospitalResponse;
 import com.res.hms.hospital.service.HospitalService;
@@ -38,7 +37,7 @@ public class HospitalController {
       @RequestParam(defaultValue = "0") int page,
       @RequestParam(defaultValue = "20") int size,
       @RequestParam(required = false) String name,
-      @RequestParam(required = false) HospitalStatus status) {
+      @RequestParam(required = false) String status) {
     return ApiResponse.success(hospitalService.list(page, Math.min(size, 100), name, status));
   }
 

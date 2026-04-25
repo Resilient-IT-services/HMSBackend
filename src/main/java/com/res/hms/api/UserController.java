@@ -2,7 +2,6 @@ package com.res.hms.api;
 
 import com.res.hms.common.api.ApiResponse;
 import com.res.hms.common.api.PageResponse;
-import com.res.hms.domain.RoleCode;
 import com.res.hms.user.dto.UserFullProfileDTO;
 import com.res.hms.user.dto.UserRequestDTO;
 import com.res.hms.user.dto.UserSummaryDTO;
@@ -34,7 +33,7 @@ public class UserController {
       @RequestParam(defaultValue = "0") int page,
       @RequestParam(defaultValue = "20") int size,
       @RequestParam(required = false) String search,
-      @RequestParam(required = false) RoleCode role,
+      @RequestParam(required = false) String role,
       @RequestParam(required = false) Boolean active,
       @RequestParam(defaultValue = "false") boolean includeDeleted) {
     return ApiResponse.success(
