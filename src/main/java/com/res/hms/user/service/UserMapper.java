@@ -140,18 +140,29 @@ public abstract class UserMapper {
       return Collections.emptyList();
     }
 
-    Map<UUID, Set<RoleCode>> rolesByHospital = new HashMap<>();
-    for (UserRoleAssignment assignment : user.getAssignments()) {
-      rolesByHospital
-          .computeIfAbsent(assignment.getHospitalId(), k -> new HashSet<>())
-          .add(assignment.getRole().getCode());
-    }
-
-    return rolesByHospital.entrySet().stream()
+    return user.getAssignments().stream()
+        .collect(Collectors.groupingBy(UserRoleAssignment::getHospitalId))
+        .entrySet()
+        .stream()
         .map(
-            e ->
-                new UserSummaryDTO.HospitalMembershipDTO(
-                    e.getKey(), e.getValue().stream().map(Enum::name).toList()))
+            e -> {
+              UUID hospitalId = e.getKey();
+              List<UserRoleAssignment> hospitalAssignments = e.getValue();
+              
+              List<String> roles = hospitalAssignments.stream()
+                  .map(a -> a.getRole().getCode().name())
+                  .toList();
+                  
+              String specialization = user.getDoctor() != null ? user.getDoctor().getSpecialization() : null;
+              String departmentName = hospitalAssignments.stream()
+                  .map(UserRoleAssignment::getDepartmentName)
+                  .filter(d -> d != null && !d.isBlank())
+                  .findFirst()
+                  .orElse(null);
+
+              return new UserSummaryDTO.HospitalMembershipDTO(
+                  hospitalId, roles, specialization, departmentName);
+            })
         .collect(Collectors.toList());
   }
 

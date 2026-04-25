@@ -55,9 +55,10 @@ public class AppointmentService {
     PageRequest pageRequest = PageRequest.of(page, size);
 
     if (search != null && !search.trim().isEmpty()) {
+      String searchPattern = "%" + search.trim().toLowerCase() + "%";
       return PageResponse.from(
           appointmentRepository
-              .search(hospitalId, search.trim(), pageRequest)
+              .search(hospitalId, searchPattern, pageRequest)
               .map(this::toResponse));
     }
 

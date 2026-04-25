@@ -84,7 +84,13 @@ class UserServiceTest {
     user.setId(userId);
     user.setFullName("Test User");
 
-    when(userAccountRepository.searchUsers(eq(hospitalId), eq(true), eq(false), eq(RoleCode.DOCTOR), eq("test"), any(Pageable.class)))
+    when(userAccountRepository.searchUsers(
+            eq(hospitalId),
+            eq(true),
+            eq(false),
+            eq(RoleCode.DOCTOR),
+            eq("%test%"),
+            any(Pageable.class)))
         .thenReturn(new PageImpl<>(List.of(user)));
     when(userMapper.toSummaryDTO(user)).thenReturn(UserSummaryDTO.builder().id(userId).fullName("Test User").build());
 

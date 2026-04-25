@@ -22,8 +22,8 @@ public interface DoctorRepository extends JpaRepository<Doctor, UUID> {
   @Query(
       "SELECT d FROM Doctor d JOIN d.user u JOIN u.assignments a "
           + "WHERE a.hospitalId = :hospitalId AND a.role.code = com.res.hms.domain.RoleCode.DOCTOR "
-          + "AND (LOWER(u.fullName) LIKE LOWER(CONCAT('%', :query, '%')) OR "
-          + "LOWER(d.specialization) LIKE LOWER(CONCAT('%', :query, '%'))) "
+          + "AND (LOWER(u.fullName) LIKE :query OR "
+          + "LOWER(d.specialization) LIKE :query) "
           + "ORDER BY d.createdAt DESC")
   Page<Doctor> search(
       @Param("hospitalId") UUID hospitalId, @Param("query") String query, Pageable pageable);

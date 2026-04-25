@@ -34,5 +34,7 @@ public class UserSummaryDTO {
   public static class HospitalMembershipDTO {
     private UUID hospitalId;
     private List<String> roles;
+    private String specialization;
+    private String departmentName;
   }
 }

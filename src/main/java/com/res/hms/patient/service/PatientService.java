@@ -43,8 +43,9 @@ public class PatientService {
     PageRequest pageRequest = PageRequest.of(page, size);
 
     if (search != null && !search.trim().isEmpty()) {
+      String searchPattern = "%" + search.trim().toLowerCase() + "%";
       return PageResponse.from(
-          patientRepository.search(hospitalId, search.trim(), pageRequest).map(this::toResponse));
+          patientRepository.search(hospitalId, searchPattern, pageRequest).map(this::toResponse));
     }
 
     return PageResponse.from(

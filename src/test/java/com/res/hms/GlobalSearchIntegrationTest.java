@@ -93,7 +93,7 @@ class GlobalSearchIntegrationTest {
         .param("query", "Searchable"))
         .andExpect(status().isOk())
         .andExpect(jsonPath("$.success").value(true))
-        .andExpect(jsonPath("$.data[?(@.type=='PATIENT' && @.title=='Searchable Patient')]").exists());
+        .andExpect(jsonPath("$.data.content[?(@.type=='PATIENT' && @.title=='Searchable Patient')]").exists());
 
     // Search for the admin user
     mockMvc.perform(get("/api/v1/search")
@@ -101,6 +101,6 @@ class GlobalSearchIntegrationTest {
         .header("X-Hospital-Id", testHospitalId.toString())
         .param("query", "Global"))
         .andExpect(status().isOk())
-        .andExpect(jsonPath("$.data[?(@.type=='USER' && @.title=='Global Admin')]").exists());
+        .andExpect(jsonPath("$.data.content[?(@.type=='USER' && @.title=='Global Admin')]").exists());
   }
 }

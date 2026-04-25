@@ -555,12 +555,14 @@ public class UserService {
     }
 
     Boolean deleted = includeDeleted ? null : false;
-    String searchTrimmed = (search != null && !search.isBlank()) ? search.trim() : null;
+    String searchPattern = (search != null && !search.isBlank())
+        ? "%" + search.trim().toLowerCase() + "%"
+        : null;
 
     return PageResponse.from(
         userAccountRepository
             .searchUsers(
-                hospitalId, active, deleted, roleCode, searchTrimmed, PageRequest.of(page, size))
+                hospitalId, active, deleted, roleCode, searchPattern, PageRequest.of(page, size))
             .map(userMapper::toSummaryDTO));
   }
 

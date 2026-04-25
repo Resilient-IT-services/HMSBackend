@@ -102,11 +102,11 @@ class PatientServiceTest {
   @Test
   void listCallsSearchWhenQueryProvided() {
     when(hospitalContext.requireHospitalId()).thenReturn(hospitalUuid);
-    when(patientRepository.search(eq(hospitalUuid), eq("Asha"), any(PageRequest.class)))
+    when(patientRepository.search(eq(hospitalUuid), eq("%asha%"), any(PageRequest.class)))
         .thenReturn(new org.springframework.data.domain.PageImpl<>(List.of()));
 
     patientService.list(0, 10, "Asha");
 
-    verify(patientRepository).search(eq(hospitalUuid), eq("Asha"), any(PageRequest.class));
+    verify(patientRepository).search(eq(hospitalUuid), eq("%asha%"), any(PageRequest.class));
   }
 }
