@@ -25,6 +25,9 @@ public class Hospital extends BaseEntity {
 
   private String address;
 
+  @Column(unique = true)
+  private String gstin;
+
   @Enumerated(EnumType.STRING)
   @Column(nullable = false)
   private HospitalStatus status;

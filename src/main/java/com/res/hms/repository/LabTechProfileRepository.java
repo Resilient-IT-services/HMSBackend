@@ -6,4 +6,8 @@ import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
 
 @Repository
-public interface LabTechProfileRepository extends JpaRepository<LabTechProfile, UUID> {}
+public interface LabTechProfileRepository extends JpaRepository<LabTechProfile, UUID> {
+  boolean existsByLicenseNo(String licenseNo);
+
+  boolean existsByLicenseNoAndIdNot(String licenseNo, UUID id);
+}

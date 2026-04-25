@@ -12,6 +12,10 @@ import org.springframework.data.repository.query.Param;
 public interface DoctorRepository extends JpaRepository<Doctor, UUID> {
   Optional<Doctor> findByUserId(UUID userId);
 
+  boolean existsByLicenseNumber(String licenseNumber);
+
+  boolean existsByLicenseNumberAndIdNot(String licenseNumber, UUID id);
+
   @Query(
       "SELECT d FROM Doctor d JOIN d.user u JOIN u.assignments a "
           + "WHERE a.hospitalId = :hospitalId AND a.role.code = com.res.hms.domain.RoleCode.DOCTOR "

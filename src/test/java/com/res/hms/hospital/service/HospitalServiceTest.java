@@ -31,19 +31,19 @@ class HospitalServiceTest {
 
   @Test
   void createRejectsDuplicateCode() {
-    when(hospitalRepository.findByCode("HMS")).thenReturn(Optional.of(new Hospital()));
+    when(hospitalRepository.existsByCode("HMS")).thenReturn(true);
 
     ApiException exception =
         assertThrows(
             ApiException.class,
-            () -> hospitalService.create(new CreateHospitalRequest("Res", "HMS", "Kochi")));
+            () -> hospitalService.create(new CreateHospitalRequest("Res", "HMS", "Kochi", null)));
 
     assertEquals("BUSINESS_RULE_VIOLATION", exception.getCode());
   }
 
   @Test
   void createPersistsHospital() {
-    when(hospitalRepository.findByCode("HMS")).thenReturn(Optional.empty());
+    when(hospitalRepository.existsByCode("HMS")).thenReturn(false);
     when(hospitalRepository.save(any(Hospital.class)))
         .thenAnswer(
             invocation -> {
@@ -52,7 +52,7 @@ class HospitalServiceTest {
               return hospital;
             });
 
-    var response = hospitalService.create(new CreateHospitalRequest("Res", "HMS", "Kochi"));
+    var response = hospitalService.create(new CreateHospitalRequest("Res", "HMS", "Kochi", null));
 
     assertEquals(UUID.nameUUIDFromBytes("1".getBytes()), response.id());
     assertEquals(HospitalStatus.ACTIVE, response.status());
@@ -85,13 +85,13 @@ class HospitalServiceTest {
 
     when(hospitalRepository.findById(UUID.nameUUIDFromBytes("1".getBytes())))
         .thenReturn(Optional.of(hospital));
-    when(hospitalRepository.findByCode("NEW")).thenReturn(Optional.empty());
+    when(hospitalRepository.existsByCodeAndIdNot("NEW", UUID.nameUUIDFromBytes("1".getBytes()))).thenReturn(false);
     when(hospitalRepository.save(any(Hospital.class))).thenAnswer(i -> i.getArgument(0));
 
     var response =
         hospitalService.update(
             UUID.nameUUIDFromBytes("1".getBytes()),
-            new CreateHospitalRequest("New Name", "NEW", "New Addr"));
+            new CreateHospitalRequest("New Name", "NEW", "New Addr", null));
 
     assertEquals("New Name", response.name());
     assertEquals("NEW", response.code());

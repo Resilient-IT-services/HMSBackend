@@ -18,6 +18,10 @@ public interface UserAccountRepository
 
   boolean existsByUsername(String username);
 
+  boolean existsByEmail(String email);
+
+  boolean existsByEmailAndIdNot(String email, UUID id);
+
   List<UserAccount> findAllByDeletedFalse();
 
   @Query(

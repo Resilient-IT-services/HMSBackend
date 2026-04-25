@@ -23,15 +23,20 @@ public class HospitalService {
 
   @Transactional
   public HospitalResponse create(CreateHospitalRequest request) {
-    if (hospitalRepository.findByCode(request.code()).isPresent()) {
+    if (hospitalRepository.existsByCode(request.code())) {
       throw new ApiException(
           "BUSINESS_RULE_VIOLATION", "Hospital code already exists", HttpStatus.CONFLICT);
+    }
+    if (request.gstin() != null && hospitalRepository.existsByGstin(request.gstin())) {
+      throw new ApiException(
+          "BUSINESS_RULE_VIOLATION", "GSTIN already exists", HttpStatus.CONFLICT);
     }
 
     Hospital hospital = new Hospital();
     hospital.setName(request.name());
     hospital.setCode(request.code());
     hospital.setAddress(request.address());
+    hospital.setGstin(request.gstin());
     hospital.setStatus(HospitalStatus.ACTIVE);
     hospitalRepository.save(hospital);
     return toResponse(hospital);
@@ -46,15 +51,19 @@ public class HospitalService {
                 () -> new ApiException("NOT_FOUND", "Hospital not found", HttpStatus.NOT_FOUND));
 
     // Check if code is being changed and if it conflicts
-    if (!hospital.getCode().equals(request.code())
-        && hospitalRepository.findByCode(request.code()).isPresent()) {
+    if (hospitalRepository.existsByCodeAndIdNot(request.code(), id)) {
       throw new ApiException(
           "BUSINESS_RULE_VIOLATION", "Hospital code already exists", HttpStatus.CONFLICT);
+    }
+    if (request.gstin() != null && hospitalRepository.existsByGstinAndIdNot(request.gstin(), id)) {
+      throw new ApiException(
+          "BUSINESS_RULE_VIOLATION", "GSTIN already exists", HttpStatus.CONFLICT);
     }
 
     hospital.setName(request.name());
     hospital.setCode(request.code());
     hospital.setAddress(request.address());
+    hospital.setGstin(request.gstin());
     hospitalRepository.save(hospital);
     return toResponse(hospital);
   }

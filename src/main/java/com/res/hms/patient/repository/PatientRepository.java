@@ -9,6 +9,9 @@ import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
 public interface PatientRepository extends BaseRepository<Patient> {
+  boolean existsByPatientCode(String patientCode);
+
+  boolean existsByPatientCodeAndIdNot(String patientCode, UUID id);
   @Query(
       "SELECT p FROM Patient p WHERE p.hospitalId = :hospitalId AND "
           + "(LOWER(p.fullName) LIKE :query OR "

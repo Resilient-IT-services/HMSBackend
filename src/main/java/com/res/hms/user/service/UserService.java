@@ -148,6 +148,13 @@ public class UserService {
     }
 
     updateUserDetails(user, request, isSuperAdmin);
+    
+    if (request.getEmail() != null && userAccountRepository.existsByEmailAndIdNot(request.getEmail(), userId)) {
+      throw new ApiException(
+          "BUSINESS_RULE_VIOLATION", "Email already exists", HttpStatus.CONFLICT);
+    }
+    validateProfileUniqueness(request, userId);
+
     updateUserMemberships(user, request, isSuperAdmin, activeHospitalId);
 
     userAccountRepository.saveAndFlush(user);
@@ -577,6 +584,11 @@ public class UserService {
       throw new ApiException(
           "BUSINESS_RULE_VIOLATION", "Username already exists", HttpStatus.CONFLICT);
     }
+    if (request.getEmail() != null && userAccountRepository.existsByEmail(request.getEmail())) {
+      throw new ApiException(
+          "BUSINESS_RULE_VIOLATION", "Email already exists", HttpStatus.CONFLICT);
+    }
+    validateProfileUniqueness(request, null);
     if (request.getDetailedMemberships() == null || request.getDetailedMemberships().isEmpty()) {
       if (request.getSuperuser() == null || !request.getSuperuser()) {
         throw new ApiException(
@@ -592,5 +604,51 @@ public class UserService {
     UserAccount user = resourceLookup.findRequired(id, userAccountRepository::findById, "User");
     user.setDeleted(true);
     userAccountRepository.save(user);
+  }
+
+  private void validateProfileUniqueness(UserRequestDTO request, UUID userId) {
+    // 1. Doctor License
+    if (request.getDoctorInfo() != null && request.getDoctorInfo().getLicenseNumber() != null) {
+      String ln = request.getDoctorInfo().getLicenseNumber();
+      boolean exists = (userId == null)
+          ? doctorRepository.existsByLicenseNumber(ln)
+          : doctorRepository.existsByLicenseNumberAndIdNot(ln, userId);
+      if (exists) {
+        throw new ApiException("BUSINESS_RULE_VIOLATION", "Doctor license number already exists", HttpStatus.CONFLICT);
+      }
+    }
+
+    // 2. Nurse License
+    if (request.getNurseInfo() != null && request.getNurseInfo().getNursingLicenseNo() != null) {
+      String ln = request.getNurseInfo().getNursingLicenseNo();
+      boolean exists = (userId == null)
+          ? nurseRepository.existsByNursingLicenseNo(ln)
+          : nurseRepository.existsByNursingLicenseNoAndIdNot(ln, userId);
+      if (exists) {
+        throw new ApiException("BUSINESS_RULE_VIOLATION", "Nurse license number already exists", HttpStatus.CONFLICT);
+      }
+    }
+
+    // 3. Pharmacist PCI Reg No
+    if (request.getPharmacistInfo() != null && request.getPharmacistInfo().getPciRegNo() != null) {
+      String reg = request.getPharmacistInfo().getPciRegNo();
+      boolean exists = (userId == null)
+          ? pharmacistProfileRepository.existsByPciRegNo(reg)
+          : pharmacistProfileRepository.existsByPciRegNoAndIdNot(reg, userId);
+      if (exists) {
+        throw new ApiException("BUSINESS_RULE_VIOLATION", "Pharmacist PCI registration number already exists", HttpStatus.CONFLICT);
+      }
+    }
+
+    // 4. Lab Tech License No
+    if (request.getLabTechInfo() != null && request.getLabTechInfo().getLicenseNo() != null) {
+      String ln = request.getLabTechInfo().getLicenseNo();
+      boolean exists = (userId == null)
+          ? labTechProfileRepository.existsByLicenseNo(ln)
+          : labTechProfileRepository.existsByLicenseNoAndIdNot(ln, userId);
+      if (exists) {
+        throw new ApiException("BUSINESS_RULE_VIOLATION", "Lab Tech license number already exists", HttpStatus.CONFLICT);
+      }
+    }
   }
 }

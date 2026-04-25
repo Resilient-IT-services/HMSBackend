@@ -91,7 +91,7 @@ class AuthServiceTest {
         .username("doctor1")
         .email("doctor@test.com")
         .superuser(false)
-        .memberships(List.of(new UserSummaryDTO.HospitalMembershipDTO(hospitalId, List.of("DOCTOR"))))
+        .memberships(List.of(new UserSummaryDTO.HospitalMembershipDTO(hospitalId, List.of("DOCTOR"), null, null)))
         .build();
 
     when(userAccountRepository.findById(userId)).thenReturn(Optional.of(user));
@@ -167,7 +167,7 @@ class AuthServiceTest {
         .username("admin")
         .email("admin@test.com")
         .superuser(false)
-        .memberships(List.of(new UserSummaryDTO.HospitalMembershipDTO(null, List.of("ADMIN"))))
+        .memberships(List.of(new UserSummaryDTO.HospitalMembershipDTO(null, List.of("ADMIN"), null, null)))
         .build();
 
     when(userAccountRepository.findById(userId)).thenReturn(Optional.of(user));
