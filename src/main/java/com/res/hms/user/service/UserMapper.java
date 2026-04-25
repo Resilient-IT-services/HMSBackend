@@ -21,7 +21,6 @@ import com.res.hms.user.dto.NurseHospitalDetailsDTO;
 import com.res.hms.user.dto.PharmacistHospitalDetailsDTO;
 import com.res.hms.user.dto.ReceptionistHospitalDetailsDTO;
 import com.res.hms.user.dto.UserDetailsDTO;
-import com.res.hms.user.dto.UserProfileResponse;
 import com.res.hms.user.dto.UserSummaryDTO;
 import java.util.Collections;
 import java.util.List;
@@ -53,11 +52,6 @@ public abstract class UserMapper {
   @Mapping(target = "labTechInfo", source = "labTechProfile")
   @Mapping(target = "receptionistInfo", source = "receptionistProfile")
   public abstract UserDetailsDTO toDetailsDTO(UserAccount user);
-
-  @Mapping(target = "userId", source = "id")
-  @Mapping(target = "hospitalId", expression = "java(hospitalContext.getHospitalIdOrNull())")
-  @Mapping(target = "hospitals", expression = "java(mapHospitalMemberships(user))")
-  public abstract UserProfileResponse toUserProfileResponse(UserAccount user);
 
   protected List<HospitalMembershipResponse> mapHospitalMemberships(UserAccount user) {
     if (user.getAssignments() == null) {

@@ -17,12 +17,15 @@ public class LabTechProfileService {
   @Transactional
   public void updateProfile(UserAccount user, UserDetailsDTO.LabTechInfo info) {
     if (info != null) {
-      LabTechProfile profile = labTechProfileRepository.findById(user.getId())
-          .orElseGet(() -> {
-            LabTechProfile p = new LabTechProfile();
-            p.setUser(user);
-            return p;
-          });
+      LabTechProfile profile =
+          labTechProfileRepository
+              .findById(user.getId())
+              .orElseGet(
+                  () -> {
+                    LabTechProfile p = new LabTechProfile();
+                    p.setUser(user);
+                    return p;
+                  });
       if (info.getSpecialty() != null) {
         profile.setSpecialty(info.getSpecialty());
       }

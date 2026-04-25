@@ -1,10 +1,10 @@
 package com.res.hms.user.service;
 
+import com.res.hms.domain.ReceptionistHospitalDetails;
 import com.res.hms.domain.ReceptionistProfile;
 import com.res.hms.domain.RoleCode;
 import com.res.hms.domain.UserAccount;
 import com.res.hms.domain.UserRoleAssignment;
-import com.res.hms.domain.ReceptionistHospitalDetails;
 import com.res.hms.repository.ReceptionistHospitalDetailsRepository;
 import com.res.hms.repository.ReceptionistProfileRepository;
 import com.res.hms.user.dto.ReceptionistHospitalDetailsDTO;
@@ -23,14 +23,18 @@ public class ReceptionistProfileService {
   private final ReceptionistHospitalDetailsRepository receptionistHospitalDetailsRepository;
 
   @Transactional
-  public void updateProfile(UserAccount user, UserDetailsDTO.ReceptionistInfo info, Set<RoleCode> roles) {
+  public void updateProfile(
+      UserAccount user, UserDetailsDTO.ReceptionistInfo info, Set<RoleCode> roles) {
     if (roles.contains(RoleCode.RECEPTIONIST) && info != null) {
-      ReceptionistProfile profile = receptionistProfileRepository.findById(user.getId())
-          .orElseGet(() -> {
-            ReceptionistProfile p = new ReceptionistProfile();
-            p.setUser(user);
-            return p;
-          });
+      ReceptionistProfile profile =
+          receptionistProfileRepository
+              .findById(user.getId())
+              .orElseGet(
+                  () -> {
+                    ReceptionistProfile p = new ReceptionistProfile();
+                    p.setUser(user);
+                    return p;
+                  });
       if (info.getLanguagesSpoken() != null) {
         profile.setLanguagesSpoken(info.getLanguagesSpoken());
       }
@@ -45,12 +49,15 @@ public class ReceptionistProfileService {
     if (r == null) {
       return;
     }
-    ReceptionistHospitalDetails det = receptionistHospitalDetailsRepository.findById(a.getId())
-        .orElseGet(() -> {
-          ReceptionistHospitalDetails newDet = new ReceptionistHospitalDetails();
-          newDet.setAssignment(a);
-          return newDet;
-        });
+    ReceptionistHospitalDetails det =
+        receptionistHospitalDetailsRepository
+            .findById(a.getId())
+            .orElseGet(
+                () -> {
+                  ReceptionistHospitalDetails newDet = new ReceptionistHospitalDetails();
+                  newDet.setAssignment(a);
+                  return newDet;
+                });
     if (r.getDeskLocation() != null) {
       det.setDeskLocation(r.getDeskLocation());
     }
