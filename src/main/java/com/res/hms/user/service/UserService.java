@@ -15,7 +15,6 @@ import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Set;
 import java.util.UUID;
-import java.util.stream.Collectors;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.crypto.password.PasswordEncoder;
@@ -68,17 +67,18 @@ public class UserService {
     }
 
     if (request.getDetailedMemberships() != null) {
-      for (UserFullProfileDTO.DetailedHospitalMembershipDTO memRequest : request.getDetailedMemberships()) {
+      for (UserFullProfileDTO.DetailedHospitalMembershipDTO memRequest :
+          request.getDetailedMemberships()) {
         UUID hospitalId = memRequest.getHospitalId();
         // If caller is not super admin, they can only create assignments in their active hospital
         if (!isCallerSuperAdmin && activeHospitalId != null) {
-            hospitalId = activeHospitalId;
+          hospitalId = activeHospitalId;
         }
-        
+
         if (hospitalId != null && memRequest.getRoleAssignments() != null) {
-            for (UserFullProfileDTO.DetailedRoleAssignmentDTO ra : memRequest.getRoleAssignments()) {
-                assignRole(user, hospitalId, ra.getRoleCode(), ra.getDepartmentName());
-            }
+          for (UserFullProfileDTO.DetailedRoleAssignmentDTO ra : memRequest.getRoleAssignments()) {
+            assignRole(user, hospitalId, ra.getRoleCode(), ra.getDepartmentName());
+          }
         }
       }
     }
@@ -103,7 +103,9 @@ public class UserService {
         throw new ApiException(
             "AUTH_ERROR", "Hospital context required for update", HttpStatus.FORBIDDEN);
       }
-      user = resourceLookup.findRequired(userId, activeHospitalId, userAccountRepository::findByIdAndHospitalId, "User");
+      user =
+          resourceLookup.findRequired(
+              userId, activeHospitalId, userAccountRepository::findByIdAndHospitalId, "User");
     }
 
     if (request.getFullName() != null) user.setFullName(request.getFullName());
@@ -126,14 +128,20 @@ public class UserService {
         request.getDetailedMemberships().stream()
             .filter(m -> activeHospitalId.equals(m.getHospitalId()))
             .flatMap(m -> m.getRoleAssignments().stream())
-            .forEach(ra -> assignRole(user, activeHospitalId, ra.getRoleCode(), ra.getDepartmentName()));
+            .forEach(
+                ra -> assignRole(user, activeHospitalId, ra.getRoleCode(), ra.getDepartmentName()));
       } else {
         // SuperAdmin can update everything.
         user.getAssignments().clear();
-        for (UserFullProfileDTO.DetailedHospitalMembershipDTO m : request.getDetailedMemberships()) {
-            if (m.getRoleAssignments() != null) {
-                m.getRoleAssignments().forEach(ra -> assignRole(user, m.getHospitalId(), ra.getRoleCode(), ra.getDepartmentName()));
-            }
+        for (UserFullProfileDTO.DetailedHospitalMembershipDTO m :
+            request.getDetailedMemberships()) {
+          if (m.getRoleAssignments() != null) {
+            m.getRoleAssignments()
+                .forEach(
+                    ra ->
+                        assignRole(
+                            user, m.getHospitalId(), ra.getRoleCode(), ra.getDepartmentName()));
+          }
         }
       }
     }
@@ -144,15 +152,16 @@ public class UserService {
     return userMapper.toFullProfileDTO(user);
   }
 
-  private void assignRole(UserAccount user, UUID hospitalId, String roleCode, String departmentName) {
-      RoleCode code = RoleCode.valueOf(roleCode);
-      Role role = resourceLookup.findRequired(code, roleRepository::findByCode, "Role");
-      UserRoleAssignment assignment = new UserRoleAssignment();
-      assignment.setUser(user);
-      assignment.setHospitalId(hospitalId);
-      assignment.setRole(role);
-      assignment.setDepartmentName(departmentName);
-      user.getAssignments().add(assignment);
+  private void assignRole(
+      UserAccount user, UUID hospitalId, String roleCode, String departmentName) {
+    RoleCode code = RoleCode.valueOf(roleCode);
+    Role role = resourceLookup.findRequired(code, roleRepository::findByCode, "Role");
+    UserRoleAssignment assignment = new UserRoleAssignment();
+    assignment.setUser(user);
+    assignment.setHospitalId(hospitalId);
+    assignment.setRole(role);
+    assignment.setDepartmentName(departmentName);
+    user.getAssignments().add(assignment);
   }
 
   private void handleProfileUpdate(UserAccount user, UserRequestDTO request) {
@@ -160,11 +169,15 @@ public class UserService {
 
     // 1. Doctor Profile
     if (allRoles.contains(RoleCode.DOCTOR) && request.getDoctorInfo() != null) {
-      Doctor doctor = doctorRepository.findByUserId(user.getId()).orElseGet(() -> {
-          Doctor d = new Doctor();
-          d.setUser(user);
-          return d;
-      });
+      Doctor doctor =
+          doctorRepository
+              .findByUserId(user.getId())
+              .orElseGet(
+                  () -> {
+                    Doctor d = new Doctor();
+                    d.setUser(user);
+                    return d;
+                  });
       UserFullProfileDTO.DoctorInfo info = request.getDoctorInfo();
       if (info.getSpecialization() != null) doctor.setSpecialization(info.getSpecialization());
       if (info.getBio() != null) doctor.setBio(info.getBio());
@@ -174,25 +187,34 @@ public class UserService {
 
     // 2. Nurse Profile
     if (allRoles.contains(RoleCode.NURSE) && request.getNurseInfo() != null) {
-      Nurse nurse = nurseRepository.findByUserId(user.getId()).orElseGet(() -> {
-          Nurse n = new Nurse();
-          n.setUser(user);
-          return n;
-      });
+      Nurse nurse =
+          nurseRepository
+              .findByUserId(user.getId())
+              .orElseGet(
+                  () -> {
+                    Nurse n = new Nurse();
+                    n.setUser(user);
+                    return n;
+                  });
       UserFullProfileDTO.NurseInfo info = request.getNurseInfo();
       if (info.getDepartment() != null) nurse.setDepartment(info.getDepartment());
       if (info.getNursingLicenseNo() != null) nurse.setNursingLicenseNo(info.getNursingLicenseNo());
-      if (info.getCertificationLevel() != null) nurse.setCertificationLevel(info.getCertificationLevel());
+      if (info.getCertificationLevel() != null)
+        nurse.setCertificationLevel(info.getCertificationLevel());
       nurseRepository.save(nurse);
     }
 
     // 3. Pharmacist Profile
     if (allRoles.contains(RoleCode.PHARMACIST) && request.getPharmacistInfo() != null) {
-      PharmacistProfile profile = pharmacistProfileRepository.findById(user.getId()).orElseGet(() -> {
-          PharmacistProfile p = new PharmacistProfile();
-          p.setUser(user);
-          return p;
-      });
+      PharmacistProfile profile =
+          pharmacistProfileRepository
+              .findById(user.getId())
+              .orElseGet(
+                  () -> {
+                    PharmacistProfile p = new PharmacistProfile();
+                    p.setUser(user);
+                    return p;
+                  });
       UserFullProfileDTO.PharmacistInfo info = request.getPharmacistInfo();
       if (info.getPciRegNo() != null) profile.setPciRegNo(info.getPciRegNo());
       if (info.getQualification() != null) profile.setQualification(info.getQualification());
@@ -201,11 +223,15 @@ public class UserService {
 
     // 4. Lab Tech Profile
     if (request.getLabTechInfo() != null) {
-      LabTechProfile profile = labTechProfileRepository.findById(user.getId()).orElseGet(() -> {
-          LabTechProfile p = new LabTechProfile();
-          p.setUser(user);
-          return p;
-      });
+      LabTechProfile profile =
+          labTechProfileRepository
+              .findById(user.getId())
+              .orElseGet(
+                  () -> {
+                    LabTechProfile p = new LabTechProfile();
+                    p.setUser(user);
+                    return p;
+                  });
       UserFullProfileDTO.LabTechInfo info = request.getLabTechInfo();
       if (info.getSpecialty() != null) profile.setSpecialty(info.getSpecialty());
       if (info.getLicenseNo() != null) profile.setLicenseNo(info.getLicenseNo());
@@ -214,11 +240,15 @@ public class UserService {
 
     // 5. Receptionist Profile
     if (allRoles.contains(RoleCode.RECEPTIONIST) && request.getReceptionistInfo() != null) {
-      ReceptionistProfile profile = receptionistProfileRepository.findById(user.getId()).orElseGet(() -> {
-          ReceptionistProfile p = new ReceptionistProfile();
-          p.setUser(user);
-          return p;
-      });
+      ReceptionistProfile profile =
+          receptionistProfileRepository
+              .findById(user.getId())
+              .orElseGet(
+                  () -> {
+                    ReceptionistProfile p = new ReceptionistProfile();
+                    p.setUser(user);
+                    return p;
+                  });
       UserFullProfileDTO.ReceptionistInfo info = request.getReceptionistInfo();
       if (info.getLanguagesSpoken() != null) profile.setLanguagesSpoken(info.getLanguagesSpoken());
       profile.setInsuranceSpecialist(info.isInsuranceSpecialist());
@@ -227,102 +257,134 @@ public class UserService {
 
     // 6. Hospital Specific Details (Nested in detailedMemberships)
     if (request.getDetailedMemberships() != null) {
-        for (UserFullProfileDTO.DetailedHospitalMembershipDTO m : request.getDetailedMemberships()) {
-            if (m.getRoleAssignments() != null) {
-                for (UserFullProfileDTO.DetailedRoleAssignmentDTO ra : m.getRoleAssignments()) {
-                    updateRoleSpecificHospitalDetails(user, m.getHospitalId(), ra);
-                }
-            }
+      for (UserFullProfileDTO.DetailedHospitalMembershipDTO m : request.getDetailedMemberships()) {
+        if (m.getRoleAssignments() != null) {
+          for (UserFullProfileDTO.DetailedRoleAssignmentDTO ra : m.getRoleAssignments()) {
+            updateRoleSpecificHospitalDetails(user, m.getHospitalId(), ra);
+          }
         }
+      }
     }
   }
 
-  private void updateRoleSpecificHospitalDetails(UserAccount user, UUID hospitalId, UserFullProfileDTO.DetailedRoleAssignmentDTO raDto) {
-      RoleCode code = RoleCode.valueOf(raDto.getRoleCode());
-      findAssignment(user, hospitalId, code).ifPresent(a -> {
-          switch (code) {
-              case DOCTOR -> {
+  private void updateRoleSpecificHospitalDetails(
+      UserAccount user, UUID hospitalId, UserFullProfileDTO.DetailedRoleAssignmentDTO raDto) {
+    RoleCode code = RoleCode.valueOf(raDto.getRoleCode());
+    findAssignment(user, hospitalId, code)
+        .ifPresent(
+            a -> {
+              switch (code) {
+                case DOCTOR -> {
                   if (raDto.getDoctorDetails() != null) {
-                      DoctorHospitalDetails det = doctorHospitalDetailsRepository.findById(a.getId()).orElseGet(() -> {
-                          DoctorHospitalDetails d = new DoctorHospitalDetails();
-                          d.setAssignment(a);
-                          return d;
-                      });
-                      var d = raDto.getDoctorDetails();
-                      if (d.getConsultationFee() != null) det.setConsultationFee(d.getConsultationFee());
-                      if (d.getFollowUpDays() != null) det.setFollowUpDays(d.getFollowUpDays());
-                      if (d.getCommissionType() != null) det.setCommissionType(d.getCommissionType());
-                      if (d.getCommissionValue() != null) det.setCommissionValue(d.getCommissionValue());
-                      det.setVisitingConsultant(d.isVisitingConsultant());
-                      det.setUpdatedAt(LocalDateTime.now());
-                      doctorHospitalDetailsRepository.save(det);
+                    DoctorHospitalDetails det =
+                        doctorHospitalDetailsRepository
+                            .findById(a.getId())
+                            .orElseGet(
+                                () -> {
+                                  DoctorHospitalDetails d = new DoctorHospitalDetails();
+                                  d.setAssignment(a);
+                                  return d;
+                                });
+                    var d = raDto.getDoctorDetails();
+                    if (d.getConsultationFee() != null)
+                      det.setConsultationFee(d.getConsultationFee());
+                    if (d.getFollowUpDays() != null) det.setFollowUpDays(d.getFollowUpDays());
+                    if (d.getCommissionType() != null) det.setCommissionType(d.getCommissionType());
+                    if (d.getCommissionValue() != null)
+                      det.setCommissionValue(d.getCommissionValue());
+                    det.setVisitingConsultant(d.isVisitingConsultant());
+                    det.setUpdatedAt(LocalDateTime.now());
+                    doctorHospitalDetailsRepository.save(det);
                   }
-              }
-              case NURSE -> {
+                }
+                case NURSE -> {
                   if (raDto.getNurseDetails() != null) {
-                      NurseHospitalDetails det = nurseHospitalDetailsRepository.findById(a.getId()).orElseGet(() -> {
-                          NurseHospitalDetails d = new NurseHospitalDetails();
-                          d.setAssignment(a);
-                          return d;
-                      });
-                      var n = raDto.getNurseDetails();
-                      if (n.getFloorLocation() != null) det.setFloorLocation(n.getFloorLocation());
-                      if (n.getShiftType() != null) det.setShiftType(n.getShiftType());
-                      det.setUpdatedAt(LocalDateTime.now());
-                      nurseHospitalDetailsRepository.save(det);
+                    NurseHospitalDetails det =
+                        nurseHospitalDetailsRepository
+                            .findById(a.getId())
+                            .orElseGet(
+                                () -> {
+                                  NurseHospitalDetails d = new NurseHospitalDetails();
+                                  d.setAssignment(a);
+                                  return d;
+                                });
+                    var n = raDto.getNurseDetails();
+                    if (n.getFloorLocation() != null) det.setFloorLocation(n.getFloorLocation());
+                    if (n.getShiftType() != null) det.setShiftType(n.getShiftType());
+                    det.setUpdatedAt(LocalDateTime.now());
+                    nurseHospitalDetailsRepository.save(det);
                   }
-              }
-              case PHARMACIST -> {
+                }
+                case PHARMACIST -> {
                   if (raDto.getPharmacistDetails() != null) {
-                      PharmacistHospitalDetails det = pharmacistHospitalDetailsRepository.findById(a.getId()).orElseGet(() -> {
-                          PharmacistHospitalDetails d = new PharmacistHospitalDetails();
-                          d.setAssignment(a);
-                          return d;
-                      });
-                      var p = raDto.getPharmacistDetails();
-                      if (p.getCounterLocation() != null) det.setCounterLocation(p.getCounterLocation());
-                      if (p.getPharmacyWing() != null) det.setPharmacyWing(p.getPharmacyWing());
-                      det.setUpdatedAt(LocalDateTime.now());
-                      pharmacistHospitalDetailsRepository.save(det);
+                    PharmacistHospitalDetails det =
+                        pharmacistHospitalDetailsRepository
+                            .findById(a.getId())
+                            .orElseGet(
+                                () -> {
+                                  PharmacistHospitalDetails d = new PharmacistHospitalDetails();
+                                  d.setAssignment(a);
+                                  return d;
+                                });
+                    var p = raDto.getPharmacistDetails();
+                    if (p.getCounterLocation() != null)
+                      det.setCounterLocation(p.getCounterLocation());
+                    if (p.getPharmacyWing() != null) det.setPharmacyWing(p.getPharmacyWing());
+                    det.setUpdatedAt(LocalDateTime.now());
+                    pharmacistHospitalDetailsRepository.save(det);
                   }
-              }
-              case RECEPTIONIST -> {
+                }
+                case RECEPTIONIST -> {
                   if (raDto.getReceptionistDetails() != null) {
-                      ReceptionistHospitalDetails det = receptionistHospitalDetailsRepository.findById(a.getId()).orElseGet(() -> {
-                          ReceptionistHospitalDetails d = new ReceptionistHospitalDetails();
-                          d.setAssignment(a);
-                          return d;
-                      });
-                      var r = raDto.getReceptionistDetails();
-                      if (r.getDeskLocation() != null) det.setDeskLocation(r.getDeskLocation());
-                      if (r.getEmergencyContactNumber() != null) det.setEmergencyContactNumber(r.getEmergencyContactNumber());
-                      det.setUpdatedAt(LocalDateTime.now());
-                      receptionistHospitalDetailsRepository.save(det);
+                    ReceptionistHospitalDetails det =
+                        receptionistHospitalDetailsRepository
+                            .findById(a.getId())
+                            .orElseGet(
+                                () -> {
+                                  ReceptionistHospitalDetails d = new ReceptionistHospitalDetails();
+                                  d.setAssignment(a);
+                                  return d;
+                                });
+                    var r = raDto.getReceptionistDetails();
+                    if (r.getDeskLocation() != null) det.setDeskLocation(r.getDeskLocation());
+                    if (r.getEmergencyContactNumber() != null)
+                      det.setEmergencyContactNumber(r.getEmergencyContactNumber());
+                    det.setUpdatedAt(LocalDateTime.now());
+                    receptionistHospitalDetailsRepository.save(det);
                   }
-              }
-              case ADMIN -> {
+                }
+                case ADMIN -> {
                   if (raDto.getAdminDetails() != null) {
-                      AdminHospitalDetails det = adminHospitalDetailsRepository.findById(a.getId()).orElseGet(() -> {
-                          AdminHospitalDetails d = new AdminHospitalDetails();
-                          d.setAssignment(a);
-                          return d;
-                      });
-                      var ad = raDto.getAdminDetails();
-                      if (ad.getOfficeLocation() != null) det.setOfficeLocation(ad.getOfficeLocation());
-                      det.setDepartmentHead(ad.isDepartmentHead());
-                      det.setUpdatedAt(LocalDateTime.now());
-                      adminHospitalDetailsRepository.save(det);
+                    AdminHospitalDetails det =
+                        adminHospitalDetailsRepository
+                            .findById(a.getId())
+                            .orElseGet(
+                                () -> {
+                                  AdminHospitalDetails d = new AdminHospitalDetails();
+                                  d.setAssignment(a);
+                                  return d;
+                                });
+                    var ad = raDto.getAdminDetails();
+                    if (ad.getOfficeLocation() != null)
+                      det.setOfficeLocation(ad.getOfficeLocation());
+                    det.setDepartmentHead(ad.isDepartmentHead());
+                    det.setUpdatedAt(LocalDateTime.now());
+                    adminHospitalDetailsRepository.save(det);
                   }
+                }
               }
-          }
-      });
+            });
   }
 
   private java.util.Optional<UserRoleAssignment> findAssignment(
       UserAccount user, UUID hospitalId, RoleCode code) {
     return user.getAssignments().stream()
-        .filter(a -> (hospitalId == null ? a.getHospitalId() == null : hospitalId.equals(a.getHospitalId())) 
-                && a.getRole().getCode() == code)
+        .filter(
+            a ->
+                (hospitalId == null
+                        ? a.getHospitalId() == null
+                        : hospitalId.equals(a.getHospitalId()))
+                    && a.getRole().getCode() == code)
         .findFirst();
   }
 

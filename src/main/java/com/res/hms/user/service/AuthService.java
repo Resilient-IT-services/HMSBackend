@@ -8,8 +8,10 @@ import com.res.hms.domain.Nurse;
 import com.res.hms.domain.RoleCode;
 import com.res.hms.nurse.repository.NurseRepository;
 import com.res.hms.repository.HospitalRepository;
+import com.res.hms.repository.UserAccountRepository;
 import com.res.hms.user.dto.HospitalMembershipResponse;
 import com.res.hms.user.dto.LoginRequest;
+import com.res.hms.user.dto.UserFullProfileDTO;
 import com.res.hms.user.dto.UserProfileResponse;
 import com.res.hms.user.security.HospitalUserPrincipal;
 import jakarta.servlet.http.HttpServletRequest;
@@ -42,6 +44,8 @@ public class AuthService {
   private final HospitalRepository hospitalRepository;
   private final DoctorRepository doctorRepository;
   private final NurseRepository nurseRepository;
+  private final UserAccountRepository userAccountRepository;
+  private final UserMapper userMapper;
   private final com.res.hms.common.tenant.HospitalContext hospitalContext;
 
   public void login(
@@ -66,7 +70,16 @@ public class AuthService {
     }
   }
 
-  private HospitalUserPrincipal getAuthenticatedPrincipal() {
+  public UserProfileResponse currentUser() {
+    HospitalUserPrincipal principal = getAuthenticatedPrincipal();
+    return userAccountRepository
+        .findById(principal.userId())
+        .map(userMapper::toUserProfileResponse)
+        .orElseThrow(
+            () -> new ApiException("NOT_FOUND", "User not found", HttpStatus.NOT_FOUND));
+  }
+
+  public HospitalUserPrincipal getAuthenticatedPrincipal() {
     Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
     if (authentication == null
         || !(authentication.getPrincipal() instanceof HospitalUserPrincipal principal)) {
@@ -80,60 +93,4 @@ public class AuthService {
         .logout(request, response, SecurityContextHolder.getContext().getAuthentication());
   }
 
-  public UserProfileResponse currentUser() {
-    HospitalUserPrincipal principal = getAuthenticatedPrincipal();
-    UUID activeHospitalId = hospitalContext.getHospitalIdOrNull();
-    return toProfileResponse(principal, activeHospitalId);
-  }
-
-  private UserProfileResponse toProfileResponse(
-      HospitalUserPrincipal principal, UUID activeHospitalId) {
-    List<HospitalMembershipResponse> memberships = new ArrayList<>();
-    if (principal.hospitalRoles() != null) {
-      for (Map.Entry<UUID, Set<RoleCode>> entry : principal.hospitalRoles().entrySet()) {
-        UUID hospitalId = entry.getKey();
-        Set<RoleCode> roles = entry.getValue();
-        String specialization = null;
-        String department = null;
-
-        if (hospitalId != null) {
-          if (roles.contains(RoleCode.DOCTOR)) {
-            specialization =
-                doctorRepository
-                    .findByUserId(principal.userId())
-                    .map(Doctor::getSpecialization)
-                    .orElse(null);
-          }
-          if (roles.contains(RoleCode.NURSE)) {
-            department =
-                nurseRepository
-                    .findByUserId(principal.userId())
-                    .map(Nurse::getDepartment)
-                    .orElse(null);
-          }
-
-          Hospital hospital = hospitalRepository.findById(hospitalId).orElseThrow();
-          memberships.add(
-              new HospitalMembershipResponse(
-                  hospital.getId(),
-                  hospital.getName(),
-                  hospital.getCode(),
-                  roles,
-                  specialization,
-                  department));
-        } else {
-          memberships.add(
-              new HospitalMembershipResponse(null, "Global Access", "GLOBAL", roles, null, null));
-        }
-      }
-    }
-
-    return new UserProfileResponse(
-        principal.userId(),
-        activeHospitalId,
-        principal.username(),
-        principal.email(),
-        principal.superuser(),
-        memberships);
-  }
 }

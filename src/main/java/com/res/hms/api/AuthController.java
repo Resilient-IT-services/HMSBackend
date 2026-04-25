@@ -2,18 +2,23 @@ package com.res.hms.api;
 
 import com.res.hms.common.api.ApiResponse;
 import com.res.hms.user.dto.LoginRequest;
-import com.res.hms.user.dto.UserProfileResponse;
+import com.res.hms.user.dto.UserFullProfileDTO;
+import com.res.hms.user.dto.UserRequestDTO;
 import com.res.hms.user.service.AuthService;
+import com.res.hms.user.service.UserService;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
+
+import java.util.UUID;
 
 @Tag(name = "Authentication")
 @RestController
@@ -22,6 +27,7 @@ import org.springframework.web.bind.annotation.RestController;
 public class AuthController {
 
   private final AuthService authService;
+  private final UserService userService;
 
   @PostMapping("/login")
   public ApiResponse<Void> login(
@@ -39,7 +45,7 @@ public class AuthController {
   }
 
   @GetMapping("/me")
-  public ApiResponse<UserProfileResponse> currentUser() {
-    return ApiResponse.success(authService.currentUser());
+  public ApiResponse<UserFullProfileDTO> getFullProfile() {
+      return ApiResponse.success(userService.getFullProfile(authService.getAuthenticatedPrincipal().userId()));
   }
 }

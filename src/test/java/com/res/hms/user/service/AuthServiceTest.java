@@ -15,7 +15,12 @@ import com.res.hms.domain.Hospital;
 import com.res.hms.domain.RoleCode;
 import com.res.hms.nurse.repository.NurseRepository;
 import com.res.hms.repository.HospitalRepository;
+import com.res.hms.domain.UserAccount;
+import com.res.hms.user.dto.HospitalMembershipResponse;
 import com.res.hms.user.dto.LoginRequest;
+import com.res.hms.user.dto.UserProfileResponse;
+import com.res.hms.repository.UserAccountRepository;
+import java.util.List;
 import com.res.hms.user.security.HospitalUserPrincipal;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
@@ -50,6 +55,8 @@ class AuthServiceTest {
   @Mock private com.res.hms.common.tenant.HospitalContext hospitalContext;
   @Mock private HttpServletRequest httpServletRequest;
   @Mock private HttpServletResponse httpServletResponse;
+  @Mock private UserAccountRepository userAccountRepository;
+  @Mock private UserMapper userMapper;
 
   @InjectMocks private AuthService authService;
 
@@ -63,17 +70,6 @@ class AuthServiceTest {
 
   @Test
   void currentUserReturnsRoleSpecificDetails() {
-    Map<UUID, Set<RoleCode>> roles = new HashMap<>();
-    roles.put(hospitalId, Set.of(RoleCode.DOCTOR));
-
-    Hospital hospital = new Hospital();
-    hospital.setId(hospitalId);
-    hospital.setName("Test Hospital");
-    hospital.setCode("TEST");
-
-    Doctor doctor = new Doctor();
-    doctor.setSpecialization("Pediatrics");
-
     SecurityContextHolder.getContext()
         .setAuthentication(
             new TestingAuthenticationToken(
@@ -84,14 +80,20 @@ class AuthServiceTest {
                     "secret",
                     true,
                     false,
-                    roles,
+                    new HashMap<>(),
                     hospitalId,
                     Set.of(RoleCode.DOCTOR)),
                 null));
 
-    when(hospitalContext.getHospitalIdOrNull()).thenReturn(hospitalId);
-    when(hospitalRepository.findById(hospitalId)).thenReturn(Optional.of(hospital));
-    when(doctorRepository.findByUserId(userId)).thenReturn(Optional.of(doctor));
+    UserAccount user = new UserAccount();
+    user.setId(userId);
+    UserProfileResponse mappedResponse = new UserProfileResponse(
+        userId, hospitalId, "doctor1", "doctor@test.com", false,
+        List.of(new HospitalMembershipResponse(hospitalId, "Test Hospital", "TEST", Set.of(RoleCode.DOCTOR), "Pediatrics", null))
+    );
+
+    when(userAccountRepository.findById(userId)).thenReturn(Optional.of(user));
+    when(userMapper.toUserProfileResponse(user)).thenReturn(mappedResponse);
 
     var response = authService.currentUser();
 
@@ -106,7 +108,15 @@ class AuthServiceTest {
 
     HospitalUserPrincipal principal =
         new HospitalUserPrincipal(
-            userId, "doctor", "doctor@test.com", "secret", true, false, roles, null, Set.of(RoleCode.DOCTOR));
+            userId,
+            "doctor",
+            "doctor@test.com",
+            "secret",
+            true,
+            false,
+            roles,
+            null,
+            Set.of(RoleCode.DOCTOR));
     Authentication authentication = new TestingAuthenticationToken(principal, null);
     when(authenticationManager.authenticate(any())).thenReturn(authentication);
 
@@ -134,17 +144,30 @@ class AuthServiceTest {
 
   @Test
   void currentUserReturnsPrincipalDetails() {
-    Map<UUID, Set<RoleCode>> roles = new HashMap<>();
-    roles.put(null, Set.of(RoleCode.ADMIN));
-
     SecurityContextHolder.getContext()
         .setAuthentication(
             new TestingAuthenticationToken(
                 new HospitalUserPrincipal(
-                    userId, "admin", "admin@test.com", "secret", true, false, roles, null, Set.of(RoleCode.ADMIN)),
+                    userId,
+                    "admin",
+                    "admin@test.com",
+                    "secret",
+                    true,
+                    false,
+                    new HashMap<>(),
+                    null,
+                    Set.of(RoleCode.ADMIN)),
                 null));
 
-    when(hospitalContext.getHospitalIdOrNull()).thenReturn(null);
+    UserAccount user = new UserAccount();
+    user.setId(userId);
+    UserProfileResponse mappedResponse = new UserProfileResponse(
+        userId, null, "admin", "admin@test.com", false,
+        List.of(new HospitalMembershipResponse(null, "Global Access", "GLOBAL", Set.of(RoleCode.ADMIN), null, null))
+    );
+
+    when(userAccountRepository.findById(userId)).thenReturn(Optional.of(user));
+    when(userMapper.toUserProfileResponse(user)).thenReturn(mappedResponse);
 
     var response = authService.currentUser();
 

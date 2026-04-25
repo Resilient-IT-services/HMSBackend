@@ -1,13 +1,11 @@
 package com.res.hms.user.dto;
 
 import com.res.hms.domain.Gender;
-import com.res.hms.domain.RoleCode;
 import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import java.time.LocalDate;
 import java.util.List;
-import java.util.UUID;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;

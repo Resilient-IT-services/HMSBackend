@@ -4,11 +4,9 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
-import com.res.hms.domain.RoleCode;
 import com.res.hms.user.dto.*;
 import com.res.hms.user.service.UserService;
 import java.util.List;
-import java.util.Set;
 import java.util.UUID;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -22,135 +20,147 @@ import org.springframework.transaction.annotation.Transactional;
 @Transactional
 class RoleHospitalDetailsIntegrationTest {
 
-    @Autowired private UserService userService;
-    @Autowired private TestDataHelper testDataHelper;
+  @Autowired private UserService userService;
+  @Autowired private TestDataHelper testDataHelper;
 
-    private UUID hospitalId;
+  private UUID hospitalId;
 
-    @BeforeEach
-    void setup() {
-        hospitalId = testDataHelper.createHospitalIfMissing("H1", "Hospital One");
-    }
+  @BeforeEach
+  void setup() {
+    hospitalId = testDataHelper.createHospitalIfMissing("H1", "Hospital One");
+  }
 
-    @Test
-    void createNurseWithHospitalDetails() {
-        UserRequestDTO request = UserRequestDTO.builder()
-                .username("nurse_test")
-                .password("pass")
-                .fullName("Nurse Joy")
-                .gender(com.res.hms.domain.Gender.FEMALE)
-                .dob(java.time.LocalDate.of(1990, 1, 1))
-                .nurseInfo(UserFullProfileDTO.NurseInfo.builder().department("Pediatrics").build())
-                .detailedMemberships(List.of(
+  @Test
+  void createNurseWithHospitalDetails() {
+    UserRequestDTO request =
+        UserRequestDTO.builder()
+            .username("nurse_test")
+            .password("pass")
+            .fullName("Nurse Joy")
+            .gender(com.res.hms.domain.Gender.FEMALE)
+            .dob(java.time.LocalDate.of(1990, 1, 1))
+            .nurseInfo(UserFullProfileDTO.NurseInfo.builder().department("Pediatrics").build())
+            .detailedMemberships(
+                List.of(
                     UserFullProfileDTO.DetailedHospitalMembershipDTO.builder()
                         .hospitalId(hospitalId)
-                        .roleAssignments(List.of(
-                            UserFullProfileDTO.DetailedRoleAssignmentDTO.builder()
-                                .roleCode("NURSE")
-                                .nurseDetails(NurseHospitalDetailsDTO.builder()
-                                    .floorLocation("2nd Floor")
-                                    .shiftType(com.res.hms.domain.ShiftType.NIGHT)
-                                    .build())
-                                .build()
-                        ))
-                        .build()
-                ))
-                .build();
+                        .roleAssignments(
+                            List.of(
+                                UserFullProfileDTO.DetailedRoleAssignmentDTO.builder()
+                                    .roleCode("NURSE")
+                                    .nurseDetails(
+                                        NurseHospitalDetailsDTO.builder()
+                                            .floorLocation("2nd Floor")
+                                            .shiftType(com.res.hms.domain.ShiftType.NIGHT)
+                                            .build())
+                                    .build()))
+                        .build()))
+            .build();
 
-        UserFullProfileDTO saved = userService.createUser(request);
-        assertNotNull(saved.getId());
+    UserFullProfileDTO saved = userService.createUser(request);
+    assertNotNull(saved.getId());
 
-        UserFullProfileDTO fetched = userService.getFullProfile(saved.getId());
-        
-        // Check Nurse Global Profile
-        assertNotNull(fetched.getNurseInfo());
-        assertEquals("Pediatrics", fetched.getNurseInfo().getDepartment());
+    UserFullProfileDTO fetched = userService.getFullProfile(saved.getId());
 
-        // Check Nurse Hospital Specific Details (Nested in detailedMemberships)
-        UserFullProfileDTO.DetailedRoleAssignmentDTO assignment = fetched.getDetailedMemberships().stream()
-                .filter(m -> hospitalId.equals(m.getHospitalId()))
-                .flatMap(m -> m.getRoleAssignments().stream())
-                .filter(ra -> "NURSE".equals(ra.getRoleCode()))
-                .findFirst().orElseThrow();
-        
-        assertNotNull(assignment.getNurseDetails());
-        assertEquals("2nd Floor", assignment.getNurseDetails().getFloorLocation());
-        assertEquals(com.res.hms.domain.ShiftType.NIGHT, assignment.getNurseDetails().getShiftType());
-    }
+    // Check Nurse Global Profile
+    assertNotNull(fetched.getNurseInfo());
+    assertEquals("Pediatrics", fetched.getNurseInfo().getDepartment());
 
-    @Test
-    void createReceptionistWithHospitalDetails() {
-        UserRequestDTO request = UserRequestDTO.builder()
-                .username("recep_test")
-                .password("pass")
-                .fullName("Recep One")
-                .gender(com.res.hms.domain.Gender.MALE)
-                .dob(java.time.LocalDate.of(1995, 5, 5))
-                .detailedMemberships(List.of(
+    // Check Nurse Hospital Specific Details (Nested in detailedMemberships)
+    UserFullProfileDTO.DetailedRoleAssignmentDTO assignment =
+        fetched.getDetailedMemberships().stream()
+            .filter(m -> hospitalId.equals(m.getHospitalId()))
+            .flatMap(m -> m.getRoleAssignments().stream())
+            .filter(ra -> "NURSE".equals(ra.getRoleCode()))
+            .findFirst()
+            .orElseThrow();
+
+    assertNotNull(assignment.getNurseDetails());
+    assertEquals("2nd Floor", assignment.getNurseDetails().getFloorLocation());
+    assertEquals(com.res.hms.domain.ShiftType.NIGHT, assignment.getNurseDetails().getShiftType());
+  }
+
+  @Test
+  void createReceptionistWithHospitalDetails() {
+    UserRequestDTO request =
+        UserRequestDTO.builder()
+            .username("recep_test")
+            .password("pass")
+            .fullName("Recep One")
+            .gender(com.res.hms.domain.Gender.MALE)
+            .dob(java.time.LocalDate.of(1995, 5, 5))
+            .detailedMemberships(
+                List.of(
                     UserFullProfileDTO.DetailedHospitalMembershipDTO.builder()
                         .hospitalId(hospitalId)
-                        .roleAssignments(List.of(
-                            UserFullProfileDTO.DetailedRoleAssignmentDTO.builder()
-                                .roleCode("RECEPTIONIST")
-                                .receptionistDetails(ReceptionistHospitalDetailsDTO.builder()
-                                    .deskLocation("Main Lobby A")
-                                    .emergencyContactNumber("1234567890")
-                                    .build())
-                                .build()
-                        ))
-                        .build()
-                ))
-                .build();
+                        .roleAssignments(
+                            List.of(
+                                UserFullProfileDTO.DetailedRoleAssignmentDTO.builder()
+                                    .roleCode("RECEPTIONIST")
+                                    .receptionistDetails(
+                                        ReceptionistHospitalDetailsDTO.builder()
+                                            .deskLocation("Main Lobby A")
+                                            .emergencyContactNumber("1234567890")
+                                            .build())
+                                    .build()))
+                        .build()))
+            .build();
 
-        UserFullProfileDTO saved = userService.createUser(request);
-        UserFullProfileDTO fetched = userService.getFullProfile(saved.getId());
+    UserFullProfileDTO saved = userService.createUser(request);
+    UserFullProfileDTO fetched = userService.getFullProfile(saved.getId());
 
-        UserFullProfileDTO.DetailedRoleAssignmentDTO assignment = fetched.getDetailedMemberships().stream()
-                .filter(m -> hospitalId.equals(m.getHospitalId()))
-                .flatMap(m -> m.getRoleAssignments().stream())
-                .filter(ra -> "RECEPTIONIST".equals(ra.getRoleCode()))
-                .findFirst().orElseThrow();
+    UserFullProfileDTO.DetailedRoleAssignmentDTO assignment =
+        fetched.getDetailedMemberships().stream()
+            .filter(m -> hospitalId.equals(m.getHospitalId()))
+            .flatMap(m -> m.getRoleAssignments().stream())
+            .filter(ra -> "RECEPTIONIST".equals(ra.getRoleCode()))
+            .findFirst()
+            .orElseThrow();
 
-        assertNotNull(assignment.getReceptionistDetails());
-        assertEquals("Main Lobby A", assignment.getReceptionistDetails().getDeskLocation());
-        assertEquals("1234567890", assignment.getReceptionistDetails().getEmergencyContactNumber());
-    }
+    assertNotNull(assignment.getReceptionistDetails());
+    assertEquals("Main Lobby A", assignment.getReceptionistDetails().getDeskLocation());
+    assertEquals("1234567890", assignment.getReceptionistDetails().getEmergencyContactNumber());
+  }
 
-    @Test
-    void createAdminWithHospitalDetails() {
-        UserRequestDTO request = UserRequestDTO.builder()
-                .username("admin_test")
-                .password("pass")
-                .fullName("Admin One")
-                .gender(com.res.hms.domain.Gender.MALE)
-                .dob(java.time.LocalDate.of(1985, 10, 10))
-                .detailedMemberships(List.of(
+  @Test
+  void createAdminWithHospitalDetails() {
+    UserRequestDTO request =
+        UserRequestDTO.builder()
+            .username("admin_test")
+            .password("pass")
+            .fullName("Admin One")
+            .gender(com.res.hms.domain.Gender.MALE)
+            .dob(java.time.LocalDate.of(1985, 10, 10))
+            .detailedMemberships(
+                List.of(
                     UserFullProfileDTO.DetailedHospitalMembershipDTO.builder()
                         .hospitalId(hospitalId)
-                        .roleAssignments(List.of(
-                            UserFullProfileDTO.DetailedRoleAssignmentDTO.builder()
-                                .roleCode("ADMIN")
-                                .adminDetails(AdminHospitalDetailsDTO.builder()
-                                    .officeLocation("Room 101")
-                                    .departmentHead(true)
-                                    .build())
-                                .build()
-                        ))
-                        .build()
-                ))
-                .build();
+                        .roleAssignments(
+                            List.of(
+                                UserFullProfileDTO.DetailedRoleAssignmentDTO.builder()
+                                    .roleCode("ADMIN")
+                                    .adminDetails(
+                                        AdminHospitalDetailsDTO.builder()
+                                            .officeLocation("Room 101")
+                                            .departmentHead(true)
+                                            .build())
+                                    .build()))
+                        .build()))
+            .build();
 
-        UserFullProfileDTO saved = userService.createUser(request);
-        UserFullProfileDTO fetched = userService.getFullProfile(saved.getId());
+    UserFullProfileDTO saved = userService.createUser(request);
+    UserFullProfileDTO fetched = userService.getFullProfile(saved.getId());
 
-        UserFullProfileDTO.DetailedRoleAssignmentDTO assignment = fetched.getDetailedMemberships().stream()
-                .filter(m -> hospitalId.equals(m.getHospitalId()))
-                .flatMap(m -> m.getRoleAssignments().stream())
-                .filter(ra -> "ADMIN".equals(ra.getRoleCode()))
-                .findFirst().orElseThrow();
+    UserFullProfileDTO.DetailedRoleAssignmentDTO assignment =
+        fetched.getDetailedMemberships().stream()
+            .filter(m -> hospitalId.equals(m.getHospitalId()))
+            .flatMap(m -> m.getRoleAssignments().stream())
+            .filter(ra -> "ADMIN".equals(ra.getRoleCode()))
+            .findFirst()
+            .orElseThrow();
 
-        assertNotNull(assignment.getAdminDetails());
-        assertEquals("Room 101", assignment.getAdminDetails().getOfficeLocation());
-        assertTrue(assignment.getAdminDetails().isDepartmentHead());
-    }
+    assertNotNull(assignment.getAdminDetails());
+    assertEquals("Room 101", assignment.getAdminDetails().getOfficeLocation());
+    assertTrue(assignment.getAdminDetails().isDepartmentHead());
+  }
 }

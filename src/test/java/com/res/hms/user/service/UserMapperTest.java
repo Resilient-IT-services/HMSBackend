@@ -2,17 +2,16 @@ package com.res.hms.user.service;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
-import com.res.hms.doctor.repository.DoctorRepository;
 import com.res.hms.domain.Role;
 import com.res.hms.domain.RoleCode;
 import com.res.hms.domain.UserAccount;
 import com.res.hms.domain.UserRoleAssignment;
-import com.res.hms.nurse.repository.NurseRepository;
-import com.res.hms.repository.*;
+import com.res.hms.repository.HospitalRepository;
 import java.util.UUID;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
-import org.mockito.InjectMocks;
+import org.mapstruct.factory.Mappers;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
@@ -20,18 +19,13 @@ import org.mockito.junit.jupiter.MockitoExtension;
 class UserMapperTest {
 
   @Mock private HospitalRepository hospitalRepository;
-  @Mock private DoctorRepository doctorRepository;
-  @Mock private NurseRepository nurseRepository;
-  @Mock private ReceptionistProfileRepository receptionistProfileRepository;
-  @Mock private DoctorHospitalDetailsRepository doctorHospitalDetailsRepository;
-  @Mock private AdminHospitalDetailsRepository adminHospitalDetailsRepository;
-  @Mock private NurseHospitalDetailsRepository nurseHospitalDetailsRepository;
-  @Mock private PharmacistHospitalDetailsRepository pharmacistHospitalDetailsRepository;
-  @Mock private ReceptionistHospitalDetailsRepository receptionistHospitalDetailsRepository;
-  @Mock private PharmacistProfileRepository pharmacistProfileRepository;
-  @Mock private LabTechProfileRepository labTechProfileRepository;
 
-  @InjectMocks private UserMapper userMapper;
+  private UserMapper userMapper = Mappers.getMapper(UserMapper.class);
+
+  @BeforeEach
+  void setUp() {
+    userMapper.hospitalRepository = hospitalRepository;
+  }
 
   private final UUID hospitalId = UUID.nameUUIDFromBytes("hospital".getBytes());
   private final UUID doctorUserId = UUID.nameUUIDFromBytes("doctorUser".getBytes());

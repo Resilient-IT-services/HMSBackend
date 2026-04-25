@@ -5,6 +5,7 @@ import jakarta.persistence.Entity;
 import jakarta.persistence.FetchType;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
+import jakarta.persistence.OneToOne;
 import jakarta.persistence.Table;
 import java.util.UUID;
 import lombok.Getter;
@@ -32,4 +33,19 @@ public class UserRoleAssignment extends BaseEntity {
   @ManyToOne(fetch = FetchType.EAGER, optional = false)
   @JoinColumn(name = "role_id", nullable = false)
   private Role role;
+
+  @OneToOne(mappedBy = "assignment", fetch = FetchType.LAZY)
+  private DoctorHospitalDetails doctorDetails;
+
+  @OneToOne(mappedBy = "assignment", fetch = FetchType.LAZY)
+  private NurseHospitalDetails nurseDetails;
+
+  @OneToOne(mappedBy = "assignment", fetch = FetchType.LAZY)
+  private AdminHospitalDetails adminDetails;
+
+  @OneToOne(mappedBy = "assignment", fetch = FetchType.LAZY)
+  private PharmacistHospitalDetails pharmacistDetails;
+
+  @OneToOne(mappedBy = "assignment", fetch = FetchType.LAZY)
+  private ReceptionistHospitalDetails receptionistDetails;
 }
