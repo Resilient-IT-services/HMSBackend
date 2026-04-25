@@ -1,6 +1,8 @@
 package com.res.hms.api;
 
 import com.res.hms.common.api.ApiResponse;
+import com.res.hms.common.api.PageResponse;
+import com.res.hms.domain.RoleCode;
 import com.res.hms.user.dto.UserFullProfileDTO;
 import com.res.hms.user.dto.UserRequestDTO;
 import com.res.hms.user.dto.UserSummaryDTO;
@@ -29,9 +31,15 @@ public class UserController {
 
   @GetMapping
   @PreAuthorize("hasAnyRole('SUPER_ADMIN', 'ADMIN')")
-  public ApiResponse<List<UserSummaryDTO>> list(
+  public ApiResponse<PageResponse<UserSummaryDTO>> list(
+      @RequestParam(defaultValue = "0") int page,
+      @RequestParam(defaultValue = "20") int size,
+      @RequestParam(required = false) String search,
+      @RequestParam(required = false) RoleCode role,
+      @RequestParam(required = false) Boolean active,
       @RequestParam(defaultValue = "false") boolean includeDeleted) {
-    return ApiResponse.success(userService.listUsers(includeDeleted));
+    return ApiResponse.success(
+        userService.listUsers(page, Math.min(size, 100), search, role, active, includeDeleted));
   }
 
   @GetMapping("/{id}/full-profile")

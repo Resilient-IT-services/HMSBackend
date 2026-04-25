@@ -1,6 +1,7 @@
 package com.res.hms.hospital.service;
 
 import com.res.hms.common.exception.ApiException;
+import com.res.hms.common.api.PageResponse;
 import com.res.hms.domain.Hospital;
 import com.res.hms.domain.HospitalStatus;
 import com.res.hms.hospital.dto.CreateHospitalRequest;
@@ -9,6 +10,8 @@ import com.res.hms.repository.HospitalRepository;
 import java.util.List;
 import java.util.UUID;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.jpa.domain.Specification;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -58,8 +61,17 @@ public class HospitalService {
   }
 
   @Transactional(readOnly = true)
-  public List<HospitalResponse> list() {
-    return hospitalRepository.findAll().stream().map(this::toResponse).toList();
+  public PageResponse<HospitalResponse> list(int page, int size, String name, HospitalStatus status) {
+    Specification<Hospital> spec = Specification.where(null);
+    if (name != null && !name.isBlank()) {
+      spec = spec.and((root, query, cb) -> cb.like(cb.lower(root.get("name")), "%" + name.toLowerCase() + "%"));
+    }
+    if (status != null) {
+      spec = spec.and((root, query, cb) -> cb.equal(root.get("status"), status));
+    }
+
+    return PageResponse.from(
+        hospitalRepository.findAll(spec, PageRequest.of(page, size)).map(this::toResponse));
   }
 
   private HospitalResponse toResponse(Hospital hospital) {

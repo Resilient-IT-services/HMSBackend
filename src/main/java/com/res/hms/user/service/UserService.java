@@ -11,11 +11,14 @@ import com.res.hms.repository.*;
 import com.res.hms.user.dto.UserFullProfileDTO;
 import com.res.hms.user.dto.UserRequestDTO;
 import com.res.hms.user.dto.UserSummaryDTO;
+import com.res.hms.common.api.PageResponse;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Set;
 import java.util.UUID;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.jpa.domain.Specification;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
@@ -409,7 +412,8 @@ public class UserService {
   }
 
   @Transactional(readOnly = true)
-  public List<UserSummaryDTO> listUsers(boolean includeDeleted) {
+  public PageResponse<UserSummaryDTO> listUsers(
+      int page, int size, String search, RoleCode role, Boolean active, boolean includeDeleted) {
     UUID hospitalId = hospitalContext.getHospitalIdOrNull();
     boolean isSuperAdmin = hospitalContext.isSuperAdmin();
 
@@ -418,17 +422,14 @@ public class UserService {
           "BUSINESS_RULE_VIOLATION", "Please select a hospital first", HttpStatus.BAD_REQUEST);
     }
 
-    List<UserAccount> users;
-    if (isSuperAdmin && hospitalId == null) {
-      users =
-          includeDeleted
-              ? userAccountRepository.findAll()
-              : userAccountRepository.findAllByDeletedFalse();
-    } else {
-      users = userAccountRepository.findAllByHospitalId(hospitalId);
-    }
+    Boolean deleted = includeDeleted ? null : false;
+    String searchTrimmed = (search != null && !search.isBlank()) ? search.trim() : null;
 
-    return users.stream().map(userMapper::toSummaryDTO).toList();
+    return PageResponse.from(
+        userAccountRepository
+            .searchUsers(
+                hospitalId, active, deleted, role, searchTrimmed, PageRequest.of(page, size))
+            .map(userMapper::toSummaryDTO));
   }
 
   @Transactional(readOnly = true)

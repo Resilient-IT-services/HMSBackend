@@ -65,10 +65,10 @@ class HospitalServiceTest {
     hospital.setStatus(HospitalStatus.ACTIVE);
     when(hospitalRepository.findAll()).thenReturn(List.of(hospital));
 
-    var response = hospitalService.list();
+    var response = hospitalService.list(1,10,null,null);
 
     assertEquals(1, response.size());
-    assertEquals("TEST", response.getFirst().code());
+    assertEquals("TEST", response.content().getFirst().code());
   }
 
   @Test

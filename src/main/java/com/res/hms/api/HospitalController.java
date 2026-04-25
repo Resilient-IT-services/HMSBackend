@@ -1,6 +1,8 @@
 package com.res.hms.api;
 
 import com.res.hms.common.api.ApiResponse;
+import com.res.hms.common.api.PageResponse;
+import com.res.hms.domain.HospitalStatus;
 import com.res.hms.hospital.dto.CreateHospitalRequest;
 import com.res.hms.hospital.dto.HospitalResponse;
 import com.res.hms.hospital.service.HospitalService;
@@ -14,6 +16,7 @@ import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 @Tag(name = "Hospitals")
@@ -32,8 +35,12 @@ public class HospitalController {
 
   @GetMapping
   @PreAuthorize("hasRole('SUPER_ADMIN')")
-  public ApiResponse<List<HospitalResponse>> list() {
-    return ApiResponse.success(hospitalService.list());
+  public ApiResponse<PageResponse<HospitalResponse>> list(
+      @RequestParam(defaultValue = "0") int page,
+      @RequestParam(defaultValue = "20") int size,
+      @RequestParam(required = false) String name,
+      @RequestParam(required = false) HospitalStatus status) {
+    return ApiResponse.success(hospitalService.list(page, Math.min(size, 100), name, status));
   }
 
   @org.springframework.web.bind.annotation.PutMapping("/{id}")
