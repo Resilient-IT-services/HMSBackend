@@ -22,7 +22,11 @@ public class HospitalDTO {
   private String code;
 
   private String address;
+  private String city;
+  private String state;
+  private String pincode;
   private String gstin;
+  private String registrationNo;
   private HospitalStatus status;
   private HospitalSettings settings;
 }

@@ -58,8 +58,12 @@ public class HospitalService {
         .name(hospital.getName())
         .code(hospital.getCode())
         .address(hospital.getAddress())
+        .city(hospital.getCity())
+        .state(hospital.getState())
+        .pincode(hospital.getPincode())
         .status(hospital.getStatus())
         .gstin(hospital.getGstin())
+        .registrationNo(hospital.getRegistrationNo())
         .settings(hospital.getSettings())
         .build();
   }

@@ -78,7 +78,11 @@ public class HospitalAggregateService {
   private void updateHospitalFields(Hospital hospital, HospitalDTO dto) {
     hospital.setName(dto.getName());
     hospital.setAddress(dto.getAddress());
+    hospital.setCity(dto.getCity());
+    hospital.setState(dto.getState());
+    hospital.setPincode(dto.getPincode());
     hospital.setGstin(dto.getGstin());
+    hospital.setRegistrationNo(dto.getRegistrationNo());
     if (dto.getSettings() != null) {
       hospital.setSettings(dto.getSettings());
     }
