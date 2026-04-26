@@ -33,5 +33,4 @@ public class AppointmentDTO {
 
   private AppointmentStatus status;
   private String notes;
-  private LocalDateTime createdAt;
 }
