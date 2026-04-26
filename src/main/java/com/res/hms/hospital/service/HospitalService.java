@@ -61,7 +61,6 @@ public class HospitalService {
         .status(hospital.getStatus())
         .gstin(hospital.getGstin())
         .settings(hospital.getSettings())
-        .createdAt(hospital.getCreatedAt())
         .build();
   }
 }

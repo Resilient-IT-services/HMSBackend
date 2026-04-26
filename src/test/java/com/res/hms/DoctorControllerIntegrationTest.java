@@ -42,7 +42,11 @@ class DoctorControllerIntegrationTest {
   @Autowired private PasswordEncoder passwordEncoder;
   @Autowired private TestDataHelper testDataHelper;
   @Autowired private com.res.hms.appointment.repository.AppointmentRepository appointmentRepository;
-  @Autowired private com.res.hms.repository.DoctorAvailabilityExceptionRepository availabilityExceptionRepository;
+
+  @Autowired
+  private com.res.hms.repository.DoctorAvailabilityExceptionRepository
+      availabilityExceptionRepository;
+
   @Autowired private com.res.hms.repository.HospitalRepository hospitalRepository;
 
   private UUID hospitalId;
@@ -143,7 +147,8 @@ class DoctorControllerIntegrationTest {
     LocalDate tuesday = LocalDate.of(2026, 4, 28); // Tuesday
 
     // 1. Create a MODIFIED exception for Tuesday: 2-4 PM
-    com.res.hms.domain.DoctorAvailabilityException ex = new com.res.hms.domain.DoctorAvailabilityException();
+    com.res.hms.domain.DoctorAvailabilityException ex =
+        new com.res.hms.domain.DoctorAvailabilityException();
     ex.setDoctor(userAccountRepository.findByUsername("avail_dr").get().getDoctor());
     ex.setHospital(hospitalRepository.findById(hospitalId).orElseThrow());
     ex.setDate(tuesday);

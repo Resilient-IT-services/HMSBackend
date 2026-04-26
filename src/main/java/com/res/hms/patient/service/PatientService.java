@@ -54,7 +54,6 @@ public class PatientService {
         .dob(patient.getDob())
         .phone(patient.getPhone())
         .address(patient.getAddress())
-        .createdAt(patient.getCreatedAt())
         .build();
   }
 }

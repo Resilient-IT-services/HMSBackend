@@ -3,7 +3,6 @@ package com.res.hms.patient.dto;
 import com.res.hms.domain.Gender;
 import jakarta.validation.constraints.NotBlank;
 import java.time.LocalDate;
-import java.time.LocalDateTime;
 import java.util.UUID;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -24,6 +23,6 @@ public class PatientDTO {
   private Gender gender;
   private LocalDate dob;
   private String phone;
+  private String bloodGroup;
   private String address;
-  private LocalDateTime createdAt;
 }

@@ -73,7 +73,6 @@ public class AppointmentService {
         .appointmentTime(appointment.getAppointmentTime())
         .status(appointment.getStatus())
         .notes(appointment.getNotes())
-        .createdAt(appointment.getCreatedAt())
         .build();
   }
 }

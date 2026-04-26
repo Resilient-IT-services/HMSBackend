@@ -1,7 +1,6 @@
 package com.res.hms.audit.dto;
 
 import com.res.hms.domain.AuditAction;
-import java.time.LocalDateTime;
 import java.util.UUID;
 
 public record AuditLogResponse(

@@ -287,7 +287,6 @@ public class DoctorService {
         doctor.getSpecialization(),
         consultationFee,
         followUpDays,
-        doctor.getEducation(),
-        doctor.getCreatedAt());
+        doctor.getEducation());
   }
 }

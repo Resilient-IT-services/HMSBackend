@@ -59,7 +59,6 @@ public class AuditLogService {
         auditLog.getEntityId(),
         auditLog.getAction(),
         auditLog.getPerformedBy(),
-        auditLog.getDetails(),
-        auditLog.getCreatedAt());
+        auditLog.getDetails());
   }
 }

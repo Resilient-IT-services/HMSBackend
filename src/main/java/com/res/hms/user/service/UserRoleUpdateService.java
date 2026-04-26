@@ -70,7 +70,8 @@ public class UserRoleUpdateService {
                         a, raDto.getReceptionistDetails());
                 case ADMIN -> adminProfileService.updateHospitalDetails(a, raDto.getAdminDetails());
                 default -> { }
-              }
+                }
+
             });
   }
 

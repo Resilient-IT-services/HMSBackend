@@ -2,7 +2,6 @@ package com.res.hms.hospital.dto;
 
 import com.res.hms.domain.HospitalStatus;
 import jakarta.validation.constraints.NotBlank;
-import java.time.LocalDateTime;
 import java.util.UUID;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -26,5 +25,4 @@ public class HospitalDTO {
   private String gstin;
   private HospitalStatus status;
   private HospitalSettings settings;
-  private LocalDateTime createdAt;
 }

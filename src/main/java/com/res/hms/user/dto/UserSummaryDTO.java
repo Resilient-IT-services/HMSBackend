@@ -3,7 +3,6 @@ package com.res.hms.user.dto;
 import com.res.hms.domain.Gender;
 import io.swagger.v3.oas.annotations.media.Schema;
 import java.time.LocalDate;
-import java.time.LocalDateTime;
 import java.util.List;
 import java.util.UUID;
 import lombok.AllArgsConstructor;

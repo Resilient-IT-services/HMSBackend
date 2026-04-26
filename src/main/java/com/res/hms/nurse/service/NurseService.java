@@ -105,7 +105,6 @@ public class NurseService {
         user != null ? user.getGender() : null,
         user != null ? user.getDob() : null,
         user != null ? user.getPhone() : null,
-        department,
-        nurse.getCreatedAt());
+        department);
   }
 }
