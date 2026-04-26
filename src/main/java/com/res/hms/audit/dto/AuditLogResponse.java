@@ -10,5 +10,4 @@ public record AuditLogResponse(
     UUID entityId,
     AuditAction action,
     UUID performedBy,
-    AuditDetail details,
-    LocalDateTime createdAt) {}
+    AuditDetail details) {}
