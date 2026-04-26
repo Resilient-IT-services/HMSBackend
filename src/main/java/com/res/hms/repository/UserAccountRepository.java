@@ -28,11 +28,11 @@ public interface UserAccountRepository
       "AND (:active IS NULL OR u.active = :active) " +
       "AND (:deleted IS NULL OR u.deleted = :deleted) " +
       "AND (:roleCode IS NULL OR a.role.code = :roleCode) " +
-      "AND (:search IS NULL OR " +
-      "     LOWER(u.fullName) LIKE LOWER(CONCAT('%', :search, '%')) OR " +
-      "     LOWER(u.email) LIKE LOWER(CONCAT('%', :search, '%')) OR " +
-      "     LOWER(u.username) LIKE LOWER(CONCAT('%', :search, '%')) OR " +
-      "     LOWER(h.name) LIKE LOWER(CONCAT('%', :search, '%')))")
+      "AND (CAST(:search AS string) IS NULL OR " +
+      "     LOWER(u.fullName) LIKE LOWER(CONCAT('%', CAST(:search AS string), '%')) OR " +
+      "     LOWER(u.email) LIKE LOWER(CONCAT('%', CAST(:search AS string), '%')) OR " +
+      "     LOWER(u.username) LIKE LOWER(CONCAT('%', CAST(:search AS string), '%')) OR " +
+      "     LOWER(h.name) LIKE LOWER(CONCAT('%', CAST(:search AS string), '%')))")
   Page<UserAccount> searchUsers(
       @Param("hospitalId") UUID hospitalId,
       @Param("active") Boolean active,
