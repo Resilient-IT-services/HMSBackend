@@ -85,7 +85,7 @@ class PatientControllerIntegrationTest {
     mockMvc
         .perform(get("/api/v1/auth/me").session(session))
         .andExpect(status().isOk())
-        .andExpect(jsonPath("$.data.detailedMemberships[0].hospitalCode").value("TEST"));
+        .andExpect(jsonPath("$.data.memberships[0].hospitalCode").value("TEST"));
 
     // Try to access patients without selecting hospital -> should fail with 400
     mockMvc

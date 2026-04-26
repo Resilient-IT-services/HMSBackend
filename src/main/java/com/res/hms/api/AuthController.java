@@ -2,7 +2,7 @@ package com.res.hms.api;
 
 import com.res.hms.common.api.ApiResponse;
 import com.res.hms.user.dto.LoginRequest;
-import com.res.hms.user.dto.UserFullProfileDTO;
+import com.res.hms.user.dto.UserDetailsDTO;
 import com.res.hms.user.service.AuthService;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.servlet.http.HttpServletRequest;
@@ -32,14 +32,14 @@ public class AuthController {
     return ApiResponse.success(null);
   }
 
+  @GetMapping("/me")
+  public ApiResponse<UserDetailsDTO> me() {
+    return ApiResponse.success(authService.currentUser());
+  }
+
   @PostMapping("/logout")
   public ApiResponse<Void> logout(HttpServletRequest request, HttpServletResponse response) {
     authService.logout(request, response);
     return ApiResponse.success(null);
-  }
-
-  @GetMapping("/me")
-  public ApiResponse<UserFullProfileDTO> getMyProfile() {
-    return ApiResponse.success(authService.currentUser());
   }
 }

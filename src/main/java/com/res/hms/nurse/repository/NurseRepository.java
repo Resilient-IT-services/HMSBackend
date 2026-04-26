@@ -12,6 +12,15 @@ import org.springframework.data.repository.query.Param;
 public interface NurseRepository extends JpaRepository<Nurse, UUID> {
   Optional<Nurse> findByUserId(UUID userId);
 
+  boolean existsByNursingLicenseNo(String nursingLicenseNo);
+
+  boolean existsByNursingLicenseNoAndIdNot(String nursingLicenseNo, UUID id);
+
+  @Query(
+      "SELECT COUNT(n) > 0 FROM Nurse n WHERE n.nursingLicenseNo = :nursingLicenseNo AND n.user.id <> :userId")
+  boolean existsByNursingLicenseNoAndUserIdNot(
+      @Param("nursingLicenseNo") String nursingLicenseNo, @Param("userId") UUID userId);
+
   @Query(
       "SELECT n FROM Nurse n JOIN n.user u JOIN u.assignments a "
           + "WHERE a.hospitalId = :hospitalId AND a.role.code = com.res.hms.domain.RoleCode.NURSE "

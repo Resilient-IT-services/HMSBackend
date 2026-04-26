@@ -20,14 +20,10 @@ import com.res.hms.user.dto.HospitalMembershipResponse;
 import com.res.hms.user.dto.NurseHospitalDetailsDTO;
 import com.res.hms.user.dto.PharmacistHospitalDetailsDTO;
 import com.res.hms.user.dto.ReceptionistHospitalDetailsDTO;
-import com.res.hms.user.dto.UserFullProfileDTO;
-import com.res.hms.user.dto.UserProfileResponse;
+import com.res.hms.user.dto.UserDetailsDTO;
 import com.res.hms.user.dto.UserSummaryDTO;
 import java.util.Collections;
-import java.util.HashMap;
-import java.util.HashSet;
 import java.util.List;
-import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
 import java.util.stream.Collectors;
@@ -46,23 +42,16 @@ public abstract class UserMapper {
   @Autowired protected HospitalRepository hospitalRepository;
   @Autowired protected com.res.hms.common.tenant.HospitalContext hospitalContext;
 
-  @Mapping(target = "memberships", expression = "java(mapMemberships(user))")
+  @Mapping(target = "memberships", expression = "java(mapSummaryMemberships(user))")
   public abstract UserSummaryDTO toSummaryDTO(UserAccount user);
 
   @Mapping(target = "memberships", expression = "java(mapMemberships(user))")
-  @Mapping(target = "detailedMemberships", expression = "java(mapDetailedMemberships(user))")
-  @Mapping(target = "hospitalId", expression = "java(hospitalContext.getHospitalIdOrNull())")
   @Mapping(target = "doctorInfo", source = "doctor")
   @Mapping(target = "nurseInfo", source = "nurse")
   @Mapping(target = "pharmacistInfo", source = "pharmacistProfile")
   @Mapping(target = "labTechInfo", source = "labTechProfile")
   @Mapping(target = "receptionistInfo", source = "receptionistProfile")
-  public abstract UserFullProfileDTO toFullProfileDTO(UserAccount user);
-
-  @Mapping(target = "userId", source = "id")
-  @Mapping(target = "hospitalId", expression = "java(hospitalContext.getHospitalIdOrNull())")
-  @Mapping(target = "hospitals", expression = "java(mapHospitalMemberships(user))")
-  public abstract UserProfileResponse toUserProfileResponse(UserAccount user);
+  public abstract UserDetailsDTO toDetailsDTO(UserAccount user);
 
   protected List<HospitalMembershipResponse> mapHospitalMemberships(UserAccount user) {
     if (user.getAssignments() == null) {
@@ -77,9 +66,7 @@ public abstract class UserMapper {
             entry -> {
               UUID hospitalId = entry.getKey();
               var hospital =
-                  hospitalId == null
-                      ? null
-                      : hospitalRepository.findById(hospitalId).orElse(null);
+                  hospitalId == null ? null : hospitalRepository.findById(hospitalId).orElse(null);
 
               Set<RoleCode> roles =
                   entry.getValue().stream()
@@ -108,19 +95,39 @@ public abstract class UserMapper {
   @Mapping(target = "adminDetails", source = "adminDetails")
   @Mapping(target = "pharmacistDetails", source = "pharmacistDetails")
   @Mapping(target = "receptionistDetails", source = "receptionistDetails")
-  public abstract UserFullProfileDTO.DetailedRoleAssignmentDTO toDetailedRoleAssignmentDTO(
+  @Mapping(target = "schedules", source = "schedules")
+  @Mapping(
+      target = "availabilityExceptions",
+      expression = "java(mapAvailabilityExceptions(assignment))")
+  public abstract UserDetailsDTO.RoleAssignmentDTO toRoleAssignmentDTO(
       UserRoleAssignment assignment);
 
-  public abstract UserFullProfileDTO.DoctorInfo toDoctorInfo(Doctor doctor);
+  protected List<com.res.hms.doctor.dto.AvailabilityExceptionDTO> mapAvailabilityExceptions(
+      UserRoleAssignment assignment) {
+    if (assignment.getUser() == null || assignment.getUser().getDoctor() == null) {
+      return null;
+    }
+    return assignment.getUser().getDoctor().getAvailabilityExceptions().stream()
+        .filter(ex -> ex.getHospital().getId().equals(assignment.getHospitalId()))
+        .map(this::toAvailabilityExceptionDTO)
+        .toList();
+  }
 
-  public abstract UserFullProfileDTO.NurseInfo toNurseInfo(Nurse nurse);
+  public abstract UserDetailsDTO.DoctorInfo toDoctorInfo(Doctor doctor);
 
-  public abstract UserFullProfileDTO.PharmacistInfo toPharmacistInfo(PharmacistProfile profile);
+  public abstract UserDetailsDTO.NurseInfo toNurseInfo(Nurse nurse);
 
-  public abstract UserFullProfileDTO.LabTechInfo toLabTechInfo(LabTechProfile profile);
+  public abstract UserDetailsDTO.PharmacistInfo toPharmacistInfo(PharmacistProfile profile);
 
-  public abstract UserFullProfileDTO.ReceptionistInfo toReceptionistInfo(
-      ReceptionistProfile profile);
+  public abstract UserDetailsDTO.LabTechInfo toLabTechInfo(LabTechProfile profile);
+
+  public abstract UserDetailsDTO.ReceptionistInfo toReceptionistInfo(ReceptionistProfile profile);
+
+  public abstract com.res.hms.doctor.dto.ScheduleDTO toScheduleDTO(
+      com.res.hms.domain.DoctorSchedule schedule);
+
+  public abstract com.res.hms.doctor.dto.AvailabilityExceptionDTO toAvailabilityExceptionDTO(
+      com.res.hms.domain.DoctorAvailabilityException unavailability);
 
   public abstract DoctorHospitalDetailsDTO toDoctorHospitalDetailsDTO(
       DoctorHospitalDetails details);
@@ -135,28 +142,38 @@ public abstract class UserMapper {
   public abstract ReceptionistHospitalDetailsDTO toReceptionistHospitalDetailsDTO(
       ReceptionistHospitalDetails details);
 
-  protected List<UserSummaryDTO.HospitalMembershipDTO> mapMemberships(UserAccount user) {
+  protected List<UserSummaryDTO.HospitalMembershipDTO> mapSummaryMemberships(UserAccount user) {
     if (user.getAssignments() == null) {
       return Collections.emptyList();
     }
 
-    Map<UUID, Set<RoleCode>> rolesByHospital = new HashMap<>();
-    for (UserRoleAssignment assignment : user.getAssignments()) {
-      rolesByHospital
-          .computeIfAbsent(assignment.getHospitalId(), k -> new HashSet<>())
-          .add(assignment.getRole().getCode());
-    }
-
-    return rolesByHospital.entrySet().stream()
+    return user.getAssignments().stream()
+        .collect(Collectors.groupingBy(UserRoleAssignment::getHospitalId))
+        .entrySet()
+        .stream()
         .map(
-            e ->
-                new UserSummaryDTO.HospitalMembershipDTO(
-                    e.getKey(), e.getValue().stream().map(Enum::name).toList()))
+            e -> {
+              UUID hospitalId = e.getKey();
+              List<UserRoleAssignment> hospitalAssignments = e.getValue();
+              UserRoleAssignment first = hospitalAssignments.getFirst();
+
+              List<String> roles =
+                  hospitalAssignments.stream().map(a -> a.getRole().getCode().name()).toList();
+
+              String specialization =
+                  user.getDoctor() != null ? user.getDoctor().getSpecialization() : null;
+              String hospitalName =
+                  first.getHospital() != null ? first.getHospital().getName() : "Global Access";
+
+              String departmentName = first.getDepartmentName();
+
+              return new UserSummaryDTO.HospitalMembershipDTO(
+                  hospitalId, hospitalName, roles, specialization, departmentName);
+            })
         .collect(Collectors.toList());
   }
 
-  protected List<UserFullProfileDTO.DetailedHospitalMembershipDTO> mapDetailedMemberships(
-      UserAccount user) {
+  protected List<UserDetailsDTO.HospitalMembershipDTO> mapMemberships(UserAccount user) {
     if (user.getAssignments() == null) {
       return Collections.emptyList();
     }
@@ -169,17 +186,15 @@ public abstract class UserMapper {
             entry -> {
               UUID hospitalId = entry.getKey();
               var hospital =
-                  hospitalId == null
-                      ? null
-                      : hospitalRepository.findById(hospitalId).orElse(null);
+                  hospitalId == null ? null : hospitalRepository.findById(hospitalId).orElse(null);
 
               String hospitalName = hospital != null ? hospital.getName() : "Global Access";
               String hospitalCode = hospital != null ? hospital.getCode() : "GLOBAL";
 
-              List<UserFullProfileDTO.DetailedRoleAssignmentDTO> roleAssignments =
-                  entry.getValue().stream().map(this::toDetailedRoleAssignmentDTO).toList();
+              List<UserDetailsDTO.RoleAssignmentDTO> roleAssignments =
+                  entry.getValue().stream().map(this::toRoleAssignmentDTO).toList();
 
-              return UserFullProfileDTO.DetailedHospitalMembershipDTO.builder()
+              return UserDetailsDTO.HospitalMembershipDTO.builder()
                   .hospitalId(hospitalId)
                   .hospitalName(hospitalName)
                   .hospitalCode(hospitalCode)

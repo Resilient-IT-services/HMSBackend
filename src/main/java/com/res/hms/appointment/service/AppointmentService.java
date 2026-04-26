@@ -1,22 +1,18 @@
 package com.res.hms.appointment.service;
 
-import com.res.hms.appointment.dto.AppointmentResponse;
-import com.res.hms.appointment.dto.CreateAppointmentRequest;
+import com.res.hms.appointment.dto.AppointmentDTO;
 import com.res.hms.appointment.dto.UpdateAppointmentStatusRequest;
 import com.res.hms.appointment.repository.AppointmentRepository;
 import com.res.hms.common.api.PageResponse;
 import com.res.hms.common.audit.Auditable;
+import com.res.hms.common.exception.ApiException;
 import com.res.hms.common.tenant.HospitalContext;
 import com.res.hms.common.util.ResourceLookup;
-import com.res.hms.doctor.service.DoctorService;
 import com.res.hms.domain.Appointment;
-import com.res.hms.domain.AppointmentStatus;
-import com.res.hms.domain.Doctor;
-import com.res.hms.domain.Patient;
-import com.res.hms.patient.service.PatientService;
 import java.util.UUID;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.PageRequest;
+import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -25,70 +21,59 @@ import org.springframework.transaction.annotation.Transactional;
 public class AppointmentService {
 
   private final AppointmentRepository appointmentRepository;
-  private final PatientService patientService;
-  private final DoctorService doctorService;
   private final HospitalContext hospitalContext;
   private final ResourceLookup resourceLookup;
 
-  @Transactional
-  @Auditable(entity = "appointment", action = "CREATE")
-  public AppointmentResponse create(CreateAppointmentRequest request) {
+  @Transactional(readOnly = true)
+  public AppointmentDTO getById(UUID id) {
     UUID hospitalId = hospitalContext.requireHospitalId();
-    Patient patient = patientService.requirePatient(request.patientId(), hospitalId);
-    Doctor doctor = doctorService.requireDoctor(request.doctorId(), hospitalId);
-
-    Appointment appointment = new Appointment();
-    appointment.setHospitalId(hospitalId);
-    appointment.setPatient(patient);
-    appointment.setDoctor(doctor);
-    appointment.setAppointmentTime(request.appointmentTime());
-    appointment.setStatus(AppointmentStatus.SCHEDULED);
-    appointment.setNotes(request.notes());
-    appointmentRepository.save(appointment);
-
-    return toResponse(appointment);
+    return appointmentRepository
+        .findByIdAndHospitalId(id, hospitalId)
+        .map(this::toDto)
+        .orElseThrow(
+            () -> new ApiException("NOT_FOUND", "Appointment not found", HttpStatus.NOT_FOUND));
   }
 
   @Transactional(readOnly = true)
-  public PageResponse<AppointmentResponse> list(int page, int size, String search) {
+  public PageResponse<AppointmentDTO> list(int page, int size, String search) {
     UUID hospitalId = hospitalContext.requireHospitalId();
     PageRequest pageRequest = PageRequest.of(page, size);
 
     if (search != null && !search.trim().isEmpty()) {
+      String searchPattern = "%" + search.trim().toLowerCase() + "%";
       return PageResponse.from(
-          appointmentRepository
-              .search(hospitalId, search.trim(), pageRequest)
-              .map(this::toResponse));
+          appointmentRepository.search(hospitalId, searchPattern, pageRequest).map(this::toDto));
     }
 
     return PageResponse.from(
         appointmentRepository
             .findAllByHospitalIdOrderByAppointmentTimeDesc(hospitalId, pageRequest)
-            .map(this::toResponse));
+            .map(this::toDto));
   }
 
   @Transactional
   @Auditable(entity = "appointment", action = "UPDATE_STATUS")
-  public AppointmentResponse updateStatus(UUID id, UpdateAppointmentStatusRequest request) {
+  public AppointmentDTO updateStatus(UUID id, UpdateAppointmentStatusRequest request) {
     UUID hospitalId = hospitalContext.requireHospitalId();
     Appointment appointment =
         resourceLookup.findRequired(
             id, hospitalId, appointmentRepository::findByIdAndHospitalId, "Appointment");
 
     appointment.setStatus(request.status());
-    return toResponse(appointmentRepository.save(appointment));
+    return toDto(appointmentRepository.save(appointment));
   }
 
-  private AppointmentResponse toResponse(Appointment appointment) {
-    return new AppointmentResponse(
-        appointment.getId(),
-        appointment.getPatient().getId(),
-        appointment.getPatient().getFullName(),
-        appointment.getDoctor().getId(),
-        appointment.getDoctor().getFullName(),
-        appointment.getAppointmentTime(),
-        appointment.getStatus(),
-        appointment.getNotes(),
-        appointment.getCreatedAt());
+  public AppointmentDTO toDto(Appointment appointment) {
+    return AppointmentDTO.builder()
+        .id(appointment.getId())
+        .patientId(appointment.getPatient().getId())
+        .patientName(appointment.getPatient().getFullName())
+        .doctorId(appointment.getDoctor().getId())
+        .doctorName(appointment.getDoctor().getFullName())
+        .appointmentTime(appointment.getAppointmentTime())
+        .status(appointment.getStatus())
+        .notes(appointment.getNotes())
+        .createdAt(appointment.getCreatedAt())
+        .build();
   }
 }

@@ -2,8 +2,8 @@ package com.res.hms.api;
 
 import com.res.hms.common.api.ApiResponse;
 import com.res.hms.common.api.PageResponse;
-import com.res.hms.hospital.dto.CreateHospitalRequest;
-import com.res.hms.hospital.dto.HospitalResponse;
+import com.res.hms.hospital.dto.HospitalDTO;
+import com.res.hms.hospital.service.HospitalAggregateService;
 import com.res.hms.hospital.service.HospitalService;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
@@ -11,7 +11,9 @@ import java.util.UUID;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
@@ -24,16 +26,17 @@ import org.springframework.web.bind.annotation.RestController;
 public class HospitalController {
 
   private final HospitalService hospitalService;
+  private final HospitalAggregateService hospitalAggregateService;
 
   @PostMapping
   @PreAuthorize("hasRole('SUPER_ADMIN')")
-  public ApiResponse<HospitalResponse> create(@Valid @RequestBody CreateHospitalRequest request) {
-    return ApiResponse.success(hospitalService.create(request));
+  public ApiResponse<HospitalDTO> create(@Valid @RequestBody HospitalDTO request) {
+    return ApiResponse.success(hospitalAggregateService.saveHospitalAggregate(request));
   }
 
   @GetMapping
   @PreAuthorize("hasRole('SUPER_ADMIN')")
-  public ApiResponse<PageResponse<HospitalResponse>> list(
+  public ApiResponse<PageResponse<HospitalDTO>> list(
       @RequestParam(defaultValue = "0") int page,
       @RequestParam(defaultValue = "20") int size,
       @RequestParam(required = false) String name,
@@ -41,11 +44,17 @@ public class HospitalController {
     return ApiResponse.success(hospitalService.list(page, Math.min(size, 100), name, status));
   }
 
-  @org.springframework.web.bind.annotation.PutMapping("/{id}")
+  @GetMapping("/{id}")
   @PreAuthorize("hasRole('SUPER_ADMIN')")
-  public ApiResponse<HospitalResponse> update(
-      @org.springframework.web.bind.annotation.PathVariable UUID id,
-      @Valid @RequestBody CreateHospitalRequest request) {
-    return ApiResponse.success(hospitalService.update(id, request));
+  public ApiResponse<HospitalDTO> get(@PathVariable UUID id) {
+    return ApiResponse.success(hospitalService.getById(id));
+  }
+
+  @PutMapping("/{id}")
+  @PreAuthorize("hasRole('SUPER_ADMIN')")
+  public ApiResponse<HospitalDTO> update(
+      @PathVariable UUID id, @Valid @RequestBody HospitalDTO request) {
+    request.setId(id);
+    return ApiResponse.success(hospitalAggregateService.saveHospitalAggregate(request));
   }
 }

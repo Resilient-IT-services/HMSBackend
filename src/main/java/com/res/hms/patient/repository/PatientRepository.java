@@ -9,10 +9,14 @@ import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
 public interface PatientRepository extends BaseRepository<Patient> {
+  boolean existsByPatientCode(String patientCode);
+
+  boolean existsByPatientCodeAndIdNot(String patientCode, UUID id);
+
   @Query(
       "SELECT p FROM Patient p WHERE p.hospitalId = :hospitalId AND "
-          + "(LOWER(p.fullName) LIKE LOWER(CONCAT('%', :query, '%')) OR "
-          + "p.phone LIKE CONCAT('%', :query, '%'))")
+          + "(LOWER(p.fullName) LIKE :query OR "
+          + "p.phone LIKE :query)")
   Page<Patient> search(
       @Param("hospitalId") UUID hospitalId, @Param("query") String query, Pageable pageable);
 }

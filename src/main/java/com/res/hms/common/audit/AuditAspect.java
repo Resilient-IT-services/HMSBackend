@@ -31,11 +31,7 @@ public class AuditAspect {
         AuditDetail.builder().after(result != null ? Map.of("data", result) : null).build();
 
     auditLogService.record(
-        hospitalId,
-        auditable.entity(),
-        entityId,
-        AuditAction.valueOf(auditable.action()),
-        details);
+        hospitalId, auditable.entity(), entityId, AuditAction.valueOf(auditable.action()), details);
   }
 
   private UUID extractId(Object result) {

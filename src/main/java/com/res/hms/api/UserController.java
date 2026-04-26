@@ -2,9 +2,9 @@ package com.res.hms.api;
 
 import com.res.hms.common.api.ApiResponse;
 import com.res.hms.common.api.PageResponse;
-import com.res.hms.user.dto.UserFullProfileDTO;
-import com.res.hms.user.dto.UserRequestDTO;
+import com.res.hms.user.dto.UserDetailsDTO;
 import com.res.hms.user.dto.UserSummaryDTO;
+import com.res.hms.user.service.UserAggregateService;
 import com.res.hms.user.service.UserService;
 import jakarta.validation.Valid;
 import java.util.UUID;
@@ -26,6 +26,7 @@ import org.springframework.web.bind.annotation.RestController;
 public class UserController {
 
   private final UserService userService;
+  private final UserAggregateService userAggregateService;
 
   @GetMapping
   @PreAuthorize("hasAnyRole('SUPER_ADMIN', 'ADMIN')")
@@ -42,21 +43,22 @@ public class UserController {
 
   @GetMapping("/{id}/full-profile")
   @PreAuthorize("hasAnyRole('SUPER_ADMIN', 'ADMIN')")
-  public ApiResponse<UserFullProfileDTO> getFullProfile(@PathVariable UUID id) {
+  public ApiResponse<UserDetailsDTO> getFullProfile(@PathVariable UUID id) {
     return ApiResponse.success(userService.getFullProfile(id));
   }
 
   @PostMapping
   @PreAuthorize("hasAnyRole('SUPER_ADMIN', 'ADMIN')")
-  public ApiResponse<UserFullProfileDTO> create(@Valid @RequestBody UserRequestDTO request) {
-    return ApiResponse.success(userService.createUser(request));
+  public ApiResponse<UserDetailsDTO> create(@Valid @RequestBody UserDetailsDTO request) {
+    return ApiResponse.success(userAggregateService.saveUserAggregate(request));
   }
 
   @PutMapping("/{id}")
   @PreAuthorize("hasAnyRole('SUPER_ADMIN', 'ADMIN')")
-  public ApiResponse<UserFullProfileDTO> update(
-      @PathVariable UUID id, @Valid @RequestBody UserRequestDTO request) {
-    return ApiResponse.success(userService.updateUser(id, request));
+  public ApiResponse<UserDetailsDTO> update(
+      @PathVariable UUID id, @Valid @RequestBody UserDetailsDTO request) {
+    request.setId(id);
+    return ApiResponse.success(userAggregateService.saveUserAggregate(request));
   }
 
   @DeleteMapping("/{id}")

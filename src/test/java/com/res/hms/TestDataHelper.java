@@ -21,6 +21,18 @@ public class TestDataHelper {
 
   @Autowired private HospitalRepository hospitalRepository;
 
+  @Autowired private com.res.hms.patient.repository.PatientRepository patientRepository;
+
+  @Transactional(propagation = Propagation.REQUIRES_NEW)
+  public com.res.hms.domain.Patient createTestPatient(UUID hospitalId) {
+    com.res.hms.domain.Patient p = new com.res.hms.domain.Patient();
+    p.setHospitalId(hospitalId);
+    p.setFullName("Test Patient");
+    p.setGender(com.res.hms.domain.Gender.FEMALE);
+    p.setPatientCode("P-" + UUID.randomUUID().toString().substring(0, 8));
+    return patientRepository.save(p);
+  }
+
   @Transactional(propagation = Propagation.REQUIRES_NEW)
   public UUID createHospitalIfMissing(String code, String name) {
     return hospitalRepository

@@ -2,12 +2,16 @@ package com.res.hms.domain;
 
 import com.res.hms.doctor.dto.DoctorEducation;
 import io.hypersistence.utils.hibernate.type.json.JsonType;
+import jakarta.persistence.CascadeType;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.FetchType;
 import jakarta.persistence.JoinColumn;
+import jakarta.persistence.OneToMany;
 import jakarta.persistence.OneToOne;
 import jakarta.persistence.Table;
+import java.util.ArrayList;
+import java.util.List;
 import lombok.Getter;
 import lombok.Setter;
 import org.hibernate.annotations.Type;
@@ -34,6 +38,9 @@ public class Doctor extends BaseEntity {
   @Type(JsonType.class)
   @Column(name = "education_json", columnDefinition = "jsonb")
   private DoctorEducation education;
+
+  @OneToMany(mappedBy = "doctor", cascade = CascadeType.ALL, orphanRemoval = true)
+  private List<DoctorAvailabilityException> availabilityExceptions = new ArrayList<>();
 
   public String getFullName() {
 

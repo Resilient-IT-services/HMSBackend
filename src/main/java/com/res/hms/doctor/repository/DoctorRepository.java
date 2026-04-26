@@ -12,6 +12,15 @@ import org.springframework.data.repository.query.Param;
 public interface DoctorRepository extends JpaRepository<Doctor, UUID> {
   Optional<Doctor> findByUserId(UUID userId);
 
+  boolean existsByLicenseNumber(String licenseNumber);
+
+  boolean existsByLicenseNumberAndIdNot(String licenseNumber, UUID id);
+
+  @Query(
+      "SELECT COUNT(d) > 0 FROM Doctor d WHERE d.licenseNumber = :licenseNumber AND d.user.id <> :userId")
+  boolean existsByLicenseNumberAndUserIdNot(
+      @Param("licenseNumber") String licenseNumber, @Param("userId") UUID userId);
+
   @Query(
       "SELECT d FROM Doctor d JOIN d.user u JOIN u.assignments a "
           + "WHERE a.hospitalId = :hospitalId AND a.role.code = com.res.hms.domain.RoleCode.DOCTOR "
@@ -22,8 +31,8 @@ public interface DoctorRepository extends JpaRepository<Doctor, UUID> {
   @Query(
       "SELECT d FROM Doctor d JOIN d.user u JOIN u.assignments a "
           + "WHERE a.hospitalId = :hospitalId AND a.role.code = com.res.hms.domain.RoleCode.DOCTOR "
-          + "AND (LOWER(u.fullName) LIKE LOWER(CONCAT('%', :query, '%')) OR "
-          + "LOWER(d.specialization) LIKE LOWER(CONCAT('%', :query, '%'))) "
+          + "AND (LOWER(u.fullName) LIKE :query OR "
+          + "LOWER(d.specialization) LIKE :query) "
           + "ORDER BY d.createdAt DESC")
   Page<Doctor> search(
       @Param("hospitalId") UUID hospitalId, @Param("query") String query, Pageable pageable);

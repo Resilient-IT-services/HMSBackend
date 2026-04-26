@@ -9,4 +9,12 @@ import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
 public interface HospitalRepository
     extends JpaRepository<Hospital, UUID>, JpaSpecificationExecutor<Hospital> {
   Optional<Hospital> findByCode(String code);
+
+  boolean existsByCode(String code);
+
+  boolean existsByCodeAndIdNot(String code, UUID id);
+
+  boolean existsByGstin(String gstin);
+
+  boolean existsByGstinAndIdNot(String gstin, UUID id);
 }
