@@ -16,10 +16,10 @@ public class ScheduleDTO {
   private UUID id;
   private Short dayOfWeek; // 0-6
 
-  @JsonFormat(pattern = "HH:mm:ss")
+  @JsonFormat(pattern = "HH:mm")
   private LocalTime startTime;
 
-  @JsonFormat(pattern = "HH:mm:ss")
+  @JsonFormat(pattern = "HH:mm")
   private LocalTime endTime;
 
   private Integer slotDurationMinutes;

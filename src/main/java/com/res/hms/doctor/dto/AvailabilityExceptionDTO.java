@@ -21,10 +21,10 @@ public class AvailabilityExceptionDTO {
 
   private String type; // FULL_DAY_OFF, MODIFIED, ADDED
 
-  @JsonFormat(pattern = "HH:mm:ss")
+  @JsonFormat(pattern = "HH:mm")
   private LocalTime startTime;
 
-  @JsonFormat(pattern = "HH:mm:ss")
+  @JsonFormat(pattern = "HH:mm")
   private LocalTime endTime;
 
   private String mode;
