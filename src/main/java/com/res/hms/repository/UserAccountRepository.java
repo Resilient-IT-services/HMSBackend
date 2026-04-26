@@ -26,9 +26,10 @@ public interface UserAccountRepository
 
   @Query(
       "SELECT DISTINCT u FROM UserAccount u "
-          + "LEFT JOIN u.assignments a "
-          + "LEFT JOIN a.role r "
-          + "LEFT JOIN Hospital h ON a.hospitalId = h.id "
+          + "LEFT JOIN FETCH u.assignments a "
+          + "LEFT JOIN FETCH a.role r "
+          + "LEFT JOIN FETCH a.hospital h "
+          + "LEFT JOIN FETCH u.doctor d "
           + "WHERE (:hospitalId IS NULL OR a.hospitalId = :hospitalId) "
           + "AND (:active IS NULL OR u.active = :active) "
           + "AND (:deleted IS NULL OR u.deleted = :deleted) "

@@ -21,6 +21,10 @@ public class UserRoleAssignment extends BaseEntity {
   @JoinColumn(name = "user_id", nullable = false)
   private UserAccount user;
 
+  @ManyToOne(fetch = FetchType.LAZY)
+  @JoinColumn(name = "hospital_id", insertable = false, updatable = false)
+  private Hospital hospital;
+
   @Column(name = "hospital_id")
   private UUID hospitalId;
 

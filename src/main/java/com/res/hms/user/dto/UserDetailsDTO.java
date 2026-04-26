@@ -99,7 +99,6 @@ public class UserDetailsDTO {
   @NoArgsConstructor
   @AllArgsConstructor
   public static class NurseInfo {
-    private String department;
     private String nursingLicenseNo;
     private com.res.hms.domain.CertificationLevel certificationLevel;
   }

@@ -49,7 +49,7 @@ class RoleHospitalDetailsIntegrationTest {
             .fullName("Nurse Joy")
             .gender(com.res.hms.domain.Gender.FEMALE)
             .dob(java.time.LocalDate.of(1990, 1, 1))
-            .nurseInfo(UserDetailsDTO.NurseInfo.builder().department("Pediatrics").build())
+            .nurseInfo(UserDetailsDTO.NurseInfo.builder().nursingLicenseNo("NL-123").build())
             .memberships(
                 List.of(
                     UserDetailsDTO.HospitalMembershipDTO.builder()
@@ -58,6 +58,7 @@ class RoleHospitalDetailsIntegrationTest {
                             List.of(
                                 UserDetailsDTO.RoleAssignmentDTO.builder()
                                     .roleCode("NURSE")
+                                    .departmentName("Pediatrics")
                                     .nurseDetails(
                                         NurseHospitalDetailsDTO.builder()
                                             .floorLocation("2nd Floor")
@@ -74,7 +75,6 @@ class RoleHospitalDetailsIntegrationTest {
 
     // Check Nurse Global Profile
     assertNotNull(fetched.getNurseInfo());
-    assertEquals("Pediatrics", fetched.getNurseInfo().getDepartment());
 
     // Check Nurse Hospital Specific Details
     UserDetailsDTO.RoleAssignmentDTO assignment =
@@ -84,6 +84,8 @@ class RoleHospitalDetailsIntegrationTest {
             .filter(ra -> "NURSE".equals(ra.getRoleCode()))
             .findFirst()
             .orElseThrow();
+
+    assertEquals("Pediatrics", assignment.getDepartmentName());
 
     assertNotNull(assignment.getNurseDetails());
     assertEquals("2nd Floor", assignment.getNurseDetails().getFloorLocation());

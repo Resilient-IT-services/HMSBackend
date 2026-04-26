@@ -21,9 +21,6 @@ public class Nurse extends BaseEntity {
   @JoinColumn(name = "user_id", unique = true)
   private UserAccount user;
 
-  @Column(nullable = false)
-  private String department;
-
   @Column(name = "nursing_license_no", unique = true)
   private String nursingLicenseNo;
 

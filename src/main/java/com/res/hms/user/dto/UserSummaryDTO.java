@@ -35,6 +35,7 @@ public class UserSummaryDTO {
   @AllArgsConstructor
   public static class HospitalMembershipDTO {
     private UUID hospitalId;
+    private String hospitalName;
     private List<String> roles;
     private String specialization;
     private String departmentName;

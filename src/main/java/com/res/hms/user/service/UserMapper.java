@@ -134,21 +134,20 @@ public abstract class UserMapper {
             e -> {
               UUID hospitalId = e.getKey();
               List<UserRoleAssignment> hospitalAssignments = e.getValue();
+              UserRoleAssignment first = hospitalAssignments.getFirst();
 
               List<String> roles =
                   hospitalAssignments.stream().map(a -> a.getRole().getCode().name()).toList();
 
               String specialization =
                   user.getDoctor() != null ? user.getDoctor().getSpecialization() : null;
-              String departmentName =
-                  hospitalAssignments.stream()
-                      .map(UserRoleAssignment::getDepartmentName)
-                      .filter(d -> d != null && !d.isBlank())
-                      .findFirst()
-                      .orElse(null);
+              String hospitalName =
+                  first.getHospital() != null ? first.getHospital().getName() : "Global Access";
+
+              String departmentName = first.getDepartmentName();
 
               return new UserSummaryDTO.HospitalMembershipDTO(
-                  hospitalId, roles, specialization, departmentName);
+                  hospitalId, hospitalName, roles, specialization, departmentName);
             })
         .collect(Collectors.toList());
   }

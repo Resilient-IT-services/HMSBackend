@@ -44,9 +44,6 @@ public class NurseService {
                   n.setUser(user);
                   return n;
                 });
-    if (info.getDepartment() != null) {
-      nurse.setDepartment(info.getDepartment());
-    }
     if (info.getNursingLicenseNo() != null) {
       nurse.setNursingLicenseNo(info.getNursingLicenseNo());
     }
@@ -92,13 +89,23 @@ public class NurseService {
 
   private NurseResponse toResponse(Nurse nurse) {
     UserAccount user = nurse.getUser();
+    String department = null;
+    UUID activeHospitalId = hospitalContext.getHospitalIdOrNull();
+    if (user != null && activeHospitalId != null) {
+      department =
+          user.getAssignments().stream()
+              .filter(a -> activeHospitalId.equals(a.getHospitalId()))
+              .map(UserRoleAssignment::getDepartmentName)
+              .findFirst()
+              .orElse(null);
+    }
     return new NurseResponse(
         nurse.getId(),
         user != null ? user.getFullName() : "N/A",
         user != null ? user.getGender() : null,
         user != null ? user.getDob() : null,
         user != null ? user.getPhone() : null,
-        nurse.getDepartment(),
+        department,
         nurse.getCreatedAt());
   }
 }
