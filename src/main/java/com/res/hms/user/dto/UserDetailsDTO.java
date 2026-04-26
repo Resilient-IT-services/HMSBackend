@@ -74,6 +74,8 @@ public class UserDetailsDTO {
     private String roleCode;
     private String departmentName;
     private Boolean active;
+    private List<com.res.hms.doctor.dto.ScheduleDTO> schedules;
+    private List<com.res.hms.doctor.dto.AvailabilityExceptionDTO> availabilityExceptions;
 
     // Explicit role-specific hospital details
     private DoctorHospitalDetailsDTO doctorDetails;

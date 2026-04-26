@@ -5,8 +5,12 @@ import jakarta.persistence.Entity;
 import jakarta.persistence.FetchType;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
+import jakarta.persistence.OneToMany;
 import jakarta.persistence.OneToOne;
 import jakarta.persistence.Table;
+import jakarta.persistence.CascadeType;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.UUID;
 import lombok.Getter;
 import lombok.Setter;
@@ -52,4 +56,7 @@ public class UserRoleAssignment extends BaseEntity {
 
   @OneToOne(mappedBy = "assignment", fetch = FetchType.LAZY)
   private ReceptionistHospitalDetails receptionistDetails;
+
+  @OneToMany(mappedBy = "assignment", cascade = CascadeType.ALL, orphanRemoval = true)
+  private List<DoctorSchedule> schedules = new ArrayList<>();
 }

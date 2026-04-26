@@ -30,12 +30,14 @@ public class UserAggregateService {
   private final ResourceLookup resourceLookup;
   private final UserRoleUpdateService userRoleUpdateService;
   private final UserValidationService userValidationService;
+  private final com.res.hms.doctor.service.DoctorScheduleValidator doctorScheduleValidator;
   private final UserMapper userMapper;
   private final HospitalContext hospitalContext;
 
   @Transactional
   public UserDetailsDTO saveUserAggregate(UserDetailsDTO dto) {
     log.info("Starting aggregate save for user: {}", dto.getUsername());
+    doctorScheduleValidator.validateOverlaps(dto);
     UUID activeId = hospitalContext.getHospitalIdOrNull();
     boolean isSuper = hospitalContext.isSuperAdmin();
 

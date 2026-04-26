@@ -95,8 +95,20 @@ public abstract class UserMapper {
   @Mapping(target = "adminDetails", source = "adminDetails")
   @Mapping(target = "pharmacistDetails", source = "pharmacistDetails")
   @Mapping(target = "receptionistDetails", source = "receptionistDetails")
+  @Mapping(target = "schedules", source = "schedules")
+  @Mapping(target = "availabilityExceptions", expression = "java(mapAvailabilityExceptions(assignment))")
   public abstract UserDetailsDTO.RoleAssignmentDTO toRoleAssignmentDTO(
       UserRoleAssignment assignment);
+
+  protected List<com.res.hms.doctor.dto.AvailabilityExceptionDTO> mapAvailabilityExceptions(UserRoleAssignment assignment) {
+    if (assignment.getUser() == null || assignment.getUser().getDoctor() == null) {
+      return null;
+    }
+    return assignment.getUser().getDoctor().getAvailabilityExceptions().stream()
+        .filter(ex -> ex.getHospital().getId().equals(assignment.getHospitalId()))
+        .map(this::toAvailabilityExceptionDTO)
+        .toList();
+  }
 
   public abstract UserDetailsDTO.DoctorInfo toDoctorInfo(Doctor doctor);
 
@@ -107,6 +119,12 @@ public abstract class UserMapper {
   public abstract UserDetailsDTO.LabTechInfo toLabTechInfo(LabTechProfile profile);
 
   public abstract UserDetailsDTO.ReceptionistInfo toReceptionistInfo(ReceptionistProfile profile);
+
+  public abstract com.res.hms.doctor.dto.ScheduleDTO toScheduleDTO(
+      com.res.hms.domain.DoctorSchedule schedule);
+
+  public abstract com.res.hms.doctor.dto.AvailabilityExceptionDTO toAvailabilityExceptionDTO(
+      com.res.hms.domain.DoctorAvailabilityException unavailability);
 
   public abstract DoctorHospitalDetailsDTO toDoctorHospitalDetailsDTO(
       DoctorHospitalDetails details);
