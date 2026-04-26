@@ -1,8 +1,11 @@
 package com.res.hms.api;
 
 import com.res.hms.common.api.ApiResponse;
+import com.res.hms.common.api.PageResponse;
 import com.res.hms.doctor.dto.DoctorAvailabilityResponse;
 import com.res.hms.doctor.service.DoctorService;
+import com.res.hms.user.dto.UserSummaryDTO;
+import com.res.hms.user.service.UserService;
 import java.time.LocalDate;
 import java.util.UUID;
 import lombok.RequiredArgsConstructor;
@@ -20,6 +23,17 @@ import org.springframework.web.bind.annotation.RestController;
 public class DoctorController {
 
   private final DoctorService doctorService;
+  private final UserService userService;
+
+  @GetMapping
+  @PreAuthorize("hasAnyRole('SUPER_ADMIN','ADMIN','RECEPTIONIST')")
+  public ApiResponse<PageResponse<UserSummaryDTO>> list(
+      @RequestParam(defaultValue = "0") int page,
+      @RequestParam(defaultValue = "20") int size,
+      @RequestParam(required = false) String search) {
+    return ApiResponse.success(
+        userService.listUsers(page, Math.min(size, 100), search, "DOCTOR", null, false));
+  }
 
   @GetMapping("/{id}/availability")
   @PreAuthorize("isAuthenticated()")
