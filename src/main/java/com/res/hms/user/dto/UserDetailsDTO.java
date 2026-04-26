@@ -90,6 +90,7 @@ public class UserDetailsDTO {
   @NoArgsConstructor
   @AllArgsConstructor
   public static class DoctorInfo {
+    private UUID id;
     private String specialization;
     private DoctorEducation education;
     private String bio;
@@ -101,6 +102,7 @@ public class UserDetailsDTO {
   @NoArgsConstructor
   @AllArgsConstructor
   public static class NurseInfo {
+    private UUID id;
     private String nursingLicenseNo;
     private com.res.hms.domain.CertificationLevel certificationLevel;
   }

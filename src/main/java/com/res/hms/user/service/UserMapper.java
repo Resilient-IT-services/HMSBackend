@@ -116,8 +116,10 @@ public abstract class UserMapper {
         .toList();
   }
 
+  @Mapping(target = "id", source = "id")
   public abstract UserDetailsDTO.DoctorInfo toDoctorInfo(Doctor doctor);
 
+  @Mapping(target = "id", source = "id")
   public abstract UserDetailsDTO.NurseInfo toNurseInfo(Nurse nurse);
 
   public abstract UserDetailsDTO.PharmacistInfo toPharmacistInfo(PharmacistProfile profile);

@@ -13,6 +13,7 @@ import com.res.hms.domain.DoctorAvailabilityException;
 import com.res.hms.domain.DoctorHospitalDetails;
 import com.res.hms.domain.DoctorSchedule;
 import com.res.hms.domain.Hospital;
+import com.res.hms.domain.RoleCode;
 import com.res.hms.domain.UserAccount;
 import com.res.hms.domain.UserRoleAssignment;
 import com.res.hms.repository.DoctorHospitalDetailsRepository;
@@ -48,8 +49,35 @@ public class DoctorService {
   @Transactional(readOnly = true)
   public DoctorAvailabilityResponse getAvailableSlots(UUID doctorId, java.time.LocalDate date) {
     UUID hospitalId = hospitalContext.requireHospitalId();
+    short dbDay = (short) date.getDayOfWeek().getValue();
 
-    // 1. Check for exceptions
+    org.slf4j.LoggerFactory.getLogger(DoctorService.class)
+        .info(
+            "Checking availability for Doctor: {}, Hospital: {}, Date: {}, Day: {}",
+            doctorId,
+            hospitalId,
+            date,
+            dbDay);
+
+    // 1. Find the Doctor (try by doctorId first, then by userId)
+    Doctor doctor =
+        doctorRepository
+            .findById(doctorId)
+            .or(() -> doctorRepository.findByUserId(doctorId))
+            .orElseThrow(
+                () ->
+                    new com.res.hms.common.exception.ApiException(
+                        "NOT_FOUND", "Doctor not found", org.springframework.http.HttpStatus.NOT_FOUND));
+
+    UserAccount user = doctor.getUser();
+    UUID actualDoctorId = doctor.getId();
+    // 2. Find the relevant assignment for this hospital
+    UserRoleAssignment assignment = user.getAssignments().stream()
+        .filter(a -> hospitalId.equals(a.getHospitalId()) && a.getRole().getCode() == RoleCode.DOCTOR)
+        .findFirst()
+        .orElseThrow(() -> new com.res.hms.common.exception.ApiException("NOT_FOUND", "Doctor assignment not found for this hospital", org.springframework.http.HttpStatus.NOT_FOUND));
+
+    // 3. Check for exceptions
     List<DoctorAvailabilityException> exceptions =
         availabilityExceptionRepository.findByDoctorIdAndHospitalIdAndDate(
             doctorId, hospitalId, date);
@@ -58,11 +86,18 @@ public class DoctorService {
       return new DoctorAvailabilityResponse(java.util.Collections.emptyList());
     }
 
-    // 2. Fetch existing appointments to count per session
+    // 4. Fetch existing appointments
     java.util.List<com.res.hms.domain.Appointment> appointments =
         appointmentRepository.findByDoctorIdAndDate(doctorId, date);
 
-    // 3. Determine sessions
+    // 5. Determine sessions
+    java.time.LocalDate today = java.time.LocalDate.now();
+    java.time.LocalTime now = java.time.LocalTime.now();
+
+    if (date.isBefore(today)) {
+      return new DoctorAvailabilityResponse(java.util.Collections.emptyList());
+    }
+
     List<DoctorAvailabilityResponse.SessionInfo> sessions = new java.util.ArrayList<>();
     Optional<DoctorAvailabilityException> override =
         exceptions.stream()
@@ -71,37 +106,40 @@ public class DoctorService {
 
     if (override.isPresent()) {
       var o = override.get();
-      int count = countBookingsInRange(appointments, o.getStartTime(), o.getEndTime());
-      int duration = o.getSlotDurationMinutes() != null ? o.getSlotDurationMinutes() : 15;
-
-      sessions.add(
-          new DoctorAvailabilityResponse.SessionInfo(
-              null,
-              o.getStartTime(),
-              o.getEndTime(),
-              null, // No max limit on exceptions unless added to table
-              count,
-              true, // Exceptions usually mean available
-              calculateSuggestedTime(o.getStartTime(), count, duration)));
-    } else {
-      int dbDay = date.getDayOfWeek().getValue();
-      List<DoctorSchedule> baseSchedules =
-          scheduleRepository.findByDoctorAndHospitalAndDay(doctorId, hospitalId, (short) dbDay);
-
-      for (DoctorSchedule s : baseSchedules) {
-        int count = countBookingsInRange(appointments, s.getStartTime(), s.getEndTime());
-        int max = s.getMaxPatients() != null ? s.getMaxPatients() : Integer.MAX_VALUE;
-        int duration = s.getSlotDurationMinutes() != null ? s.getSlotDurationMinutes() : 15;
+      if (date.isAfter(today) || o.getEndTime().isAfter(now)) {
+        int count = countBookingsInRange(appointments, o.getStartTime(), o.getEndTime());
+        int duration = o.getSlotDurationMinutes() != null ? o.getSlotDurationMinutes() : 15;
 
         sessions.add(
             new DoctorAvailabilityResponse.SessionInfo(
-                s.getId(),
-                s.getStartTime(),
-                s.getEndTime(),
-                s.getMaxPatients(),
+                null,
+                o.getStartTime(),
+                o.getEndTime(),
+                null,
                 count,
-                count < max,
-                calculateSuggestedTime(s.getStartTime(), count, duration)));
+                true,
+                calculateSuggestedTime(o.getStartTime(), count, duration)));
+      }
+    } else {
+      List<DoctorSchedule> baseSchedules =
+          assignment.getSchedules().stream().filter(s -> s.getDayOfWeek().equals(dbDay)).toList();
+
+      for (DoctorSchedule s : baseSchedules) {
+        if (date.isAfter(today) || s.getEndTime().isAfter(now)) {
+          int count = countBookingsInRange(appointments, s.getStartTime(), s.getEndTime());
+          int max = s.getMaxPatients() != null ? s.getMaxPatients() : Integer.MAX_VALUE;
+          int duration = s.getSlotDurationMinutes() != null ? s.getSlotDurationMinutes() : 15;
+
+          sessions.add(
+              new DoctorAvailabilityResponse.SessionInfo(
+                  s.getId(),
+                  s.getStartTime(),
+                  s.getEndTime(),
+                  s.getMaxPatients(),
+                  count,
+                  count < max,
+                  calculateSuggestedTime(s.getStartTime(), count, duration)));
+        }
       }
     }
 
