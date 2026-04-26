@@ -84,7 +84,7 @@ public class DoctorService {
               true, // Exceptions usually mean available
               calculateSuggestedTime(o.getStartTime(), count, duration)));
     } else {
-      int dbDay = date.getDayOfWeek().getValue() == 7 ? 0 : date.getDayOfWeek().getValue();
+      int dbDay = date.getDayOfWeek().getValue();
       List<DoctorSchedule> baseSchedules =
           scheduleRepository.findByDoctorAndHospitalAndDay(doctorId, hospitalId, (short) dbDay);
 
