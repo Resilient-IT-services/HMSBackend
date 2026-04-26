@@ -52,13 +52,16 @@ public class UserRoleUpdateService {
   private void updateRoleSpecificHospitalDetails(
       UserAccount user, UUID hospitalId, UserDetailsDTO.RoleAssignmentDTO raDto) {
     RoleCode code = RoleCode.valueOf(raDto.getRoleCode());
-      findAssignment(user, hospitalId, code)
+    findAssignment(user, hospitalId, code)
         .ifPresent(
             a -> {
               switch (code) {
                 case DOCTOR ->
                     doctorService.updateHospitalDetails(
-                        a, raDto.getDoctorDetails(), raDto.getSchedules(), raDto.getAvailabilityExceptions());
+                        a,
+                        raDto.getDoctorDetails(),
+                        raDto.getSchedules(),
+                        raDto.getAvailabilityExceptions());
                 case NURSE -> nurseService.updateHospitalDetails(a, raDto.getNurseDetails());
                 case PHARMACIST ->
                     pharmacistProfileService.updateHospitalDetails(a, raDto.getPharmacistDetails());
@@ -66,7 +69,7 @@ public class UserRoleUpdateService {
                     receptionistProfileService.updateHospitalDetails(
                         a, raDto.getReceptionistDetails());
                 case ADMIN -> adminProfileService.updateHospitalDetails(a, raDto.getAdminDetails());
-                default -> {}
+                default -> { }
               }
             });
   }

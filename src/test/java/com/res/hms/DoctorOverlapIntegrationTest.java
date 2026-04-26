@@ -84,7 +84,8 @@ class DoctorOverlapIntegrationTest {
             .build();
 
     assertThrows(
-        ApiException.class, () -> userAggregateService.saveUserAggregate(request),
+        ApiException.class,
+        () -> userAggregateService.saveUserAggregate(request),
         "Should throw exception due to overlapping schedules");
   }
 }

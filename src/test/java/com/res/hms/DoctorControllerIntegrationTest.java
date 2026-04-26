@@ -69,7 +69,7 @@ class DoctorControllerIntegrationTest {
     drAssign.setUser(drUser);
     drAssign.setHospitalId(hospitalId);
     drAssign.setRole(roleRepository.findByCode(RoleCode.DOCTOR).orElseThrow());
-    
+
     // Add Schedule: Monday 9-11 AM, 15 min slots
     DoctorSchedule schedule = new DoctorSchedule();
     schedule.setAssignment(drAssign);
@@ -78,17 +78,23 @@ class DoctorControllerIntegrationTest {
     schedule.setEndTime(LocalTime.of(11, 0));
     schedule.setSlotDurationMinutes(60); // 1 hour slots for easy test
     drAssign.getSchedules().add(schedule);
-    
+
     drUser.getAssignments().add(drAssign);
     UserAccount saved = userAccountRepository.save(drUser);
     doctorId = saved.getDoctor().getId();
 
     // Session
-    session = (MockHttpSession) mockMvc.perform(post("/api/v1/auth/login")
-            .contentType(MediaType.APPLICATION_JSON)
-            .content("{\"username\": \"avail_dr\", \"password\": \"password\"}"))
-        .andExpect(status().isOk())
-        .andReturn().getRequest().getSession();
+    session =
+        (MockHttpSession)
+            mockMvc
+                .perform(
+                    post("/api/v1/auth/login")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"username\": \"avail_dr\", \"password\": \"password\"}"))
+                .andExpect(status().isOk())
+                .andReturn()
+                .getRequest()
+                .getSession();
   }
 
   @Test
@@ -96,10 +102,12 @@ class DoctorControllerIntegrationTest {
     LocalDate monday = LocalDate.of(2026, 4, 27); // This is a Monday
 
     // Initial check: Should have 1 session (9-11 AM)
-    mockMvc.perform(get("/api/v1/doctors/" + doctorId + "/availability")
-            .session(session)
-            .header("X-Hospital-Id", hospitalId.toString())
-            .param("date", monday.toString()))
+    mockMvc
+        .perform(
+            get("/api/v1/doctors/" + doctorId + "/availability")
+                .session(session)
+                .header("X-Hospital-Id", hospitalId.toString())
+                .param("date", monday.toString()))
         .andExpect(status().isOk())
         .andExpect(jsonPath("$.data.sessions.length()").value(1))
         .andExpect(jsonPath("$.data.sessions[0].startTime").value("09:00:00"))
@@ -115,11 +123,14 @@ class DoctorControllerIntegrationTest {
     apt.setStatus(AppointmentStatus.SCHEDULED);
     appointmentRepository.save(apt);
 
-    // Check again: currentBookings should be 1, suggestedTime should be 10:00 (since duration was 60 min in setup)
-    mockMvc.perform(get("/api/v1/doctors/" + doctorId + "/availability")
-            .session(session)
-            .header("X-Hospital-Id", hospitalId.toString())
-            .param("date", monday.toString()))
+    // Check again: currentBookings should be 1, suggestedTime should be 10:00 (since duration was
+    // 60 min in setup)
+    mockMvc
+        .perform(
+            get("/api/v1/doctors/" + doctorId + "/availability")
+                .session(session)
+                .header("X-Hospital-Id", hospitalId.toString())
+                .param("date", monday.toString()))
         .andExpect(status().isOk())
         .andExpect(jsonPath("$.data.sessions[0].currentBookings").value(1))
         .andExpect(jsonPath("$.data.sessions[0].nextSuggestedTime").value("10:00:00"));

@@ -8,7 +8,8 @@ import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
 
 @Repository
-public interface DoctorAvailabilityExceptionRepository extends JpaRepository<DoctorAvailabilityException, UUID> {
+public interface DoctorAvailabilityExceptionRepository
+    extends JpaRepository<DoctorAvailabilityException, UUID> {
   List<DoctorAvailabilityException> findByDoctorIdAndHospitalIdAndDate(
       UUID doctorId, UUID hospitalId, LocalDate date);
 }

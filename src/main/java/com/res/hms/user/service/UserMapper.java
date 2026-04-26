@@ -96,11 +96,14 @@ public abstract class UserMapper {
   @Mapping(target = "pharmacistDetails", source = "pharmacistDetails")
   @Mapping(target = "receptionistDetails", source = "receptionistDetails")
   @Mapping(target = "schedules", source = "schedules")
-  @Mapping(target = "availabilityExceptions", expression = "java(mapAvailabilityExceptions(assignment))")
+  @Mapping(
+      target = "availabilityExceptions",
+      expression = "java(mapAvailabilityExceptions(assignment))")
   public abstract UserDetailsDTO.RoleAssignmentDTO toRoleAssignmentDTO(
       UserRoleAssignment assignment);
 
-  protected List<com.res.hms.doctor.dto.AvailabilityExceptionDTO> mapAvailabilityExceptions(UserRoleAssignment assignment) {
+  protected List<com.res.hms.doctor.dto.AvailabilityExceptionDTO> mapAvailabilityExceptions(
+      UserRoleAssignment assignment) {
     if (assignment.getUser() == null || assignment.getUser().getDoctor() == null) {
       return null;
     }

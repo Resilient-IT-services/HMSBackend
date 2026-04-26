@@ -3,7 +3,6 @@ package com.res.hms.doctor.service;
 import com.res.hms.common.exception.ApiException;
 import com.res.hms.doctor.dto.ScheduleDTO;
 import com.res.hms.user.dto.UserDetailsDTO;
-import java.time.DayOfWeek;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -21,7 +20,9 @@ public class DoctorScheduleValidator {
 
     List<ScheduleDTO> allSchedules = new ArrayList<>();
     for (UserDetailsDTO.HospitalMembershipDTO membership : dto.getMemberships()) {
-      if (membership.getRoleAssignments() == null) continue;
+      if (membership.getRoleAssignments() == null) {
+        continue;
+      }
       for (UserDetailsDTO.RoleAssignmentDTO ra : membership.getRoleAssignments()) {
         if (ra.getSchedules() != null && "DOCTOR".equals(ra.getRoleCode())) {
           allSchedules.addAll(ra.getSchedules());
@@ -48,7 +49,11 @@ public class DoctorScheduleValidator {
                 "SCHEDULE_OVERLAP",
                 String.format(
                     "Doctor has overlapping schedules on %s: %s-%s and %s-%s",
-                    entry.getKey(), s1.getStartTime(), s1.getEndTime(), s2.getStartTime(), s2.getEndTime()),
+                    entry.getKey(),
+                    s1.getStartTime(),
+                    s1.getEndTime(),
+                    s2.getStartTime(),
+                    s2.getEndTime()),
                 HttpStatus.CONFLICT);
           }
         }
@@ -57,6 +62,7 @@ public class DoctorScheduleValidator {
   }
 
   private boolean isOverlapping(ScheduleDTO s1, ScheduleDTO s2) {
-    return s1.getStartTime().isBefore(s2.getEndTime()) && s2.getStartTime().isBefore(s1.getEndTime());
+    return s1.getStartTime().isBefore(s2.getEndTime())
+        && s2.getStartTime().isBefore(s1.getEndTime());
   }
 }

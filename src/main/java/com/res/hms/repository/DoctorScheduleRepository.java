@@ -10,7 +10,8 @@ import org.springframework.stereotype.Repository;
 
 @Repository
 public interface DoctorScheduleRepository extends JpaRepository<DoctorSchedule, UUID> {
-  @Query("SELECT s FROM DoctorSchedule s WHERE s.assignment.user.doctor.id = :doctorId AND s.assignment.hospitalId = :hospitalId AND s.dayOfWeek = :dayOfWeek")
+  @Query(
+      "SELECT s FROM DoctorSchedule s WHERE s.assignment.user.doctor.id = :doctorId AND s.assignment.hospitalId = :hospitalId AND s.dayOfWeek = :dayOfWeek")
   List<DoctorSchedule> findByDoctorAndHospitalAndDay(
       @Param("doctorId") UUID doctorId,
       @Param("hospitalId") UUID hospitalId,
