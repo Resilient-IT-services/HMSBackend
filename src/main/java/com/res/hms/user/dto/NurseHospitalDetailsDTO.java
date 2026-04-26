@@ -14,5 +14,4 @@ import lombok.NoArgsConstructor;
 public class NurseHospitalDetailsDTO {
   private String floorLocation;
   private ShiftType shiftType;
-  private LocalDateTime updatedAt;
 }

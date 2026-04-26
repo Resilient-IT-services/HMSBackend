@@ -13,5 +13,4 @@ import lombok.NoArgsConstructor;
 public class ReceptionistHospitalDetailsDTO {
   private String deskLocation;
   private String emergencyContactNumber;
-  private LocalDateTime updatedAt;
 }
