@@ -60,7 +60,7 @@ class DoctorOverlapIntegrationTest {
                                     .schedules(
                                         List.of(
                                             ScheduleDTO.builder()
-                                                .dayOfWeek(1) // Monday
+                                                .dayOfWeek((short) 1) // Monday
                                                 .startTime(LocalTime.of(16, 0)) // 4 PM
                                                 .endTime(LocalTime.of(18, 0)) // 6 PM
                                                 .build()))
@@ -75,7 +75,7 @@ class DoctorOverlapIntegrationTest {
                                     .schedules(
                                         List.of(
                                             ScheduleDTO.builder()
-                                                .dayOfWeek(1) // Monday
+                                                .dayOfWeek((short) 1) // Monday
                                                 .startTime(LocalTime.of(15, 0)) // 3 PM
                                                 .endTime(LocalTime.of(17, 0)) // 5 PM
                                                 .build()))

@@ -15,5 +15,5 @@ public interface DoctorScheduleRepository extends JpaRepository<DoctorSchedule, 
   List<DoctorSchedule> findByDoctorAndHospitalAndDay(
       @Param("doctorId") UUID doctorId,
       @Param("hospitalId") UUID hospitalId,
-      @Param("dayOfWeek") Integer dayOfWeek);
+      @Param("dayOfWeek") Short dayOfWeek);
 }

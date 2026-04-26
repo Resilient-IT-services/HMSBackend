@@ -13,7 +13,7 @@ import lombok.NoArgsConstructor;
 @AllArgsConstructor
 public class ScheduleDTO {
   private UUID id;
-  private Integer dayOfWeek; // 0-6
+  private Short dayOfWeek; // 0-6
   private LocalTime startTime;
   private LocalTime endTime;
   private Integer slotDurationMinutes;

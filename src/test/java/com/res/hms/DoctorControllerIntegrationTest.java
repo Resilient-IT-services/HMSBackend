@@ -42,6 +42,8 @@ class DoctorControllerIntegrationTest {
   @Autowired private PasswordEncoder passwordEncoder;
   @Autowired private TestDataHelper testDataHelper;
   @Autowired private com.res.hms.appointment.repository.AppointmentRepository appointmentRepository;
+  @Autowired private com.res.hms.repository.DoctorAvailabilityExceptionRepository availabilityExceptionRepository;
+  @Autowired private com.res.hms.repository.HospitalRepository hospitalRepository;
 
   private UUID hospitalId;
   private UUID doctorId;
@@ -73,7 +75,7 @@ class DoctorControllerIntegrationTest {
     // Add Schedule: Monday 9-11 AM, 15 min slots
     DoctorSchedule schedule = new DoctorSchedule();
     schedule.setAssignment(drAssign);
-    schedule.setDayOfWeek(1); // Monday
+    schedule.setDayOfWeek((short) 1); // Monday
     schedule.setStartTime(LocalTime.of(9, 0));
     schedule.setEndTime(LocalTime.of(11, 0));
     schedule.setSlotDurationMinutes(60); // 1 hour slots for easy test
@@ -134,5 +136,35 @@ class DoctorControllerIntegrationTest {
         .andExpect(status().isOk())
         .andExpect(jsonPath("$.data.sessions[0].currentBookings").value(1))
         .andExpect(jsonPath("$.data.sessions[0].nextSuggestedTime").value("10:00:00"));
+  }
+
+  @Test
+  void testGetAvailabilityWithModifiedException() throws Exception {
+    LocalDate tuesday = LocalDate.of(2026, 4, 28); // Tuesday
+
+    // 1. Create a MODIFIED exception for Tuesday: 2-4 PM
+    com.res.hms.domain.DoctorAvailabilityException ex = new com.res.hms.domain.DoctorAvailabilityException();
+    ex.setDoctor(userAccountRepository.findByUsername("avail_dr").get().getDoctor());
+    ex.setHospital(hospitalRepository.findById(hospitalId).orElseThrow());
+    ex.setDate(tuesday);
+    ex.setType("MODIFIED");
+    ex.setStartTime(LocalTime.of(14, 0));
+    ex.setEndTime(LocalTime.of(16, 0));
+    ex.setSlotDurationMinutes(30);
+    ex.setNote("Afternoon shift");
+    availabilityExceptionRepository.save(ex);
+
+    // 2. Fetch availability for Tuesday
+    mockMvc
+        .perform(
+            get("/api/v1/doctors/" + doctorId + "/availability")
+                .session(session)
+                .header("X-Hospital-Id", hospitalId.toString())
+                .param("date", tuesday.toString()))
+        .andExpect(status().isOk())
+        .andExpect(jsonPath("$.data.sessions.length()").value(1))
+        .andExpect(jsonPath("$.data.sessions[0].startTime").value("14:00:00"))
+        .andExpect(jsonPath("$.data.sessions[0].endTime").value("16:00:00"))
+        .andExpect(jsonPath("$.data.sessions[0].nextSuggestedTime").value("14:00:00"));
   }
 }

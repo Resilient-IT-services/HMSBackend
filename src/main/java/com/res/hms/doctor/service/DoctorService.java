@@ -86,7 +86,7 @@ public class DoctorService {
     } else {
       int dbDay = date.getDayOfWeek().getValue() == 7 ? 0 : date.getDayOfWeek().getValue();
       List<DoctorSchedule> baseSchedules =
-          scheduleRepository.findByDoctorAndHospitalAndDay(doctorId, hospitalId, dbDay);
+          scheduleRepository.findByDoctorAndHospitalAndDay(doctorId, hospitalId, (short) dbDay);
 
       for (DoctorSchedule s : baseSchedules) {
         int count = countBookingsInRange(appointments, s.getStartTime(), s.getEndTime());

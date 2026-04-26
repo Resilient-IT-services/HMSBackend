@@ -65,8 +65,11 @@ public abstract class UserMapper {
         .map(
             entry -> {
               UUID hospitalId = entry.getKey();
-              var hospital =
-                  hospitalId == null ? null : hospitalRepository.findById(hospitalId).orElse(null);
+              UserRoleAssignment first = entry.getValue().getFirst();
+              var hospital = first.getHospital();
+              if (hospital == null && hospitalId != null) {
+                hospital = hospitalRepository.findById(hospitalId).orElse(null);
+              }
 
               Set<RoleCode> roles =
                   entry.getValue().stream()
@@ -75,7 +78,7 @@ public abstract class UserMapper {
 
               String specialization =
                   user.getDoctor() != null ? user.getDoctor().getSpecialization() : null;
-              String department = entry.getValue().getFirst().getDepartmentName();
+              String department = first.getDepartmentName();
 
               return new HospitalMembershipResponse(
                   hospitalId,
@@ -185,8 +188,11 @@ public abstract class UserMapper {
         .map(
             entry -> {
               UUID hospitalId = entry.getKey();
-              var hospital =
-                  hospitalId == null ? null : hospitalRepository.findById(hospitalId).orElse(null);
+              var first = entry.getValue().getFirst();
+              var hospital = first.getHospital();
+              if (hospital == null && hospitalId != null) {
+                hospital = hospitalRepository.findById(hospitalId).orElse(null);
+              }
 
               String hospitalName = hospital != null ? hospital.getName() : "Global Access";
               String hospitalCode = hospital != null ? hospital.getCode() : "GLOBAL";

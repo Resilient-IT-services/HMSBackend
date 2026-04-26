@@ -34,10 +34,10 @@ public class DoctorScheduleValidator {
       return;
     }
 
-    Map<Integer, List<ScheduleDTO>> schedulesByDay =
+    Map<Short, List<ScheduleDTO>> schedulesByDay =
         allSchedules.stream().collect(Collectors.groupingBy(ScheduleDTO::getDayOfWeek));
 
-    for (Map.Entry<Integer, List<ScheduleDTO>> entry : schedulesByDay.entrySet()) {
+    for (Map.Entry<Short, List<ScheduleDTO>> entry : schedulesByDay.entrySet()) {
       List<ScheduleDTO> dailySchedules = entry.getValue();
       for (int i = 0; i < dailySchedules.size(); i++) {
         for (int j = i + 1; j < dailySchedules.size(); j++) {
