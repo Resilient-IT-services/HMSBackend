@@ -35,11 +35,11 @@ public class DoctorController {
         userService.listUsers(page, Math.min(size, 100), search, "DOCTOR", null, false));
   }
 
-  @GetMapping("/{id}/availability")
+  @GetMapping("/{doctorId}/availability")
   @PreAuthorize("isAuthenticated()")
   public ApiResponse<DoctorAvailabilityResponse> getAvailability(
-      @PathVariable UUID id,
+      @PathVariable UUID doctorId,
       @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate date) {
-    return ApiResponse.success(doctorService.getAvailableSlots(id, date));
+    return ApiResponse.success(doctorService.getAvailableSlots(doctorId, date));
   }
 }

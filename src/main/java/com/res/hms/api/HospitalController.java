@@ -44,17 +44,17 @@ public class HospitalController {
     return ApiResponse.success(hospitalService.list(page, Math.min(size, 100), name, status));
   }
 
-  @GetMapping("/{id}")
+  @GetMapping("/{hospitalId}")
   @PreAuthorize("hasRole('SUPER_ADMIN')")
-  public ApiResponse<HospitalDTO> get(@PathVariable UUID id) {
-    return ApiResponse.success(hospitalService.getById(id));
+  public ApiResponse<HospitalDTO> get(@PathVariable UUID hospitalId) {
+    return ApiResponse.success(hospitalService.getById(hospitalId));
   }
 
-  @PutMapping("/{id}")
+  @PutMapping("/{hospitalId}")
   @PreAuthorize("hasRole('SUPER_ADMIN')")
   public ApiResponse<HospitalDTO> update(
-      @PathVariable UUID id, @Valid @RequestBody HospitalDTO request) {
-    request.setId(id);
+      @PathVariable UUID hospitalId, @Valid @RequestBody HospitalDTO request) {
+    request.setId(hospitalId);
     return ApiResponse.success(hospitalAggregateService.saveHospitalAggregate(request));
   }
 }

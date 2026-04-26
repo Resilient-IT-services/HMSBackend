@@ -38,30 +38,7 @@ class DoctorServiceTest {
 
   @InjectMocks private DoctorService doctorService;
 
-  @Test
-  void listReturnsMappedDoctors() {
-    UserAccount user = new UserAccount();
-    user.setFullName("Dr. Maya");
 
-    Doctor doctor = new Doctor();
-    doctor.setId(UUID.nameUUIDFromBytes("3".getBytes()));
-    doctor.setUser(user);
-    doctor.setSpecialization("Cardiology");
-
-    UUID hospitalId = UUID.nameUUIDFromBytes("4".getBytes());
-    when(hospitalContext.requireHospitalId()).thenReturn(hospitalId);
-    when(hospitalContext.getHospitalIdOrNull()).thenReturn(hospitalId);
-    when(doctorRepository.findAllByHospitalIdOrderByCreatedAtDesc(
-            eq(hospitalId), any(PageRequest.class)))
-        .thenReturn(new PageImpl<>(List.of(doctor)));
-    when(doctorHospitalDetailsRepository.findByUserIdAndHospitalId(any(), eq(hospitalId)))
-        .thenReturn(Optional.empty());
-
-    var response = doctorService.list(0, 10);
-
-    assertEquals(1, response.content().size());
-    assertEquals("Cardiology", response.content().getFirst().specialization());
-  }
 
   @Test
   void requireDoctorRejectsMissingDoctor() {

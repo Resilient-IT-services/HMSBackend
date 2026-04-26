@@ -5,7 +5,6 @@ import com.res.hms.common.tenant.HospitalContext;
 import com.res.hms.common.util.ResourceLookup;
 import com.res.hms.doctor.dto.AvailabilityExceptionDTO;
 import com.res.hms.doctor.dto.DoctorAvailabilityResponse;
-import com.res.hms.doctor.dto.DoctorResponse;
 import com.res.hms.doctor.dto.ScheduleDTO;
 import com.res.hms.doctor.repository.DoctorRepository;
 import com.res.hms.domain.Doctor;
@@ -41,6 +40,7 @@ public class DoctorService {
   private final HospitalContext hospitalContext;
   private final ResourceLookup resourceLookup;
 
+  private final com.res.hms.repository.UserRoleAssignmentRepository assignmentRepository;
   private final com.res.hms.repository.DoctorScheduleRepository scheduleRepository;
   private final com.res.hms.repository.DoctorAvailabilityExceptionRepository
       availabilityExceptionRepository;
@@ -59,11 +59,16 @@ public class DoctorService {
             date,
             dbDay);
 
-    // 1. Find the Doctor (try by doctorId first, then by userId)
+    // 1. Find the Doctor (try by doctorId, userId, or assignmentId)
     Doctor doctor =
         doctorRepository
             .findById(doctorId)
             .or(() -> doctorRepository.findByUserId(doctorId))
+            .or(
+                () ->
+                    assignmentRepository
+                        .findById(doctorId)
+                        .map(a -> a.getUser().getDoctor()))
             .orElseThrow(
                 () ->
                     new com.res.hms.common.exception.ApiException(
@@ -287,44 +292,11 @@ public class DoctorService {
     assignment.setDoctorDetails(det);
   }
 
-  public PageResponse<DoctorResponse> list(int page, int size) {
-    UUID hospitalId = hospitalContext.requireHospitalId();
-    return PageResponse.from(
-        doctorRepository
-            .findAllByHospitalIdOrderByCreatedAtDesc(hospitalId, PageRequest.of(page, size))
-            .map(this::toResponse));
-  }
 
   public Doctor requireDoctor(UUID id, UUID hospitalId) {
     return resourceLookup.findRequired(
         id, hospitalId, doctorRepository::findByIdAndHospitalId, "Doctor");
   }
 
-  private DoctorResponse toResponse(Doctor doctor) {
-    UserAccount user = doctor.getUser();
-    UUID activeHospitalId = hospitalContext.getHospitalIdOrNull();
 
-    BigDecimal consultationFee = BigDecimal.ZERO;
-    Integer followUpDays = 0;
-
-    if (activeHospitalId != null && user != null) {
-      Optional<DoctorHospitalDetails> details =
-          doctorHospitalDetailsRepository.findByUserIdAndHospitalId(user.getId(), activeHospitalId);
-      if (details.isPresent()) {
-        consultationFee = details.get().getConsultationFee();
-        followUpDays = details.get().getFollowUpDays();
-      }
-    }
-
-    return new DoctorResponse(
-        doctor.getId(),
-        user != null ? user.getFullName() : "N/A",
-        user != null ? user.getGender() : null,
-        user != null ? user.getDob() : null,
-        user != null ? user.getPhone() : null,
-        doctor.getSpecialization(),
-        consultationFee,
-        followUpDays,
-        doctor.getEducation());
-  }
 }

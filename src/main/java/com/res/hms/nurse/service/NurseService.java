@@ -7,7 +7,6 @@ import com.res.hms.domain.Nurse;
 import com.res.hms.domain.NurseHospitalDetails;
 import com.res.hms.domain.UserAccount;
 import com.res.hms.domain.UserRoleAssignment;
-import com.res.hms.nurse.dto.NurseResponse;
 import com.res.hms.nurse.repository.NurseRepository;
 import com.res.hms.repository.NurseHospitalDetailsRepository;
 import com.res.hms.repository.UserAccountRepository;
@@ -77,34 +76,5 @@ public class NurseService {
     det.setUpdatedAt(LocalDateTime.now());
     nurseHospitalDetailsRepository.save(det);
     assignment.setNurseDetails(det);
-  }
-
-  public PageResponse<NurseResponse> list(int page, int size) {
-    UUID hospitalId = hospitalContext.requireHospitalId();
-    return PageResponse.from(
-        nurseRepository
-            .findAllByHospitalIdOrderByCreatedAtDesc(hospitalId, PageRequest.of(page, size))
-            .map(this::toResponse));
-  }
-
-  private NurseResponse toResponse(Nurse nurse) {
-    UserAccount user = nurse.getUser();
-    String department = null;
-    UUID activeHospitalId = hospitalContext.getHospitalIdOrNull();
-    if (user != null && activeHospitalId != null) {
-      department =
-          user.getAssignments().stream()
-              .filter(a -> activeHospitalId.equals(a.getHospitalId()))
-              .map(UserRoleAssignment::getDepartmentName)
-              .findFirst()
-              .orElse(null);
-    }
-    return new NurseResponse(
-        nurse.getId(),
-        user != null ? user.getFullName() : "N/A",
-        user != null ? user.getGender() : null,
-        user != null ? user.getDob() : null,
-        user != null ? user.getPhone() : null,
-        department);
   }
 }

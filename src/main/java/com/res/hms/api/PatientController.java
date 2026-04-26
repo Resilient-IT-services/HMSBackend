@@ -43,17 +43,17 @@ public class PatientController {
     return ApiResponse.success(patientService.list(page, Math.min(size, 100), search));
   }
 
-  @GetMapping("/{id}")
+  @GetMapping("/{patientId}")
   @PreAuthorize("hasAnyRole('ADMIN','RECEPTIONIST','NURSE','DOCTOR')")
-  public ApiResponse<PatientDTO> get(@PathVariable UUID id) {
-    return ApiResponse.success(patientService.get(id));
+  public ApiResponse<PatientDTO> get(@PathVariable UUID patientId) {
+    return ApiResponse.success(patientService.get(patientId));
   }
 
-  @PutMapping("/{id}")
+  @PutMapping("/{patientId}")
   @PreAuthorize("hasAnyRole('ADMIN','RECEPTIONIST','NURSE')")
   public ApiResponse<PatientDTO> update(
-      @PathVariable UUID id, @Valid @RequestBody PatientDTO request) {
-    request.setId(id);
+      @PathVariable UUID patientId, @Valid @RequestBody PatientDTO request) {
+    request.setId(patientId);
     return ApiResponse.success(patientAggregateService.savePatientAggregate(request));
   }
 }

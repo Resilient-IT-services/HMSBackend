@@ -13,8 +13,9 @@ import lombok.NoArgsConstructor;
 @NoArgsConstructor
 @AllArgsConstructor
 public class DoctorStaffResponse {
-  private UUID id; // Assignment ID
   private UUID userId;
+  private UUID doctorId;
+  private UUID assignmentId;
   private String fullName;
   private String phone;
   private Gender gender;

@@ -44,24 +44,24 @@ public class AppointmentController {
     return ApiResponse.success(appointmentService.list(page, Math.min(size, 100), search));
   }
 
-  @GetMapping("/{id}")
+  @GetMapping("/{appointmentId}")
   @PreAuthorize("hasAnyRole('ADMIN','RECEPTIONIST','NURSE','DOCTOR')")
-  public ApiResponse<AppointmentDTO> get(@PathVariable UUID id) {
-    return ApiResponse.success(appointmentService.getById(id));
+  public ApiResponse<AppointmentDTO> get(@PathVariable UUID appointmentId) {
+    return ApiResponse.success(appointmentService.getById(appointmentId));
   }
 
-  @PutMapping("/{id}")
+  @PutMapping("/{appointmentId}")
   @PreAuthorize("hasAnyRole('ADMIN','RECEPTIONIST')")
   public ApiResponse<AppointmentDTO> update(
-      @PathVariable UUID id, @Valid @RequestBody AppointmentDTO request) {
-    request.setId(id);
+      @PathVariable UUID appointmentId, @Valid @RequestBody AppointmentDTO request) {
+    request.setId(appointmentId);
     return ApiResponse.success(appointmentAggregateService.saveAppointmentAggregate(request));
   }
 
-  @PostMapping("/{id}/status")
+  @PostMapping("/{appointmentId}/status")
   @PreAuthorize("hasAnyRole('ADMIN','RECEPTIONIST','DOCTOR')")
   public ApiResponse<AppointmentDTO> updateStatus(
-      @PathVariable UUID id, @Valid @RequestBody UpdateAppointmentStatusRequest request) {
-    return ApiResponse.success(appointmentService.updateStatus(id, request));
+      @PathVariable UUID appointmentId, @Valid @RequestBody UpdateAppointmentStatusRequest request) {
+    return ApiResponse.success(appointmentService.updateStatus(appointmentId, request));
   }
 }

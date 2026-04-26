@@ -133,8 +133,9 @@ public class StaffService {
     DoctorHospitalDetails det = a.getDoctorDetails();
 
     return DoctorStaffResponse.builder()
-        .id(a.getId())
         .userId(u.getId())
+        .doctorId(d != null ? d.getId() : null)
+        .assignmentId(a.getId())
         .fullName(u.getFullName())
         .phone(u.getPhone())
         .gender(u.getGender())
@@ -150,8 +151,9 @@ public class StaffService {
     var det = a.getNurseDetails();
 
     return NurseStaffResponse.builder()
-        .id(a.getId())
         .userId(u.getId())
+        .nurseId(n != null ? n.getId() : null)
+        .assignmentId(a.getId())
         .fullName(u.getFullName())
         .phone(u.getPhone())
         .gender(u.getGender())

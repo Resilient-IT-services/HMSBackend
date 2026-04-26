@@ -41,10 +41,10 @@ public class UserController {
         userService.listUsers(page, Math.min(size, 100), search, role, active, includeDeleted));
   }
 
-  @GetMapping("/{id}/full-profile")
+  @GetMapping("/{userId}/full-profile")
   @PreAuthorize("hasAnyRole('SUPER_ADMIN', 'ADMIN')")
-  public ApiResponse<UserDetailsDTO> getFullProfile(@PathVariable UUID id) {
-    return ApiResponse.success(userService.getFullProfile(id));
+  public ApiResponse<UserDetailsDTO> getFullProfile(@PathVariable UUID userId) {
+    return ApiResponse.success(userService.getFullProfile(userId));
   }
 
   @PostMapping
@@ -53,18 +53,18 @@ public class UserController {
     return ApiResponse.success(userAggregateService.saveUserAggregate(request));
   }
 
-  @PutMapping("/{id}")
+  @PutMapping("/{userId}")
   @PreAuthorize("hasAnyRole('SUPER_ADMIN', 'ADMIN')")
   public ApiResponse<UserDetailsDTO> update(
-      @PathVariable UUID id, @Valid @RequestBody UserDetailsDTO request) {
-    request.setId(id);
+      @PathVariable UUID userId, @Valid @RequestBody UserDetailsDTO request) {
+    request.setId(userId);
     return ApiResponse.success(userAggregateService.saveUserAggregate(request));
   }
 
-  @DeleteMapping("/{id}")
+  @DeleteMapping("/{userId}")
   @PreAuthorize("hasAnyRole('SUPER_ADMIN', 'ADMIN')")
-  public ApiResponse<Void> delete(@PathVariable UUID id) {
-    userService.deleteUser(id);
+  public ApiResponse<Void> delete(@PathVariable UUID userId) {
+    userService.deleteUser(userId);
     return ApiResponse.success(null);
   }
 }
