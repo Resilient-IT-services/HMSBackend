@@ -18,5 +18,4 @@ public class DoctorHospitalDetailsDTO {
   private CommissionType commissionType;
   private BigDecimal commissionValue;
   private boolean visitingConsultant;
-  private LocalDateTime updatedAt;
 }

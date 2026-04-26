@@ -1,6 +1,7 @@
 package com.res.hms.user.dto;
 
 import com.res.hms.domain.Gender;
+import io.swagger.v3.oas.annotations.media.Schema;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.List;
@@ -21,12 +22,15 @@ public class UserSummaryDTO {
   private String email;
   private String fullName;
   private Gender gender;
+
+  @Schema(type = "string", example = "1990-01-01")
   private LocalDate dob;
+
   private String phone;
   private boolean active;
   private boolean deleted;
   private boolean superuser;
-  private LocalDateTime createdAt;
+
   private List<HospitalMembershipDTO> memberships;
 
   @Data

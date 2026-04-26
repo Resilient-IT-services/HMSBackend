@@ -112,9 +112,9 @@ class DoctorControllerIntegrationTest {
                 .param("date", monday.toString()))
         .andExpect(status().isOk())
         .andExpect(jsonPath("$.data.sessions.length()").value(1))
-        .andExpect(jsonPath("$.data.sessions[0].startTime").value("09:00:00"))
+        .andExpect(jsonPath("$.data.sessions[0].startTime").value("09:00"))
         .andExpect(jsonPath("$.data.sessions[0].currentBookings").value(0))
-        .andExpect(jsonPath("$.data.sessions[0].nextSuggestedTime").value("09:00:00"));
+        .andExpect(jsonPath("$.data.sessions[0].nextSuggestedTime").value("09:00"));
 
     // Book 1 patient
     com.res.hms.domain.Appointment apt = new com.res.hms.domain.Appointment();
@@ -135,7 +135,7 @@ class DoctorControllerIntegrationTest {
                 .param("date", monday.toString()))
         .andExpect(status().isOk())
         .andExpect(jsonPath("$.data.sessions[0].currentBookings").value(1))
-        .andExpect(jsonPath("$.data.sessions[0].nextSuggestedTime").value("10:00:00"));
+        .andExpect(jsonPath("$.data.sessions[0].nextSuggestedTime").value("10:00"));
   }
 
   @Test
@@ -163,8 +163,8 @@ class DoctorControllerIntegrationTest {
                 .param("date", tuesday.toString()))
         .andExpect(status().isOk())
         .andExpect(jsonPath("$.data.sessions.length()").value(1))
-        .andExpect(jsonPath("$.data.sessions[0].startTime").value("14:00:00"))
-        .andExpect(jsonPath("$.data.sessions[0].endTime").value("16:00:00"))
-        .andExpect(jsonPath("$.data.sessions[0].nextSuggestedTime").value("14:00:00"));
+        .andExpect(jsonPath("$.data.sessions[0].startTime").value("14:00"))
+        .andExpect(jsonPath("$.data.sessions[0].endTime").value("16:00"))
+        .andExpect(jsonPath("$.data.sessions[0].nextSuggestedTime").value("14:00"));
   }
 }

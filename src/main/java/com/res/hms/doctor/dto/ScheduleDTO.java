@@ -1,6 +1,7 @@
 package com.res.hms.doctor.dto;
 
 import com.fasterxml.jackson.annotation.JsonFormat;
+import io.swagger.v3.oas.annotations.media.Schema;
 import java.time.LocalTime;
 import java.util.UUID;
 import lombok.AllArgsConstructor;
@@ -17,9 +18,11 @@ public class ScheduleDTO {
   private Short dayOfWeek; // 0-6
 
   @JsonFormat(pattern = "HH:mm")
+  @Schema(type = "string", pattern = "HH:mm", example = "09:00")
   private LocalTime startTime;
 
   @JsonFormat(pattern = "HH:mm")
+  @Schema(type = "string", pattern = "HH:mm", example = "17:00")
   private LocalTime endTime;
 
   private Integer slotDurationMinutes;

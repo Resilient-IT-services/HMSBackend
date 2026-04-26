@@ -2,6 +2,7 @@ package com.res.hms.user.dto;
 
 import com.res.hms.doctor.dto.DoctorEducation;
 import com.res.hms.domain.Gender;
+import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
@@ -36,12 +37,12 @@ public class UserDetailsDTO {
   private Gender gender;
 
   @NotNull(message = "dob is required")
+  @Schema(type = "string", example = "1990-01-01")
   private LocalDate dob;
 
   private String phone;
   private Boolean active;
   private Boolean superuser;
-  private LocalDateTime createdAt;
 
   // Global Profile Info
   private DoctorInfo doctorInfo;
