@@ -11,20 +11,14 @@ import com.res.hms.common.exception.ApiException;
 import com.res.hms.common.tenant.HospitalContext;
 import com.res.hms.common.util.ResourceLookup;
 import com.res.hms.doctor.repository.DoctorRepository;
-import com.res.hms.domain.Doctor;
-import com.res.hms.domain.UserAccount;
 import com.res.hms.repository.DoctorHospitalDetailsRepository;
 import com.res.hms.repository.UserAccountRepository;
-import java.util.List;
-import java.util.Optional;
 import java.util.UUID;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
-import org.springframework.data.domain.PageImpl;
-import org.springframework.data.domain.PageRequest;
 import org.springframework.http.HttpStatus;
 
 @ExtendWith(MockitoExtension.class)
@@ -37,8 +31,6 @@ class DoctorServiceTest {
   @Mock private ResourceLookup resourceLookup;
 
   @InjectMocks private DoctorService doctorService;
-
-
 
   @Test
   void requireDoctorRejectsMissingDoctor() {

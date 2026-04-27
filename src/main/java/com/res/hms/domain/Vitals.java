@@ -6,9 +6,9 @@ import jakarta.persistence.FetchType;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.OneToOne;
 import jakarta.persistence.Table;
+import java.math.BigDecimal;
 import lombok.Getter;
 import lombok.Setter;
-import java.math.BigDecimal;
 
 @Getter
 @Setter
@@ -16,17 +16,17 @@ import java.math.BigDecimal;
 @Table(name = "vitals")
 public class Vitals extends HospitalScopedEntity {
 
-    @OneToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "appointment_id", nullable = false)
-    private Appointment appointment;
+  @OneToOne(fetch = FetchType.LAZY)
+  @JoinColumn(name = "appointment_id", nullable = false)
+  private Appointment appointment;
 
-    @Column(name = "blood_pressure")
-    private String bloodPressure;
+  @Column(name = "blood_pressure")
+  private String bloodPressure;
 
-    @Column(name = "heart_rate")
-    private Integer heartRate;
+  @Column(name = "heart_rate")
+  private Integer heartRate;
 
-    private BigDecimal  temperature;
+  private BigDecimal temperature;
 
-    private BigDecimal  weight;
+  private BigDecimal weight;
 }

@@ -21,7 +21,7 @@ public class AuditLogController {
   private final AuditLogService auditLogService;
 
   @GetMapping
-  @PreAuthorize("hasRole('ADMIN')")
+  @PreAuthorize("hasAnyRole('ADMIN','SUPER_ADMIN')")
   public ApiResponse<PageResponse<AuditLogResponse>> list(
       @RequestParam(defaultValue = "0") int page, @RequestParam(defaultValue = "20") int size) {
     return ApiResponse.success(auditLogService.list(page, Math.min(size, 100)));

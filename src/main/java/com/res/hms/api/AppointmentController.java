@@ -30,13 +30,13 @@ public class AppointmentController {
   private final AppointmentAggregateService appointmentAggregateService;
 
   @PostMapping
-  @PreAuthorize("hasAnyRole('ADMIN','RECEPTIONIST','DOCTOR')")
+  @PreAuthorize("hasAnyRole('ADMIN','RECEPTIONIST','DOCTOR','SUPER_ADMIN')")
   public ApiResponse<AppointmentDTO> create(@Valid @RequestBody AppointmentDTO request) {
     return ApiResponse.success(appointmentAggregateService.saveAppointmentAggregate(request));
   }
 
   @GetMapping
-  @PreAuthorize("hasAnyRole('ADMIN','RECEPTIONIST','NURSE','DOCTOR')")
+  @PreAuthorize("hasAnyRole('ADMIN','RECEPTIONIST','NURSE','DOCTOR','SUPER_ADMIN')")
   public ApiResponse<PageResponse<AppointmentDTO>> list(
       @RequestParam(defaultValue = "0") int page,
       @RequestParam(defaultValue = "20") int size,
@@ -45,13 +45,13 @@ public class AppointmentController {
   }
 
   @GetMapping("/{appointmentId}")
-  @PreAuthorize("hasAnyRole('ADMIN','RECEPTIONIST','NURSE','DOCTOR')")
+  @PreAuthorize("hasAnyRole('ADMIN','RECEPTIONIST','NURSE','DOCTOR','SUPER_ADMIN')")
   public ApiResponse<AppointmentDTO> get(@PathVariable UUID appointmentId) {
     return ApiResponse.success(appointmentService.getById(appointmentId));
   }
 
   @PutMapping("/{appointmentId}")
-  @PreAuthorize("hasAnyRole('ADMIN','RECEPTIONIST','DOCTOR')")
+  @PreAuthorize("hasAnyRole('ADMIN','RECEPTIONIST','DOCTOR','SUPER_ADMIN')")
   public ApiResponse<AppointmentDTO> update(
       @PathVariable UUID appointmentId, @Valid @RequestBody AppointmentDTO request) {
     request.setId(appointmentId);
@@ -59,9 +59,10 @@ public class AppointmentController {
   }
 
   @PostMapping("/{appointmentId}/status")
-  @PreAuthorize("hasAnyRole('ADMIN','RECEPTIONIST','DOCTOR')")
+  @PreAuthorize("hasAnyRole('ADMIN','RECEPTIONIST','DOCTOR','SUPER_ADMIN')")
   public ApiResponse<AppointmentDTO> updateStatus(
-      @PathVariable UUID appointmentId, @Valid @RequestBody UpdateAppointmentStatusRequest request) {
+      @PathVariable UUID appointmentId,
+      @Valid @RequestBody UpdateAppointmentStatusRequest request) {
     return ApiResponse.success(appointmentService.updateStatus(appointmentId, request));
   }
 }

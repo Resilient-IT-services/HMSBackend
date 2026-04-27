@@ -29,13 +29,13 @@ public class PatientController {
   private final PatientAggregateService patientAggregateService;
 
   @PostMapping
-  @PreAuthorize("hasAnyRole('ADMIN','RECEPTIONIST','NURSE')")
+  @PreAuthorize("hasAnyRole('ADMIN','RECEPTIONIST','NURSE','SUPER_ADMIN')")
   public ApiResponse<PatientDTO> create(@Valid @RequestBody PatientDTO request) {
     return ApiResponse.success(patientAggregateService.savePatientAggregate(request));
   }
 
   @GetMapping
-  @PreAuthorize("hasAnyRole('ADMIN','RECEPTIONIST','NURSE','DOCTOR')")
+  @PreAuthorize("hasAnyRole('ADMIN','RECEPTIONIST','NURSE','DOCTOR','SUPER_ADMIN')")
   public ApiResponse<PageResponse<PatientDTO>> list(
       @RequestParam(defaultValue = "0") int page,
       @RequestParam(defaultValue = "20") int size,
@@ -44,13 +44,13 @@ public class PatientController {
   }
 
   @GetMapping("/{patientId}")
-  @PreAuthorize("hasAnyRole('ADMIN','RECEPTIONIST','NURSE','DOCTOR')")
+  @PreAuthorize("hasAnyRole('ADMIN','RECEPTIONIST','NURSE','DOCTOR','SUPER_ADMIN')")
   public ApiResponse<PatientDTO> get(@PathVariable UUID patientId) {
     return ApiResponse.success(patientService.get(patientId));
   }
 
   @PutMapping("/{patientId}")
-  @PreAuthorize("hasAnyRole('ADMIN','RECEPTIONIST','NURSE')")
+  @PreAuthorize("hasAnyRole('ADMIN','RECEPTIONIST','NURSE','SUPER_ADMIN')")
   public ApiResponse<PatientDTO> update(
       @PathVariable UUID patientId, @Valid @RequestBody PatientDTO request) {
     request.setId(patientId);

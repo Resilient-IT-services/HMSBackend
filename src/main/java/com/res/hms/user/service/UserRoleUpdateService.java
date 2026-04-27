@@ -69,9 +69,10 @@ public class UserRoleUpdateService {
                     receptionistProfileService.updateHospitalDetails(
                         a, raDto.getReceptionistDetails());
                 case ADMIN -> adminProfileService.updateHospitalDetails(a, raDto.getAdminDetails());
-                default -> { }
+                default -> {
+                  // No specific hospital details to update for other roles
                 }
-
+              }
             });
   }
 

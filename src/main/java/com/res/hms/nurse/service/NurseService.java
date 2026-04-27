@@ -1,6 +1,5 @@
 package com.res.hms.nurse.service;
 
-import com.res.hms.common.api.PageResponse;
 import com.res.hms.common.tenant.HospitalContext;
 import com.res.hms.common.util.ResourceLookup;
 import com.res.hms.domain.Nurse;
@@ -13,9 +12,7 @@ import com.res.hms.repository.UserAccountRepository;
 import com.res.hms.user.dto.NurseHospitalDetailsDTO;
 import com.res.hms.user.dto.UserDetailsDTO;
 import java.time.LocalDateTime;
-import java.util.UUID;
 import lombok.RequiredArgsConstructor;
-import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 

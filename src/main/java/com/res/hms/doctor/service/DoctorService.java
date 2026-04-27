@@ -1,6 +1,5 @@
 package com.res.hms.doctor.service;
 
-import com.res.hms.common.api.PageResponse;
 import com.res.hms.common.tenant.HospitalContext;
 import com.res.hms.common.util.ResourceLookup;
 import com.res.hms.doctor.dto.AvailabilityExceptionDTO;
@@ -19,14 +18,12 @@ import com.res.hms.repository.DoctorHospitalDetailsRepository;
 import com.res.hms.repository.HospitalRepository;
 import com.res.hms.user.dto.DoctorHospitalDetailsDTO;
 import com.res.hms.user.dto.UserDetailsDTO;
-import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.time.LocalTime;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 import lombok.RequiredArgsConstructor;
-import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -64,28 +61,35 @@ public class DoctorService {
         doctorRepository
             .findById(doctorId)
             .or(() -> doctorRepository.findByUserId(doctorId))
-            .or(
-                () ->
-                    assignmentRepository
-                        .findById(doctorId)
-                        .map(a -> a.getUser().getDoctor()))
+            .or(() -> assignmentRepository.findById(doctorId).map(a -> a.getUser().getDoctor()))
             .orElseThrow(
                 () ->
                     new com.res.hms.common.exception.ApiException(
-                        "NOT_FOUND", "Doctor not found", org.springframework.http.HttpStatus.NOT_FOUND));
+                        "NOT_FOUND",
+                        "Doctor not found",
+                        org.springframework.http.HttpStatus.NOT_FOUND));
 
     UserAccount user = doctor.getUser();
     UUID actualDoctorId = doctor.getId();
     // 2. Find the relevant assignment for this hospital
-    UserRoleAssignment assignment = user.getAssignments().stream()
-        .filter(a -> hospitalId.equals(a.getHospitalId()) && a.getRole().getCode() == RoleCode.DOCTOR)
-        .findFirst()
-        .orElseThrow(() -> new com.res.hms.common.exception.ApiException("NOT_FOUND", "Doctor assignment not found for this hospital", org.springframework.http.HttpStatus.NOT_FOUND));
+    UserRoleAssignment assignment =
+        user.getAssignments().stream()
+            .filter(
+                a ->
+                    hospitalId.equals(a.getHospitalId())
+                        && a.getRole().getCode() == RoleCode.DOCTOR)
+            .findFirst()
+            .orElseThrow(
+                () ->
+                    new com.res.hms.common.exception.ApiException(
+                        "NOT_FOUND",
+                        "Doctor assignment not found for this hospital",
+                        org.springframework.http.HttpStatus.NOT_FOUND));
 
     // 3. Check for exceptions
     List<DoctorAvailabilityException> exceptions =
         availabilityExceptionRepository.findByDoctorIdAndHospitalIdAndDate(
-            doctorId, hospitalId, date);
+            actualDoctorId, hospitalId, date);
 
     if (exceptions.stream().anyMatch(e -> "FULL_DAY_OFF".equals(e.getType()))) {
       return new DoctorAvailabilityResponse(java.util.Collections.emptyList());
@@ -93,7 +97,7 @@ public class DoctorService {
 
     // 4. Fetch existing appointments
     java.util.List<com.res.hms.domain.Appointment> appointments =
-        appointmentRepository.findByDoctorIdAndDate(doctorId, date);
+        appointmentRepository.findByDoctorIdAndDate(actualDoctorId, date);
 
     // 5. Determine sessions
     java.time.LocalDate today = java.time.LocalDate.now();
@@ -292,11 +296,8 @@ public class DoctorService {
     assignment.setDoctorDetails(det);
   }
 
-
   public Doctor requireDoctor(UUID id, UUID hospitalId) {
     return resourceLookup.findRequired(
         id, hospitalId, doctorRepository::findByIdAndHospitalId, "Doctor");
   }
-
-
 }

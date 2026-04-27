@@ -105,7 +105,7 @@ class DoctorControllerIntegrationTest {
 
   @Test
   void testGetAvailability() throws Exception {
-    LocalDate monday = LocalDate.of(2026, 4, 27); // This is a Monday
+    LocalDate nextMonday = LocalDate.of(2026, 5, 4); // A future Monday
 
     // Initial check: Should have 1 session (9-11 AM)
     mockMvc
@@ -113,7 +113,7 @@ class DoctorControllerIntegrationTest {
             get("/api/v1/doctors/" + doctorId + "/availability")
                 .session(session)
                 .header("X-Hospital-Id", hospitalId.toString())
-                .param("date", monday.toString()))
+                .param("date", nextMonday.toString()))
         .andExpect(status().isOk())
         .andExpect(jsonPath("$.data.sessions.length()").value(1))
         .andExpect(jsonPath("$.data.sessions[0].startTime").value("09:00"))
@@ -125,7 +125,7 @@ class DoctorControllerIntegrationTest {
     apt.setHospitalId(hospitalId);
     apt.setDoctor(userAccountRepository.findByUsername("avail_dr").get().getDoctor());
     apt.setPatient(testDataHelper.createTestPatient(hospitalId));
-    apt.setAppointmentTime(LocalDateTime.of(monday, LocalTime.of(9, 0)));
+    apt.setAppointmentTime(LocalDateTime.of(nextMonday, LocalTime.of(9, 0)));
     apt.setStatus(AppointmentStatus.SCHEDULED);
     appointmentRepository.save(apt);
 
@@ -136,7 +136,7 @@ class DoctorControllerIntegrationTest {
             get("/api/v1/doctors/" + doctorId + "/availability")
                 .session(session)
                 .header("X-Hospital-Id", hospitalId.toString())
-                .param("date", monday.toString()))
+                .param("date", nextMonday.toString()))
         .andExpect(status().isOk())
         .andExpect(jsonPath("$.data.sessions[0].currentBookings").value(1))
         .andExpect(jsonPath("$.data.sessions[0].nextSuggestedTime").value("10:00"));

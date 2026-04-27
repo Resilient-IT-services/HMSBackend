@@ -35,6 +35,9 @@ public class Appointment extends HospitalScopedEntity {
 
   private String notes;
 
-  @jakarta.persistence.OneToOne(mappedBy = "appointment", cascade = jakarta.persistence.CascadeType.ALL, fetch = jakarta.persistence.FetchType.LAZY)
+  @jakarta.persistence.OneToOne(
+      mappedBy = "appointment",
+      cascade = jakarta.persistence.CascadeType.ALL,
+      fetch = jakarta.persistence.FetchType.LAZY)
   private Vitals vitals;
 }
