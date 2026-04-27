@@ -30,7 +30,7 @@ public class AppointmentController {
   private final AppointmentAggregateService appointmentAggregateService;
 
   @PostMapping
-  @PreAuthorize("hasAnyRole('ADMIN','RECEPTIONIST')")
+  @PreAuthorize("hasAnyRole('ADMIN','RECEPTIONIST','DOCTOR')")
   public ApiResponse<AppointmentDTO> create(@Valid @RequestBody AppointmentDTO request) {
     return ApiResponse.success(appointmentAggregateService.saveAppointmentAggregate(request));
   }
@@ -51,7 +51,7 @@ public class AppointmentController {
   }
 
   @PutMapping("/{appointmentId}")
-  @PreAuthorize("hasAnyRole('ADMIN','RECEPTIONIST')")
+  @PreAuthorize("hasAnyRole('ADMIN','RECEPTIONIST','DOCTOR')")
   public ApiResponse<AppointmentDTO> update(
       @PathVariable UUID appointmentId, @Valid @RequestBody AppointmentDTO request) {
     request.setId(appointmentId);

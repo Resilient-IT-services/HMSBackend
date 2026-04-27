@@ -38,13 +38,11 @@ public class HospitalUserDetailsService implements UserDetailsService {
     }
 
     Map<UUID, Set<RoleCode>> hospitalRoles = new HashMap<>();
-    Set<RoleCode> allRoles = new HashSet<>();
 
     for (UserRoleAssignment assignment : userAccount.getAssignments()) {
       UUID hid = assignment.getHospitalId();
       RoleCode code = assignment.getRole().getCode();
       hospitalRoles.computeIfAbsent(hid, k -> new HashSet<>()).add(code);
-      allRoles.add(code);
     }
 
     return new HospitalUserPrincipal(
@@ -56,7 +54,7 @@ public class HospitalUserDetailsService implements UserDetailsService {
         userAccount.isSuperuser(),
         hospitalRoles,
         null, // Active hospitalId
-        allRoles // We load ALL roles so @PreAuthorize works
+        userAccount.getRoleCodes() // Use helper method to include all roles
         );
   }
 }
