@@ -1,0 +1,19 @@
+version: "3.9"
+
+services:
+  backend:
+    build: ./backend
+    container_name: hms-backend
+
+    ports:
+      - "8080:8080"
+
+    environment:
+      SPRING_PROFILES_ACTIVE: prod
+      DB_HOST: host.docker.internal
+      DB_PORT: 5432
+      DB_NAME: hms
+      DB_USER: hms_user
+      DB_PASS: hms_pass
+
+    restart: always
