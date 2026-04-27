@@ -33,4 +33,7 @@ public class AppointmentDTO {
 
   private AppointmentStatus status;
   private String notes;
+
+  @jakarta.validation.Valid
+  private VitalsDTO vitals;
 }

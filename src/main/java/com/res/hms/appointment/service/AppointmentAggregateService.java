@@ -81,5 +81,19 @@ public class AppointmentAggregateService {
   private void updateAppointmentFields(Appointment appointment, AppointmentDTO dto) {
     appointment.setAppointmentTime(dto.getAppointmentTime());
     appointment.setNotes(dto.getNotes());
+
+    if (dto.getVitals() != null) {
+      com.res.hms.domain.Vitals vitals = appointment.getVitals();
+      if (vitals == null) {
+        vitals = new com.res.hms.domain.Vitals();
+        vitals.setAppointment(appointment);
+        vitals.setHospitalId(appointment.getHospitalId());
+        appointment.setVitals(vitals);
+      }
+      vitals.setBloodPressure(dto.getVitals().getBloodPressure());
+      vitals.setHeartRate(dto.getVitals().getHeartRate());
+      vitals.setTemperature(dto.getVitals().getTemperature());
+      vitals.setWeight(dto.getVitals().getWeight());
+    }
   }
 }

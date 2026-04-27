@@ -73,6 +73,19 @@ public class AppointmentService {
         .appointmentTime(appointment.getAppointmentTime())
         .status(appointment.getStatus())
         .notes(appointment.getNotes())
+        .vitals(toVitalsDto(appointment.getVitals()))
+        .build();
+  }
+
+  private com.res.hms.appointment.dto.VitalsDTO toVitalsDto(com.res.hms.domain.Vitals vitals) {
+    if (vitals == null) {
+      return null;
+    }
+    return com.res.hms.appointment.dto.VitalsDTO.builder()
+        .bloodPressure(vitals.getBloodPressure())
+        .heartRate(vitals.getHeartRate())
+        .temperature(vitals.getTemperature())
+        .weight(vitals.getWeight())
         .build();
   }
 }
