@@ -49,7 +49,8 @@ class UserHospitalIntegrationTest {
   @Test
   void testCreateHospitalAndUser() throws Exception {
     // 1. Create Hospital
-    String hospitalJson = "{\"name\":\"New Hospital\",\"code\":\"NEW_HOSP\",\"address\":\"New City\",\"status\":\"ACTIVE\"}";
+    String hospitalJson =
+        "{\"name\":\"New Hospital\",\"code\":\"NEW_HOSP\",\"address\":\"New City\",\"status\":\"ACTIVE\"}";
 
     String hospitalResponse =
         mockMvc

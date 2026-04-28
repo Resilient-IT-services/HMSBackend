@@ -31,7 +31,8 @@ public class NurseProfileService {
       return;
     }
     NurseProfile profile =
-        nurseProfileRepository.findByUserId(user.getId())
+        nurseProfileRepository
+            .findByUserId(user.getId())
             .orElseGet(
                 () -> {
                   NurseProfile n = new NurseProfile();

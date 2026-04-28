@@ -57,7 +57,8 @@ public class DoctorProfileService {
 
     // 1. Find the DoctorProfile (try by doctorId, userId, or assignmentId)
     DoctorProfile doctorProfile =
-        doctorProfileRepository.findById(doctorId)
+        doctorProfileRepository
+            .findById(doctorId)
             .or(() -> doctorProfileRepository.findByUserId(doctorId))
             .or(
                 () ->
@@ -177,7 +178,8 @@ public class DoctorProfileService {
       return;
     }
     DoctorProfile doctorProfile =
-        doctorProfileRepository.findByUserId(user.getId())
+        doctorProfileRepository
+            .findByUserId(user.getId())
             .orElseGet(
                 () -> {
                   DoctorProfile d = new DoctorProfile();
