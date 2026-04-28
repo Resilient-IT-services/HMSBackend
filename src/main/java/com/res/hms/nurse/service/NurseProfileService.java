@@ -19,7 +19,7 @@ import org.springframework.transaction.annotation.Transactional;
 @RequiredArgsConstructor
 public class NurseProfileService {
 
-  private final NurseProfileRepository NurseProfileRepository;
+  private final NurseProfileRepository nurseProfileRepository;
   private final NurseHospitalDetailsRepository nurseHospitalDetailsRepository;
   private final UserAccountRepository userAccountRepository;
   private final HospitalContext hospitalContext;
@@ -31,7 +31,7 @@ public class NurseProfileService {
       return;
     }
     NurseProfile profile =
-        NurseProfileRepository.findByUserId(user.getId())
+        nurseProfileRepository.findByUserId(user.getId())
             .orElseGet(
                 () -> {
                   NurseProfile n = new NurseProfile();
@@ -44,7 +44,7 @@ public class NurseProfileService {
     if (info.getCertificationLevel() != null) {
       profile.setCertificationLevel(info.getCertificationLevel());
     }
-    NurseProfileRepository.save(profile);
+    nurseProfileRepository.save(profile);
     user.setNurseProfile(profile);
   }
 

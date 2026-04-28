@@ -30,7 +30,7 @@ import org.springframework.transaction.annotation.Transactional;
 @RequiredArgsConstructor
 public class DoctorProfileService {
 
-  private final DoctorProfileRepository DoctorProfileRepository;
+  private final DoctorProfileRepository doctorProfileRepository;
   private final DoctorHospitalDetailsRepository doctorHospitalDetailsRepository;
   private final HospitalRepository hospitalRepository;
   private final HospitalContext hospitalContext;
@@ -57,8 +57,8 @@ public class DoctorProfileService {
 
     // 1. Find the DoctorProfile (try by doctorId, userId, or assignmentId)
     DoctorProfile doctorProfile =
-        DoctorProfileRepository.findById(doctorId)
-            .or(() -> DoctorProfileRepository.findByUserId(doctorId))
+        doctorProfileRepository.findById(doctorId)
+            .or(() -> doctorProfileRepository.findByUserId(doctorId))
             .or(
                 () ->
                     assignmentRepository
@@ -177,7 +177,7 @@ public class DoctorProfileService {
       return;
     }
     DoctorProfile doctorProfile =
-        DoctorProfileRepository.findByUserId(user.getId())
+        doctorProfileRepository.findByUserId(user.getId())
             .orElseGet(
                 () -> {
                   DoctorProfile d = new DoctorProfile();
@@ -194,7 +194,7 @@ public class DoctorProfileService {
       doctorProfile.setLicenseNumber(info.getLicenseNumber());
     }
 
-    DoctorProfileRepository.save(doctorProfile);
+    doctorProfileRepository.save(doctorProfile);
     user.setDoctorProfile(doctorProfile);
   }
 
@@ -298,6 +298,6 @@ public class DoctorProfileService {
 
   public DoctorProfile requireDoctor(UUID id, UUID hospitalId) {
     return resourceLookup.findRequired(
-        id, hospitalId, DoctorProfileRepository::findByIdAndHospitalId, "DoctorProfile");
+        id, hospitalId, doctorProfileRepository::findByIdAndHospitalId, "DoctorProfile");
   }
 }

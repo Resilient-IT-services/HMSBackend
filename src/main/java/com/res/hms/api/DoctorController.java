@@ -22,7 +22,7 @@ import org.springframework.web.bind.annotation.RestController;
 @RequiredArgsConstructor
 public class DoctorController {
 
-  private final DoctorProfileService DoctorProfileService;
+  private final DoctorProfileService doctorProfileService;
   private final UserService userService;
 
   @GetMapping
@@ -40,6 +40,6 @@ public class DoctorController {
   public ApiResponse<DoctorAvailabilityResponse> getAvailability(
       @PathVariable UUID doctorId,
       @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate date) {
-    return ApiResponse.success(DoctorProfileService.getAvailableSlots(doctorId, date));
+    return ApiResponse.success(doctorProfileService.getAvailableSlots(doctorId, date));
   }
 }

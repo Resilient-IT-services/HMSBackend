@@ -49,15 +49,7 @@ class UserHospitalIntegrationTest {
   @Test
   void testCreateHospitalAndUser() throws Exception {
     // 1. Create Hospital
-    String hospitalJson =
-        """
-        {
-          "name": "New Hospital",
-          "code": "NEW_HOSP",
-          "address": "New City",
-          "status": "ACTIVE"
-        }
-        """;
+    String hospitalJson = "{\"name\":\"New Hospital\",\"code\":\"NEW_HOSP\",\"address\":\"New City\",\"status\":\"ACTIVE\"}";
 
     String hospitalResponse =
         mockMvc
@@ -78,28 +70,7 @@ class UserHospitalIntegrationTest {
     // 2. Create User for this hospital
     String userJson =
         String.format(
-            """
-        {
-          "username": "new_staff",
-          "password": "password123",
-          "fullName": "New Staff",
-          "gender": "MALE",
-          "dob": "1995-01-01",
-          "memberships": [
-            {
-              "hospitalId": "%s",
-              "roleAssignments": [
-                {
-                  "roleCode": "DOCTOR",
-                  "doctorDetails": {
-                    "specialization": "Heart"
-                  }
-                }
-              ]
-            }
-          ]
-        }
-        """,
+            "{\"username\":\"new_staff\",\"password\":\"password123\",\"fullName\":\"New Staff\",\"gender\":\"MALE\",\"dob\":\"1995-01-01\",\"memberships\":[{\"hospitalId\":\"%s\",\"roleAssignments\":[{\"roleCode\":\"DOCTOR\",\"doctorDetails\":{\"specialization\":\"Heart\"}}]}]}",
             hospitalId);
 
     String userResponse =
@@ -121,33 +92,7 @@ class UserHospitalIntegrationTest {
     // 3. Update User Profile (triggers UserRoleUpdateService)
     String updateJson =
         String.format(
-            """
-        {
-          "username": "new_staff",
-          "fullName": "Updated Staff",
-          "gender": "MALE",
-          "dob": "1995-01-01",
-          "memberships": [
-            {
-              "hospitalId": "%s",
-              "roleAssignments": [
-                {
-                  "roleCode": "NURSE",
-                  "nurseDetails": {
-                    "department": "ICU"
-                  }
-                },
-                {
-                  "roleCode": "PHARMACIST",
-                  "pharmacistDetails": {
-                    "licenseNumber": "PH-123"
-                  }
-                }
-              ]
-            }
-          ]
-        }
-        """,
+            "{\"username\":\"new_staff\",\"fullName\":\"Updated Staff\",\"gender\":\"MALE\",\"dob\":\"1995-01-01\",\"memberships\":[{\"hospitalId\":\"%s\",\"roleAssignments\":[{\"roleCode\":\"NURSE\",\"nurseDetails\":{\"department\":\"ICU\"}},{\"roleCode\":\"PHARMACIST\",\"pharmacistDetails\":{\"licenseNumber\":\"PH-123\"}}]}]}",
             hospitalId);
 
     mockMvc
