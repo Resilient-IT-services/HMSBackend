@@ -9,3 +9,10 @@ services:
         ports:
             - "8080:8080"
         restart: always
+    frontend:
+        build:
+            context: ../HMSFrontEnd   # ✅ correct path
+            dockerfile: Dockerfile
+        container_name: hms-frontend
+        ports:
+            - "3000:3000"
