@@ -10,7 +10,7 @@ import static org.mockito.Mockito.when;
 import com.res.hms.common.exception.ApiException;
 import com.res.hms.common.tenant.HospitalContext;
 import com.res.hms.common.util.ResourceLookup;
-import com.res.hms.doctor.repository.DoctorRepository;
+import com.res.hms.doctor.repository.DoctorProfileRepository;
 import com.res.hms.repository.DoctorHospitalDetailsRepository;
 import com.res.hms.repository.UserAccountRepository;
 import java.util.UUID;
@@ -24,13 +24,13 @@ import org.springframework.http.HttpStatus;
 @ExtendWith(MockitoExtension.class)
 class DoctorServiceTest {
 
-  @Mock private DoctorRepository doctorRepository;
+  @Mock private DoctorProfileRepository doctorRepository;
   @Mock private DoctorHospitalDetailsRepository doctorHospitalDetailsRepository;
   @Mock private UserAccountRepository userAccountRepository;
   @Mock private HospitalContext hospitalContext;
   @Mock private ResourceLookup resourceLookup;
 
-  @InjectMocks private DoctorService doctorService;
+  @InjectMocks private DoctorProfileService doctorService;
 
   @Test
   void requireDoctorRejectsMissingDoctor() {

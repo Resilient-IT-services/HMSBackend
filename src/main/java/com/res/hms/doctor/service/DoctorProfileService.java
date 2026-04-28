@@ -5,10 +5,10 @@ import com.res.hms.common.util.ResourceLookup;
 import com.res.hms.doctor.dto.AvailabilityExceptionDTO;
 import com.res.hms.doctor.dto.DoctorAvailabilityResponse;
 import com.res.hms.doctor.dto.ScheduleDTO;
-import com.res.hms.doctor.repository.DoctorRepository;
-import com.res.hms.domain.Doctor;
+import com.res.hms.doctor.repository.DoctorProfileRepository;
 import com.res.hms.domain.DoctorAvailabilityException;
 import com.res.hms.domain.DoctorHospitalDetails;
+import com.res.hms.domain.DoctorProfile;
 import com.res.hms.domain.DoctorSchedule;
 import com.res.hms.domain.Hospital;
 import com.res.hms.domain.RoleCode;
@@ -18,7 +18,6 @@ import com.res.hms.repository.DoctorHospitalDetailsRepository;
 import com.res.hms.repository.HospitalRepository;
 import com.res.hms.user.dto.DoctorHospitalDetailsDTO;
 import com.res.hms.user.dto.UserDetailsDTO;
-import java.time.LocalDateTime;
 import java.time.LocalTime;
 import java.util.List;
 import java.util.Optional;
@@ -29,9 +28,9 @@ import org.springframework.transaction.annotation.Transactional;
 
 @Service
 @RequiredArgsConstructor
-public class DoctorService {
+public class DoctorProfileService {
 
-  private final DoctorRepository doctorRepository;
+  private final DoctorProfileRepository DoctorProfileRepository;
   private final DoctorHospitalDetailsRepository doctorHospitalDetailsRepository;
   private final HospitalRepository hospitalRepository;
   private final HospitalContext hospitalContext;
@@ -48,29 +47,32 @@ public class DoctorService {
     UUID hospitalId = hospitalContext.requireHospitalId();
     short dbDay = (short) date.getDayOfWeek().getValue();
 
-    org.slf4j.LoggerFactory.getLogger(DoctorService.class)
+    org.slf4j.LoggerFactory.getLogger(DoctorProfileService.class)
         .info(
-            "Checking availability for Doctor: {}, Hospital: {}, Date: {}, Day: {}",
+            "Checking availability for DoctorProfile: {}, Hospital: {}, Date: {}, Day: {}",
             doctorId,
             hospitalId,
             date,
             dbDay);
 
-    // 1. Find the Doctor (try by doctorId, userId, or assignmentId)
-    Doctor doctor =
-        doctorRepository
-            .findById(doctorId)
-            .or(() -> doctorRepository.findByUserId(doctorId))
-            .or(() -> assignmentRepository.findById(doctorId).map(a -> a.getUser().getDoctor()))
+    // 1. Find the DoctorProfile (try by doctorId, userId, or assignmentId)
+    DoctorProfile doctorProfile =
+        DoctorProfileRepository.findById(doctorId)
+            .or(() -> DoctorProfileRepository.findByUserId(doctorId))
+            .or(
+                () ->
+                    assignmentRepository
+                        .findById(doctorId)
+                        .map(a -> a.getUser().getDoctorProfile()))
             .orElseThrow(
                 () ->
                     new com.res.hms.common.exception.ApiException(
                         "NOT_FOUND",
-                        "Doctor not found",
+                        "DoctorProfile not found",
                         org.springframework.http.HttpStatus.NOT_FOUND));
 
-    UserAccount user = doctor.getUser();
-    UUID actualDoctorId = doctor.getId();
+    UserAccount user = doctorProfile.getUser();
+    UUID actualDoctorId = doctorProfile.getId();
     // 2. Find the relevant assignment for this hospital
     UserRoleAssignment assignment =
         user.getAssignments().stream()
@@ -83,7 +85,7 @@ public class DoctorService {
                 () ->
                     new com.res.hms.common.exception.ApiException(
                         "NOT_FOUND",
-                        "Doctor assignment not found for this hospital",
+                        "DoctorProfile assignment not found for this hospital",
                         org.springframework.http.HttpStatus.NOT_FOUND));
 
     // 3. Check for exceptions
@@ -174,27 +176,26 @@ public class DoctorService {
     if (info == null) {
       return;
     }
-    Doctor doctor =
-        doctorRepository
-            .findByUserId(user.getId())
+    DoctorProfile doctorProfile =
+        DoctorProfileRepository.findByUserId(user.getId())
             .orElseGet(
                 () -> {
-                  Doctor d = new Doctor();
+                  DoctorProfile d = new DoctorProfile();
                   d.setUser(user);
                   return d;
                 });
     if (info.getSpecialization() != null) {
-      doctor.setSpecialization(info.getSpecialization());
+      doctorProfile.setSpecialization(info.getSpecialization());
     }
     if (info.getBio() != null) {
-      doctor.setBio(info.getBio());
+      doctorProfile.setBio(info.getBio());
     }
     if (info.getLicenseNumber() != null) {
-      doctor.setLicenseNumber(info.getLicenseNumber());
+      doctorProfile.setLicenseNumber(info.getLicenseNumber());
     }
 
-    doctorRepository.save(doctor);
-    user.setDoctor(doctor);
+    DoctorProfileRepository.save(doctorProfile);
+    user.setDoctorProfile(doctorProfile);
   }
 
   @Transactional
@@ -230,20 +231,20 @@ public class DoctorService {
           assignment.getSchedules()::remove);
     }
 
-    if (exceptions != null && assignment.getUser().getDoctor() != null) {
-      Doctor doctor = assignment.getUser().getDoctor();
+    if (exceptions != null && assignment.getUser().getDoctorProfile() != null) {
+      DoctorProfile doctorProfile = assignment.getUser().getDoctorProfile();
       Hospital hospital =
           resourceLookup.findRequired(
               assignment.getHospitalId(), hospitalRepository::findById, "Hospital");
 
       com.res.hms.common.util.CollectionMergeUtil.merge(
-          doctor.getAvailabilityExceptions(),
+          doctorProfile.getAvailabilityExceptions(),
           exceptions,
           DoctorAvailabilityException::getId,
           AvailabilityExceptionDTO::getId,
           dto -> {
             DoctorAvailabilityException ex = new DoctorAvailabilityException();
-            ex.setDoctor(doctor);
+            ex.setDoctorProfile(doctorProfile);
             ex.setHospital(hospital);
             ex.setDate(dto.getDate());
             ex.setType(dto.getType());
@@ -263,7 +264,7 @@ public class DoctorService {
             existing.setSlotDurationMinutes(dto.getSlotDurationMinutes());
             existing.setNote(dto.getNote());
           },
-          doctor.getAvailabilityExceptions()::remove);
+          doctorProfile.getAvailabilityExceptions()::remove);
     }
 
     if (d == null) {
@@ -291,13 +292,12 @@ public class DoctorService {
       det.setCommissionValue(d.getCommissionValue());
     }
     det.setVisitingConsultant(d.isVisitingConsultant());
-    det.setUpdatedAt(LocalDateTime.now());
     doctorHospitalDetailsRepository.save(det);
     assignment.setDoctorDetails(det);
   }
 
-  public Doctor requireDoctor(UUID id, UUID hospitalId) {
+  public DoctorProfile requireDoctor(UUID id, UUID hospitalId) {
     return resourceLookup.findRequired(
-        id, hospitalId, doctorRepository::findByIdAndHospitalId, "Doctor");
+        id, hospitalId, DoctorProfileRepository::findByIdAndHospitalId, "DoctorProfile");
   }
 }

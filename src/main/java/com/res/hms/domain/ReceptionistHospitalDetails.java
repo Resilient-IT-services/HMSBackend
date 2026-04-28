@@ -8,7 +8,6 @@ import jakarta.persistence.JoinColumn;
 import jakarta.persistence.MapsId;
 import jakarta.persistence.OneToOne;
 import jakarta.persistence.Table;
-import java.time.LocalDateTime;
 import java.util.UUID;
 import lombok.Getter;
 import lombok.Setter;
@@ -17,7 +16,7 @@ import lombok.Setter;
 @Setter
 @Entity
 @Table(name = "receptionist_hospital_details")
-public class ReceptionistHospitalDetails {
+public class ReceptionistHospitalDetails extends AuditableEntity {
 
   @Id
   @Column(name = "id")
@@ -33,7 +32,4 @@ public class ReceptionistHospitalDetails {
 
   @Column(name = "emergency_contact_number")
   private String emergencyContactNumber;
-
-  @Column(name = "updated_at", nullable = false)
-  private LocalDateTime updatedAt = LocalDateTime.now();
 }

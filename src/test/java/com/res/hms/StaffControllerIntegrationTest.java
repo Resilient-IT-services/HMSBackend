@@ -6,10 +6,10 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 import com.res.hms.domain.CertificationLevel;
-import com.res.hms.domain.Doctor;
 import com.res.hms.domain.DoctorHospitalDetails;
-import com.res.hms.domain.Nurse;
+import com.res.hms.domain.DoctorProfile;
 import com.res.hms.domain.NurseHospitalDetails;
+import com.res.hms.domain.NurseProfile;
 import com.res.hms.domain.RoleCode;
 import com.res.hms.domain.ShiftType;
 import com.res.hms.domain.UserAccount;
@@ -84,11 +84,11 @@ class StaffControllerIntegrationTest {
     drUser.setPasswordHash(passwordEncoder.encode("password"));
     drUser.setActive(true);
 
-    Doctor drProfile = new Doctor();
+    DoctorProfile drProfile = new DoctorProfile();
     drProfile.setUser(drUser);
     drProfile.setSpecialization("Archaeology");
     drProfile.setLicenseNumber("LICENSE-123");
-    drUser.setDoctor(drProfile);
+    drUser.setDoctorProfile(drProfile);
 
     UserRoleAssignment drAssign = new UserRoleAssignment();
     drAssign.setUser(drUser);
@@ -111,11 +111,11 @@ class StaffControllerIntegrationTest {
     nurseUser.setPasswordHash(passwordEncoder.encode("password"));
     nurseUser.setActive(true);
 
-    Nurse nurseProfile = new Nurse();
+    NurseProfile nurseProfile = new NurseProfile();
     nurseProfile.setUser(nurseUser);
     nurseProfile.setCertificationLevel(CertificationLevel.RN);
     nurseProfile.setNursingLicenseNo("NURSE-999");
-    nurseUser.setNurse(nurseProfile);
+    nurseUser.setNurseProfile(nurseProfile);
 
     UserRoleAssignment nurseAssign = new UserRoleAssignment();
     nurseAssign.setUser(nurseUser);

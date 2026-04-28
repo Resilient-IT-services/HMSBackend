@@ -11,7 +11,6 @@ import jakarta.persistence.MapsId;
 import jakarta.persistence.OneToOne;
 import jakarta.persistence.Table;
 import java.math.BigDecimal;
-import java.time.LocalDateTime;
 import java.util.UUID;
 import lombok.Getter;
 import lombok.Setter;
@@ -20,7 +19,7 @@ import lombok.Setter;
 @Setter
 @Entity
 @Table(name = "doctor_hospital_details")
-public class DoctorHospitalDetails {
+public class DoctorHospitalDetails extends AuditableEntity {
 
   @Id
   @Column(name = "id")
@@ -46,7 +45,4 @@ public class DoctorHospitalDetails {
 
   @Column(name = "is_visiting_consultant")
   private boolean visitingConsultant = false;
-
-  @Column(name = "updated_at", nullable = false)
-  private LocalDateTime updatedAt = LocalDateTime.now();
 }

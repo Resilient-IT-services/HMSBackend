@@ -16,7 +16,7 @@ import lombok.Setter;
 @Setter
 @Entity
 @Table(name = "lab_tech_profile")
-public class LabTechProfile {
+public class LabTechProfile extends AuditableEntity {
 
   @Id
   @Column(name = "id")

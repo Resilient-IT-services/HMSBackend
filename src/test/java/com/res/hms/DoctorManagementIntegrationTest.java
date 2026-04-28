@@ -104,7 +104,12 @@ class DoctorManagementIntegrationTest {
         UUID.fromString(objectMapper.readTree(userResponse).path("data").path("id").asText());
     UUID doctorId =
         UUID.fromString(
-            objectMapper.readTree(userResponse).path("data").path("doctorInfo").path("id").asText());
+            objectMapper
+                .readTree(userResponse)
+                .path("data")
+                .path("doctorInfo")
+                .path("id")
+                .asText());
 
     // 2. Update Doctor: Modify schedule and add exception
     String updateJson =

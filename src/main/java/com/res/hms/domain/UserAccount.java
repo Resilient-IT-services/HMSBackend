@@ -58,10 +58,10 @@ public class UserAccount extends BaseEntity {
   private boolean deleted = false;
 
   @OneToOne(mappedBy = "user", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
-  private Doctor doctor;
+  private DoctorProfile doctorProfile;
 
   @OneToOne(mappedBy = "user", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
-  private Nurse nurse;
+  private NurseProfile nurseProfile;
 
   @OneToOne(mappedBy = "user", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
   private PharmacistProfile pharmacistProfile;

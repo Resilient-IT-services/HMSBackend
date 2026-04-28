@@ -48,7 +48,7 @@ public class DoctorScheduleValidator {
             throw new ApiException(
                 "SCHEDULE_OVERLAP",
                 String.format(
-                    "Doctor has overlapping schedules on %s: %s-%s and %s-%s",
+                    "DoctorProfile has overlapping schedules on %s: %s-%s and %s-%s",
                     entry.getKey(),
                     s1.getStartTime(),
                     s1.getEndTime(),

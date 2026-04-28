@@ -1,8 +1,8 @@
 package com.res.hms.domain;
 
 public enum CertificationLevel {
-  RN, // Registered Nurse
-  LPN, // Licensed Practical Nurse
-  NP, // Nurse Practitioner
+  RN, // Registered NurseProfile
+  LPN, // Licensed Practical NurseProfile
+  NP, // NurseProfile Practitioner
   CNA // Certified Nursing Assistant
 }

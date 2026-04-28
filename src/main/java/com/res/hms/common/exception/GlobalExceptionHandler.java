@@ -77,7 +77,7 @@ public class GlobalExceptionHandler {
     if (rootMsg.contains("duplicate key value violates unique constraint")) {
       message = "A record with the same unique value already exists";
       if (rootMsg.contains("doctor_license_number_key")) {
-        message = "Doctor license number already exists";
+        message = "DoctorProfile license number already exists";
       } else if (rootMsg.contains("user_account_username_key")) {
         message = "Username already exists";
       } else if (rootMsg.contains("user_account_email_key")) {
@@ -85,7 +85,7 @@ public class GlobalExceptionHandler {
       } else if (rootMsg.contains("hospital_code_key")) {
         message = "Hospital code already exists";
       } else if (rootMsg.contains("nurse_nursing_license_no_key")) {
-        message = "Nurse license number already exists";
+        message = "NurseProfile license number already exists";
       } else if (rootMsg.contains("pharmacist_profile_pci_reg_no_key")) {
         message = "Pharmacist PCI registration number already exists";
       }

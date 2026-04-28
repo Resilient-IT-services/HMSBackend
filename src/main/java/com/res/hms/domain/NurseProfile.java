@@ -5,20 +5,26 @@ import jakarta.persistence.Entity;
 import jakarta.persistence.EnumType;
 import jakarta.persistence.Enumerated;
 import jakarta.persistence.FetchType;
+import jakarta.persistence.Id;
 import jakarta.persistence.JoinColumn;
+import jakarta.persistence.MapsId;
 import jakarta.persistence.OneToOne;
 import jakarta.persistence.Table;
+import java.util.UUID;
 import lombok.Getter;
 import lombok.Setter;
 
 @Getter
 @Setter
 @Entity
-@Table(name = "nurse")
-public class Nurse extends BaseEntity {
+@Table(name = "nurse_profile")
+public class NurseProfile extends AuditableEntity {
+
+  @Id private UUID id;
 
   @OneToOne(fetch = FetchType.EAGER)
-  @JoinColumn(name = "user_id", unique = true)
+  @MapsId
+  @JoinColumn(name = "id")
   private UserAccount user;
 
   @Column(name = "nursing_license_no", unique = true)

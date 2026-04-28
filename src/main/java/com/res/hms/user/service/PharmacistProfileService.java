@@ -9,7 +9,6 @@ import com.res.hms.repository.PharmacistHospitalDetailsRepository;
 import com.res.hms.repository.PharmacistProfileRepository;
 import com.res.hms.user.dto.PharmacistHospitalDetailsDTO;
 import com.res.hms.user.dto.UserDetailsDTO;
-import java.time.LocalDateTime;
 import java.util.Set;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
@@ -66,7 +65,9 @@ public class PharmacistProfileService {
     if (p.getPharmacyWing() != null) {
       det.setPharmacyWing(p.getPharmacyWing());
     }
-    det.setUpdatedAt(LocalDateTime.now());
+    if (p.getPharmacyLicenseNo() != null) {
+      det.setPharmacyLicenseNo(p.getPharmacyLicenseNo());
+    }
     pharmacistHospitalDetailsRepository.save(det);
     a.setPharmacistDetails(det);
   }

@@ -6,7 +6,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 import com.res.hms.domain.AppointmentStatus;
-import com.res.hms.domain.Doctor;
+import com.res.hms.domain.DoctorProfile;
 import com.res.hms.domain.DoctorSchedule;
 import com.res.hms.domain.Gender;
 import com.res.hms.domain.RoleCode;
@@ -66,10 +66,10 @@ class DoctorControllerIntegrationTest {
     drUser.setGender(Gender.MALE);
     drUser.setDob(LocalDate.of(1980, 1, 1));
 
-    Doctor drProfile = new Doctor();
+    DoctorProfile drProfile = new DoctorProfile();
     drProfile.setUser(drUser);
     drProfile.setSpecialization("General");
-    drUser.setDoctor(drProfile);
+    drUser.setDoctorProfile(drProfile);
 
     UserRoleAssignment drAssign = new UserRoleAssignment();
     drAssign.setUser(drUser);
@@ -87,7 +87,7 @@ class DoctorControllerIntegrationTest {
 
     drUser.getAssignments().add(drAssign);
     UserAccount saved = userAccountRepository.save(drUser);
-    doctorId = saved.getDoctor().getId();
+    doctorId = saved.getDoctorProfile().getId();
 
     // Session
     session =
@@ -123,7 +123,7 @@ class DoctorControllerIntegrationTest {
     // Book 1 patient
     com.res.hms.domain.Appointment apt = new com.res.hms.domain.Appointment();
     apt.setHospitalId(hospitalId);
-    apt.setDoctor(userAccountRepository.findByUsername("avail_dr").get().getDoctor());
+    apt.setDoctorProfile(userAccountRepository.findByUsername("avail_dr").get().getDoctorProfile());
     apt.setPatient(testDataHelper.createTestPatient(hospitalId));
     apt.setAppointmentTime(LocalDateTime.of(nextMonday, LocalTime.of(9, 0)));
     apt.setStatus(AppointmentStatus.SCHEDULED);
@@ -149,7 +149,7 @@ class DoctorControllerIntegrationTest {
     // 1. Create a MODIFIED exception for Tuesday: 2-4 PM
     com.res.hms.domain.DoctorAvailabilityException ex =
         new com.res.hms.domain.DoctorAvailabilityException();
-    ex.setDoctor(userAccountRepository.findByUsername("avail_dr").get().getDoctor());
+    ex.setDoctorProfile(userAccountRepository.findByUsername("avail_dr").get().getDoctorProfile());
     ex.setHospital(hospitalRepository.findById(hospitalId).orElseThrow());
     ex.setDate(tuesday);
     ex.setType("MODIFIED");

@@ -1,10 +1,10 @@
 package com.res.hms.user.service;
 
-import com.res.hms.doctor.service.DoctorService;
+import com.res.hms.doctor.service.DoctorProfileService;
 import com.res.hms.domain.RoleCode;
 import com.res.hms.domain.UserAccount;
 import com.res.hms.domain.UserRoleAssignment;
-import com.res.hms.nurse.service.NurseService;
+import com.res.hms.nurse.service.NurseProfileService;
 import com.res.hms.user.dto.UserDetailsDTO;
 import java.util.Set;
 import java.util.UUID;
@@ -16,8 +16,8 @@ import org.springframework.transaction.annotation.Transactional;
 @RequiredArgsConstructor
 public class UserRoleUpdateService {
 
-  private final DoctorService doctorService;
-  private final NurseService nurseService;
+  private final DoctorProfileService DoctorProfileService;
+  private final NurseProfileService NurseProfileService;
   private final PharmacistProfileService pharmacistProfileService;
   private final LabTechProfileService labTechProfileService;
   private final ReceptionistProfileService receptionistProfileService;
@@ -28,8 +28,8 @@ public class UserRoleUpdateService {
       UserAccount user, UserDetailsDTO request, boolean isSuper, UUID activeId) {
     Set<RoleCode> allRoles = user.getRoleCodes();
 
-    doctorService.updateProfile(user, request.getDoctorInfo());
-    nurseService.updateProfile(user, request.getNurseInfo());
+    DoctorProfileService.updateProfile(user, request.getDoctorInfo());
+    NurseProfileService.updateProfile(user, request.getNurseInfo());
     pharmacistProfileService.updateProfile(user, request.getPharmacistInfo(), allRoles);
     labTechProfileService.updateProfile(user, request.getLabTechInfo());
     receptionistProfileService.updateProfile(user, request.getReceptionistInfo(), allRoles);
@@ -57,12 +57,12 @@ public class UserRoleUpdateService {
             a -> {
               switch (code) {
                 case DOCTOR ->
-                    doctorService.updateHospitalDetails(
+                    DoctorProfileService.updateHospitalDetails(
                         a,
                         raDto.getDoctorDetails(),
                         raDto.getSchedules(),
                         raDto.getAvailabilityExceptions());
-                case NURSE -> nurseService.updateHospitalDetails(a, raDto.getNurseDetails());
+                case NURSE -> NurseProfileService.updateHospitalDetails(a, raDto.getNurseDetails());
                 case PHARMACIST ->
                     pharmacistProfileService.updateHospitalDetails(a, raDto.getPharmacistDetails());
                 case RECEPTIONIST ->

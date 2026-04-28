@@ -2,25 +2,24 @@ package com.res.hms.nurse.service;
 
 import com.res.hms.common.tenant.HospitalContext;
 import com.res.hms.common.util.ResourceLookup;
-import com.res.hms.domain.Nurse;
 import com.res.hms.domain.NurseHospitalDetails;
+import com.res.hms.domain.NurseProfile;
 import com.res.hms.domain.UserAccount;
 import com.res.hms.domain.UserRoleAssignment;
-import com.res.hms.nurse.repository.NurseRepository;
+import com.res.hms.nurse.repository.NurseProfileRepository;
 import com.res.hms.repository.NurseHospitalDetailsRepository;
 import com.res.hms.repository.UserAccountRepository;
 import com.res.hms.user.dto.NurseHospitalDetailsDTO;
 import com.res.hms.user.dto.UserDetailsDTO;
-import java.time.LocalDateTime;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 @Service
 @RequiredArgsConstructor
-public class NurseService {
+public class NurseProfileService {
 
-  private final NurseRepository nurseRepository;
+  private final NurseProfileRepository NurseProfileRepository;
   private final NurseHospitalDetailsRepository nurseHospitalDetailsRepository;
   private final UserAccountRepository userAccountRepository;
   private final HospitalContext hospitalContext;
@@ -31,23 +30,22 @@ public class NurseService {
     if (info == null) {
       return;
     }
-    Nurse nurse =
-        nurseRepository
-            .findByUserId(user.getId())
+    NurseProfile profile =
+        NurseProfileRepository.findByUserId(user.getId())
             .orElseGet(
                 () -> {
-                  Nurse n = new Nurse();
+                  NurseProfile n = new NurseProfile();
                   n.setUser(user);
                   return n;
                 });
     if (info.getNursingLicenseNo() != null) {
-      nurse.setNursingLicenseNo(info.getNursingLicenseNo());
+      profile.setNursingLicenseNo(info.getNursingLicenseNo());
     }
     if (info.getCertificationLevel() != null) {
-      nurse.setCertificationLevel(info.getCertificationLevel());
+      profile.setCertificationLevel(info.getCertificationLevel());
     }
-    nurseRepository.save(nurse);
-    user.setNurse(nurse);
+    NurseProfileRepository.save(profile);
+    user.setNurseProfile(profile);
   }
 
   @Transactional
@@ -70,7 +68,6 @@ public class NurseService {
     if (n.getShiftType() != null) {
       det.setShiftType(n.getShiftType());
     }
-    det.setUpdatedAt(LocalDateTime.now());
     nurseHospitalDetailsRepository.save(det);
     assignment.setNurseDetails(det);
   }

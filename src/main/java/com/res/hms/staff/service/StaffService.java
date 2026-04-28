@@ -2,8 +2,8 @@ package com.res.hms.staff.service;
 
 import com.res.hms.common.api.PageResponse;
 import com.res.hms.common.tenant.HospitalContext;
-import com.res.hms.domain.Doctor;
 import com.res.hms.domain.DoctorHospitalDetails;
+import com.res.hms.domain.DoctorProfile;
 import com.res.hms.domain.RoleCode;
 import com.res.hms.domain.UserAccount;
 import com.res.hms.domain.UserRoleAssignment;
@@ -48,7 +48,7 @@ public class StaffService {
 
     Specification<UserRoleAssignment> spec =
         (root, query, cb) -> {
-          root.fetch("user", JoinType.INNER).fetch("doctor", JoinType.LEFT);
+          root.fetch("user", JoinType.INNER).fetch("doctorProfile", JoinType.LEFT);
           root.fetch("doctorDetails", JoinType.LEFT);
 
           List<Predicate> predicates = new ArrayList<>();
@@ -68,7 +68,7 @@ public class StaffService {
           }
           if (specialization != null && !specialization.isBlank()) {
             Join<UserRoleAssignment, UserAccount> userJoin = root.join("user");
-            Join<UserAccount, Doctor> doctorJoin = userJoin.join("doctor");
+            Join<UserAccount, DoctorProfile> doctorJoin = userJoin.join("doctorProfile");
             predicates.add(
                 cb.like(
                     cb.lower(doctorJoin.get("specialization")),
@@ -101,7 +101,7 @@ public class StaffService {
 
     Specification<UserRoleAssignment> spec =
         (root, query, cb) -> {
-          root.fetch("user", JoinType.INNER).fetch("nurse", JoinType.LEFT);
+          root.fetch("user", JoinType.INNER).fetch("nurseProfile", JoinType.LEFT);
           root.fetch("nurseDetails", JoinType.LEFT);
 
           List<Predicate> predicates = new ArrayList<>();
@@ -129,7 +129,7 @@ public class StaffService {
 
   private DoctorStaffResponse mapToDoctorResponse(UserRoleAssignment a) {
     UserAccount u = a.getUser();
-    Doctor d = u.getDoctor();
+    DoctorProfile d = u.getDoctorProfile();
     DoctorHospitalDetails det = a.getDoctorDetails();
 
     return DoctorStaffResponse.builder()
@@ -147,7 +147,7 @@ public class StaffService {
 
   private NurseStaffResponse mapToNurseResponse(UserRoleAssignment a) {
     UserAccount u = a.getUser();
-    var n = u.getNurse();
+    var n = u.getNurseProfile();
     var det = a.getNurseDetails();
 
     return NurseStaffResponse.builder()

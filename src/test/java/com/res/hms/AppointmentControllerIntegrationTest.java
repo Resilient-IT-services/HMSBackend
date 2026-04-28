@@ -64,10 +64,10 @@ class AppointmentControllerIntegrationTest {
     drUser.setGender(Gender.MALE);
     drUser.setDob(LocalDate.of(1980, 1, 1));
 
-    com.res.hms.domain.Doctor drProfile = new com.res.hms.domain.Doctor();
+    com.res.hms.domain.DoctorProfile drProfile = new com.res.hms.domain.DoctorProfile();
     drProfile.setUser(drUser);
     drProfile.setSpecialization("General");
-    drUser.setDoctor(drProfile);
+    drUser.setDoctorProfile(drProfile);
 
     com.res.hms.domain.UserRoleAssignment drAssign = new com.res.hms.domain.UserRoleAssignment();
     drAssign.setUser(drUser);
@@ -76,7 +76,7 @@ class AppointmentControllerIntegrationTest {
     drUser.getAssignments().add(drAssign);
 
     userAccountRepository.save(drUser);
-    doctorId = drUser.getDoctor().getId();
+    doctorId = drUser.getDoctorProfile().getId();
 
     // Login as the doctor (who has permission to create appointments)
     session =

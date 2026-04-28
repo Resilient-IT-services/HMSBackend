@@ -5,7 +5,6 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
 import java.util.UUID;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -54,7 +53,9 @@ class HospitalControllerIntegrationTest {
     mockMvc
         .perform(get("/api/v1/hospitals").session(session))
         .andExpect(status().isOk())
-        .andExpect(jsonPath("$.data.content.length()").value(org.hamcrest.Matchers.greaterThanOrEqualTo(2)));
+        .andExpect(
+            jsonPath("$.data.content.length()")
+                .value(org.hamcrest.Matchers.greaterThanOrEqualTo(2)));
 
     // 2. Filter by name
     mockMvc

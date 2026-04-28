@@ -10,7 +10,6 @@ import jakarta.persistence.JoinColumn;
 import jakarta.persistence.MapsId;
 import jakarta.persistence.OneToOne;
 import jakarta.persistence.Table;
-import java.time.LocalDateTime;
 import java.util.UUID;
 import lombok.Getter;
 import lombok.Setter;
@@ -19,7 +18,7 @@ import lombok.Setter;
 @Setter
 @Entity
 @Table(name = "nurse_hospital_details")
-public class NurseHospitalDetails {
+public class NurseHospitalDetails extends AuditableEntity {
 
   @Id
   @Column(name = "id")
@@ -36,7 +35,4 @@ public class NurseHospitalDetails {
   @Enumerated(EnumType.STRING)
   @Column(name = "shift_type")
   private ShiftType shiftType;
-
-  @Column(name = "updated_at", nullable = false)
-  private LocalDateTime updatedAt = LocalDateTime.now();
 }

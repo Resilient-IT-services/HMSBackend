@@ -13,7 +13,7 @@ public interface AppointmentRepository extends BaseRepository<Appointment> {
       UUID hospitalId, Pageable pageable);
 
   @Query(
-      "SELECT a FROM Appointment a JOIN a.patient p JOIN a.doctor d JOIN d.user u "
+      "SELECT a FROM Appointment a JOIN a.patient p JOIN a.doctorProfile d JOIN d.user u "
           + "WHERE a.hospitalId = :hospitalId AND "
           + "(LOWER(p.fullName) LIKE :query OR "
           + "LOWER(u.fullName) LIKE :query) "
@@ -23,7 +23,7 @@ public interface AppointmentRepository extends BaseRepository<Appointment> {
 
   @Query(
       "SELECT a FROM Appointment a "
-          + "WHERE a.doctor.id = :doctorId "
+          + "WHERE a.doctorProfile.id = :doctorId "
           + "AND CAST(a.appointmentTime AS date) = :date "
           + "AND a.status NOT IN (com.res.hms.domain.AppointmentStatus.CANCELLED)")
   java.util.List<Appointment> findByDoctorIdAndDate(

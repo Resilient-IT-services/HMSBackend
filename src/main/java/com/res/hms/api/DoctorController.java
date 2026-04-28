@@ -3,7 +3,7 @@ package com.res.hms.api;
 import com.res.hms.common.api.ApiResponse;
 import com.res.hms.common.api.PageResponse;
 import com.res.hms.doctor.dto.DoctorAvailabilityResponse;
-import com.res.hms.doctor.service.DoctorService;
+import com.res.hms.doctor.service.DoctorProfileService;
 import com.res.hms.user.dto.UserSummaryDTO;
 import com.res.hms.user.service.UserService;
 import java.time.LocalDate;
@@ -22,7 +22,7 @@ import org.springframework.web.bind.annotation.RestController;
 @RequiredArgsConstructor
 public class DoctorController {
 
-  private final DoctorService doctorService;
+  private final DoctorProfileService DoctorProfileService;
   private final UserService userService;
 
   @GetMapping
@@ -32,7 +32,7 @@ public class DoctorController {
       @RequestParam(defaultValue = "20") int size,
       @RequestParam(required = false) String search) {
     return ApiResponse.success(
-        userService.listUsers(page, Math.min(size, 100), search, "DOCTOR", null, false));
+        userService.listUsers(page, Math.min(size, 100), search, "DoctorProfile", null, false));
   }
 
   @GetMapping("/{doctorId}/availability")
@@ -40,6 +40,6 @@ public class DoctorController {
   public ApiResponse<DoctorAvailabilityResponse> getAvailability(
       @PathVariable UUID doctorId,
       @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate date) {
-    return ApiResponse.success(doctorService.getAvailableSlots(doctorId, date));
+    return ApiResponse.success(DoctorProfileService.getAvailableSlots(doctorId, date));
   }
 }

@@ -8,6 +8,7 @@ import static org.mockito.Mockito.when;
 import com.res.hms.common.tenant.HospitalContext;
 import com.res.hms.user.dto.AdminHospitalDetailsDTO;
 import com.res.hms.user.dto.NurseHospitalDetailsDTO;
+import com.res.hms.user.dto.PharmacistHospitalDetailsDTO;
 import com.res.hms.user.dto.ReceptionistHospitalDetailsDTO;
 import com.res.hms.user.dto.UserDetailsDTO;
 import com.res.hms.user.service.UserAggregateService;
@@ -174,5 +175,54 @@ class RoleHospitalDetailsIntegrationTest {
     assertNotNull(assignment.getAdminDetails());
     assertEquals("Room 101", assignment.getAdminDetails().getOfficeLocation());
     assertTrue(assignment.getAdminDetails().isDepartmentHead());
+  }
+
+  @Test
+  void createPharmacistWithHospitalDetails() {
+    UserDetailsDTO request =
+        UserDetailsDTO.builder()
+            .username("pharmacist_test")
+            .password("pass")
+            .fullName("Pharmacist One")
+            .gender(com.res.hms.domain.Gender.MALE)
+            .dob(java.time.LocalDate.of(1990, 1, 1))
+            .pharmacistInfo(
+                UserDetailsDTO.PharmacistInfo.builder()
+                    .pciRegNo("PCI-123")
+                    .qualification("B.Pharm")
+                    .build())
+            .memberships(
+                List.of(
+                    UserDetailsDTO.HospitalMembershipDTO.builder()
+                        .hospitalId(hospitalId)
+                        .roleAssignments(
+                            List.of(
+                                UserDetailsDTO.RoleAssignmentDTO.builder()
+                                    .roleCode("PHARMACIST")
+                                    .pharmacistDetails(
+                                        PharmacistHospitalDetailsDTO.builder()
+                                            .counterLocation("Counter 1")
+                                            .pharmacyWing("West Wing")
+                                            .pharmacyLicenseNo("PHARM-LIC-456")
+                                            .build())
+                                    .build()))
+                        .build()))
+            .build();
+
+    UserDetailsDTO saved = userAggregateService.saveUserAggregate(request);
+    UserDetailsDTO fetched = userService.getFullProfile(saved.getId());
+
+    UserDetailsDTO.RoleAssignmentDTO assignment =
+        fetched.getMemberships().stream()
+            .filter(m -> hospitalId.equals(m.getHospitalId()))
+            .flatMap(m -> m.getRoleAssignments().stream())
+            .filter(ra -> "PHARMACIST".equals(ra.getRoleCode()))
+            .findFirst()
+            .orElseThrow();
+
+    assertNotNull(assignment.getPharmacistDetails());
+    assertEquals("Counter 1", assignment.getPharmacistDetails().getCounterLocation());
+    assertEquals("West Wing", assignment.getPharmacistDetails().getPharmacyWing());
+    assertEquals("PHARM-LIC-456", assignment.getPharmacistDetails().getPharmacyLicenseNo());
   }
 }

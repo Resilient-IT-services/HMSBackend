@@ -6,9 +6,9 @@ import static org.junit.jupiter.api.Assertions.assertNotNull;
 import com.res.hms.audit.dto.AuditDetail;
 import com.res.hms.audit.repository.AuditLogRepository;
 import com.res.hms.doctor.dto.DoctorEducation;
-import com.res.hms.doctor.repository.DoctorRepository;
+import com.res.hms.doctor.repository.DoctorProfileRepository;
 import com.res.hms.domain.AuditLog;
-import com.res.hms.domain.Doctor;
+import com.res.hms.domain.DoctorProfile;
 import com.res.hms.domain.Hospital;
 import com.res.hms.domain.HospitalStatus;
 import com.res.hms.domain.ProficiencyLevel;
@@ -34,7 +34,7 @@ import org.springframework.transaction.annotation.Transactional;
 class JsonFieldsIntegrationTest {
 
   @Autowired private AuditLogRepository auditLogRepository;
-  @Autowired private DoctorRepository doctorRepository;
+  @Autowired private DoctorProfileRepository doctorRepository;
   @Autowired private HospitalRepository hospitalRepository;
   @Autowired private ReceptionistProfileRepository receptionistProfileRepository;
   @Autowired private UserAccountRepository userAccountRepository;
@@ -68,7 +68,7 @@ class JsonFieldsIntegrationTest {
     user.setUpdatedAt(LocalDateTime.now());
     userAccountRepository.save(user);
 
-    Doctor doctor = new Doctor();
+    DoctorProfile doctor = new DoctorProfile();
     doctor.setUser(user);
     doctor.setSpecialization("General");
 
@@ -84,8 +84,8 @@ class JsonFieldsIntegrationTest {
             .build();
     doctor.setEducation(edu);
 
-    Doctor saved = doctorRepository.save(doctor);
-    Doctor fetched = doctorRepository.findById(saved.getId()).orElseThrow();
+    DoctorProfile saved = doctorRepository.save(doctor);
+    DoctorProfile fetched = doctorRepository.findById(saved.getId()).orElseThrow();
 
     assertEquals(1, fetched.getEducation().getQualifications().size());
     assertEquals("MBBS", fetched.getEducation().getQualifications().get(0).getDegree());

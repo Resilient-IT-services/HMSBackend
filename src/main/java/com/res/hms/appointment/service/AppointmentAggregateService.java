@@ -4,10 +4,10 @@ import com.res.hms.appointment.dto.AppointmentDTO;
 import com.res.hms.appointment.repository.AppointmentRepository;
 import com.res.hms.common.exception.ApiException;
 import com.res.hms.common.tenant.HospitalContext;
-import com.res.hms.doctor.service.DoctorService;
+import com.res.hms.doctor.service.DoctorProfileService;
 import com.res.hms.domain.Appointment;
 import com.res.hms.domain.AppointmentStatus;
-import com.res.hms.domain.Doctor;
+import com.res.hms.domain.DoctorProfile;
 import com.res.hms.domain.Patient;
 import com.res.hms.patient.service.PatientService;
 import java.util.UUID;
@@ -25,7 +25,7 @@ public class AppointmentAggregateService {
   private final AppointmentRepository appointmentRepository;
   private final AppointmentService appointmentService;
   private final PatientService patientService;
-  private final DoctorService doctorService;
+  private final DoctorProfileService doctorProfileService;
   private final HospitalContext hospitalContext;
 
   @Transactional
@@ -52,12 +52,12 @@ public class AppointmentAggregateService {
 
   private Appointment createAppointment(AppointmentDTO dto, UUID hospitalId) {
     Patient patient = patientService.requirePatient(dto.getPatientId(), hospitalId);
-    Doctor doctor = doctorService.requireDoctor(dto.getDoctorId(), hospitalId);
+    DoctorProfile profile = doctorProfileService.requireDoctor(dto.getDoctorId(), hospitalId);
 
     Appointment appointment = new Appointment();
     appointment.setHospitalId(hospitalId);
     appointment.setPatient(patient);
-    appointment.setDoctor(doctor);
+    appointment.setDoctorProfile(profile);
     appointment.setStatus(dto.getStatus() != null ? dto.getStatus() : AppointmentStatus.SCHEDULED);
     updateAppointmentFields(appointment, dto);
     return appointment;
@@ -68,9 +68,9 @@ public class AppointmentAggregateService {
       Patient patient = patientService.requirePatient(dto.getPatientId(), hospitalId);
       appointment.setPatient(patient);
     }
-    if (!appointment.getDoctor().getId().equals(dto.getDoctorId())) {
-      Doctor doctor = doctorService.requireDoctor(dto.getDoctorId(), hospitalId);
-      appointment.setDoctor(doctor);
+    if (!appointment.getDoctorProfile().getId().equals(dto.getDoctorId())) {
+      DoctorProfile profile = doctorProfileService.requireDoctor(dto.getDoctorId(), hospitalId);
+      appointment.setDoctorProfile(profile);
     }
     if (dto.getStatus() != null) {
       appointment.setStatus(dto.getStatus());
@@ -87,7 +87,6 @@ public class AppointmentAggregateService {
       if (vitals == null) {
         vitals = new com.res.hms.domain.Vitals();
         vitals.setAppointment(appointment);
-        vitals.setHospitalId(appointment.getHospitalId());
         appointment.setVitals(vitals);
       }
       vitals.setBloodPressure(dto.getVitals().getBloodPressure());

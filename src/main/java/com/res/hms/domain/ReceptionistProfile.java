@@ -19,7 +19,7 @@ import org.hibernate.annotations.Type;
 @Setter
 @Entity
 @Table(name = "receptionist_profile")
-public class ReceptionistProfile {
+public class ReceptionistProfile extends AuditableEntity {
 
   @Id
   @Column(name = "id")
@@ -34,6 +34,10 @@ public class ReceptionistProfile {
   @Column(name = "languages_spoken", columnDefinition = "jsonb")
   private ReceptionistFluency languagesSpoken;
 
-  @Column(name = "is_insurance_specialist", nullable = false)
+  @Type(JsonType.class)
+  @Column(name = "skills_json", columnDefinition = "jsonb")
+  private Object skills;
+
+  @Column(name = "is_insurance_specialist")
   private boolean insuranceSpecialist = false;
 }

@@ -24,7 +24,7 @@ public class Appointment extends HospitalScopedEntity {
 
   @ManyToOne(fetch = FetchType.LAZY, optional = false)
   @JoinColumn(name = "doctor_id", nullable = false)
-  private Doctor doctor;
+  private DoctorProfile doctorProfile;
 
   @Column(name = "appointment_time", nullable = false)
   private LocalDateTime appointmentTime;

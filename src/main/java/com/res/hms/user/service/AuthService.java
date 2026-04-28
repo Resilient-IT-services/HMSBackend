@@ -1,8 +1,8 @@
 package com.res.hms.user.service;
 
 import com.res.hms.common.exception.ApiException;
-import com.res.hms.doctor.repository.DoctorRepository;
-import com.res.hms.nurse.repository.NurseRepository;
+import com.res.hms.doctor.repository.DoctorProfileRepository;
+import com.res.hms.nurse.repository.NurseProfileRepository;
 import com.res.hms.repository.HospitalRepository;
 import com.res.hms.repository.UserAccountRepository;
 import com.res.hms.user.dto.LoginRequest;
@@ -32,8 +32,8 @@ public class AuthService {
   private final AuthenticationManager authenticationManager;
   private final SecurityContextRepository securityContextRepository;
   private final HospitalRepository hospitalRepository;
-  private final DoctorRepository doctorRepository;
-  private final NurseRepository nurseRepository;
+  private final DoctorProfileRepository DoctorProfileRepository;
+  private final NurseProfileRepository NurseProfileRepository;
   private final UserAccountRepository userAccountRepository;
   private final UserMapper userMapper;
   private final com.res.hms.common.tenant.HospitalContext hospitalContext;

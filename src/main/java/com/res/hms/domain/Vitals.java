@@ -1,12 +1,14 @@
 package com.res.hms.domain;
 
-import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.FetchType;
+import jakarta.persistence.Id;
 import jakarta.persistence.JoinColumn;
+import jakarta.persistence.MapsId;
 import jakarta.persistence.OneToOne;
 import jakarta.persistence.Table;
 import java.math.BigDecimal;
+import java.util.UUID;
 import lombok.Getter;
 import lombok.Setter;
 
@@ -14,16 +16,17 @@ import lombok.Setter;
 @Setter
 @Entity
 @Table(name = "vitals")
-public class Vitals extends HospitalScopedEntity {
+public class Vitals {
+
+  @Id private UUID id;
 
   @OneToOne(fetch = FetchType.LAZY)
-  @JoinColumn(name = "appointment_id", nullable = false)
+  @MapsId
+  @JoinColumn(name = "id")
   private Appointment appointment;
 
-  @Column(name = "blood_pressure")
   private String bloodPressure;
 
-  @Column(name = "heart_rate")
   private Integer heartRate;
 
   private BigDecimal temperature;

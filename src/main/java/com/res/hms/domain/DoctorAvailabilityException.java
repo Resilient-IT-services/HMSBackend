@@ -19,7 +19,7 @@ public class DoctorAvailabilityException extends BaseEntity {
 
   @ManyToOne(fetch = FetchType.LAZY)
   @JoinColumn(name = "doctor_id", nullable = false)
-  private Doctor doctor;
+  private DoctorProfile doctorProfile;
 
   @ManyToOne(fetch = FetchType.LAZY)
   @JoinColumn(name = "hospital_id", nullable = false)

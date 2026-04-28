@@ -12,4 +12,5 @@ import lombok.NoArgsConstructor;
 public class PharmacistHospitalDetailsDTO {
   private String counterLocation;
   private String pharmacyWing;
+  private String pharmacyLicenseNo;
 }

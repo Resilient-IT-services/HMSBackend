@@ -9,7 +9,6 @@ import com.res.hms.repository.ReceptionistHospitalDetailsRepository;
 import com.res.hms.repository.ReceptionistProfileRepository;
 import com.res.hms.user.dto.ReceptionistHospitalDetailsDTO;
 import com.res.hms.user.dto.UserDetailsDTO;
-import java.time.LocalDateTime;
 import java.util.Set;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
@@ -64,7 +63,6 @@ public class ReceptionistProfileService {
     if (r.getEmergencyContactNumber() != null) {
       det.setEmergencyContactNumber(r.getEmergencyContactNumber());
     }
-    det.setUpdatedAt(LocalDateTime.now());
     receptionistHospitalDetailsRepository.save(det);
     a.setReceptionistDetails(det);
   }

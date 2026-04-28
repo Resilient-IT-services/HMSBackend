@@ -1,11 +1,11 @@
 package com.res.hms.user.service;
 
 import com.res.hms.domain.AdminHospitalDetails;
-import com.res.hms.domain.Doctor;
 import com.res.hms.domain.DoctorHospitalDetails;
+import com.res.hms.domain.DoctorProfile;
 import com.res.hms.domain.LabTechProfile;
-import com.res.hms.domain.Nurse;
 import com.res.hms.domain.NurseHospitalDetails;
+import com.res.hms.domain.NurseProfile;
 import com.res.hms.domain.PharmacistHospitalDetails;
 import com.res.hms.domain.PharmacistProfile;
 import com.res.hms.domain.ReceptionistHospitalDetails;
@@ -46,8 +46,8 @@ public abstract class UserMapper {
   public abstract UserSummaryDTO toSummaryDTO(UserAccount user);
 
   @Mapping(target = "memberships", expression = "java(mapMemberships(user))")
-  @Mapping(target = "doctorInfo", source = "doctor")
-  @Mapping(target = "nurseInfo", source = "nurse")
+  @Mapping(target = "doctorInfo", source = "doctorProfile")
+  @Mapping(target = "nurseInfo", source = "nurseProfile")
   @Mapping(target = "pharmacistInfo", source = "pharmacistProfile")
   @Mapping(target = "labTechInfo", source = "labTechProfile")
   @Mapping(target = "receptionistInfo", source = "receptionistProfile")
@@ -77,7 +77,9 @@ public abstract class UserMapper {
                       .collect(Collectors.toSet());
 
               String specialization =
-                  user.getDoctor() != null ? user.getDoctor().getSpecialization() : null;
+                  user.getDoctorProfile() != null
+                      ? user.getDoctorProfile().getSpecialization()
+                      : null;
               String department = first.getDepartmentName();
 
               return new HospitalMembershipResponse(
@@ -107,20 +109,20 @@ public abstract class UserMapper {
 
   protected List<com.res.hms.doctor.dto.AvailabilityExceptionDTO> mapAvailabilityExceptions(
       UserRoleAssignment assignment) {
-    if (assignment.getUser() == null || assignment.getUser().getDoctor() == null) {
+    if (assignment.getUser() == null || assignment.getUser().getDoctorProfile() == null) {
       return null;
     }
-    return assignment.getUser().getDoctor().getAvailabilityExceptions().stream()
+    return assignment.getUser().getDoctorProfile().getAvailabilityExceptions().stream()
         .filter(ex -> ex.getHospital().getId().equals(assignment.getHospitalId()))
         .map(this::toAvailabilityExceptionDTO)
         .toList();
   }
 
   @Mapping(target = "id", source = "id")
-  public abstract UserDetailsDTO.DoctorInfo toDoctorInfo(Doctor doctor);
+  public abstract UserDetailsDTO.DoctorInfo toDoctorInfo(DoctorProfile profile);
 
   @Mapping(target = "id", source = "id")
-  public abstract UserDetailsDTO.NurseInfo toNurseInfo(Nurse nurse);
+  public abstract UserDetailsDTO.NurseInfo toNurseInfo(NurseProfile profile);
 
   public abstract UserDetailsDTO.PharmacistInfo toPharmacistInfo(PharmacistProfile profile);
 
@@ -166,7 +168,9 @@ public abstract class UserMapper {
                   hospitalAssignments.stream().map(a -> a.getRole().getCode().name()).toList();
 
               String specialization =
-                  user.getDoctor() != null ? user.getDoctor().getSpecialization() : null;
+                  user.getDoctorProfile() != null
+                      ? user.getDoctorProfile().getSpecialization()
+                      : null;
               String hospitalName =
                   first.getHospital() != null ? first.getHospital().getName() : "Global Access";
 

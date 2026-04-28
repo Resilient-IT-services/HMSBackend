@@ -4,7 +4,6 @@ import com.res.hms.domain.AdminHospitalDetails;
 import com.res.hms.domain.UserRoleAssignment;
 import com.res.hms.repository.AdminHospitalDetailsRepository;
 import com.res.hms.user.dto.AdminHospitalDetailsDTO;
-import java.time.LocalDateTime;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -33,7 +32,6 @@ public class AdminProfileService {
       det.setOfficeLocation(ad.getOfficeLocation());
     }
     det.setDepartmentHead(ad.isDepartmentHead());
-    det.setUpdatedAt(LocalDateTime.now());
     adminHospitalDetailsRepository.save(det);
     a.setAdminDetails(det);
   }

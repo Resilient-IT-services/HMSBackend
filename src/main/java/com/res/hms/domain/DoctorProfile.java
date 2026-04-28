@@ -6,12 +6,15 @@ import jakarta.persistence.CascadeType;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.FetchType;
+import jakarta.persistence.Id;
 import jakarta.persistence.JoinColumn;
+import jakarta.persistence.MapsId;
 import jakarta.persistence.OneToMany;
 import jakarta.persistence.OneToOne;
 import jakarta.persistence.Table;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.UUID;
 import lombok.Getter;
 import lombok.Setter;
 import org.hibernate.annotations.Type;
@@ -19,11 +22,16 @@ import org.hibernate.annotations.Type;
 @Getter
 @Setter
 @Entity
-@Table(name = "doctor")
-public class Doctor extends BaseEntity {
+@Table(name = "doctor_profile")
+public class DoctorProfile extends AuditableEntity {
+
+  @Id
+  @Column(name = "id")
+  private UUID id;
 
   @OneToOne(fetch = FetchType.EAGER)
-  @JoinColumn(name = "user_id", unique = true)
+  @MapsId
+  @JoinColumn(name = "id")
   private UserAccount user;
 
   @Column(nullable = false)
@@ -39,11 +47,10 @@ public class Doctor extends BaseEntity {
   @Column(name = "education_json", columnDefinition = "jsonb")
   private DoctorEducation education;
 
-  @OneToMany(mappedBy = "doctor", cascade = CascadeType.ALL, orphanRemoval = true)
+  @OneToMany(mappedBy = "doctorProfile", cascade = CascadeType.ALL, orphanRemoval = true)
   private List<DoctorAvailabilityException> availabilityExceptions = new ArrayList<>();
 
   public String getFullName() {
-
     return user != null ? user.getFullName() : null;
   }
 }
