@@ -6,11 +6,14 @@ import com.res.hms.appointment.service.AppointmentAggregateService;
 import com.res.hms.appointment.service.AppointmentService;
 import com.res.hms.common.api.ApiResponse;
 import com.res.hms.common.api.PageResponse;
+import com.res.hms.common.validation.OnCreate;
+import com.res.hms.common.validation.OnUpdate;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import java.util.UUID;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -31,7 +34,8 @@ public class AppointmentController {
 
   @PostMapping
   @PreAuthorize("hasAnyRole('ADMIN','RECEPTIONIST','DOCTOR','SUPER_ADMIN')")
-  public ApiResponse<AppointmentDTO> create(@Valid @RequestBody AppointmentDTO request) {
+  public ApiResponse<AppointmentDTO> create(
+      @Validated(OnCreate.class) @RequestBody AppointmentDTO request) {
     return ApiResponse.success(appointmentAggregateService.saveAppointmentAggregate(request));
   }
 
@@ -53,7 +57,8 @@ public class AppointmentController {
   @PutMapping("/{appointmentId}")
   @PreAuthorize("hasAnyRole('ADMIN','RECEPTIONIST','DOCTOR','SUPER_ADMIN')")
   public ApiResponse<AppointmentDTO> update(
-      @PathVariable UUID appointmentId, @Valid @RequestBody AppointmentDTO request) {
+      @PathVariable UUID appointmentId,
+      @Validated(OnUpdate.class) @RequestBody AppointmentDTO request) {
     request.setId(appointmentId);
     return ApiResponse.success(appointmentAggregateService.saveAppointmentAggregate(request));
   }

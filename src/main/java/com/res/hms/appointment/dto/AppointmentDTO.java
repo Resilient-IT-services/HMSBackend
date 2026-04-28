@@ -1,5 +1,7 @@
 package com.res.hms.appointment.dto;
 
+import com.res.hms.common.validation.OnCreate;
+import com.res.hms.common.validation.OnUpdate;
 import com.res.hms.domain.AppointmentStatus;
 import jakarta.validation.constraints.Future;
 import jakarta.validation.constraints.NotNull;
@@ -28,11 +30,12 @@ public class AppointmentDTO {
   private String doctorName;
 
   @NotNull(message = "appointmentTime is required")
-  @Future(message = "appointmentTime must be in the future")
+  @Future(message = "appointmentTime must be in the future", groups = OnCreate.class)
   private LocalDateTime appointmentTime;
 
   private AppointmentStatus status;
   private String notes;
 
-  @jakarta.validation.Valid private VitalsDTO vitals;
+  @jakarta.validation.Valid
+  private VitalsDTO vitals;
 }
