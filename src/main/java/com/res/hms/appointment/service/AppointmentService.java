@@ -72,6 +72,7 @@ public class AppointmentService {
         .doctorName(appointment.getDoctorProfile().getFullName())
         .appointmentTime(appointment.getAppointmentTime())
         .status(appointment.getStatus())
+        .tokenNumber(appointment.getTokenNumber())
         .notes(appointment.getNotes())
         .vitals(toVitalsDto(appointment.getVitals()))
         .build();

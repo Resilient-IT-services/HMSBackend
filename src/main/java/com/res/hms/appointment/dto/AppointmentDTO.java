@@ -34,6 +34,7 @@ public class AppointmentDTO {
   private LocalDateTime appointmentTime;
 
   private AppointmentStatus status;
+  private Integer tokenNumber;
   private String notes;
 
   @jakarta.validation.Valid

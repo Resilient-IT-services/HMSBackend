@@ -59,23 +59,45 @@ public class AppointmentAggregateService {
     appointment.setPatient(patient);
     appointment.setDoctorProfile(profile);
     appointment.setStatus(dto.getStatus() != null ? dto.getStatus() : AppointmentStatus.SCHEDULED);
+    appointment.setTokenNumber(generateNextToken(profile.getId(), dto.getAppointmentTime()));
     updateAppointmentFields(appointment, dto);
     return appointment;
   }
 
   private void updateAppointment(Appointment appointment, AppointmentDTO dto, UUID hospitalId) {
+    boolean doctorChanged = !appointment.getDoctorProfile().getId().equals(dto.getDoctorId());
+    boolean dateChanged =
+        !appointment.getAppointmentTime().toLocalDate().equals(dto.getAppointmentTime().toLocalDate());
+
+    if (doctorChanged) {
+      DoctorProfile profile = doctorProfileService.requireDoctor(dto.getDoctorId(), hospitalId);
+      appointment.setDoctorProfile(profile);
+    }
     if (!appointment.getPatient().getId().equals(dto.getPatientId())) {
       Patient patient = patientService.requirePatient(dto.getPatientId(), hospitalId);
       appointment.setPatient(patient);
     }
-    if (!appointment.getDoctorProfile().getId().equals(dto.getDoctorId())) {
-      DoctorProfile profile = doctorProfileService.requireDoctor(dto.getDoctorId(), hospitalId);
-      appointment.setDoctorProfile(profile);
-    }
     if (dto.getStatus() != null) {
       appointment.setStatus(dto.getStatus());
     }
+
+    if (doctorChanged || dateChanged) {
+      appointment.setTokenNumber(
+          generateNextToken(appointment.getDoctorProfile().getId(), dto.getAppointmentTime()));
+    }
+
     updateAppointmentFields(appointment, dto);
+  }
+
+  private Integer generateNextToken(UUID doctorId, java.time.LocalDateTime appointmentTime) {
+    java.time.LocalDate date = appointmentTime.toLocalDate();
+    Integer lastToken = appointmentRepository.findMaxTokenByDoctorAndDate(doctorId, date);
+
+    if (lastToken == null) {
+      return 1;
+    }
+
+    return lastToken + 1;
   }
 
   private void updateAppointmentFields(Appointment appointment, AppointmentDTO dto) {

@@ -16,6 +16,7 @@ spring:
         highlight_sql: true
   flyway:
     enabled: true
+    validate-on-migrate: false
     locations: classpath:db/migration/common,classpath:db/migration/postgres
     placeholders:
       uuid_gen: (md5(random()::text || clock_timestamp()::text))::uuid

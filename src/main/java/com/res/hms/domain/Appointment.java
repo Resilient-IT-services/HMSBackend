@@ -33,6 +33,9 @@ public class Appointment extends HospitalScopedEntity {
   @Column(nullable = false)
   private AppointmentStatus status;
 
+  @Column(name = "token_number")
+  private Integer tokenNumber;
+
   private String notes;
 
   @jakarta.persistence.OneToOne(
