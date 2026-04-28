@@ -1,0 +1,30 @@
+package com.res.hms.billing.dto;
+
+import com.res.hms.domain.BillingSourceType;
+import com.res.hms.domain.BillingStatus;
+import java.math.BigDecimal;
+import java.time.LocalDateTime;
+import java.util.List;
+import java.util.UUID;
+import lombok.AllArgsConstructor;
+import lombok.Builder;
+import lombok.Data;
+import lombok.NoArgsConstructor;
+
+@Data
+@Builder
+@NoArgsConstructor
+@AllArgsConstructor
+public class BillingDTO {
+  private UUID id;
+  private UUID patientId;
+  private String patientName;
+  private UUID appointmentId;
+  private BillingSourceType sourceType;
+  private BillingStatus status;
+  private BigDecimal totalAmount;
+  private BigDecimal discount;
+  private String paymentMethod;
+  private LocalDateTime createdAt;
+  private List<BillingItemDTO> items;
+}

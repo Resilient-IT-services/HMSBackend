@@ -4,7 +4,7 @@ spring:
   datasource:
     url: ${DB_URL:jdbc:postgresql://localhost:5432/hms}
     username: ${DB_USERNAME:postgres}
-    password: ${DB_PASSWORD:2011}
+    password: ${DB_PASSWORD:2004}
   jpa:
     hibernate:
       ddl-auto: validate
@@ -16,6 +16,7 @@ spring:
         highlight_sql: true
   flyway:
     enabled: true
+    validate-on-migrate: false
     locations: classpath:db/migration/common,classpath:db/migration/postgres
     placeholders:
       uuid_gen: (md5(random()::text || clock_timestamp()::text))::uuid

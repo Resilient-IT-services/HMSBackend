@@ -34,8 +34,15 @@ public class AppointmentDTO {
   private LocalDateTime appointmentTime;
 
   private AppointmentStatus status;
+  private Integer tokenNumber;
+  private String chiefComplaints;
+  private String diagnosis;
+  private String clinicalNotes;
+  private java.util.List<String> icdCodes;
   private String notes;
 
   @jakarta.validation.Valid
   private VitalsDTO vitals;
+
+  private java.util.List<com.res.hms.prescription.dto.PrescriptionDTO> prescriptions;
 }

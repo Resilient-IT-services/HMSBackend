@@ -28,4 +28,14 @@ public interface AppointmentRepository extends BaseRepository<Appointment> {
           + "AND a.status NOT IN (com.res.hms.domain.AppointmentStatus.CANCELLED)")
   java.util.List<Appointment> findByDoctorIdAndDate(
       @Param("doctorId") UUID doctorId, @Param("date") java.time.LocalDate date);
+
+  @Query(
+      "SELECT MAX(a.tokenNumber) FROM Appointment a "
+          + "WHERE a.doctorProfile.id = :doctorId "
+          + "AND CAST(a.appointmentTime AS date) = :date")
+  Integer findMaxTokenByDoctorAndDate(
+      @Param("doctorId") UUID doctorId, @Param("date") java.time.LocalDate date);
+
+  java.util.List<Appointment> findByPatientIdAndHospitalIdOrderByAppointmentTimeDesc(
+      UUID patientId, UUID hospitalId);
 }

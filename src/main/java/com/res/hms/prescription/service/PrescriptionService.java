@@ -1,0 +1,133 @@
+package com.res.hms.prescription.service;
+
+import com.res.hms.appointment.repository.AppointmentRepository;
+import com.res.hms.common.exception.ApiException;
+import com.res.hms.common.tenant.HospitalContext;
+import com.res.hms.common.util.ResourceLookup;
+import com.res.hms.doctor.service.DoctorProfileService;
+import com.res.hms.domain.Appointment;
+import com.res.hms.domain.DoctorProfile;
+import com.res.hms.domain.Medicine;
+import com.res.hms.domain.Patient;
+import com.res.hms.domain.Prescription;
+import com.res.hms.domain.PrescriptionItem;
+import com.res.hms.patient.service.PatientService;
+import com.res.hms.prescription.dto.PrescriptionDTO;
+import com.res.hms.prescription.dto.PrescriptionItemDTO;
+import com.res.hms.prescription.repository.PrescriptionRepository;
+import com.res.hms.repository.MedicineRepository;
+import java.util.List;
+import java.util.UUID;
+import java.util.stream.Collectors;
+import lombok.RequiredArgsConstructor;
+import org.springframework.http.HttpStatus;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+
+@Service
+@RequiredArgsConstructor
+public class PrescriptionService {
+
+  private final PrescriptionRepository prescriptionRepository;
+  private final MedicineRepository medicineRepository;
+  private final AppointmentRepository appointmentRepository;
+  private final PatientService patientService;
+  private final DoctorProfileService doctorProfileService;
+  private final HospitalContext hospitalContext;
+  private final ResourceLookup resourceLookup;
+
+  @Transactional
+  public PrescriptionDTO createPrescription(PrescriptionDTO dto) {
+    UUID hospitalId = hospitalContext.requireHospitalId();
+
+    Patient patient;
+    DoctorProfile doctor;
+    Appointment appointment = null;
+
+    if (dto.getAppointmentId() != null) {
+      appointment =
+          appointmentRepository
+              .findByIdAndHospitalId(dto.getAppointmentId(), hospitalId)
+              .orElseThrow(
+                  () ->
+                      new ApiException("NOT_FOUND", "Appointment not found", HttpStatus.NOT_FOUND));
+      patient = appointment.getPatient();
+      doctor = appointment.getDoctorProfile();
+    } else {
+      patient = patientService.requirePatient(dto.getPatientId(), hospitalId);
+      doctor = doctorProfileService.requireDoctor(dto.getDoctorId(), hospitalId);
+    }
+
+    Prescription prescription = new Prescription();
+    prescription.setHospitalId(hospitalId);
+    prescription.setPatient(patient);
+    prescription.setDoctorProfile(doctor);
+    prescription.setAppointment(appointment);
+
+    if (dto.getItems() != null) {
+      for (PrescriptionItemDTO itemDto : dto.getItems()) {
+        Medicine medicine =
+            resourceLookup.findRequired(
+                itemDto.getMedicineId(),
+                hospitalId,
+                medicineRepository::findByIdAndHospitalId,
+                "Medicine");
+
+        PrescriptionItem item = new PrescriptionItem();
+        item.setHospitalId(hospitalId);
+        item.setPrescription(prescription);
+        item.setMedicine(medicine);
+        item.setDosage(itemDto.getDosage());
+        item.setDuration(itemDto.getDuration());
+        prescription.getItems().add(item);
+      }
+    }
+
+    return toDto(prescriptionRepository.save(prescription));
+  }
+
+  @Transactional(readOnly = true)
+  public List<PrescriptionDTO> getPatientPrescriptions(UUID patientId) {
+    UUID hospitalId = hospitalContext.requireHospitalId();
+    return prescriptionRepository
+        .findByPatientIdAndHospitalIdOrderByCreatedAtDesc(patientId, hospitalId)
+        .stream()
+        .map(this::toDto)
+        .collect(Collectors.toList());
+  }
+
+  @Transactional(readOnly = true)
+  public PrescriptionDTO getById(UUID id) {
+    UUID hospitalId = hospitalContext.requireHospitalId();
+    return prescriptionRepository
+        .findByIdAndHospitalId(id, hospitalId)
+        .map(this::toDto)
+        .orElseThrow(
+            () -> new ApiException("NOT_FOUND", "Prescription not found", HttpStatus.NOT_FOUND));
+  }
+
+  public PrescriptionDTO toDto(Prescription prescription) {
+    return PrescriptionDTO.builder()
+        .id(prescription.getId())
+        .patientId(prescription.getPatient().getId())
+        .patientName(prescription.getPatient().getFullName())
+        .doctorId(prescription.getDoctorProfile().getId())
+        .doctorName(prescription.getDoctorProfile().getFullName())
+        .appointmentId(
+            prescription.getAppointment() != null ? prescription.getAppointment().getId() : null)
+        .createdAt(prescription.getCreatedAt())
+        .items(
+            prescription.getItems().stream()
+                .map(
+                    item ->
+                        PrescriptionItemDTO.builder()
+                            .id(item.getId())
+                            .medicineId(item.getMedicine().getId())
+                            .medicineName(item.getMedicine().getName())
+                            .dosage(item.getDosage())
+                            .duration(item.getDuration())
+                            .build())
+                .collect(Collectors.toList()))
+        .build();
+  }
+}

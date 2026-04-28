@@ -58,6 +58,9 @@ public class PatientAggregateService {
     patient.setGender(dto.getGender());
     patient.setDob(dto.getDob());
     patient.setPhone(dto.getPhone());
+    patient.setEmail(dto.getEmail());
+    patient.setMedicalHistory(dto.getMedicalHistory());
+    patient.setBloodGroup(dto.getBloodGroup());
     patient.setAddress(dto.getAddress());
   }
 }

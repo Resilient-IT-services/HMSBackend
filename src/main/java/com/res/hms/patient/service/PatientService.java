@@ -50,9 +50,12 @@ public class PatientService {
         .id(patient.getId())
         .fullName(patient.getFullName())
         .patientCode(patient.getPatientCode())
+        .email(patient.getEmail())
+        .medicalHistory(patient.getMedicalHistory())
         .gender(patient.getGender())
         .dob(patient.getDob())
         .phone(patient.getPhone())
+        .bloodGroup(patient.getBloodGroup())
         .address(patient.getAddress())
         .build();
   }
