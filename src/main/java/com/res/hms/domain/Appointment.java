@@ -36,6 +36,18 @@ public class Appointment extends HospitalScopedEntity {
   @Column(name = "token_number")
   private Integer tokenNumber;
 
+  @Column(name = "chief_complaints")
+  private String chiefComplaints;
+
+  private String diagnosis;
+
+  @Column(name = "clinical_notes")
+  private String clinicalNotes;
+
+  @Column(name = "icd_codes", columnDefinition = "jsonb")
+  @org.hibernate.annotations.JdbcTypeCode(org.hibernate.type.SqlTypes.JSON)
+  private java.util.List<String> icdCodes = new java.util.ArrayList<>();
+
   private String notes;
 
   @jakarta.persistence.OneToOne(
@@ -43,4 +55,9 @@ public class Appointment extends HospitalScopedEntity {
       cascade = jakarta.persistence.CascadeType.ALL,
       fetch = jakarta.persistence.FetchType.LAZY)
   private Vitals vitals;
+
+  @jakarta.persistence.OneToMany(
+      mappedBy = "appointment",
+      fetch = jakarta.persistence.FetchType.LAZY)
+  private java.util.List<Prescription> prescriptions = new java.util.ArrayList<>();
 }

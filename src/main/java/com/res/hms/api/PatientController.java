@@ -27,6 +27,8 @@ public class PatientController {
 
   private final PatientService patientService;
   private final PatientAggregateService patientAggregateService;
+  private final com.res.hms.prescription.service.PrescriptionService prescriptionService;
+  private final com.res.hms.patient.service.PatientHistoryService patientHistoryService;
 
   @PostMapping
   @PreAuthorize("hasAnyRole('ADMIN','RECEPTIONIST','NURSE','SUPER_ADMIN')")
@@ -47,6 +49,20 @@ public class PatientController {
   @PreAuthorize("hasAnyRole('ADMIN','RECEPTIONIST','NURSE','DOCTOR','SUPER_ADMIN')")
   public ApiResponse<PatientDTO> get(@PathVariable UUID patientId) {
     return ApiResponse.success(patientService.get(patientId));
+  }
+
+  @GetMapping("/{patientId}/prescriptions")
+  @PreAuthorize("hasAnyRole('ADMIN','RECEPTIONIST','NURSE','DOCTOR','PHARMACIST','SUPER_ADMIN')")
+  public ApiResponse<java.util.List<com.res.hms.prescription.dto.PrescriptionDTO>> getPrescriptions(
+      @PathVariable UUID patientId) {
+    return ApiResponse.success(prescriptionService.getPatientPrescriptions(patientId));
+  }
+
+  @GetMapping("/{patientId}/full-history")
+  @PreAuthorize("hasAnyRole('ADMIN','DOCTOR','NURSE','SUPER_ADMIN')")
+  public ApiResponse<com.res.hms.patient.dto.PatientHistoryDTO> getFullHistory(
+      @PathVariable UUID patientId) {
+    return ApiResponse.success(patientHistoryService.getFullHistory(patientId));
   }
 
   @PutMapping("/{patientId}")

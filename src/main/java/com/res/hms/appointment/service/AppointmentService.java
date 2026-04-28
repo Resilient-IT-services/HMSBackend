@@ -9,8 +9,11 @@ import com.res.hms.common.exception.ApiException;
 import com.res.hms.common.tenant.HospitalContext;
 import com.res.hms.common.util.ResourceLookup;
 import com.res.hms.domain.Appointment;
+import com.res.hms.prescription.service.PrescriptionService;
 import java.util.UUID;
+import java.util.stream.Collectors;
 import lombok.RequiredArgsConstructor;
+import org.springframework.context.annotation.Lazy;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
@@ -23,6 +26,8 @@ public class AppointmentService {
   private final AppointmentRepository appointmentRepository;
   private final HospitalContext hospitalContext;
   private final ResourceLookup resourceLookup;
+
+  @Lazy private final PrescriptionService prescriptionService;
 
   @Transactional(readOnly = true)
   public AppointmentDTO getById(UUID id) {
@@ -73,8 +78,18 @@ public class AppointmentService {
         .appointmentTime(appointment.getAppointmentTime())
         .status(appointment.getStatus())
         .tokenNumber(appointment.getTokenNumber())
+        .chiefComplaints(appointment.getChiefComplaints())
+        .diagnosis(appointment.getDiagnosis())
+        .clinicalNotes(appointment.getClinicalNotes())
+        .icdCodes(appointment.getIcdCodes())
         .notes(appointment.getNotes())
         .vitals(toVitalsDto(appointment.getVitals()))
+        .prescriptions(
+            appointment.getPrescriptions() != null
+                ? appointment.getPrescriptions().stream()
+                    .map(prescriptionService::toDto)
+                    .collect(Collectors.toList())
+                : null)
         .build();
   }
 

@@ -35,4 +35,7 @@ public interface AppointmentRepository extends BaseRepository<Appointment> {
           + "AND CAST(a.appointmentTime AS date) = :date")
   Integer findMaxTokenByDoctorAndDate(
       @Param("doctorId") UUID doctorId, @Param("date") java.time.LocalDate date);
+
+  java.util.List<Appointment> findByPatientIdAndHospitalIdOrderByAppointmentTimeDesc(
+      UUID patientId, UUID hospitalId);
 }
