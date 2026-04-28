@@ -8,8 +8,7 @@ RUN sed -i 's/\r$//' gradlew
 RUN chmod +x gradlew
 
 RUN chmod +x gradlew
-RUN ./gradlew clean build --no-daemon
-
+RUN ./gradlew clean bootJar -x test --no-daemon
 FROM eclipse-temurin:21-jdk-jammy
 
 WORKDIR /app

@@ -16,8 +16,8 @@ import org.springframework.transaction.annotation.Transactional;
 @RequiredArgsConstructor
 public class UserRoleUpdateService {
 
-  private final DoctorProfileService DoctorProfileService;
-  private final NurseProfileService NurseProfileService;
+  private final DoctorProfileService doctorProfileService;
+  private final NurseProfileService nurseProfileService;
   private final PharmacistProfileService pharmacistProfileService;
   private final LabTechProfileService labTechProfileService;
   private final ReceptionistProfileService receptionistProfileService;
@@ -28,8 +28,8 @@ public class UserRoleUpdateService {
       UserAccount user, UserDetailsDTO request, boolean isSuper, UUID activeId) {
     Set<RoleCode> allRoles = user.getRoleCodes();
 
-    DoctorProfileService.updateProfile(user, request.getDoctorInfo());
-    NurseProfileService.updateProfile(user, request.getNurseInfo());
+    doctorProfileService.updateProfile(user, request.getDoctorInfo());
+    nurseProfileService.updateProfile(user, request.getNurseInfo());
     pharmacistProfileService.updateProfile(user, request.getPharmacistInfo(), allRoles);
     labTechProfileService.updateProfile(user, request.getLabTechInfo());
     receptionistProfileService.updateProfile(user, request.getReceptionistInfo(), allRoles);
@@ -57,12 +57,12 @@ public class UserRoleUpdateService {
             a -> {
               switch (code) {
                 case DOCTOR ->
-                    DoctorProfileService.updateHospitalDetails(
+                    doctorProfileService.updateHospitalDetails(
                         a,
                         raDto.getDoctorDetails(),
                         raDto.getSchedules(),
                         raDto.getAvailabilityExceptions());
-                case NURSE -> NurseProfileService.updateHospitalDetails(a, raDto.getNurseDetails());
+                case NURSE -> nurseProfileService.updateHospitalDetails(a, raDto.getNurseDetails());
                 case PHARMACIST ->
                     pharmacistProfileService.updateHospitalDetails(a, raDto.getPharmacistDetails());
                 case RECEPTIONIST ->

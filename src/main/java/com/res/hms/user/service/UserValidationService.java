@@ -15,8 +15,8 @@ import org.springframework.stereotype.Service;
 @RequiredArgsConstructor
 public class UserValidationService {
 
-  private final DoctorProfileRepository DoctorProfileRepository;
-  private final NurseProfileRepository NurseProfileRepository;
+  private final DoctorProfileRepository doctorProfileRepository;
+  private final NurseProfileRepository nurseProfileRepository;
   private final PharmacistProfileRepository pharmacistProfileRepository;
   private final LabTechProfileRepository labTechProfileRepository;
 
@@ -25,8 +25,8 @@ public class UserValidationService {
       String ln = request.getDoctorInfo().getLicenseNumber();
       boolean exists =
           (userId == null)
-              ? DoctorProfileRepository.existsByLicenseNumber(ln)
-              : DoctorProfileRepository.existsByLicenseNumberAndUserIdNot(ln, userId);
+              ? doctorProfileRepository.existsByLicenseNumber(ln)
+              : doctorProfileRepository.existsByLicenseNumberAndUserIdNot(ln, userId);
       if (exists) {
         throw new ApiException(
             "BUSINESS_RULE_VIOLATION",
@@ -38,8 +38,8 @@ public class UserValidationService {
       String ln = request.getNurseInfo().getNursingLicenseNo();
       boolean exists =
           (userId == null)
-              ? NurseProfileRepository.existsByNursingLicenseNo(ln)
-              : NurseProfileRepository.existsByNursingLicenseNoAndUserIdNot(ln, userId);
+              ? nurseProfileRepository.existsByNursingLicenseNo(ln)
+              : nurseProfileRepository.existsByNursingLicenseNoAndUserIdNot(ln, userId);
       if (exists) {
         throw new ApiException(
             "BUSINESS_RULE_VIOLATION",

@@ -55,36 +55,7 @@ class DoctorManagementIntegrationTest {
     // 1. Create Doctor with initial schedule
     String userJson =
         String.format(
-            """
-        {
-          "username": "doc_lifecycle",
-          "password": "password123",
-          "fullName": "Lifecycle Doctor",
-          "gender": "MALE",
-          "dob": "1980-01-01",
-          "doctorInfo": {
-            "specialization": "Cardiology"
-          },
-          "memberships": [
-            {
-              "hospitalId": "%s",
-              "roleAssignments": [
-                {
-                  "roleCode": "DOCTOR",
-                  "schedules": [
-                    {
-                      "dayOfWeek": 1,
-                      "startTime": "09:00",
-                      "endTime": "12:00",
-                      "slotDurationMinutes": 30
-                    }
-                  ]
-                }
-              ]
-            }
-          ]
-        }
-        """,
+            "{\"username\":\"doc_lifecycle\",\"password\":\"password123\",\"fullName\":\"Lifecycle Doctor\",\"gender\":\"MALE\",\"dob\":\"1980-01-01\",\"doctorInfo\":{\"specialization\":\"Cardiology\"},\"memberships\":[{\"hospitalId\":\"%s\",\"roleAssignments\":[{\"roleCode\":\"DOCTOR\",\"schedules\":[{\"dayOfWeek\":1,\"startTime\":\"09:00\",\"endTime\":\"12:00\",\"slotDurationMinutes\":30}]}]}]}",
             hospitalId);
 
     String userResponse =
@@ -114,56 +85,7 @@ class DoctorManagementIntegrationTest {
     // 2. Update Doctor: Modify schedule and add exception
     String updateJson =
         String.format(
-            """
-        {
-          "username": "doc_lifecycle",
-          "fullName": "Updated Lifecycle Doctor",
-          "gender": "MALE",
-          "dob": "1980-01-01",
-          "memberships": [
-            {
-              "hospitalId": "%s",
-              "roleAssignments": [
-                {
-                  "roleCode": "DOCTOR",
-                  "doctorDetails": {
-                    "specialization": "Interventional Cardiology"
-                  },
-                  "schedules": [
-                    {
-                      "dayOfWeek": 1,
-                      "startTime": "10:00",
-                      "endTime": "13:00",
-                      "slotDurationMinutes": 30
-                    },
-                    {
-                      "dayOfWeek": 3,
-                      "startTime": "09:00",
-                      "endTime": "12:00",
-                      "slotDurationMinutes": 30
-                    }
-                  ],
-                  "availabilityExceptions": [
-                    {
-                      "date": "2026-05-01",
-                      "type": "FULL_DAY_OFF",
-                      "note": "Holiday"
-                    },
-                    {
-                      "date": "2026-05-02",
-                      "type": "MODIFIED",
-                      "startTime": "14:00",
-                      "endTime": "16:00",
-                      "slotDurationMinutes": 20,
-                      "note": "Extra hours"
-                    }
-                  ]
-                }
-              ]
-            }
-          ]
-        }
-        """,
+            "{\"username\":\"doc_lifecycle\",\"fullName\":\"Updated Lifecycle Doctor\",\"gender\":\"MALE\",\"dob\":\"1980-01-01\",\"memberships\":[{\"hospitalId\":\"%s\",\"roleAssignments\":[{\"roleCode\":\"DOCTOR\",\"doctorDetails\":{\"specialization\":\"Interventional Cardiology\"},\"schedules\":[{\"dayOfWeek\":1,\"startTime\":\"10:00\",\"endTime\":\"13:00\",\"slotDurationMinutes\":30},{\"dayOfWeek\":3,\"startTime\":\"09:00\",\"endTime\":\"12:00\",\"slotDurationMinutes\":30}],\"availabilityExceptions\":[{\"date\":\"2026-05-01\",\"type\":\"FULL_DAY_OFF\",\"note\":\"Holiday\"},{\"date\":\"2026-05-02\",\"type\":\"MODIFIED\",\"startTime\":\"14:00\",\"endTime\":\"16:00\",\"slotDurationMinutes\":20,\"note\":\"Extra hours\"}]}]}]}",
             hospitalId);
 
     mockMvc
