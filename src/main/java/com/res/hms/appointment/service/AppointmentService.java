@@ -73,7 +73,8 @@ public class AppointmentService {
     long total = 0;
 
     for (Object[] result : results) {
-      com.res.hms.domain.AppointmentStatus status = (com.res.hms.domain.AppointmentStatus) result[0];
+      com.res.hms.domain.AppointmentStatus status =
+          (com.res.hms.domain.AppointmentStatus) result[0];
       Long count = (Long) result[1];
       byStatus.put(status, count);
       total += count;

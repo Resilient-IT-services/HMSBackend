@@ -8,5 +8,6 @@ import java.util.UUID;
 
 public interface VitalSettingRepository extends BaseRepository<VitalSetting> {
   List<VitalSetting> findAllByHospitalId(UUID hospitalId);
+
   Optional<VitalSetting> findByHospitalIdAndVitalName(UUID hospitalId, String vitalName);
 }

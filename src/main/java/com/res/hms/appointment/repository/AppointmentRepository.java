@@ -18,7 +18,9 @@ public interface AppointmentRepository extends BaseRepository<Appointment> {
           + "CAST(a.appointmentTime AS date) = :date "
           + "ORDER BY a.appointmentTime DESC")
   Page<Appointment> findAllByHospitalIdAndDate(
-      @Param("hospitalId") UUID hospitalId, @Param("date") java.time.LocalDate date, Pageable pageable);
+      @Param("hospitalId") UUID hospitalId,
+      @Param("date") java.time.LocalDate date,
+      Pageable pageable);
 
   @Query(
       "SELECT a FROM Appointment a JOIN a.patient p JOIN a.doctorProfile d JOIN d.user u "

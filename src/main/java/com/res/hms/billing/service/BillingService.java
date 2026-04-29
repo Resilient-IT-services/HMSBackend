@@ -92,7 +92,7 @@ public class BillingService {
                 () -> new ApiException("NOT_FOUND", "Bill not found", HttpStatus.NOT_FOUND));
 
     billing.setStatus(status);
-    
+
     // If billing is paid, and it's linked to an appointment with PAYMENT_PENDING status, update it
     if (status == com.res.hms.domain.BillingStatus.PAID && billing.getAppointment() != null) {
       Appointment appointment = billing.getAppointment();

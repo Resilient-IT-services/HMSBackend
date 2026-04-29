@@ -14,8 +14,10 @@ import lombok.NoArgsConstructor;
 public class DoctorSlotDTO {
   @JsonFormat(pattern = "HH:mm")
   private LocalTime startTime;
+
   @JsonFormat(pattern = "HH:mm")
   private LocalTime endTime;
+
   private boolean available;
   private String status; // e.g., "AVAILABLE", "BOOKED", "SESSION_EXPIRED"
 }

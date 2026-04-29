@@ -159,7 +159,8 @@ public class DoctorProfileService {
   }
 
   @Transactional(readOnly = true)
-  public List<com.res.hms.doctor.dto.DoctorSlotDTO> getSlots(UUID doctorId, java.time.LocalDate date) {
+  public List<com.res.hms.doctor.dto.DoctorSlotDTO> getSlots(
+      UUID doctorId, java.time.LocalDate date) {
     UUID hospitalId = hospitalContext.requireHospitalId();
     short dbDay = (short) date.getDayOfWeek().getValue();
 
@@ -200,9 +201,10 @@ public class DoctorProfileService {
 
     java.util.List<com.res.hms.domain.Appointment> appointments =
         appointmentRepository.findByDoctorIdAndDate(actualDoctorId, date);
-    java.util.Set<LocalTime> bookedTimes = appointments.stream()
-        .map(a -> a.getAppointmentTime().toLocalTime())
-        .collect(java.util.stream.Collectors.toSet());
+    java.util.Set<LocalTime> bookedTimes =
+        appointments.stream()
+            .map(a -> a.getAppointmentTime().toLocalTime())
+            .collect(java.util.stream.Collectors.toSet());
 
     java.time.LocalDate today = java.time.LocalDate.now();
     java.time.LocalTime now = java.time.LocalTime.now();
@@ -214,15 +216,30 @@ public class DoctorProfileService {
             .findFirst();
 
     if (override.isPresent()) {
-      generateSlots(override.get().getStartTime(), override.get().getEndTime(), 
-          override.get().getSlotDurationMinutes() != null ? override.get().getSlotDurationMinutes() : 15,
-          bookedTimes, date, today, now, allSlots);
+      generateSlots(
+          override.get().getStartTime(),
+          override.get().getEndTime(),
+          override.get().getSlotDurationMinutes() != null
+              ? override.get().getSlotDurationMinutes()
+              : 15,
+          bookedTimes,
+          date,
+          today,
+          now,
+          allSlots);
     } else {
       List<DoctorSchedule> baseSchedules =
           assignment.getSchedules().stream().filter(s -> s.getDayOfWeek().equals(dbDay)).toList();
       for (DoctorSchedule s : baseSchedules) {
-        generateSlots(s.getStartTime(), s.getEndTime(), s.getSlotDurationMinutes(),
-            bookedTimes, date, today, now, allSlots);
+        generateSlots(
+            s.getStartTime(),
+            s.getEndTime(),
+            s.getSlotDurationMinutes(),
+            bookedTimes,
+            date,
+            today,
+            now,
+            allSlots);
       }
     }
 
@@ -232,31 +249,42 @@ public class DoctorProfileService {
   @Transactional(readOnly = true)
   public boolean isFullDayOff(UUID doctorId, java.time.LocalDate date) {
     UUID hospitalId = hospitalContext.requireHospitalId();
-    return availabilityExceptionRepository.findByDoctorIdAndHospitalIdAndDate(
-        doctorId, hospitalId, date).stream()
+    return availabilityExceptionRepository
+        .findByDoctorIdAndHospitalIdAndDate(doctorId, hospitalId, date)
+        .stream()
         .anyMatch(e -> "FULL_DAY_OFF".equals(e.getType()));
   }
 
-  private void generateSlots(LocalTime start, LocalTime end, int duration, 
-      java.util.Set<LocalTime> bookedTimes, java.time.LocalDate date, 
-      java.time.LocalDate today, LocalTime now, 
+  private void generateSlots(
+      LocalTime start,
+      LocalTime end,
+      int duration,
+      java.util.Set<LocalTime> bookedTimes,
+      java.time.LocalDate date,
+      java.time.LocalDate today,
+      LocalTime now,
       List<com.res.hms.doctor.dto.DoctorSlotDTO> allSlots) {
     LocalTime current = start;
-    while (current.plusMinutes(duration).isBefore(end) || current.plusMinutes(duration).equals(end)) {
+    while (current.plusMinutes(duration).isBefore(end)
+        || current.plusMinutes(duration).equals(end)) {
       LocalTime slotEnd = current.plusMinutes(duration);
       boolean isPast = date.isBefore(today) || (date.equals(today) && current.isBefore(now));
       boolean isBooked = bookedTimes.contains(current);
 
       String status = "AVAILABLE";
-      if (isPast) status = "SESSION_EXPIRED";
-      else if (isBooked) status = "BOOKED";
+      if (isPast) {
+        status = "SESSION_EXPIRED";
+      } else if (isBooked) {
+        status = "BOOKED";
+      }
 
-      allSlots.add(com.res.hms.doctor.dto.DoctorSlotDTO.builder()
-          .startTime(current)
-          .endTime(slotEnd)
-          .available(!isPast && !isBooked)
-          .status(status)
-          .build());
+      allSlots.add(
+          com.res.hms.doctor.dto.DoctorSlotDTO.builder()
+              .startTime(current)
+              .endTime(slotEnd)
+              .available(!isPast && !isBooked)
+              .status(status)
+              .build());
       current = slotEnd;
     }
   }
