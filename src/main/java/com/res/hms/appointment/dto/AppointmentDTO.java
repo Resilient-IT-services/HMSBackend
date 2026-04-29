@@ -1,6 +1,7 @@
 package com.res.hms.appointment.dto;
 
 import com.res.hms.common.validation.OnCreate;
+import com.res.hms.common.validation.OnUpdate;
 import com.res.hms.domain.AppointmentStatus;
 import jakarta.validation.constraints.Future;
 import jakarta.validation.constraints.NotNull;
@@ -36,5 +37,6 @@ public class AppointmentDTO {
   private Integer tokenNumber;
   private String notes;
 
-  @jakarta.validation.Valid private VitalsDTO vitals;
+  @jakarta.validation.Valid
+  private VitalsDTO vitals;
 }

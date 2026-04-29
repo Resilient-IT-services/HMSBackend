@@ -57,4 +57,30 @@ class AuditLogServiceTest {
 
     assertEquals(1, response.content().size());
   }
+
+  @Test
+  void listReturnsAllForSuperAdminWhenNoHospitalSelected() {
+    AuditLog auditLog = new AuditLog();
+    auditLog.setDetails(AuditDetail.builder().after(Map.of("msg", "created")).build());
+    auditLog.setCreatedAt(LocalDateTime.now());
+    auditLog.setAction(AuditAction.CREATE);
+
+    when(hospitalContext.getHospitalIdOrNull()).thenReturn(null);
+    when(hospitalContext.isSuperAdmin()).thenReturn(true);
+    when(auditLogRepository.findAllByOrderByCreatedAtDesc(PageRequest.of(0, 10)))
+        .thenReturn(new PageImpl<>(List.of(auditLog)));
+
+    var response = auditLogService.list(0, 10);
+
+    assertEquals(1, response.content().size());
+  }
+
+  @Test
+  void listThrowsExceptionWhenNoHospitalSelectedAndNotSuperAdmin() {
+    when(hospitalContext.getHospitalIdOrNull()).thenReturn(null);
+    when(hospitalContext.isSuperAdmin()).thenReturn(false);
+
+    org.junit.jupiter.api.Assertions.assertThrows(
+        com.res.hms.common.exception.ApiException.class, () -> auditLogService.list(0, 10));
+  }
 }

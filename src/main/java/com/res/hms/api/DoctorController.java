@@ -42,4 +42,12 @@ public class DoctorController {
       @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate date) {
     return ApiResponse.success(doctorProfileService.getAvailableSlots(doctorId, date));
   }
+
+  @GetMapping("/{doctorId}/slots")
+  @PreAuthorize("isAuthenticated()")
+  public ApiResponse<java.util.List<com.res.hms.doctor.dto.DoctorSlotDTO>> getSlots(
+      @PathVariable UUID doctorId,
+      @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate date) {
+    return ApiResponse.success(doctorProfileService.getSlots(doctorId, date));
+  }
 }

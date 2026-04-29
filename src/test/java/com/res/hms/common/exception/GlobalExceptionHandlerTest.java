@@ -13,6 +13,7 @@ import java.util.Set;
 import java.util.UUID;
 import org.junit.jupiter.api.Test;
 import org.springframework.core.MethodParameter;
+import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.AccessDeniedException;
@@ -94,6 +95,34 @@ class GlobalExceptionHandlerTest {
     assertEquals(
         "SYSTEM_ERROR",
         ((com.res.hms.common.api.ApiResponse<?>) response.getBody()).error().code());
+  }
+
+  @Test
+  void handleDataIntegrityViolationReturnsConflict() {
+    DataIntegrityViolationException exception =
+        new DataIntegrityViolationException(
+            "Conflict",
+            new RuntimeException(
+                "duplicate key value violates unique constraint \"user_account_username_key\""));
+    ResponseEntity<?> response = handler.handleDataIntegrityViolation(exception);
+
+    assertEquals(HttpStatus.CONFLICT, response.getStatusCode());
+    assertEquals(
+        "Username already exists",
+        ((com.res.hms.common.api.ApiResponse<?>) response.getBody()).error().message());
+  }
+
+  @Test
+  void handleDataIntegrityViolationReturnsGenericConflict() {
+    DataIntegrityViolationException exception =
+        new DataIntegrityViolationException(
+            "Conflict", new RuntimeException("some other constraint"));
+    ResponseEntity<?> response = handler.handleDataIntegrityViolation(exception);
+
+    assertEquals(HttpStatus.CONFLICT, response.getStatusCode());
+    assertEquals(
+        "A data integrity violation occurred",
+        ((com.res.hms.common.api.ApiResponse<?>) response.getBody()).error().message());
   }
 
   static class SampleController {
