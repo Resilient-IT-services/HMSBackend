@@ -45,8 +45,16 @@ public class AppointmentController {
   public ApiResponse<PageResponse<AppointmentDTO>> list(
       @RequestParam(defaultValue = "0") int page,
       @RequestParam(defaultValue = "20") int size,
-      @RequestParam(required = false) String search) {
-    return ApiResponse.success(appointmentService.list(page, Math.min(size, 100), search));
+      @RequestParam(required = false) String search,
+      @RequestParam(required = false) @org.springframework.format.annotation.DateTimeFormat(iso = org.springframework.format.annotation.DateTimeFormat.ISO.DATE) java.time.LocalDate date) {
+    return ApiResponse.success(appointmentService.list(page, Math.min(size, 100), search, date));
+  }
+
+  @GetMapping("/stats")
+  @PreAuthorize("hasAnyRole('ADMIN','RECEPTIONIST','NURSE','DOCTOR','SUPER_ADMIN')")
+  public ApiResponse<com.res.hms.appointment.dto.AppointmentStatsDTO> getStats(
+      @RequestParam(required = false) @org.springframework.format.annotation.DateTimeFormat(iso = org.springframework.format.annotation.DateTimeFormat.ISO.DATE) java.time.LocalDate date) {
+    return ApiResponse.success(appointmentService.getStats(date != null ? date : java.time.LocalDate.now()));
   }
 
   @GetMapping("/{appointmentId}")

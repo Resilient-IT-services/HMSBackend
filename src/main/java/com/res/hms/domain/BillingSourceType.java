@@ -5,5 +5,6 @@ public enum BillingSourceType {
   IPD,
   PHARMACY,
   LAB,
-  EMERGENCY
+  EMERGENCY,
+  APPOINTMENT
 }

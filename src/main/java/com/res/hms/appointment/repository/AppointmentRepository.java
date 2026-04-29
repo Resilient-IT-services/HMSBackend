@@ -13,6 +13,14 @@ public interface AppointmentRepository extends BaseRepository<Appointment> {
       UUID hospitalId, Pageable pageable);
 
   @Query(
+      "SELECT a FROM Appointment a "
+          + "WHERE a.hospitalId = :hospitalId AND "
+          + "CAST(a.appointmentTime AS date) = :date "
+          + "ORDER BY a.appointmentTime DESC")
+  Page<Appointment> findAllByHospitalIdAndDate(
+      @Param("hospitalId") UUID hospitalId, @Param("date") java.time.LocalDate date, Pageable pageable);
+
+  @Query(
       "SELECT a FROM Appointment a JOIN a.patient p JOIN a.doctorProfile d JOIN d.user u "
           + "WHERE a.hospitalId = :hospitalId AND "
           + "(LOWER(p.fullName) LIKE :query OR "
@@ -20,6 +28,14 @@ public interface AppointmentRepository extends BaseRepository<Appointment> {
           + "ORDER BY a.appointmentTime DESC")
   Page<Appointment> search(
       @Param("hospitalId") UUID hospitalId, @Param("query") String query, Pageable pageable);
+
+  @Query(
+      "SELECT a.status, COUNT(a) FROM Appointment a "
+          + "WHERE a.hospitalId = :hospitalId AND "
+          + "CAST(a.appointmentTime AS date) = :date "
+          + "GROUP BY a.status")
+  java.util.List<Object[]> getStatsByDate(
+      @Param("hospitalId") UUID hospitalId, @Param("date") java.time.LocalDate date);
 
   @Query(
       "SELECT a FROM Appointment a "

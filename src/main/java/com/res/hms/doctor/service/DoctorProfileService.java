@@ -158,6 +158,109 @@ public class DoctorProfileService {
     return new DoctorAvailabilityResponse(sessions);
   }
 
+  @Transactional(readOnly = true)
+  public List<com.res.hms.doctor.dto.DoctorSlotDTO> getSlots(UUID doctorId, java.time.LocalDate date) {
+    UUID hospitalId = hospitalContext.requireHospitalId();
+    short dbDay = (short) date.getDayOfWeek().getValue();
+
+    DoctorProfile doctorProfile =
+        doctorProfileRepository
+            .findById(doctorId)
+            .or(() -> doctorProfileRepository.findByUserId(doctorId))
+            .orElseThrow(
+                () ->
+                    new com.res.hms.common.exception.ApiException(
+                        "NOT_FOUND",
+                        "DoctorProfile not found",
+                        org.springframework.http.HttpStatus.NOT_FOUND));
+
+    UUID actualDoctorId = doctorProfile.getId();
+    UserAccount user = doctorProfile.getUser();
+    UserRoleAssignment assignment =
+        user.getAssignments().stream()
+            .filter(
+                a ->
+                    hospitalId.equals(a.getHospitalId())
+                        && a.getRole().getCode() == RoleCode.DOCTOR)
+            .findFirst()
+            .orElseThrow(
+                () ->
+                    new com.res.hms.common.exception.ApiException(
+                        "NOT_FOUND",
+                        "DoctorProfile assignment not found for this hospital",
+                        org.springframework.http.HttpStatus.NOT_FOUND));
+
+    List<DoctorAvailabilityException> exceptions =
+        availabilityExceptionRepository.findByDoctorIdAndHospitalIdAndDate(
+            actualDoctorId, hospitalId, date);
+
+    if (exceptions.stream().anyMatch(e -> "FULL_DAY_OFF".equals(e.getType()))) {
+      return java.util.Collections.emptyList();
+    }
+
+    java.util.List<com.res.hms.domain.Appointment> appointments =
+        appointmentRepository.findByDoctorIdAndDate(actualDoctorId, date);
+    java.util.Set<LocalTime> bookedTimes = appointments.stream()
+        .map(a -> a.getAppointmentTime().toLocalTime())
+        .collect(java.util.stream.Collectors.toSet());
+
+    java.time.LocalDate today = java.time.LocalDate.now();
+    java.time.LocalTime now = java.time.LocalTime.now();
+
+    List<com.res.hms.doctor.dto.DoctorSlotDTO> allSlots = new java.util.ArrayList<>();
+    Optional<DoctorAvailabilityException> override =
+        exceptions.stream()
+            .filter(e -> "MODIFIED".equals(e.getType()) || "ADDED".equals(e.getType()))
+            .findFirst();
+
+    if (override.isPresent()) {
+      generateSlots(override.get().getStartTime(), override.get().getEndTime(), 
+          override.get().getSlotDurationMinutes() != null ? override.get().getSlotDurationMinutes() : 15,
+          bookedTimes, date, today, now, allSlots);
+    } else {
+      List<DoctorSchedule> baseSchedules =
+          assignment.getSchedules().stream().filter(s -> s.getDayOfWeek().equals(dbDay)).toList();
+      for (DoctorSchedule s : baseSchedules) {
+        generateSlots(s.getStartTime(), s.getEndTime(), s.getSlotDurationMinutes(),
+            bookedTimes, date, today, now, allSlots);
+      }
+    }
+
+    return allSlots;
+  }
+
+  @Transactional(readOnly = true)
+  public boolean isFullDayOff(UUID doctorId, java.time.LocalDate date) {
+    UUID hospitalId = hospitalContext.requireHospitalId();
+    return availabilityExceptionRepository.findByDoctorIdAndHospitalIdAndDate(
+        doctorId, hospitalId, date).stream()
+        .anyMatch(e -> "FULL_DAY_OFF".equals(e.getType()));
+  }
+
+  private void generateSlots(LocalTime start, LocalTime end, int duration, 
+      java.util.Set<LocalTime> bookedTimes, java.time.LocalDate date, 
+      java.time.LocalDate today, LocalTime now, 
+      List<com.res.hms.doctor.dto.DoctorSlotDTO> allSlots) {
+    LocalTime current = start;
+    while (current.plusMinutes(duration).isBefore(end) || current.plusMinutes(duration).equals(end)) {
+      LocalTime slotEnd = current.plusMinutes(duration);
+      boolean isPast = date.isBefore(today) || (date.equals(today) && current.isBefore(now));
+      boolean isBooked = bookedTimes.contains(current);
+
+      String status = "AVAILABLE";
+      if (isPast) status = "SESSION_EXPIRED";
+      else if (isBooked) status = "BOOKED";
+
+      allSlots.add(com.res.hms.doctor.dto.DoctorSlotDTO.builder()
+          .startTime(current)
+          .endTime(slotEnd)
+          .available(!isPast && !isBooked)
+          .status(status)
+          .build());
+      current = slotEnd;
+    }
+  }
+
   private int countBookingsInRange(
       java.util.List<com.res.hms.domain.Appointment> appointments, LocalTime start, LocalTime end) {
     return (int)

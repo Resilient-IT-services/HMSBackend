@@ -36,6 +36,10 @@ public class Appointment extends HospitalScopedEntity {
   @Column(name = "token_number")
   private Integer tokenNumber;
 
+  @Enumerated(EnumType.STRING)
+  @Column(name = "session_period")
+  private SessionPeriod sessionPeriod;
+
   @Column(name = "chief_complaints")
   private String chiefComplaints;
 

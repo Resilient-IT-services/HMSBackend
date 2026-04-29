@@ -82,6 +82,29 @@ public class BillingService {
         .orElseThrow(() -> new ApiException("NOT_FOUND", "Bill not found", HttpStatus.NOT_FOUND));
   }
 
+  @Transactional
+  public BillingDTO updateBillingStatus(UUID billingId, com.res.hms.domain.BillingStatus status) {
+    UUID hospitalId = hospitalContext.requireHospitalId();
+    Billing billing =
+        billingRepository
+            .findByIdAndHospitalId(billingId, hospitalId)
+            .orElseThrow(
+                () -> new ApiException("NOT_FOUND", "Bill not found", HttpStatus.NOT_FOUND));
+
+    billing.setStatus(status);
+    
+    // If billing is paid, and it's linked to an appointment with PAYMENT_PENDING status, update it
+    if (status == com.res.hms.domain.BillingStatus.PAID && billing.getAppointment() != null) {
+      Appointment appointment = billing.getAppointment();
+      if (appointment.getStatus() == com.res.hms.domain.AppointmentStatus.PAYMENT_PENDING) {
+        appointment.setStatus(com.res.hms.domain.AppointmentStatus.SCHEDULED);
+        appointmentRepository.save(appointment);
+      }
+    }
+
+    return toDto(billingRepository.save(billing));
+  }
+
   public BillingDTO toDto(Billing billing) {
     return BillingDTO.builder()
         .id(billing.getId())

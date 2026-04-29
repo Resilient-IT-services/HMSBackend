@@ -34,6 +34,7 @@ public class AppointmentDTO {
 
   private AppointmentStatus status;
   private Integer tokenNumber;
+  private com.res.hms.domain.SessionPeriod sessionPeriod;
   private String chiefComplaints;
   private String diagnosis;
   private String clinicalNotes;
