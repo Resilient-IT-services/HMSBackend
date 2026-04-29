@@ -67,7 +67,10 @@ public class AppointmentAggregateService {
   private void updateAppointment(Appointment appointment, AppointmentDTO dto, UUID hospitalId) {
     boolean doctorChanged = !appointment.getDoctorProfile().getId().equals(dto.getDoctorId());
     boolean dateChanged =
-        !appointment.getAppointmentTime().toLocalDate().equals(dto.getAppointmentTime().toLocalDate());
+        !appointment
+            .getAppointmentTime()
+            .toLocalDate()
+            .equals(dto.getAppointmentTime().toLocalDate());
 
     if (doctorChanged) {
       DoctorProfile profile = doctorProfileService.requireDoctor(dto.getDoctorId(), hospitalId);

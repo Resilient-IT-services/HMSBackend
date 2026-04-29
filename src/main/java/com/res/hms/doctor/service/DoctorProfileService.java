@@ -193,11 +193,16 @@ public class DoctorProfileService {
       doctorProfile.setBio(info.getBio());
     }
     if (info.getLicenseNumber() != null) {
-      doctorProfile.setLicenseNumber(info.getLicenseNumber());
+      doctorProfile.setLicenseNumber(normalizeLicenseNumber(info.getLicenseNumber()));
     }
 
     doctorProfileRepository.save(doctorProfile);
     user.setDoctorProfile(doctorProfile);
+  }
+
+  private String normalizeLicenseNumber(String licenseNumber) {
+    String trimmed = licenseNumber.trim();
+    return trimmed.isEmpty() ? null : trimmed;
   }
 
   @Transactional

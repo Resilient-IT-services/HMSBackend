@@ -71,7 +71,7 @@ class UserHospitalIntegrationTest {
     // 2. Create User for this hospital
     String userJson =
         String.format(
-            "{\"username\":\"new_staff\",\"password\":\"password123\",\"fullName\":\"New Staff\",\"gender\":\"MALE\",\"dob\":\"1995-01-01\",\"memberships\":[{\"hospitalId\":\"%s\",\"roleAssignments\":[{\"roleCode\":\"DOCTOR\",\"doctorDetails\":{\"specialization\":\"Heart\"}}]}]}",
+            "{\"username\":\"new_staff\",\"password\":\"password123\",\"fullName\":\"New Staff\",\"gender\":\"MALE\",\"dob\":\"1995-01-01\",\"doctorInfo\":{\"specialization\":\"Heart\",\"licenseNumber\":\"NEW-STAFF-DOC-001\"},\"memberships\":[{\"hospitalId\":\"%s\",\"roleAssignments\":[{\"roleCode\":\"DOCTOR\"}]}]}",
             hospitalId);
 
     String userResponse =

@@ -55,7 +55,7 @@ class DoctorManagementIntegrationTest {
     // 1. Create Doctor with initial schedule
     String userJson =
         String.format(
-            "{\"username\":\"doc_lifecycle\",\"password\":\"password123\",\"fullName\":\"Lifecycle Doctor\",\"gender\":\"MALE\",\"dob\":\"1980-01-01\",\"doctorInfo\":{\"specialization\":\"Cardiology\"},\"memberships\":[{\"hospitalId\":\"%s\",\"roleAssignments\":[{\"roleCode\":\"DOCTOR\",\"schedules\":[{\"dayOfWeek\":1,\"startTime\":\"09:00\",\"endTime\":\"12:00\",\"slotDurationMinutes\":30}]}]}]}",
+            "{\"username\":\"doc_lifecycle\",\"password\":\"password123\",\"fullName\":\"Lifecycle Doctor\",\"gender\":\"MALE\",\"dob\":\"1980-01-01\",\"doctorInfo\":{\"specialization\":\"Cardiology\",\"licenseNumber\":\"DOC-LIFE-001\"},\"memberships\":[{\"hospitalId\":\"%s\",\"roleAssignments\":[{\"roleCode\":\"DOCTOR\",\"schedules\":[{\"dayOfWeek\":1,\"startTime\":\"09:00\",\"endTime\":\"12:00\",\"slotDurationMinutes\":30}]}]}]}",
             hospitalId);
 
     String userResponse =
@@ -141,5 +141,54 @@ class DoctorManagementIntegrationTest {
         .andExpect(jsonPath("$.data.sessions.length()").value(1))
         .andExpect(jsonPath("$.data.sessions[0].startTime").value("14:00"))
         .andExpect(jsonPath("$.data.sessions[0].endTime").value("16:00"));
+  }
+
+  @Test
+  void createDoctorWithoutLicenseNumberShouldFail() throws Exception {
+    String userJson =
+        String.format(
+            "{\"username\":\"doc_no_license\",\"password\":\"password123\",\"fullName\":\"No License Doctor\",\"gender\":\"MALE\",\"dob\":\"1980-01-01\",\"doctorInfo\":{\"specialization\":\"Cardiology\"},\"memberships\":[{\"hospitalId\":\"%s\",\"roleAssignments\":[{\"roleCode\":\"DOCTOR\"}]}]}",
+            hospitalId);
+
+    mockMvc
+        .perform(
+            post("/api/v1/users")
+                .session(session)
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(userJson))
+        .andExpect(status().isBadRequest())
+        .andExpect(jsonPath("$.error.message").value("Doctor license number is required"));
+  }
+
+  @Test
+  void createDoctorWithExistingLicenseNumberShouldFail() throws Exception {
+    createDoctor("doc_license_a", "DOC-DUP-001");
+
+    String userJson = createDoctorJson("doc_license_b", "DOC-DUP-001");
+
+    mockMvc
+        .perform(
+            post("/api/v1/users")
+                .session(session)
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(userJson))
+        .andExpect(status().isConflict())
+        .andExpect(jsonPath("$.error.message").value("Doctor license number already exists"));
+  }
+
+  private void createDoctor(String username, String licenseNumber) throws Exception {
+    mockMvc
+        .perform(
+            post("/api/v1/users")
+                .session(session)
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(createDoctorJson(username, licenseNumber)))
+        .andExpect(status().isOk());
+  }
+
+  private String createDoctorJson(String username, String licenseNumber) {
+    return String.format(
+        "{\"username\":\"%s\",\"password\":\"password123\",\"fullName\":\"License Doctor\",\"gender\":\"MALE\",\"dob\":\"1980-01-01\",\"doctorInfo\":{\"specialization\":\"Cardiology\",\"licenseNumber\":\"%s\"},\"memberships\":[{\"hospitalId\":\"%s\",\"roleAssignments\":[{\"roleCode\":\"DOCTOR\"}]}]}",
+        username, licenseNumber, hospitalId);
   }
 }

@@ -37,7 +37,7 @@ public class DoctorProfile extends AuditableEntity {
   @Column(nullable = false)
   private String specialization;
 
-  @Column(name = "license_number", unique = true)
+  @Column(name = "license_number", unique = true, nullable = true)
   private String licenseNumber;
 
   @Column(columnDefinition = "text")

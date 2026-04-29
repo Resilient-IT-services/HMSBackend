@@ -60,6 +60,11 @@ class SecurityExhaustiveIntegrationTest {
             .fullName("SA User")
             .gender(com.res.hms.domain.Gender.MALE)
             .dob(java.time.LocalDate.of(1990, 1, 1))
+            .doctorInfo(
+                UserDetailsDTO.DoctorInfo.builder()
+                    .specialization("General")
+                    .licenseNumber("SEC-DOC-001")
+                    .build())
             .memberships(
                 List.of(
                     UserDetailsDTO.HospitalMembershipDTO.builder()

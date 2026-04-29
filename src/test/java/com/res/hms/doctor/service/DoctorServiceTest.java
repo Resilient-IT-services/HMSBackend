@@ -1,21 +1,28 @@
 package com.res.hms.doctor.service;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 import com.res.hms.common.exception.ApiException;
 import com.res.hms.common.tenant.HospitalContext;
 import com.res.hms.common.util.ResourceLookup;
 import com.res.hms.doctor.repository.DoctorProfileRepository;
+import com.res.hms.domain.DoctorProfile;
+import com.res.hms.domain.UserAccount;
 import com.res.hms.repository.DoctorHospitalDetailsRepository;
 import com.res.hms.repository.UserAccountRepository;
+import com.res.hms.user.dto.UserDetailsDTO;
+import java.util.Optional;
 import java.util.UUID;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.ArgumentCaptor;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
@@ -44,5 +51,22 @@ class DoctorServiceTest {
         assertThrows(ApiException.class, () -> doctorService.requireDoctor(doctorId, hospitalId));
 
     assertEquals("NOT_FOUND", exception.getCode());
+  }
+
+  @Test
+  void updateProfileStoresBlankLicenseAsNull() {
+    UUID userId = UUID.nameUUIDFromBytes("doctor".getBytes());
+    UserAccount user = new UserAccount();
+    user.setId(userId);
+    UserDetailsDTO.DoctorInfo info =
+        UserDetailsDTO.DoctorInfo.builder().licenseNumber("  ").build();
+
+    when(doctorRepository.findByUserId(userId)).thenReturn(Optional.empty());
+
+    doctorService.updateProfile(user, info);
+
+    ArgumentCaptor<DoctorProfile> captor = ArgumentCaptor.forClass(DoctorProfile.class);
+    verify(doctorRepository).save(captor.capture());
+    assertNull(captor.getValue().getLicenseNumber());
   }
 }

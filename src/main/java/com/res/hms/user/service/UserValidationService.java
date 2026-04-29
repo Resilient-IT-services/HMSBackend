@@ -21,25 +21,28 @@ public class UserValidationService {
   private final LabTechProfileRepository labTechProfileRepository;
 
   public void validateProfileUniqueness(UserDetailsDTO request, UUID userId) {
-    if (request.getDoctorInfo() != null && request.getDoctorInfo().getLicenseNumber() != null) {
-      String ln = request.getDoctorInfo().getLicenseNumber();
+    validateDoctorLicenseRequired(request, userId);
+    String doctorLicense =
+        normalizeProfileIdentifier(
+            request.getDoctorInfo() != null ? request.getDoctorInfo().getLicenseNumber() : null);
+    if (doctorLicense != null) {
       boolean exists =
           (userId == null)
-              ? doctorProfileRepository.existsByLicenseNumber(ln)
-              : doctorProfileRepository.existsByLicenseNumberAndUserIdNot(ln, userId);
+              ? doctorProfileRepository.existsByLicenseNumber(doctorLicense)
+              : doctorProfileRepository.existsByLicenseNumberAndUserIdNot(doctorLicense, userId);
       if (exists) {
         throw new ApiException(
-            "BUSINESS_RULE_VIOLATION",
-            "DoctorProfile license number already exists",
-            HttpStatus.CONFLICT);
+            "BUSINESS_RULE_VIOLATION", "Doctor license number already exists", HttpStatus.CONFLICT);
       }
     }
-    if (request.getNurseInfo() != null && request.getNurseInfo().getNursingLicenseNo() != null) {
-      String ln = request.getNurseInfo().getNursingLicenseNo();
+    String nurseLicense =
+        normalizeProfileIdentifier(
+            request.getNurseInfo() != null ? request.getNurseInfo().getNursingLicenseNo() : null);
+    if (nurseLicense != null) {
       boolean exists =
           (userId == null)
-              ? nurseProfileRepository.existsByNursingLicenseNo(ln)
-              : nurseProfileRepository.existsByNursingLicenseNoAndUserIdNot(ln, userId);
+              ? nurseProfileRepository.existsByNursingLicenseNo(nurseLicense)
+              : nurseProfileRepository.existsByNursingLicenseNoAndUserIdNot(nurseLicense, userId);
       if (exists) {
         throw new ApiException(
             "BUSINESS_RULE_VIOLATION",
@@ -47,12 +50,15 @@ public class UserValidationService {
             HttpStatus.CONFLICT);
       }
     }
-    if (request.getPharmacistInfo() != null && request.getPharmacistInfo().getPciRegNo() != null) {
-      String reg = request.getPharmacistInfo().getPciRegNo();
+    String pharmacistRegistration =
+        normalizeProfileIdentifier(
+            request.getPharmacistInfo() != null ? request.getPharmacistInfo().getPciRegNo() : null);
+    if (pharmacistRegistration != null) {
       boolean exists =
           (userId == null)
-              ? pharmacistProfileRepository.existsByPciRegNo(reg)
-              : pharmacistProfileRepository.existsByPciRegNoAndUserIdNot(reg, userId);
+              ? pharmacistProfileRepository.existsByPciRegNo(pharmacistRegistration)
+              : pharmacistProfileRepository.existsByPciRegNoAndUserIdNot(
+                  pharmacistRegistration, userId);
       if (exists) {
         throw new ApiException(
             "BUSINESS_RULE_VIOLATION",
@@ -60,12 +66,14 @@ public class UserValidationService {
             HttpStatus.CONFLICT);
       }
     }
-    if (request.getLabTechInfo() != null && request.getLabTechInfo().getLicenseNo() != null) {
-      String ln = request.getLabTechInfo().getLicenseNo();
+    String labTechLicense =
+        normalizeProfileIdentifier(
+            request.getLabTechInfo() != null ? request.getLabTechInfo().getLicenseNo() : null);
+    if (labTechLicense != null) {
       boolean exists =
           (userId == null)
-              ? labTechProfileRepository.existsByLicenseNo(ln)
-              : labTechProfileRepository.existsByLicenseNoAndUserIdNot(ln, userId);
+              ? labTechProfileRepository.existsByLicenseNo(labTechLicense)
+              : labTechProfileRepository.existsByLicenseNoAndUserIdNot(labTechLicense, userId);
       if (exists) {
         throw new ApiException(
             "BUSINESS_RULE_VIOLATION",
@@ -73,5 +81,42 @@ public class UserValidationService {
             HttpStatus.CONFLICT);
       }
     }
+  }
+
+  private String normalizeProfileIdentifier(String value) {
+    if (value == null) {
+      return null;
+    }
+    String trimmed = value.trim();
+    return trimmed.isEmpty() ? null : trimmed;
+  }
+
+  private void validateDoctorLicenseRequired(UserDetailsDTO request, UUID userId) {
+    if (!hasDoctorRole(request)) {
+      return;
+    }
+
+    boolean createRequest = userId == null;
+    boolean licenseSubmitted =
+        request.getDoctorInfo() != null && request.getDoctorInfo().getLicenseNumber() != null;
+    String doctorLicense =
+        normalizeProfileIdentifier(
+            request.getDoctorInfo() != null ? request.getDoctorInfo().getLicenseNumber() : null);
+
+    if ((createRequest || licenseSubmitted) && doctorLicense == null) {
+      throw new ApiException(
+          "VALIDATION_ERROR", "Doctor license number is required", HttpStatus.BAD_REQUEST);
+    }
+  }
+
+  private boolean hasDoctorRole(UserDetailsDTO request) {
+    if (request.getMemberships() == null) {
+      return false;
+    }
+
+    return request.getMemberships().stream()
+        .filter(membership -> membership.getRoleAssignments() != null)
+        .flatMap(membership -> membership.getRoleAssignments().stream())
+        .anyMatch(roleAssignment -> "DOCTOR".equals(roleAssignment.getRoleCode()));
   }
 }

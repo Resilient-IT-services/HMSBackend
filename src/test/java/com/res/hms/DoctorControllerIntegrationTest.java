@@ -14,9 +14,11 @@ import com.res.hms.domain.UserAccount;
 import com.res.hms.domain.UserRoleAssignment;
 import com.res.hms.repository.RoleRepository;
 import com.res.hms.repository.UserAccountRepository;
+import java.time.DayOfWeek;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.LocalTime;
+import java.time.temporal.TemporalAdjusters;
 import java.util.UUID;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -105,7 +107,7 @@ class DoctorControllerIntegrationTest {
 
   @Test
   void testGetAvailability() throws Exception {
-    LocalDate nextMonday = LocalDate.of(2026, 5, 4); // A future Monday
+    LocalDate nextMonday = LocalDate.now().with(TemporalAdjusters.next(DayOfWeek.MONDAY));
 
     // Initial check: Should have 1 session (9-11 AM)
     mockMvc
@@ -144,7 +146,7 @@ class DoctorControllerIntegrationTest {
 
   @Test
   void testGetAvailabilityWithModifiedException() throws Exception {
-    LocalDate tuesday = LocalDate.of(2026, 4, 28); // Tuesday
+    LocalDate tuesday = LocalDate.now().with(TemporalAdjusters.next(DayOfWeek.TUESDAY));
 
     // 1. Create a MODIFIED exception for Tuesday: 2-4 PM
     com.res.hms.domain.DoctorAvailabilityException ex =

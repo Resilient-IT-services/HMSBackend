@@ -77,7 +77,7 @@ public class GlobalExceptionHandler {
     if (rootMsg.contains("duplicate key value violates unique constraint")) {
       message = "A record with the same unique value already exists";
       if (rootMsg.contains("doctor_license_number_key")) {
-        message = "DoctorProfile license number already exists";
+        message = "Doctor license number already exists";
       } else if (rootMsg.contains("user_account_username_key")) {
         message = "Username already exists";
       } else if (rootMsg.contains("user_account_email_key")) {
