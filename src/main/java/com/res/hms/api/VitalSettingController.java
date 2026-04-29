@@ -23,13 +23,13 @@ public class VitalSettingController {
   private final VitalSettingService vitalSettingService;
 
   @GetMapping
-  @PreAuthorize("hasAnyRole('ADMIN','SUPER_ADMIN')")
+  @PreAuthorize("hasRole('SUPER_ADMIN')")
   public ApiResponse<List<VitalSettingDTO>> list() {
     return ApiResponse.success(vitalSettingService.listSettings());
   }
 
   @PostMapping
-  @PreAuthorize("hasAnyRole('ADMIN','SUPER_ADMIN')")
+  @PreAuthorize("hasRole('SUPER_ADMIN')")
   public ApiResponse<VitalSettingDTO> save(@Valid @RequestBody VitalSettingDTO setting) {
     return ApiResponse.success(vitalSettingService.saveSetting(setting));
   }

@@ -3,8 +3,9 @@ package com.res.hms.vital.service;
 import com.res.hms.appointment.dto.VitalsDTO;
 import com.res.hms.common.exception.ApiException;
 import com.res.hms.common.tenant.HospitalContext;
-import com.res.hms.domain.VitalSetting;
-import com.res.hms.repository.VitalSettingRepository;
+import com.res.hms.domain.VitalRangeConfig;
+import com.res.hms.domain.VitalType;
+import com.res.hms.repository.VitalRangeConfigRepository;
 import java.math.BigDecimal;
 import java.util.List;
 import java.util.UUID;
@@ -16,7 +17,7 @@ import org.springframework.stereotype.Service;
 @RequiredArgsConstructor
 public class VitalValidationService {
 
-  private final VitalSettingRepository vitalSettingRepository;
+  private final VitalRangeConfigRepository repository;
   private final HospitalContext hospitalContext;
 
   public void validate(VitalsDTO vitals) {
@@ -24,31 +25,31 @@ public class VitalValidationService {
       return;
     }
     UUID hospitalId = hospitalContext.requireHospitalId();
-    List<VitalSetting> settings = vitalSettingRepository.findAllByHospitalId(hospitalId);
+    List<VitalRangeConfig> configs = repository.findAllByHospitalId(hospitalId);
 
-    settings.forEach(
-        s -> {
-          switch (s.getVitalName().toUpperCase(java.util.Locale.ROOT)) {
-            case "HEART_RATE":
+    configs.forEach(
+        c -> {
+          switch (c.getVitalType()) {
+            case HEART_RATE:
               validateRange(
-                  s, vitals.getHeartRate() != null ? new BigDecimal(vitals.getHeartRate()) : null);
+                  c, vitals.getHeartRate() != null ? new BigDecimal(vitals.getHeartRate()) : null);
               break;
-            case "TEMPERATURE":
-              validateTemperature(s, vitals.getTemperature(), vitals.getTemperatureUnit());
+            case BODY_TEMPERATURE:
+              validateTemperature(c, vitals.getTemperature(), vitals.getTemperatureUnit());
               break;
-            case "WEIGHT":
-              validateWeight(s, vitals.getWeight(), vitals.getWeightUnit());
+            case WEIGHT:
+              validateWeight(c, vitals.getWeight(), vitals.getWeightUnit());
               break;
-            case "OXYGEN_LEVEL":
-              validateRange(s, vitals.getOxygenLevel());
+            case OXYGEN_LEVEL:
+              validateRange(c, vitals.getOxygenLevel());
               break;
-            case "SYSTOLIC":
+            case SYSTOLIC_BP:
               validateRange(
-                  s, vitals.getSystolic() != null ? new BigDecimal(vitals.getSystolic()) : null);
+                  c, vitals.getSystolic() != null ? new BigDecimal(vitals.getSystolic()) : null);
               break;
-            case "DIASTOLIC":
+            case DIASTOLIC_BP:
               validateRange(
-                  s, vitals.getDiastolic() != null ? new BigDecimal(vitals.getDiastolic()) : null);
+                  c, vitals.getDiastolic() != null ? new BigDecimal(vitals.getDiastolic()) : null);
               break;
             default:
               break;
@@ -57,18 +58,22 @@ public class VitalValidationService {
   }
 
   private void validateTemperature(
-      VitalSetting s, BigDecimal value, com.res.hms.domain.TemperatureUnit unit) {
+      VitalRangeConfig c, BigDecimal value, com.res.hms.domain.TemperatureUnit unit) {
     if (value == null) {
       return;
     }
     BigDecimal valueToValidate = value;
-    if (s.getUnit() != null && unit != null) {
-      com.res.hms.domain.TemperatureUnit settingUnit =
-          com.res.hms.domain.TemperatureUnit.valueOf(
-              s.getUnit().toUpperCase(java.util.Locale.ROOT));
-      valueToValidate = convertTemperature(value, unit, settingUnit);
+    if (c.getUnit() != null && unit != null) {
+      try {
+        com.res.hms.domain.TemperatureUnit settingUnit =
+            com.res.hms.domain.TemperatureUnit.valueOf(
+                c.getUnit().toUpperCase(java.util.Locale.ROOT));
+        valueToValidate = convertTemperature(value, unit, settingUnit);
+      } catch (IllegalArgumentException e) {
+        // If unit in config is not valid, skip conversion and use raw value
+      }
     }
-    validateRange(s, valueToValidate);
+    validateRange(c, valueToValidate);
   }
 
   private BigDecimal convertTemperature(
@@ -96,17 +101,21 @@ public class VitalValidationService {
   }
 
   private void validateWeight(
-      VitalSetting s, BigDecimal value, com.res.hms.domain.WeightUnit unit) {
+      VitalRangeConfig c, BigDecimal value, com.res.hms.domain.WeightUnit unit) {
     if (value == null) {
       return;
     }
     BigDecimal valueToValidate = value;
-    if (s.getUnit() != null && unit != null) {
-      com.res.hms.domain.WeightUnit settingUnit =
-          com.res.hms.domain.WeightUnit.valueOf(s.getUnit().toUpperCase(java.util.Locale.ROOT));
-      valueToValidate = convertWeight(value, unit, settingUnit);
+    if (c.getUnit() != null && unit != null) {
+      try {
+        com.res.hms.domain.WeightUnit settingUnit =
+            com.res.hms.domain.WeightUnit.valueOf(c.getUnit().toUpperCase(java.util.Locale.ROOT));
+        valueToValidate = convertWeight(value, unit, settingUnit);
+      } catch (IllegalArgumentException e) {
+        // Skip conversion
+      }
     }
-    validateRange(s, valueToValidate);
+    validateRange(c, valueToValidate);
   }
 
   private BigDecimal convertWeight(
@@ -124,20 +133,24 @@ public class VitalValidationService {
     return value;
   }
 
-  private void validateRange(VitalSetting s, BigDecimal value) {
+  private void validateRange(VitalRangeConfig c, BigDecimal value) {
     if (value == null) {
       return;
     }
-    if (s.getMinValue() != null && value.compareTo(s.getMinValue()) < 0) {
+    String vitalName = c.getVitalType().name().replace("_", " ").toLowerCase();
+    // Capitalize first letter
+    vitalName = vitalName.substring(0, 1).toUpperCase() + vitalName.substring(1);
+
+    if (c.getMinValue() != null && value.compareTo(c.getMinValue()) < 0) {
       throw new ApiException(
           "VALIDATION_ERROR",
-          s.getVitalName() + " is below minimum allowed value: " + s.getMinValue(),
+          vitalName + " must be between " + c.getMinValue() + " and " + c.getMaxValue(),
           HttpStatus.BAD_REQUEST);
     }
-    if (s.getMaxValue() != null && value.compareTo(s.getMaxValue()) > 0) {
+    if (c.getMaxValue() != null && value.compareTo(c.getMaxValue()) > 0) {
       throw new ApiException(
           "VALIDATION_ERROR",
-          s.getVitalName() + " is above maximum allowed value: " + s.getMaxValue(),
+          vitalName + " must be between " + c.getMinValue() + " and " + c.getMaxValue(),
           HttpStatus.BAD_REQUEST);
     }
   }
