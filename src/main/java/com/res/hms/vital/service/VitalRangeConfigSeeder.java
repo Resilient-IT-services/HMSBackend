@@ -27,14 +27,17 @@ public class VitalRangeConfigSeeder implements CommandLineRunner {
 
   @Transactional
   public void seedDefaults() {
-    hospitalRepository.findAll().forEach(hospital -> {
-      ensureDefault(hospital.getId(), VitalType.BODY_TEMPERATURE, 95, 108, "F");
-      ensureDefault(hospital.getId(), VitalType.SYSTOLIC_BP, 70, 220, "mmHg");
-      ensureDefault(hospital.getId(), VitalType.DIASTOLIC_BP, 40, 140, "mmHg");
-      ensureDefault(hospital.getId(), VitalType.OXYGEN_LEVEL, 50, 100, "%");
-      ensureDefault(hospital.getId(), VitalType.WEIGHT, 1, 300, "kg");
-      ensureDefault(hospital.getId(), VitalType.HEART_RATE, 30, 250, "bpm");
-    });
+    hospitalRepository
+        .findAll()
+        .forEach(
+            hospital -> {
+              ensureDefault(hospital.getId(), VitalType.BODY_TEMPERATURE, 95, 108, "F");
+              ensureDefault(hospital.getId(), VitalType.SYSTOLIC_BP, 70, 220, "mmHg");
+              ensureDefault(hospital.getId(), VitalType.DIASTOLIC_BP, 40, 140, "mmHg");
+              ensureDefault(hospital.getId(), VitalType.OXYGEN_LEVEL, 50, 100, "%");
+              ensureDefault(hospital.getId(), VitalType.WEIGHT, 1, 300, "kg");
+              ensureDefault(hospital.getId(), VitalType.HEART_RATE, 30, 250, "bpm");
+            });
   }
 
   private void ensureDefault(UUID hospitalId, VitalType type, double min, double max, String unit) {

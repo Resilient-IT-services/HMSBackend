@@ -27,11 +27,16 @@ public class AppointmentAggregateService {
   private final PatientService patientService;
   private final DoctorProfileService doctorProfileService;
   private final HospitalContext hospitalContext;
+  private final com.res.hms.vital.service.VitalValidationService vitalValidationService;
 
   @Transactional
   public AppointmentDTO saveAppointmentAggregate(AppointmentDTO dto) {
     log.info("Starting aggregate save for appointment");
     UUID hospitalId = hospitalContext.requireHospitalId();
+
+    if (dto.getVitals() != null) {
+      vitalValidationService.validate(dto.getVitals());
+    }
 
     Appointment appointment;
     if (dto.getId() == null) {
@@ -48,6 +53,61 @@ public class AppointmentAggregateService {
 
     appointmentRepository.saveAndFlush(appointment);
     return appointmentService.toDto(appointment);
+  }
+
+  @Transactional
+  public AppointmentDTO updateVitals(UUID id, com.res.hms.appointment.dto.VitalsDTO vitalsDto) {
+    UUID hospitalId = hospitalContext.requireHospitalId();
+
+    vitalValidationService.validate(vitalsDto);
+
+    Appointment appointment =
+        appointmentRepository
+            .findByIdAndHospitalId(id, hospitalId)
+            .orElseThrow(
+                () -> new ApiException("NOT_FOUND", "Appointment not found", HttpStatus.NOT_FOUND));
+
+    com.res.hms.domain.Vitals vitals = appointment.getVitals();
+    if (vitals == null) {
+      vitals = new com.res.hms.domain.Vitals();
+      vitals.setAppointment(appointment);
+      appointment.setVitals(vitals);
+    }
+    mapVitalsDtoToEntity(vitalsDto, vitals);
+
+    return appointmentService.toDto(appointmentRepository.save(appointment));
+  }
+
+  @Transactional
+  public AppointmentDTO updateConsultation(UUID id, AppointmentDTO dto) {
+    UUID hospitalId = hospitalContext.requireHospitalId();
+
+    Appointment appointment =
+        appointmentRepository
+            .findByIdAndHospitalId(id, hospitalId)
+            .orElseThrow(
+                () -> new ApiException("NOT_FOUND", "Appointment not found", HttpStatus.NOT_FOUND));
+
+    appointment.setChiefComplaints(dto.getChiefComplaints());
+    appointment.setDiagnosis(dto.getDiagnosis());
+    appointment.setClinicalNotes(dto.getClinicalNotes());
+    appointment.setIcdCodes(dto.getIcdCodes());
+    appointment.setStatus(AppointmentStatus.COMPLETED);
+
+    return appointmentService.toDto(appointmentRepository.save(appointment));
+  }
+
+  private void mapVitalsDtoToEntity(
+      com.res.hms.appointment.dto.VitalsDTO dto, com.res.hms.domain.Vitals entity) {
+    entity.setBloodPressure(dto.getBloodPressure());
+    entity.setSystolic(dto.getSystolic());
+    entity.setDiastolic(dto.getDiastolic());
+    entity.setHeartRate(dto.getHeartRate());
+    entity.setOxygenLevel(dto.getOxygenLevel());
+    entity.setTemperatureUnit(dto.getTemperatureUnit());
+    entity.setTemperature(dto.getTemperature());
+    entity.setWeightUnit(dto.getWeightUnit());
+    entity.setWeight(dto.getWeight());
   }
 
   private Appointment createAppointment(AppointmentDTO dto, UUID hospitalId) {
@@ -67,7 +127,10 @@ public class AppointmentAggregateService {
   private void updateAppointment(Appointment appointment, AppointmentDTO dto, UUID hospitalId) {
     boolean doctorChanged = !appointment.getDoctorProfile().getId().equals(dto.getDoctorId());
     boolean dateChanged =
-        !appointment.getAppointmentTime().toLocalDate().equals(dto.getAppointmentTime().toLocalDate());
+        !appointment
+            .getAppointmentTime()
+            .toLocalDate()
+            .equals(dto.getAppointmentTime().toLocalDate());
 
     if (doctorChanged) {
       DoctorProfile profile = doctorProfileService.requireDoctor(dto.getDoctorId(), hospitalId);

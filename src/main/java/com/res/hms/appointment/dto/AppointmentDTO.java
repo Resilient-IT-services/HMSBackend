@@ -1,11 +1,12 @@
 package com.res.hms.appointment.dto;
 
 import com.res.hms.common.validation.OnCreate;
-import com.res.hms.common.validation.OnUpdate;
 import com.res.hms.domain.AppointmentStatus;
+import com.res.hms.domain.SessionPeriod;
 import jakarta.validation.constraints.Future;
 import jakarta.validation.constraints.NotNull;
 import java.time.LocalDateTime;
+import java.util.List;
 import java.util.UUID;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -35,8 +36,14 @@ public class AppointmentDTO {
 
   private AppointmentStatus status;
   private Integer tokenNumber;
+  private SessionPeriod sessionPeriod;
+  private String chiefComplaints;
+  private String diagnosis;
+  private String clinicalNotes;
+  private List<String> icdCodes;
   private String notes;
 
-  @jakarta.validation.Valid
-  private VitalsDTO vitals;
+  @jakarta.validation.Valid private VitalsDTO vitals;
+
+  private com.res.hms.prescription.dto.PrescriptionDTO prescription;
 }
