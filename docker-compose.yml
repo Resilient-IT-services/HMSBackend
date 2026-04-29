@@ -16,3 +16,13 @@ services:
         container_name: hms-frontend
         ports:
             - "3000:3000"
+    nginx:
+        image: nginx:latest
+        container_name: hms-nginx
+        ports:
+            - "80:80"
+        volumes:
+            - ./nginx.conf:/etc/nginx/nginx.conf
+        depends_on:
+            - frontend
+            - backend
