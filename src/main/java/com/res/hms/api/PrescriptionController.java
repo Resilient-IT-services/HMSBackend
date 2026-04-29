@@ -5,7 +5,6 @@ import com.res.hms.prescription.dto.PrescriptionDTO;
 import com.res.hms.prescription.service.PrescriptionService;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
-import java.util.List;
 import java.util.UUID;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.access.prepost.PreAuthorize;

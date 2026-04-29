@@ -11,7 +11,6 @@ import com.res.hms.common.util.ResourceLookup;
 import com.res.hms.domain.Appointment;
 import com.res.hms.prescription.service.PrescriptionService;
 import java.util.UUID;
-import java.util.stream.Collectors;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.data.domain.PageRequest;
@@ -84,11 +83,9 @@ public class AppointmentService {
         .icdCodes(appointment.getIcdCodes())
         .notes(appointment.getNotes())
         .vitals(toVitalsDto(appointment.getVitals()))
-        .prescriptions(
-            appointment.getPrescriptions() != null
-                ? appointment.getPrescriptions().stream()
-                    .map(prescriptionService::toDto)
-                    .collect(Collectors.toList())
+        .prescription(
+            appointment.getPrescription() != null
+                ? prescriptionService.toDto(appointment.getPrescription())
                 : null)
         .build();
   }

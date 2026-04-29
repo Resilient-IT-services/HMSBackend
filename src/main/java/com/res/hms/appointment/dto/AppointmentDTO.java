@@ -1,7 +1,6 @@
 package com.res.hms.appointment.dto;
 
 import com.res.hms.common.validation.OnCreate;
-import com.res.hms.common.validation.OnUpdate;
 import com.res.hms.domain.AppointmentStatus;
 import jakarta.validation.constraints.Future;
 import jakarta.validation.constraints.NotNull;
@@ -41,8 +40,7 @@ public class AppointmentDTO {
   private java.util.List<String> icdCodes;
   private String notes;
 
-  @jakarta.validation.Valid
-  private VitalsDTO vitals;
+  @jakarta.validation.Valid private VitalsDTO vitals;
 
-  private java.util.List<com.res.hms.prescription.dto.PrescriptionDTO> prescriptions;
+  private com.res.hms.prescription.dto.PrescriptionDTO prescription;
 }

@@ -16,7 +16,14 @@ import lombok.Setter;
 @Setter
 @Entity
 @Table(name = "prescription")
-public class Prescription extends HospitalScopedEntity {
+public class Prescription {
+
+  @jakarta.persistence.Id private java.util.UUID id;
+
+  @jakarta.persistence.OneToOne(fetch = FetchType.LAZY)
+  @jakarta.persistence.MapsId
+  @JoinColumn(name = "id")
+  private Appointment appointment;
 
   @ManyToOne(fetch = FetchType.LAZY, optional = false)
   @JoinColumn(name = "patient_id", nullable = false)
@@ -25,10 +32,6 @@ public class Prescription extends HospitalScopedEntity {
   @ManyToOne(fetch = FetchType.LAZY, optional = false)
   @JoinColumn(name = "doctor_id", nullable = false)
   private DoctorProfile doctorProfile;
-
-  @ManyToOne(fetch = FetchType.LAZY)
-  @JoinColumn(name = "appointment_id")
-  private Appointment appointment;
 
   @OneToMany(
       mappedBy = "prescription",

@@ -129,7 +129,8 @@ public class AppointmentAggregateService {
       DoctorProfile profile = doctorProfileService.requireDoctor(dto.getDoctorId(), hospitalId);
       appointment.setDoctorProfile(profile);
     }
-    if (dto.getPatientId() != null && !appointment.getPatient().getId().equals(dto.getPatientId())) {
+    if (dto.getPatientId() != null
+        && !appointment.getPatient().getId().equals(dto.getPatientId())) {
       Patient patient = patientService.requirePatient(dto.getPatientId(), hospitalId);
       appointment.setPatient(patient);
     }

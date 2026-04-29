@@ -4,14 +4,10 @@ import com.res.hms.appointment.repository.AppointmentRepository;
 import com.res.hms.common.exception.ApiException;
 import com.res.hms.common.tenant.HospitalContext;
 import com.res.hms.common.util.ResourceLookup;
-import com.res.hms.doctor.service.DoctorProfileService;
 import com.res.hms.domain.Appointment;
-import com.res.hms.domain.DoctorProfile;
 import com.res.hms.domain.Medicine;
-import com.res.hms.domain.Patient;
 import com.res.hms.domain.Prescription;
 import com.res.hms.domain.PrescriptionItem;
-import com.res.hms.patient.service.PatientService;
 import com.res.hms.prescription.dto.PrescriptionDTO;
 import com.res.hms.prescription.dto.PrescriptionItemDTO;
 import com.res.hms.prescription.repository.PrescriptionRepository;
@@ -31,8 +27,6 @@ public class PrescriptionService {
   private final PrescriptionRepository prescriptionRepository;
   private final MedicineRepository medicineRepository;
   private final AppointmentRepository appointmentRepository;
-  private final PatientService patientService;
-  private final DoctorProfileService doctorProfileService;
   private final HospitalContext hospitalContext;
   private final ResourceLookup resourceLookup;
 
@@ -40,29 +34,27 @@ public class PrescriptionService {
   public PrescriptionDTO createPrescription(PrescriptionDTO dto) {
     UUID hospitalId = hospitalContext.requireHospitalId();
 
-    Patient patient;
-    DoctorProfile doctor;
-    Appointment appointment = null;
+    if (dto.getAppointmentId() == null) {
+      throw new ApiException(
+          "BAD_REQUEST", "Appointment ID is required for prescription", HttpStatus.BAD_REQUEST);
+    }
 
-    if (dto.getAppointmentId() != null) {
-      appointment =
-          appointmentRepository
-              .findByIdAndHospitalId(dto.getAppointmentId(), hospitalId)
-              .orElseThrow(
-                  () ->
-                      new ApiException("NOT_FOUND", "Appointment not found", HttpStatus.NOT_FOUND));
-      patient = appointment.getPatient();
-      doctor = appointment.getDoctorProfile();
-    } else {
-      patient = patientService.requirePatient(dto.getPatientId(), hospitalId);
-      doctor = doctorProfileService.requireDoctor(dto.getDoctorId(), hospitalId);
+    Appointment appointment =
+        appointmentRepository
+            .findByIdAndHospitalId(dto.getAppointmentId(), hospitalId)
+            .orElseThrow(
+                () -> new ApiException("NOT_FOUND", "Appointment not found", HttpStatus.NOT_FOUND));
+
+    // Check if prescription already exists for this appointment
+    if (prescriptionRepository.existsById(appointment.getId())) {
+      throw new ApiException(
+          "CONFLICT", "Prescription already exists for this appointment", HttpStatus.CONFLICT);
     }
 
     Prescription prescription = new Prescription();
-    prescription.setHospitalId(hospitalId);
-    prescription.setPatient(patient);
-    prescription.setDoctorProfile(doctor);
     prescription.setAppointment(appointment);
+    prescription.setPatient(appointment.getPatient());
+    prescription.setDoctorProfile(appointment.getDoctorProfile());
 
     if (dto.getItems() != null) {
       for (PrescriptionItemDTO itemDto : dto.getItems()) {
@@ -74,7 +66,6 @@ public class PrescriptionService {
                 "Medicine");
 
         PrescriptionItem item = new PrescriptionItem();
-        item.setHospitalId(hospitalId);
         item.setPrescription(prescription);
         item.setMedicine(medicine);
         item.setDosage(itemDto.getDosage());
@@ -89,9 +80,7 @@ public class PrescriptionService {
   @Transactional(readOnly = true)
   public List<PrescriptionDTO> getPatientPrescriptions(UUID patientId) {
     UUID hospitalId = hospitalContext.requireHospitalId();
-    return prescriptionRepository
-        .findByPatientIdAndHospitalIdOrderByCreatedAtDesc(patientId, hospitalId)
-        .stream()
+    return prescriptionRepository.findByPatientIdAndHospitalId(patientId, hospitalId).stream()
         .map(this::toDto)
         .collect(Collectors.toList());
   }
@@ -113,9 +102,8 @@ public class PrescriptionService {
         .patientName(prescription.getPatient().getFullName())
         .doctorId(prescription.getDoctorProfile().getId())
         .doctorName(prescription.getDoctorProfile().getFullName())
-        .appointmentId(
-            prescription.getAppointment() != null ? prescription.getAppointment().getId() : null)
-        .createdAt(prescription.getCreatedAt())
+        .appointmentId(prescription.getAppointment().getId())
+        .createdAt(prescription.getAppointment().getCreatedAt())
         .items(
             prescription.getItems().stream()
                 .map(

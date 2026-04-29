@@ -40,7 +40,8 @@ public class BillingService {
           appointmentRepository
               .findByIdAndHospitalId(dto.getAppointmentId(), hospitalId)
               .orElseThrow(
-                  () -> new ApiException("NOT_FOUND", "Appointment not found", HttpStatus.NOT_FOUND));
+                  () ->
+                      new ApiException("NOT_FOUND", "Appointment not found", HttpStatus.NOT_FOUND));
       patient = appointment.getPatient();
     } else {
       patient = patientService.requirePatient(dto.getPatientId(), hospitalId);
