@@ -4,8 +4,11 @@ import com.res.hms.common.api.PageResponse;
 import com.res.hms.common.tenant.HospitalContext;
 import com.res.hms.common.util.ResourceLookup;
 import com.res.hms.domain.Medicine;
+import com.res.hms.domain.PharmacyStock;
 import com.res.hms.pharmacy.dto.MedicineDTO;
+import com.res.hms.pharmacy.dto.PharmacyStockDTO;
 import com.res.hms.repository.MedicineRepository;
+import com.res.hms.repository.PharmacyStockRepository;
 import java.util.UUID;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -19,6 +22,7 @@ import org.springframework.transaction.annotation.Transactional;
 public class MedicineService {
 
   private final MedicineRepository medicineRepository;
+  private final PharmacyStockRepository pharmacyStockRepository;
   private final HospitalContext hospitalContext;
   private final ResourceLookup resourceLookup;
 
@@ -80,6 +84,36 @@ public class MedicineService {
     medicine.setName(dto.getName());
     medicine.setComposition(dto.getComposition());
     medicine.setManufacturer(dto.getManufacturer());
+  }
+
+  @Transactional(readOnly = true)
+  public PageResponse<PharmacyStockDTO> listStock(int page, int size, boolean lowStock) {
+    UUID hospitalId = hospitalContext.requireHospitalId();
+    PageRequest pageRequest = PageRequest.of(page, size);
+
+    if (lowStock) {
+      return PageResponse.from(
+          pharmacyStockRepository
+              .findAllByHospitalIdAndQuantityLessThan(hospitalId, 20, pageRequest)
+              .map(this::toStockDto));
+    }
+
+    return PageResponse.from(
+        pharmacyStockRepository
+            .findAllByHospitalIdOrderByCreatedAtDesc(hospitalId, pageRequest)
+            .map(this::toStockDto));
+  }
+
+  private PharmacyStockDTO toStockDto(PharmacyStock stock) {
+    return PharmacyStockDTO.builder()
+        .id(stock.getId())
+        .medicineId(stock.getMedicine().getId())
+        .medicineName(stock.getMedicine().getName())
+        .batchNumber(stock.getBatchNumber())
+        .expiryDate(stock.getExpiryDate())
+        .quantity(stock.getQuantity())
+        .price(stock.getPrice())
+        .build();
   }
 
   public MedicineDTO toDto(Medicine medicine) {

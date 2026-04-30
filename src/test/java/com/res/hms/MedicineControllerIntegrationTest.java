@@ -101,4 +101,39 @@ class MedicineControllerIntegrationTest {
         .andExpect(status().isOk())
         .andExpect(jsonPath("$.data.content[0].name").value("Paracetamol"));
   }
+
+  @Test
+  void testPharmacyStockListing() throws Exception {
+    // 1. Create Medicine
+    String medResponse =
+        mockMvc
+            .perform(
+                post("/api/v1/pharmacy/medicines")
+                    .session(session)
+                    .header("X-Hospital-Id", testHospitalId.toString())
+                    .contentType(MediaType.APPLICATION_JSON)
+                    .content(
+                        "{\"name\": \"Amoxicillin\", \"composition\": \"Amoxicillin 500mg\", \"manufacturer\": \"Abbott\"}"))
+            .andExpect(status().isOk())
+            .andReturn()
+            .getResponse()
+            .getContentAsString();
+
+    // Note: Stock is managed via direct repository or other services if implemented.
+    // For coverage, we want to hit listStock endpoint.
+    mockMvc
+        .perform(
+            get("/api/v1/pharmacy/medicines/stock")
+                .session(session)
+                .header("X-Hospital-Id", testHospitalId.toString()))
+        .andExpect(status().isOk());
+
+    mockMvc
+        .perform(
+            get("/api/v1/pharmacy/medicines/stock")
+                .session(session)
+                .header("X-Hospital-Id", testHospitalId.toString())
+                .param("lowStock", "true"))
+        .andExpect(status().isOk());
+  }
 }

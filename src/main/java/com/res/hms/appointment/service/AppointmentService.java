@@ -99,27 +99,41 @@ public class AppointmentService {
   }
 
   public AppointmentDTO toDto(Appointment appointment) {
-    return AppointmentDTO.builder()
-        .id(appointment.getId())
-        .patientId(appointment.getPatient().getId())
-        .patientName(appointment.getPatient().getFullName())
-        .doctorId(appointment.getDoctorProfile().getId())
-        .doctorName(appointment.getDoctorProfile().getFullName())
-        .appointmentTime(appointment.getAppointmentTime())
-        .status(appointment.getStatus())
-        .tokenNumber(appointment.getTokenNumber())
-        .sessionPeriod(appointment.getSessionPeriod())
-        .chiefComplaints(appointment.getChiefComplaints())
-        .diagnosis(appointment.getDiagnosis())
-        .clinicalNotes(appointment.getClinicalNotes())
-        .icdCodes(appointment.getIcdCodes())
-        .notes(appointment.getNotes())
-        .vitals(toVitalsDto(appointment.getVitals()))
-        .prescription(
-            appointment.getPrescription() != null
-                ? prescriptionService.toDto(appointment.getPrescription())
-                : null)
-        .build();
+    if (appointment == null) {
+      return null;
+    }
+
+    AppointmentDTO.AppointmentDTOBuilder builder =
+        AppointmentDTO.builder()
+            .id(appointment.getId())
+            .appointmentTime(appointment.getAppointmentTime())
+            .status(appointment.getStatus())
+            .tokenNumber(appointment.getTokenNumber())
+            .sessionPeriod(appointment.getSessionPeriod())
+            .chiefComplaints(appointment.getChiefComplaints())
+            .diagnosis(appointment.getDiagnosis())
+            .clinicalNotes(appointment.getClinicalNotes())
+            .icdCodes(appointment.getIcdCodes())
+            .notes(appointment.getNotes())
+            .vitals(toVitalsDto(appointment.getVitals()))
+            .prescription(
+                appointment.getPrescription() != null
+                    ? prescriptionService.toDto(appointment.getPrescription())
+                    : null);
+
+    if (appointment.getPatient() != null) {
+      builder
+          .patientId(appointment.getPatient().getId())
+          .patientName(appointment.getPatient().getFullName());
+    }
+
+    if (appointment.getDoctorProfile() != null) {
+      builder
+          .doctorId(appointment.getDoctorProfile().getId())
+          .doctorName(appointment.getDoctorProfile().getFullName());
+    }
+
+    return builder.build();
   }
 
   private com.res.hms.appointment.dto.VitalsDTO toVitalsDto(com.res.hms.domain.Vitals vitals) {

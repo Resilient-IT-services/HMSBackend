@@ -1,6 +1,7 @@
 package com.res.hms.api;
 
 import com.res.hms.common.api.ApiResponse;
+import com.res.hms.common.api.PageResponse;
 import com.res.hms.prescription.dto.PrescriptionDTO;
 import com.res.hms.prescription.service.PrescriptionService;
 import io.swagger.v3.oas.annotations.tags.Tag;
@@ -13,6 +14,7 @@ import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 @Tag(name = "Prescriptions")
@@ -20,6 +22,13 @@ import org.springframework.web.bind.annotation.RestController;
 @RequestMapping("/api/v1/pharmacy/prescriptions")
 @RequiredArgsConstructor
 public class PrescriptionController {
+
+  @GetMapping
+  @PreAuthorize("hasAnyRole('ADMIN','DOCTOR','NURSE','PHARMACIST','SUPER_ADMIN')")
+  public ApiResponse<PageResponse<PrescriptionDTO>> list(
+      @RequestParam(defaultValue = "0") int page, @RequestParam(defaultValue = "20") int size) {
+    return ApiResponse.success(prescriptionService.list(page, size));
+  }
 
   private final PrescriptionService prescriptionService;
 

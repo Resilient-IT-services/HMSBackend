@@ -3,6 +3,7 @@ package com.res.hms.api;
 import com.res.hms.common.api.ApiResponse;
 import com.res.hms.common.api.PageResponse;
 import com.res.hms.pharmacy.dto.MedicineDTO;
+import com.res.hms.pharmacy.dto.PharmacyStockDTO;
 import com.res.hms.pharmacy.service.MedicineService;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
@@ -24,6 +25,15 @@ import org.springframework.web.bind.annotation.RestController;
 @RequestMapping("/api/v1/pharmacy/medicines")
 @RequiredArgsConstructor
 public class MedicineController {
+
+  @GetMapping("/stock")
+  @PreAuthorize("hasAnyRole('ADMIN','PHARMACIST','DOCTOR','NURSE','SUPER_ADMIN')")
+  public ApiResponse<PageResponse<PharmacyStockDTO>> listStock(
+      @RequestParam(defaultValue = "0") int page,
+      @RequestParam(defaultValue = "20") int size,
+      @RequestParam(defaultValue = "false") boolean lowStock) {
+    return ApiResponse.success(medicineService.listStock(page, size, lowStock));
+  }
 
   private final MedicineService medicineService;
 
