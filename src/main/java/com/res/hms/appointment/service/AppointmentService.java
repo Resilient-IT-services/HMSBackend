@@ -9,7 +9,6 @@ import com.res.hms.common.exception.ApiException;
 import com.res.hms.common.tenant.HospitalContext;
 import com.res.hms.common.util.ResourceLookup;
 import com.res.hms.domain.Appointment;
-import com.res.hms.domain.SessionPeriod;
 import com.res.hms.prescription.service.PrescriptionService;
 import java.util.UUID;
 import lombok.RequiredArgsConstructor;
