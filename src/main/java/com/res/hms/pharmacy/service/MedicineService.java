@@ -31,7 +31,6 @@ public class MedicineService {
     PageRequest pageRequest = PageRequest.of(page, size);
 
     if (search != null && !search.trim().isEmpty()) {
-      String searchPattern = "%" + search.trim().toLowerCase() + "%";
       return PageResponse.from(
           medicineRepository
               .findAllByHospitalIdAndNameContainingIgnoreCase(hospitalId, search, pageRequest)
@@ -56,6 +55,20 @@ public class MedicineService {
     medicine.setHospitalId(hospitalId);
     updateFields(medicine, dto);
     medicine = medicineRepository.save(medicine);
+
+    // If batch/stock info is provided during creation, initialize pharmacy_stock
+    if (dto.getBatchNumber() != null && !dto.getBatchNumber().isBlank()) {
+      PharmacyStock stock = new PharmacyStock();
+      stock.setHospitalId(hospitalId);
+      stock.setMedicine(medicine);
+      stock.setBatchNumber(dto.getBatchNumber());
+      stock.setExpiryDate(dto.getExpiryDate());
+      stock.setQuantity(dto.getCurrentStock() != null ? dto.getCurrentStock() : 0);
+      stock.setPrice(
+          dto.getSellingPrice() != null ? dto.getSellingPrice() : java.math.BigDecimal.ZERO);
+      pharmacyStockRepository.save(stock);
+    }
+
     return toDto(medicine);
   }
 
@@ -82,8 +95,17 @@ public class MedicineService {
 
   private void updateFields(Medicine medicine, MedicineDTO dto) {
     medicine.setName(dto.getName());
+    medicine.setGenericName(dto.getGenericName());
     medicine.setComposition(dto.getComposition());
+    medicine.setCategory(dto.getCategory());
     medicine.setManufacturer(dto.getManufacturer());
+    medicine.setReorderLevel(dto.getReorderLevel());
+    medicine.setSellingPrice(dto.getSellingPrice());
+    medicine.setPurchasePrice(dto.getPurchasePrice());
+    medicine.setTaxPercentage(dto.getTaxPercentage());
+    medicine.setStorageTemperature(dto.getTemperature());
+    medicine.setStorageHumidity(dto.getHumidity());
+    medicine.setSpecialNotes(dto.getSpecialNotes());
   }
 
   @Transactional(readOnly = true)
@@ -120,8 +142,17 @@ public class MedicineService {
     return MedicineDTO.builder()
         .id(medicine.getId())
         .name(medicine.getName())
+        .genericName(medicine.getGenericName())
         .composition(medicine.getComposition())
+        .category(medicine.getCategory())
         .manufacturer(medicine.getManufacturer())
+        .reorderLevel(medicine.getReorderLevel())
+        .purchasePrice(medicine.getPurchasePrice())
+        .sellingPrice(medicine.getSellingPrice())
+        .taxPercentage(medicine.getTaxPercentage())
+        .temperature(medicine.getStorageTemperature())
+        .humidity(medicine.getStorageHumidity())
+        .specialNotes(medicine.getSpecialNotes())
         .build();
   }
 }
