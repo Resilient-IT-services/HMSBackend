@@ -144,12 +144,7 @@ class DoctorControllerIntegrationTest {
 
   @Test
   void testGetAvailabilityWithModifiedException() throws Exception {
-    LocalDate futureDate = LocalDate.now().plusWeeks(1);
-    // Adjust to a Tuesday if needed, but the service uses dbDay from the date passed.
-    // The test was specifically mentioning Tuesday for 2026-04-28.
-    // Let's just use a fixed future date that we know is a Tuesday or just any future date.
-    // 2026-05-05 is the next Tuesday after 2026-04-30.
-    LocalDate tuesday = LocalDate.of(2026, 5, 5);
+    LocalDate tuesday = LocalDate.of(2026, 4, 28); // Tuesday
 
     // 1. Create a MODIFIED exception for Tuesday: 2-4 PM
     com.res.hms.domain.DoctorAvailabilityException ex =
