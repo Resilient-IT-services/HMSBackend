@@ -56,4 +56,70 @@ class AuthControllerIntegrationTest {
         .andExpect(jsonPath("$.data.superuser").value(true))
         .andExpect(jsonPath("$.data.memberships").isArray());
   }
+
+  @Test
+  void changePasswordShouldUpdateCredentials() throws Exception {
+    // 1. Login with original password
+    MockHttpSession session =
+        (MockHttpSession)
+            mockMvc
+                .perform(
+                    post("/api/v1/auth/login")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"username\": \"admin\", \"password\": \"admin123\"}"))
+                .andExpect(status().isOk())
+                .andReturn()
+                .getRequest()
+                .getSession(false);
+
+    // 2. Change password
+    mockMvc
+        .perform(
+            post("/api/v1/auth/change-password")
+                .session(session)
+                .contentType(MediaType.APPLICATION_JSON)
+                .content("{\"oldPassword\": \"admin123\", \"newPassword\": \"newAdminPass\"}"))
+        .andExpect(status().isOk())
+        .andExpect(jsonPath("$.success").value(true));
+
+    // 3. Logout
+    mockMvc.perform(post("/api/v1/auth/logout").session(session)).andExpect(status().isOk());
+
+    // 4. Try login with old password - should fail
+    mockMvc
+        .perform(
+            post("/api/v1/auth/login")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content("{\"username\": \"admin\", \"password\": \"admin123\"}"))
+        .andExpect(status().isUnauthorized());
+
+    // 5. Try login with new password - should succeed
+    mockMvc
+        .perform(
+            post("/api/v1/auth/login")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content("{\"username\": \"admin\", \"password\": \"newAdminPass\"}"))
+        .andExpect(status().isOk());
+
+    // Cleanup: Change password back to original for other tests
+    MockHttpSession cleanupSession =
+        (MockHttpSession)
+            mockMvc
+                .perform(
+                    post("/api/v1/auth/login")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"username\": \"admin\", \"password\": \"newAdminPass\"}"))
+                .andExpect(status().isOk())
+                .andReturn()
+                .getRequest()
+                .getSession(false);
+
+    mockMvc
+        .perform(
+            post("/api/v1/auth/change-password")
+                .session(cleanupSession)
+                .contentType(MediaType.APPLICATION_JSON)
+                .content("{\"oldPassword\": \"newAdminPass\", \"newPassword\": \"admin123\"}"))
+        .andExpect(status().isOk());
+  }
 }

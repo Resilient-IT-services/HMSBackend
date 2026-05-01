@@ -1,6 +1,7 @@
 package com.res.hms.api;
 
 import com.res.hms.common.api.ApiResponse;
+import com.res.hms.user.dto.ChangePasswordRequest;
 import com.res.hms.user.dto.LoginRequest;
 import com.res.hms.user.dto.UserDetailsDTO;
 import com.res.hms.user.service.AuthService;
@@ -35,6 +36,12 @@ public class AuthController {
   @GetMapping("/me")
   public ApiResponse<UserDetailsDTO> me() {
     return ApiResponse.success(authService.currentUser());
+  }
+
+  @PostMapping("/change-password")
+  public ApiResponse<Void> changePassword(@Valid @RequestBody ChangePasswordRequest request) {
+    authService.changePassword(request);
+    return ApiResponse.success(null);
   }
 
   @PostMapping("/logout")

@@ -2,6 +2,7 @@ package com.res.hms.api;
 
 import com.res.hms.common.api.ApiResponse;
 import com.res.hms.common.api.PageResponse;
+import com.res.hms.user.dto.AdminResetPasswordRequest;
 import com.res.hms.user.dto.UserDetailsDTO;
 import com.res.hms.user.dto.UserSummaryDTO;
 import com.res.hms.user.service.UserAggregateService;
@@ -27,6 +28,14 @@ public class UserController {
 
   private final UserService userService;
   private final UserAggregateService userAggregateService;
+
+  @PostMapping("/{userId}/reset-password")
+  @PreAuthorize("hasAnyRole('SUPER_ADMIN', 'ADMIN')")
+  public ApiResponse<Void> resetPassword(
+      @PathVariable UUID userId, @Valid @RequestBody AdminResetPasswordRequest request) {
+    userService.resetPassword(userId, request);
+    return ApiResponse.success(null);
+  }
 
   @GetMapping
   @PreAuthorize("hasAnyRole('SUPER_ADMIN', 'ADMIN')")

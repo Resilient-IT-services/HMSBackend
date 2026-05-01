@@ -711,7 +711,7 @@ INDEX (hospital_id)
 ## 1. Auth APIs
 
 ### Login (Cookie Based)
-POST `/auth/login`
+POST `/api/v1/auth/login`
 ```
 {
   "username": "string",
@@ -723,8 +723,20 @@ Response:
 - Sets secure HTTP-only cookie
 - No token returned in body
 
+### Change Password
+POST `/api/v1/auth/change-password`
+```
+{
+  "oldPassword": "string",
+  "newPassword": "string"
+}
+```
+
+### Get Current Profile
+GET `/api/v1/auth/me`
+
 ### Logout
-POST `/auth/logout`
+POST `/api/v1/auth/logout`
 
 ---
 
@@ -802,7 +814,16 @@ POST `/users`
 ```
 
 ### Get Users
-GET `/users`
+GET `/api/v1/users`
+
+### Reset User Password (Admin Only)
+POST `/api/v1/users/{userId}/reset-password`
+```
+{
+  "newPassword": "string"
+}
+```
+*Note: This endpoint allows admins to reset any user's password without knowing the old one.*
 
 ---
 

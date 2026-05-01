@@ -16,6 +16,9 @@ import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import org.springframework.security.crypto.password.PasswordEncoder;
+import com.res.hms.user.dto.AdminResetPasswordRequest;
+
 @Service
 @RequiredArgsConstructor
 @SuppressWarnings({"PMD.AvoidDuplicateLiterals", "PMD.AvoidInstantiatingObjectsInLoops"})
@@ -25,6 +28,21 @@ public class UserService {
   private final HospitalContext hospitalContext;
   private final UserMapper userMapper;
   private final ResourceLookup resourceLookup;
+  private final PasswordEncoder passwordEncoder;
+
+  @Transactional
+  public void resetPassword(UUID userId, AdminResetPasswordRequest request) {
+    UserAccount user;
+    if (hospitalContext.isSuperAdmin()) {
+      user = resourceLookup.findRequired(userId, userAccountRepository::findById, "User");
+    } else {
+      user = resourceLookup.findRequired(
+          userId, hospitalContext.requireHospitalId(), userAccountRepository::findByIdAndHospitalId, "User");
+    }
+    
+    user.setPasswordHash(passwordEncoder.encode(request.newPassword()));
+    userAccountRepository.save(user);
+  }
 
   @Transactional(readOnly = true)
   public PageResponse<UserSummaryDTO> listUsers(

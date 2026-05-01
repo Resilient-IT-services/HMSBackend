@@ -18,8 +18,11 @@ import org.springframework.security.core.context.SecurityContext;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.web.authentication.logout.SecurityContextLogoutHandler;
 import org.springframework.security.web.context.SecurityContextRepository;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import com.res.hms.user.dto.ChangePasswordRequest;
+import com.res.hms.domain.UserAccount;
 
 @Service
 @RequiredArgsConstructor
@@ -30,6 +33,7 @@ public class AuthService {
   private final SecurityContextRepository securityContextRepository;
   private final UserAccountRepository userAccountRepository;
   private final UserMapper userMapper;
+  private final PasswordEncoder passwordEncoder;
 
   public void login(
       LoginRequest request, HttpServletRequest httpRequest, HttpServletResponse httpResponse) {
@@ -51,6 +55,20 @@ public class AuthService {
           Map.of(),
           exception);
     }
+  }
+
+  @Transactional
+  public void changePassword(ChangePasswordRequest request) {
+    HospitalUserPrincipal principal = getAuthenticatedPrincipal();
+    UserAccount user = userAccountRepository.findById(principal.userId())
+        .orElseThrow(() -> new ApiException("NOT_FOUND", "User not found", HttpStatus.NOT_FOUND));
+
+    if (!passwordEncoder.matches(request.oldPassword(), user.getPasswordHash())) {
+      throw new ApiException("AUTH_ERROR", "Current password does not match", HttpStatus.BAD_REQUEST);
+    }
+
+    user.setPasswordHash(passwordEncoder.encode(request.newPassword()));
+    userAccountRepository.save(user);
   }
 
   public UserDetailsDTO currentUser() {
