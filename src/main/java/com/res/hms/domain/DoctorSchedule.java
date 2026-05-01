@@ -29,7 +29,7 @@ public class DoctorSchedule {
   private UserRoleAssignment assignment;
 
   @Column(name = "day_of_week", nullable = false)
-  private Short dayOfWeek; // 0-6 to match DB int2
+  private Short dayOfWeek; // 1-7 (Monday-Sunday) to match DB check constraint
 
   @Column(name = "start_time", nullable = false)
   private LocalTime startTime;

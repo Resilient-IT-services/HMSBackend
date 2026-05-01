@@ -16,6 +16,10 @@ import lombok.Setter;
 @Table(name = "inventory_transaction")
 public class InventoryTransaction extends HospitalScopedEntity {
 
+  @jakarta.persistence.ManyToOne(fetch = jakarta.persistence.FetchType.LAZY)
+  @jakarta.persistence.JoinColumn(name = "item_id", insertable = false, updatable = false)
+  private Item item;
+
   @Column(name = "item_id", nullable = false)
   private UUID itemId;
 

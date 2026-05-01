@@ -41,7 +41,7 @@ public class Hospital extends BaseEntity {
   @Column(nullable = false)
   private HospitalStatus status;
 
-  @Type(JsonType.class)
+  @org.hibernate.annotations.JdbcTypeCode(org.hibernate.type.SqlTypes.JSON)
   @Column(name = "settings", columnDefinition = "jsonb")
   private HospitalSettings settings;
 }
