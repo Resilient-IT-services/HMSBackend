@@ -37,5 +37,14 @@ services:
             - "6543:5432"
         volumes:
             - pgdata:/var/lib/postgresql/data
+    cloudflared:
+        image: cloudflare/cloudflared:latest
+        container_name: hms-cloudflared
+        restart: unless-stopped
+        command: tunnel run
+        environment:
+            - TUNNEL_TOKEN=eyJhIjoiMGEwNjQ2YWZlODkxNDVkMTk0MTEzMGNhMTFhMmEyYzYiLCJ0IjoiNjM2OGE1MDMtZDUyNy00OGM2LTg3M2MtZDM1NDAxNDMzY2Q1IiwicyI6Ik1qWXhOR1l5TnpBdE5XUXhPQzAwTlRRM0xXRmxPREV0TnpGa1l6TTVaVE5pTVdZMiJ9   # 👈 paste your token here
+        depends_on:
+            - nginx
 volumes:
     pgdata:
