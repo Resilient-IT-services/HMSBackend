@@ -43,7 +43,7 @@ public class DoctorProfile extends AuditableEntity {
   @Column(columnDefinition = "text")
   private String bio;
 
-  @Type(JsonType.class)
+  @org.hibernate.annotations.JdbcTypeCode(org.hibernate.type.SqlTypes.JSON)
   @Column(name = "education_json", columnDefinition = "jsonb")
   private DoctorEducation education;
 
