@@ -9,42 +9,50 @@ services:
         restart: always
         depends_on:
             - postgres
+
+
     frontend:
         build:
-            context: ../HMSFrontEnd   # ✅ correct path
+            context: ../HMSFrontEnd
             dockerfile: Dockerfile
         container_name: hms-frontend
         ports:
             - "3000:3000"
+
     nginx:
         image: nginx:latest
         container_name: hms-nginx
         ports:
             - "80:80"
+            - "443:443"
         volumes:
             - ./nginx.conf:/etc/nginx/nginx.conf
+            - ./certs:/etc/nginx/certs
         depends_on:
             - frontend
             - backend
+
     postgres:
         image: postgres:15
         container_name: hms-postgres
         environment:
-            POSTGRES_DB: hms
-            POSTGRES_USER: postgres
-            POSTGRES_PASSWORD: dR3H8dKS89xB6RHq
+            POSTGRES_DB: ${POSTGRES_DB}
+            POSTGRES_USER: ${DB_USERNAME}
+            POSTGRES_PASSWORD: ${DB_PASSWORD}
         ports:
             - "6543:5432"
         volumes:
             - pgdata:/var/lib/postgresql/data
+
     cloudflared:
         image: cloudflare/cloudflared:latest
         container_name: hms-cloudflared
         restart: unless-stopped
-        command: tunnel run
+        command: tunnel --loglevel debug run
         environment:
-            - TUNNEL_TOKEN=eyJhIjoiMGEwNjQ2YWZlODkxNDVkMTk0MTEzMGNhMTFhMmEyYzYiLCJ0IjoiNjM2OGE1MDMtZDUyNy00OGM2LTg3M2MtZDM1NDAxNDMzY2Q1IiwicyI6Ik1qWXhOR1l5TnpBdE5XUXhPQzAwTlRRM0xXRmxPREV0TnpGa1l6TTVaVE5pTVdZMiJ9   # 👈 paste your token here
+            TUNNEL_TOKEN: ${CLOUDFLARE_TUNNEL_TOKEN}
         depends_on:
             - nginx
+
 volumes:
     pgdata:
