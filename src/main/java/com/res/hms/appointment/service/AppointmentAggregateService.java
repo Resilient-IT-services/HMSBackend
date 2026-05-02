@@ -178,6 +178,9 @@ public class AppointmentAggregateService {
       vitals.setHeartRate(dto.getVitals().getHeartRate());
       vitals.setTemperature(dto.getVitals().getTemperature());
       vitals.setWeight(dto.getVitals().getWeight());
+      vitals.setOxygenLevel(dto.getVitals().getOxygenLevel());
+      vitals.setTemperatureUnit(dto.getVitals().getTemperatureUnit());
+      vitals.setWeightUnit(dto.getVitals().getWeightUnit());
     }
   }
 }
