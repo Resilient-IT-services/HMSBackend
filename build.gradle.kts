@@ -41,6 +41,8 @@ dependencies {
     implementation("com.fasterxml.jackson.datatype:jackson-datatype-jsr310")
     implementation("io.hypersistence:hypersistence-utils-hibernate-63:3.8.2")
     implementation("org.mapstruct:mapstruct:1.5.5.Final")
+    implementation("org.apache.poi:poi-ooxml:5.2.5")
+    implementation("com.github.librepdf:openpdf:1.3.30")
     compileOnly("org.projectlombok:lombok")
     developmentOnly("org.springframework.boot:spring-boot-devtools")
     runtimeOnly("org.postgresql:postgresql")
