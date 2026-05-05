@@ -7,17 +7,16 @@ import com.res.hms.common.util.ResourceLookup;
 import com.res.hms.domain.RoleCode;
 import com.res.hms.domain.UserAccount;
 import com.res.hms.repository.UserAccountRepository;
+import com.res.hms.user.dto.AdminResetPasswordRequest;
 import com.res.hms.user.dto.UserDetailsDTO;
 import com.res.hms.user.dto.UserSummaryDTO;
 import java.util.UUID;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.http.HttpStatus;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-
-import org.springframework.security.crypto.password.PasswordEncoder;
-import com.res.hms.user.dto.AdminResetPasswordRequest;
 
 @Service
 @RequiredArgsConstructor
@@ -36,10 +35,14 @@ public class UserService {
     if (hospitalContext.isSuperAdmin()) {
       user = resourceLookup.findRequired(userId, userAccountRepository::findById, "User");
     } else {
-      user = resourceLookup.findRequired(
-          userId, hospitalContext.requireHospitalId(), userAccountRepository::findByIdAndHospitalId, "User");
+      user =
+          resourceLookup.findRequired(
+              userId,
+              hospitalContext.requireHospitalId(),
+              userAccountRepository::findByIdAndHospitalId,
+              "User");
     }
-    
+
     user.setPasswordHash(passwordEncoder.encode(request.newPassword()));
     userAccountRepository.save(user);
   }

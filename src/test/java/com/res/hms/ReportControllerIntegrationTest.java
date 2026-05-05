@@ -112,8 +112,7 @@ class ReportControllerIntegrationTest {
         .andExpect(
             result -> {
               String contentType = result.getResponse().getContentType();
-              assert contentType != null
-                  && contentType.contains("spreadsheetml");
+              assert contentType != null && contentType.contains("spreadsheetml");
             });
 
     mockMvc

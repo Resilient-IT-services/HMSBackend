@@ -5,5 +5,5 @@ import jakarta.validation.constraints.Size;
 
 public record AdminResetPasswordRequest(
     @NotBlank(message = "New password is required")
-    @Size(min = 6, message = "New password must be at least 6 characters")
-    String newPassword) {}
+        @Size(min = 6, message = "New password must be at least 6 characters")
+        String newPassword) {}

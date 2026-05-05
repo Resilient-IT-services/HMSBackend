@@ -8,7 +8,6 @@ import io.swagger.v3.oas.annotations.tags.Tag;
 import java.io.IOException;
 import java.time.LocalDate;
 import java.util.List;
-import java.util.UUID;
 import lombok.RequiredArgsConstructor;
 import org.springframework.core.io.ByteArrayResource;
 import org.springframework.core.io.Resource;
@@ -37,7 +36,7 @@ public class ReportController {
       @RequestParam ReportType type,
       @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate startDate,
       @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate endDate,
-      @RequestParam(required = false) UUID doctorId) {
+      @RequestParam(required = false) java.util.UUID doctorId) {
     return ApiResponse.success(reportService.getReportData(type, startDate, endDate, doctorId));
   }
 
@@ -47,7 +46,7 @@ public class ReportController {
       @RequestParam ReportType type,
       @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate startDate,
       @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate endDate,
-      @RequestParam(required = false) UUID doctorId)
+      @RequestParam(required = false) java.util.UUID doctorId)
       throws IOException {
     List<?> data = reportService.getReportData(type, startDate, endDate, doctorId);
     byte[] content = exportService.generateExcel(type, data, startDate, endDate);
@@ -68,7 +67,7 @@ public class ReportController {
       @RequestParam ReportType type,
       @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate startDate,
       @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate endDate,
-      @RequestParam(required = false) UUID doctorId) {
+      @RequestParam(required = false) java.util.UUID doctorId) {
     List<?> data = reportService.getReportData(type, startDate, endDate, doctorId);
     byte[] content = exportService.generatePdf(type, data, startDate, endDate);
 

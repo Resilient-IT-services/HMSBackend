@@ -83,7 +83,11 @@ public class BillingService {
   }
 
   @Transactional
-  public BillingDTO updateBillingStatus(UUID billingId, com.res.hms.domain.BillingStatus status) {
+  public BillingDTO updateBillingStatus(
+      UUID billingId,
+      com.res.hms.domain.BillingStatus status,
+      String paymentMethod,
+      BigDecimal discount) {
     UUID hospitalId = hospitalContext.requireHospitalId();
     Billing billing =
         billingRepository
@@ -92,6 +96,12 @@ public class BillingService {
                 () -> new ApiException("NOT_FOUND", "Bill not found", HttpStatus.NOT_FOUND));
 
     billing.setStatus(status);
+    if (paymentMethod != null) {
+      billing.setPaymentMethod(paymentMethod);
+    }
+    if (discount != null) {
+      billing.setDiscount(discount);
+    }
 
     // If billing is paid, and it's linked to an appointment with PAYMENT_PENDING status, update it
     if (status == com.res.hms.domain.BillingStatus.PAID && billing.getAppointment() != null) {

@@ -1,4 +1,5 @@
 package com.res.hms.api;
+
 import com.res.hms.appointment.dto.AppointmentDTO;
 import com.res.hms.appointment.dto.UpdateAppointmentStatusRequest;
 import com.res.hms.appointment.service.AppointmentAggregateService;
@@ -22,6 +23,7 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
+
 @Tag(name = "Appointments")
 @RestController
 @RequestMapping("/api/v1/appointments")
@@ -29,6 +31,7 @@ import org.springframework.web.bind.annotation.RestController;
 public class AppointmentController {
   private final AppointmentService appointmentService;
   private final AppointmentAggregateService appointmentAggregateService;
+
   @PostMapping
   @PreAuthorize("hasAnyRole('ADMIN','RECEPTIONIST','DOCTOR','SUPER_ADMIN')")
   public ApiResponse<AppointmentDTO> create(

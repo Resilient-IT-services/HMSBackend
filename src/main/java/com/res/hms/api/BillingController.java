@@ -40,7 +40,11 @@ public class BillingController {
   @PutMapping("/{billingId}/status")
   @PreAuthorize("hasAnyRole('ADMIN','RECEPTIONIST','SUPER_ADMIN')")
   public ApiResponse<BillingDTO> updateStatus(
-      @PathVariable UUID billingId, @RequestParam com.res.hms.domain.BillingStatus status) {
-    return ApiResponse.success(billingService.updateBillingStatus(billingId, status));
+      @PathVariable UUID billingId,
+      @RequestParam com.res.hms.domain.BillingStatus status,
+      @RequestParam(required = false) String paymentMethod,
+      @RequestParam(required = false) java.math.BigDecimal discount) {
+    return ApiResponse.success(
+        billingService.updateBillingStatus(billingId, status, paymentMethod, discount));
   }
 }

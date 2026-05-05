@@ -105,7 +105,7 @@ class DoctorControllerIntegrationTest {
 
   @Test
   void testGetAvailability() throws Exception {
-    LocalDate nextMonday = LocalDate.of(2026, 5, 4); // A future Monday
+    LocalDate nextMonday = LocalDate.of(2026, 5, 11); // A future Monday
 
     // Initial check: Should have 1 session (9-11 AM)
     mockMvc
@@ -144,7 +144,7 @@ class DoctorControllerIntegrationTest {
 
   @Test
   void testGetAvailabilityWithModifiedException() throws Exception {
-    LocalDate tuesday = LocalDate.of(2026, 4, 28); // Tuesday
+    LocalDate tuesday = LocalDate.of(2026, 5, 12); // Tuesday
 
     // 1. Create a MODIFIED exception for Tuesday: 2-4 PM
     com.res.hms.domain.DoctorAvailabilityException ex =

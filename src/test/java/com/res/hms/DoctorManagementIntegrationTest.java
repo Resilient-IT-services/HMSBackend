@@ -85,7 +85,7 @@ class DoctorManagementIntegrationTest {
     // 2. Update Doctor: Modify schedule and add exception
     String updateJson =
         String.format(
-            "{\"username\":\"doc_lifecycle\",\"fullName\":\"Updated Lifecycle Doctor\",\"gender\":\"MALE\",\"dob\":\"1980-01-01\",\"memberships\":[{\"hospitalId\":\"%s\",\"roleAssignments\":[{\"roleCode\":\"DOCTOR\",\"doctorDetails\":{\"specialization\":\"Interventional Cardiology\"},\"schedules\":[{\"dayOfWeek\":1,\"startTime\":\"10:00\",\"endTime\":\"13:00\",\"slotDurationMinutes\":30},{\"dayOfWeek\":3,\"startTime\":\"09:00\",\"endTime\":\"12:00\",\"slotDurationMinutes\":30}],\"availabilityExceptions\":[{\"date\":\"2026-05-01\",\"type\":\"FULL_DAY_OFF\",\"note\":\"Holiday\"},{\"date\":\"2026-05-02\",\"type\":\"MODIFIED\",\"startTime\":\"14:00\",\"endTime\":\"16:00\",\"slotDurationMinutes\":20,\"note\":\"Extra hours\"}]}]}]}",
+            "{\"username\":\"doc_lifecycle\",\"fullName\":\"Updated Lifecycle Doctor\",\"gender\":\"MALE\",\"dob\":\"1980-01-01\",\"memberships\":[{\"hospitalId\":\"%s\",\"roleAssignments\":[{\"roleCode\":\"DOCTOR\",\"doctorDetails\":{\"specialization\":\"Interventional Cardiology\"},\"schedules\":[{\"dayOfWeek\":1,\"startTime\":\"10:00\",\"endTime\":\"13:00\",\"slotDurationMinutes\":30},{\"dayOfWeek\":3,\"startTime\":\"09:00\",\"endTime\":\"12:00\",\"slotDurationMinutes\":30}],\"availabilityExceptions\":[{\"date\":\"2026-05-18\",\"type\":\"FULL_DAY_OFF\",\"note\":\"Holiday\"},{\"date\":\"2026-05-19\",\"type\":\"MODIFIED\",\"startTime\":\"14:00\",\"endTime\":\"16:00\",\"slotDurationMinutes\":20,\"note\":\"Extra hours\"}]}]}]}",
             hospitalId);
 
     mockMvc
@@ -98,45 +98,45 @@ class DoctorManagementIntegrationTest {
         .andExpect(jsonPath("$.data.fullName").value("Updated Lifecycle Doctor"));
 
     // 3. Verify availability reflects the changes
-    // Monday (2026-05-04 is a Monday)
+    // Monday (2026-05-11 is a Monday)
     mockMvc
         .perform(
             get("/api/v1/doctors/" + doctorId + "/availability")
                 .session(session)
                 .header("X-Hospital-Id", hospitalId.toString())
-                .param("date", "2026-05-04"))
+                .param("date", "2026-05-11"))
         .andExpect(status().isOk())
         .andExpect(jsonPath("$.data.sessions.length()").value(1))
         .andExpect(jsonPath("$.data.sessions[0].startTime").value("10:00"));
 
-    // Wednesday (2026-05-06 is a Wednesday)
+    // Wednesday (2026-05-13 is a Wednesday)
     mockMvc
         .perform(
             get("/api/v1/doctors/" + doctorId + "/availability")
                 .session(session)
                 .header("X-Hospital-Id", hospitalId.toString())
-                .param("date", "2026-05-06"))
+                .param("date", "2026-05-13"))
         .andExpect(status().isOk())
         .andExpect(jsonPath("$.data.sessions.length()").value(1))
         .andExpect(jsonPath("$.data.sessions[0].startTime").value("09:00"));
 
-    // Exception: Full day off (2026-05-01)
+    // Exception: Full day off (2026-05-18)
     mockMvc
         .perform(
             get("/api/v1/doctors/" + doctorId + "/availability")
                 .session(session)
                 .header("X-Hospital-Id", hospitalId.toString())
-                .param("date", "2026-05-01"))
+                .param("date", "2026-05-18"))
         .andExpect(status().isOk())
         .andExpect(jsonPath("$.data.sessions.length()").value(0));
 
-    // Exception: Modified (2026-05-02)
+    // Exception: Modified (2026-05-19)
     mockMvc
         .perform(
             get("/api/v1/doctors/" + doctorId + "/availability")
                 .session(session)
                 .header("X-Hospital-Id", hospitalId.toString())
-                .param("date", "2026-05-02"))
+                .param("date", "2026-05-19"))
         .andExpect(status().isOk())
         .andExpect(jsonPath("$.data.sessions.length()").value(1))
         .andExpect(jsonPath("$.data.sessions[0].startTime").value("14:00"))
