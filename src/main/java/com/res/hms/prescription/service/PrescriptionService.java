@@ -78,11 +78,9 @@ public class PrescriptionService {
                         new ApiException(
                             "NOT_FOUND", "Medicine not found", HttpStatus.NOT_FOUND));
 
-        PrescriptionItem item = new PrescriptionItem();
+        PrescriptionItem item = prescriptionMapper.toEntity(itemDto);
         item.setPrescription(prescription);
         item.setMedicine(medicine);
-        item.setDosage(itemDto.getDosage());
-        item.setDuration(itemDto.getDuration());
         prescription.getItems().add(item);
       }
     }

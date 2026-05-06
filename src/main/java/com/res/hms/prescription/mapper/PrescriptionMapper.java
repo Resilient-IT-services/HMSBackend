@@ -21,4 +21,9 @@ public interface PrescriptionMapper {
   @Mapping(target = "medicineId", source = "medicine.id")
   @Mapping(target = "medicineName", source = "medicine.name")
   PrescriptionItemDTO toDto(PrescriptionItem item);
+
+  @Mapping(target = "id", ignore = true)
+  @Mapping(target = "prescription", ignore = true)
+  @Mapping(target = "medicine", ignore = true)
+  PrescriptionItem toEntity(PrescriptionItemDTO dto);
 }

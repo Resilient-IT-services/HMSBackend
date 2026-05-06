@@ -17,4 +17,14 @@ public interface BillingMapper {
 
   @Mapping(target = "id", ignore = true)
   BillingItemDTO toDto(BillingItem item);
+
+  @Mapping(target = "id", ignore = true)
+  @Mapping(target = "hospitalId", ignore = true)
+  @Mapping(target = "billing", ignore = true)
+  BillingItem toEntity(BillingItemDTO dto);
+
+  @Mapping(target = "patient", ignore = true)
+  @Mapping(target = "appointment", ignore = true)
+  @Mapping(target = "items", ignore = true)
+  Billing toEntity(BillingDTO dto);
 }

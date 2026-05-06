@@ -50,25 +50,16 @@ public class BillingService {
       patient = patientService.requirePatient(dto.getPatientId(), hospitalId);
     }
 
-    Billing billing = new Billing();
+    Billing billing = billingMapper.toEntity(dto);
     billing.setHospitalId(hospitalId);
     billing.setPatient(patient);
     billing.setAppointment(appointment);
-    billing.setSourceType(dto.getSourceType());
-    billing.setStatus(dto.getStatus());
-    billing.setTotalAmount(dto.getTotalAmount());
-    billing.setDiscount(dto.getDiscount() != null ? dto.getDiscount() : BigDecimal.ZERO);
-    billing.setPaymentMethod(dto.getPaymentMethod());
 
     if (dto.getItems() != null) {
       for (BillingItemDTO itemDto : dto.getItems()) {
-        BillingItem item = new BillingItem();
+        BillingItem item = billingMapper.toEntity(itemDto);
         item.setHospitalId(hospitalId);
         item.setBilling(billing);
-        item.setItemName(itemDto.getItemName());
-        item.setAmount(itemDto.getAmount());
-        item.setQuantity(itemDto.getQuantity());
-        item.setSubtotal(itemDto.getSubtotal());
         billing.getItems().add(item);
       }
     }

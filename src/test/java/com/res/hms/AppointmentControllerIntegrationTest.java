@@ -9,7 +9,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.res.hms.appointment.dto.AppointmentDTO;
 import com.res.hms.appointment.dto.UpdateAppointmentStatusRequest;
-import com.res.hms.appointment.dto.VitalsDTO;
+import com.res.hms.vital.dto.VitalsDTO;
 import com.res.hms.domain.AppointmentStatus;
 import com.res.hms.domain.Gender;
 import com.res.hms.domain.RoleCode;

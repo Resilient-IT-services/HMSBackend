@@ -33,11 +33,7 @@ public class PatientAggregateService {
     if (dto.getId() == null) {
       patient = createPatient(dto, hospitalId);
     } else {
-      patient =
-          patientRepository
-              .findByIdAndHospitalId(dto.getId(), hospitalId)
-              .orElseThrow(
-                  () -> new ApiException("NOT_FOUND", "Patient not found", HttpStatus.NOT_FOUND));
+      patient = patientService.requirePatient(dto.getId(), hospitalId);
       updatePatient(patient, dto);
     }
 

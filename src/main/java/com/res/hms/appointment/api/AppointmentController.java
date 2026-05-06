@@ -10,6 +10,7 @@ import com.res.hms.common.validation.OnCreate;
 import com.res.hms.common.validation.OnUpdate;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
+import com.res.hms.vital.dto.VitalsDTO;
 import java.util.UUID;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.access.prepost.PreAuthorize;
@@ -81,8 +82,7 @@ public class AppointmentController {
   @PatchMapping("/{appointmentId}/vitals")
   @PreAuthorize("hasAnyRole('ADMIN','NURSE','DOCTOR','SUPER_ADMIN')")
   public ApiResponse<AppointmentDTO> updateVitals(
-      @PathVariable UUID appointmentId,
-      @Valid @RequestBody com.res.hms.appointment.dto.VitalsDTO request) {
+      @PathVariable UUID appointmentId, @Valid @RequestBody VitalsDTO request) {
     return ApiResponse.success(appointmentAggregateService.updateVitals(appointmentId, request));
   }
 

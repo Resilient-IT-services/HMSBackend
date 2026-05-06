@@ -3,6 +3,7 @@ package com.res.hms.appointment.dto;
 import com.res.hms.common.validation.OnCreate;
 import com.res.hms.domain.AppointmentStatus;
 import com.res.hms.domain.SessionPeriod;
+import com.res.hms.vital.dto.VitalsDTO;
 import jakarta.validation.constraints.Future;
 import jakarta.validation.constraints.NotNull;
 import java.time.LocalDateTime;

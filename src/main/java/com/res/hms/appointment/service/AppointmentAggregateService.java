@@ -10,6 +10,7 @@ import com.res.hms.domain.AppointmentStatus;
 import com.res.hms.domain.DoctorProfile;
 import com.res.hms.domain.Patient;
 import com.res.hms.patient.service.PatientService;
+import com.res.hms.vital.dto.VitalsDTO;
 import java.util.UUID;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -28,6 +29,7 @@ public class AppointmentAggregateService {
   private final DoctorProfileService doctorProfileService;
   private final HospitalContext hospitalContext;
   private final com.res.hms.vital.service.VitalValidationService vitalValidationService;
+  private final com.res.hms.appointment.mapper.VitalsMapper vitalsMapper;
 
   @Transactional
   public AppointmentDTO saveAppointmentAggregate(AppointmentDTO dto) {
@@ -56,7 +58,7 @@ public class AppointmentAggregateService {
   }
 
   @Transactional
-  public AppointmentDTO updateVitals(UUID id, com.res.hms.appointment.dto.VitalsDTO vitalsDto) {
+  public AppointmentDTO updateVitals(UUID id, VitalsDTO vitalsDto) {
     UUID hospitalId = hospitalContext.requireHospitalId();
 
     vitalValidationService.validate(vitalsDto);
@@ -73,7 +75,7 @@ public class AppointmentAggregateService {
       vitals.setAppointment(appointment);
       appointment.setVitals(vitals);
     }
-    mapVitalsDtoToEntity(vitalsDto, vitals);
+    vitalsMapper.updateEntity(vitalsDto, vitals);
 
     return appointmentService.toDto(appointmentRepository.save(appointment));
   }
@@ -97,17 +99,8 @@ public class AppointmentAggregateService {
     return appointmentService.toDto(appointmentRepository.save(appointment));
   }
 
-  private void mapVitalsDtoToEntity(
-      com.res.hms.appointment.dto.VitalsDTO dto, com.res.hms.domain.Vitals entity) {
-    entity.setBloodPressure(dto.getBloodPressure());
-    entity.setSystolic(dto.getSystolic());
-    entity.setDiastolic(dto.getDiastolic());
-    entity.setHeartRate(dto.getHeartRate());
-    entity.setOxygenLevel(dto.getOxygenLevel());
-    entity.setTemperatureUnit(dto.getTemperatureUnit());
-    entity.setTemperature(dto.getTemperature());
-    entity.setWeightUnit(dto.getWeightUnit());
-    entity.setWeight(dto.getWeight());
+  private void mapVitalsDtoToEntity(VitalsDTO dto, com.res.hms.domain.Vitals entity) {
+    vitalsMapper.updateEntity(dto, entity);
   }
 
   private Appointment createAppointment(AppointmentDTO dto, UUID hospitalId) {
@@ -174,13 +167,7 @@ public class AppointmentAggregateService {
         vitals.setAppointment(appointment);
         appointment.setVitals(vitals);
       }
-      vitals.setBloodPressure(dto.getVitals().getBloodPressure());
-      vitals.setHeartRate(dto.getVitals().getHeartRate());
-      vitals.setTemperature(dto.getVitals().getTemperature());
-      vitals.setWeight(dto.getVitals().getWeight());
-      vitals.setOxygenLevel(dto.getVitals().getOxygenLevel());
-      vitals.setTemperatureUnit(dto.getVitals().getTemperatureUnit());
-      vitals.setWeightUnit(dto.getVitals().getWeightUnit());
+      vitalsMapper.updateEntity(dto.getVitals(), vitals);
     }
   }
 }
