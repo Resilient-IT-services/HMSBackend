@@ -9,6 +9,7 @@ import com.res.hms.pharmacy.dto.PharmacyReturnResponse;
 import com.res.hms.pharmacy.dto.PharmacySaleRequest;
 import com.res.hms.pharmacy.dto.PharmacySaleResponse;
 import com.res.hms.pharmacy.dto.PharmacyStockDTO;
+import com.res.hms.pharmacy.dto.StockImportResponse;
 import com.res.hms.pharmacy.dto.StockRequest;
 import com.res.hms.pharmacy.service.MedicineService;
 import io.swagger.v3.oas.annotations.tags.Tag;
@@ -73,7 +74,7 @@ public class MedicineController {
   }
 
   @PutMapping("/medicines/{id}")
-  @PreAuthorize("hasRole('SUPER_ADMIN')")
+  @PreAuthorize("hasAnyRole('ADMIN','PHARMACIST','SUPER_ADMIN')")
   public ApiResponse<MedicineDTO> update(
       @PathVariable UUID id, @Valid @RequestBody MedicineDTO request) {
     return ApiResponse.success(medicineService.update(id, request));
@@ -86,8 +87,14 @@ public class MedicineController {
     return ApiResponse.success(null);
   }
 
+  @PostMapping("/stock/import")
+  @PreAuthorize("hasRole('PHARMACIST')")
+  public ApiResponse<StockImportResponse> importStock(@RequestParam MultipartFile file) {
+    return ApiResponse.success(medicineService.importStockExcel(file));
+  }
+
   @PostMapping("/stock")
-  @PreAuthorize("hasAnyRole('ADMIN','PHARMACIST','SUPER_ADMIN')")
+  @PreAuthorize("hasRole('PHARMACIST')")
   public ApiResponse<PharmacyStockDTO> addStock(@Valid @RequestBody StockRequest request) {
     return ApiResponse.success(medicineService.addStock(request));
   }

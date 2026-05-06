@@ -40,6 +40,8 @@ public interface MedicineRepository extends JpaRepository<Medicine, UUID> {
   Page<Medicine> searchAvailableForHospital(
       @Param("hospitalId") UUID hospitalId, @Param("search") String search, Pageable pageable);
 
+  Optional<Medicine> findByNameIgnoreCase(String name);
+
   Optional<Medicine> findByNameIgnoreCaseAndGenericNameIgnoreCaseAndStrengthIgnoreCaseAndFormIgnoreCase(
       String name, String genericName, String strength, String form);
 

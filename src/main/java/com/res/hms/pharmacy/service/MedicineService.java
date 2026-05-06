@@ -15,6 +15,7 @@ import com.res.hms.pharmacy.dto.PharmacyReturnResponse;
 import com.res.hms.pharmacy.dto.PharmacySaleRequest;
 import com.res.hms.pharmacy.dto.PharmacySaleResponse;
 import com.res.hms.pharmacy.dto.PharmacyStockDTO;
+import com.res.hms.pharmacy.dto.StockImportResponse;
 import com.res.hms.pharmacy.dto.StockRequest;
 import com.res.hms.repository.MedicineRepository;
 import com.res.hms.repository.PharmacyReturnRepository;
@@ -178,6 +179,66 @@ public class MedicineService {
       log.error("Excel import failed", e);
       throw new ApiException(
           "IMPORT_FAILED", "Unable to read medicine Excel file", HttpStatus.BAD_REQUEST);
+    }
+  }
+
+  @Transactional
+  public StockImportResponse importStockExcel(MultipartFile file) {
+    try (var workbook = WorkbookFactory.create(file.getInputStream())) {
+      int totalRows = 0;
+      int imported = 0;
+      int skipped = 0;
+      int notFound = 0;
+
+      for (Row row : workbook.getSheetAt(0)) {
+        if (row.getRowNum() == 0 || blank(row, 0)) {
+          continue;
+        }
+
+        totalRows++;
+        String medicineName = text(row, 0);
+        String batchNumber = text(row, 1);
+        String expiryStr = text(row, 2);
+        String qtyStr = text(row, 3);
+        String purchasePriceStr = text(row, 4);
+        String sellingPriceStr = text(row, 5);
+
+        var medicineOpt = medicineRepository.findByNameIgnoreCase(medicineName);
+        if (medicineOpt.isEmpty()) {
+          log.warn("Medicine not found for stock import: {}", medicineName);
+          notFound++;
+          continue;
+        }
+
+        try {
+          addStock(
+              StockRequest.builder()
+                  .medicineId(medicineOpt.get().getId())
+                  .batchNumber(batchNumber)
+                  .expiryDate(expiryStr != null ? LocalDate.parse(expiryStr) : null)
+                  .quantity(qtyStr != null ? (int) Double.parseDouble(qtyStr) : 0)
+                  .purchasePrice(
+                      purchasePriceStr != null ? new BigDecimal(purchasePriceStr) : BigDecimal.ZERO)
+                  .sellingPrice(
+                      sellingPriceStr != null ? new BigDecimal(sellingPriceStr) : BigDecimal.ZERO)
+                  .build());
+          imported++;
+        } catch (Exception e) {
+          log.error("Failed to import stock row: {}", row.getRowNum(), e);
+          skipped++;
+        }
+      }
+
+      return StockImportResponse.builder()
+          .totalRows(totalRows)
+          .importedRows(imported)
+          .skippedRows(skipped)
+          .medicineNotFoundRows(notFound)
+          .build();
+    } catch (IOException e) {
+      log.error("Stock Excel import failed", e);
+      throw new ApiException(
+          "IMPORT_FAILED", "Unable to read stock Excel file", HttpStatus.BAD_REQUEST);
     }
   }
 
