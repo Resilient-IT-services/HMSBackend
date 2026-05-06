@@ -15,8 +15,8 @@ import com.res.hms.common.util.ResourceLookup;
 import com.res.hms.doctor.repository.DoctorProfileRepository;
 import com.res.hms.domain.DoctorProfile;
 import com.res.hms.domain.UserAccount;
-import com.res.hms.repository.DoctorHospitalDetailsRepository;
-import com.res.hms.repository.UserAccountRepository;
+import com.res.hms.doctor.repository.DoctorHospitalDetailsRepository;
+import com.res.hms.hospital.repository.HospitalRepository;
 import com.res.hms.user.dto.UserDetailsDTO;
 import java.util.Optional;
 import java.util.UUID;
@@ -27,6 +27,8 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.http.HttpStatus;
+
+import com.res.hms.user.repository.UserAccountRepository;
 
 @ExtendWith(MockitoExtension.class)
 class DoctorServiceTest {

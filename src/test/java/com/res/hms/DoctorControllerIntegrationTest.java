@@ -12,8 +12,8 @@ import com.res.hms.domain.Gender;
 import com.res.hms.domain.RoleCode;
 import com.res.hms.domain.UserAccount;
 import com.res.hms.domain.UserRoleAssignment;
-import com.res.hms.repository.RoleRepository;
-import com.res.hms.repository.UserAccountRepository;
+import com.res.hms.user.repository.RoleRepository;
+import com.res.hms.user.repository.UserAccountRepository;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.LocalTime;
@@ -44,10 +44,10 @@ class DoctorControllerIntegrationTest {
   @Autowired private com.res.hms.appointment.repository.AppointmentRepository appointmentRepository;
 
   @Autowired
-  private com.res.hms.repository.DoctorAvailabilityExceptionRepository
+  private com.res.hms.doctor.repository.DoctorAvailabilityExceptionRepository
       availabilityExceptionRepository;
 
-  @Autowired private com.res.hms.repository.HospitalRepository hospitalRepository;
+  @Autowired private com.res.hms.hospital.repository.HospitalRepository hospitalRepository;
 
   private UUID hospitalId;
   private UUID doctorId;

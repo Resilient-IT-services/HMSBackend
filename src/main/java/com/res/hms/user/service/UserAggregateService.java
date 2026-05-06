@@ -7,8 +7,8 @@ import com.res.hms.common.util.ResourceLookup;
 import com.res.hms.domain.Role;
 import com.res.hms.domain.UserAccount;
 import com.res.hms.domain.UserRoleAssignment;
-import com.res.hms.repository.RoleRepository;
-import com.res.hms.repository.UserAccountRepository;
+import com.res.hms.user.repository.RoleRepository;
+import com.res.hms.user.repository.UserAccountRepository;
 import com.res.hms.user.dto.UserDetailsDTO;
 import java.util.Objects;
 import java.util.UUID;
@@ -97,20 +97,8 @@ public class UserAggregateService {
           && userAccountRepository.existsByEmailAndIdNot(dto.getEmail(), user.getId())) {
         throw new ApiException("CONFLICT", "Email already exists", HttpStatus.CONFLICT);
       }
-      user.setEmail(dto.getEmail());
     }
-    if (dto.getFullName() != null) {
-      user.setFullName(dto.getFullName());
-    }
-    if (dto.getGender() != null) {
-      user.setGender(dto.getGender());
-    }
-    if (dto.getDob() != null) {
-      user.setDob(dto.getDob());
-    }
-    if (dto.getPhone() != null) {
-      user.setPhone(dto.getPhone());
-    }
+    userMapper.updateEntity(dto, user);
     if (isSuper && dto.getSuperuser() != null) {
       user.setSuperuser(dto.getSuperuser());
     }
@@ -136,7 +124,7 @@ public class UserAggregateService {
         UserRoleAssignment::getId,
         UserDetailsDTO.RoleAssignmentDTO::getAssignmentId,
         raDto -> createRoleAssignment(user, raDto),
-        this::updateRoleAssignment,
+        (existing, raDto) -> userMapper.updateEntity(raDto, existing),
         ra -> {
           if (isSuper || Objects.equals(activeId, ra.getHospitalId())) {
             user.getAssignments().remove(ra);
@@ -156,18 +144,12 @@ public class UserAggregateService {
     ra.setUser(user);
     ra.setHospitalId(dto.getHospitalId());
     ra.setRole(role);
-    ra.setDepartmentName(dto.getDepartmentName());
-    ra.setActive(dto.getActive() != null ? dto.getActive() : true);
-    return ra;
-  }
-
-  private void updateRoleAssignment(
-      UserRoleAssignment existing, UserDetailsDTO.RoleAssignmentDTO dto) {
-    if (dto.getDepartmentName() != null) {
-      existing.setDepartmentName(dto.getDepartmentName());
-    }
+    userMapper.updateEntity(dto, ra);
     if (dto.getActive() != null) {
-      existing.setActive(dto.getActive());
+      ra.setActive(dto.getActive());
+    } else {
+      ra.setActive(true);
     }
+    return ra;
   }
 }

@@ -6,7 +6,7 @@ import com.res.hms.common.tenant.HospitalContext;
 import com.res.hms.common.util.ResourceLookup;
 import com.res.hms.domain.RoleCode;
 import com.res.hms.domain.UserAccount;
-import com.res.hms.repository.UserAccountRepository;
+import com.res.hms.user.repository.UserAccountRepository;
 import com.res.hms.user.dto.AdminResetPasswordRequest;
 import com.res.hms.user.dto.UserDetailsDTO;
 import com.res.hms.user.dto.UserSummaryDTO;

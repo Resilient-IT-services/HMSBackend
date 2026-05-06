@@ -2,8 +2,8 @@ package com.res.hms.vital.service;
 
 import com.res.hms.domain.VitalRangeConfig;
 import com.res.hms.domain.VitalType;
-import com.res.hms.repository.HospitalRepository;
-import com.res.hms.repository.VitalRangeConfigRepository;
+import com.res.hms.hospital.repository.HospitalRepository;
+import com.res.hms.vital.repository.VitalRangeConfigRepository;
 import java.math.BigDecimal;
 import java.util.UUID;
 import lombok.RequiredArgsConstructor;

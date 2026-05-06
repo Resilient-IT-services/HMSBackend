@@ -2,7 +2,7 @@ package com.res.hms.user.service;
 
 import com.res.hms.common.exception.ApiException;
 import com.res.hms.domain.UserAccount;
-import com.res.hms.repository.UserAccountRepository;
+import com.res.hms.user.repository.UserAccountRepository;
 import com.res.hms.user.dto.ChangePasswordRequest;
 import com.res.hms.user.dto.LoginRequest;
 import com.res.hms.user.dto.UserDetailsDTO;

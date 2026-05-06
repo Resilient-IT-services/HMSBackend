@@ -2,17 +2,20 @@ package com.res.hms.user.service;
 
 import com.res.hms.domain.LabTechProfile;
 import com.res.hms.domain.UserAccount;
-import com.res.hms.repository.LabTechProfileRepository;
+import com.res.hms.staff.repository.LabTechProfileRepository;
 import com.res.hms.user.dto.UserDetailsDTO;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+
+import com.res.hms.staff.mapper.StaffInternalMapper;
 
 @Service
 @RequiredArgsConstructor
 public class LabTechProfileService {
 
   private final LabTechProfileRepository labTechProfileRepository;
+  private final StaffInternalMapper staffInternalMapper;
 
   @Transactional
   public void updateProfile(UserAccount user, UserDetailsDTO.LabTechInfo info) {
@@ -26,12 +29,8 @@ public class LabTechProfileService {
                     p.setUser(user);
                     return p;
                   });
-      if (info.getSpecialty() != null) {
-        profile.setSpecialty(info.getSpecialty());
-      }
-      if (info.getLicenseNo() != null) {
-        profile.setLicenseNo(info.getLicenseNo());
-      }
+
+      staffInternalMapper.updateEntity(info, profile);
       labTechProfileRepository.save(profile);
       user.setLabTechProfile(profile);
     }

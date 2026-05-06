@@ -12,8 +12,8 @@ import com.res.hms.domain.RoleCode;
 import com.res.hms.domain.UserAccount;
 import com.res.hms.prescription.dto.PrescriptionDTO;
 import com.res.hms.prescription.dto.PrescriptionItemDTO;
-import com.res.hms.repository.RoleRepository;
-import com.res.hms.repository.UserAccountRepository;
+import com.res.hms.user.repository.RoleRepository;
+import com.res.hms.user.repository.UserAccountRepository;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.List;
@@ -42,7 +42,7 @@ class PrescriptionControllerIntegrationTest {
   @Autowired private PasswordEncoder passwordEncoder;
   @Autowired private TestDataHelper testDataHelper;
   @Autowired private com.res.hms.appointment.repository.AppointmentRepository appointmentRepository;
-  @Autowired private com.res.hms.repository.MedicineRepository medicineRepository;
+  @Autowired private com.res.hms.pharmacy.repository.MedicineRepository medicineRepository;
   @Autowired private ObjectMapper objectMapper;
 
   private UUID hospitalId;

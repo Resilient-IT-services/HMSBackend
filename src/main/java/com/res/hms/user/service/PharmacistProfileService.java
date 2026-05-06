@@ -5,8 +5,8 @@ import com.res.hms.domain.PharmacistProfile;
 import com.res.hms.domain.RoleCode;
 import com.res.hms.domain.UserAccount;
 import com.res.hms.domain.UserRoleAssignment;
-import com.res.hms.repository.PharmacistHospitalDetailsRepository;
-import com.res.hms.repository.PharmacistProfileRepository;
+import com.res.hms.pharmacy.repository.PharmacistHospitalDetailsRepository;
+import com.res.hms.pharmacy.repository.PharmacistProfileRepository;
 import com.res.hms.user.dto.PharmacistHospitalDetailsDTO;
 import com.res.hms.user.dto.UserDetailsDTO;
 import java.util.Set;
@@ -14,12 +14,15 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import com.res.hms.pharmacy.mapper.PharmacistMapper;
+
 @Service
 @RequiredArgsConstructor
 public class PharmacistProfileService {
 
   private final PharmacistProfileRepository pharmacistProfileRepository;
   private final PharmacistHospitalDetailsRepository pharmacistHospitalDetailsRepository;
+  private final PharmacistMapper pharmacistMapper;
 
   @Transactional
   public void updateProfile(
@@ -34,12 +37,8 @@ public class PharmacistProfileService {
                     p.setUser(user);
                     return p;
                   });
-      if (info.getPciRegNo() != null) {
-        profile.setPciRegNo(info.getPciRegNo());
-      }
-      if (info.getQualification() != null) {
-        profile.setQualification(info.getQualification());
-      }
+
+      pharmacistMapper.updateEntity(info, profile);
       pharmacistProfileRepository.save(profile);
       user.setPharmacistProfile(profile);
     }
@@ -59,15 +58,8 @@ public class PharmacistProfileService {
                   newDet.setAssignment(a);
                   return newDet;
                 });
-    if (p.getCounterLocation() != null) {
-      det.setCounterLocation(p.getCounterLocation());
-    }
-    if (p.getPharmacyWing() != null) {
-      det.setPharmacyWing(p.getPharmacyWing());
-    }
-    if (p.getPharmacyLicenseNo() != null) {
-      det.setPharmacyLicenseNo(p.getPharmacyLicenseNo());
-    }
+
+    pharmacistMapper.updateEntity(p, det);
     pharmacistHospitalDetailsRepository.save(det);
     a.setPharmacistDetails(det);
   }

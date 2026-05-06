@@ -7,13 +7,15 @@ import com.res.hms.domain.NurseProfile;
 import com.res.hms.domain.UserAccount;
 import com.res.hms.domain.UserRoleAssignment;
 import com.res.hms.nurse.repository.NurseProfileRepository;
-import com.res.hms.repository.NurseHospitalDetailsRepository;
-import com.res.hms.repository.UserAccountRepository;
+import com.res.hms.nurse.repository.NurseHospitalDetailsRepository;
+import com.res.hms.user.repository.UserAccountRepository;
 import com.res.hms.user.dto.NurseHospitalDetailsDTO;
 import com.res.hms.user.dto.UserDetailsDTO;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+
+import com.res.hms.nurse.mapper.NurseMapper;
 
 @Service
 @RequiredArgsConstructor
@@ -24,6 +26,7 @@ public class NurseProfileService {
   private final UserAccountRepository userAccountRepository;
   private final HospitalContext hospitalContext;
   private final ResourceLookup resourceLookup;
+  private final NurseMapper nurseMapper;
 
   @Transactional
   public void updateProfile(UserAccount user, UserDetailsDTO.NurseInfo info) {
@@ -39,12 +42,8 @@ public class NurseProfileService {
                   n.setUser(user);
                   return n;
                 });
-    if (info.getNursingLicenseNo() != null) {
-      profile.setNursingLicenseNo(info.getNursingLicenseNo());
-    }
-    if (info.getCertificationLevel() != null) {
-      profile.setCertificationLevel(info.getCertificationLevel());
-    }
+
+    nurseMapper.updateEntity(info, profile);
     nurseProfileRepository.save(profile);
     user.setNurseProfile(profile);
   }
@@ -63,12 +62,8 @@ public class NurseProfileService {
                   newDet.setAssignment(assignment);
                   return newDet;
                 });
-    if (n.getFloorLocation() != null) {
-      det.setFloorLocation(n.getFloorLocation());
-    }
-    if (n.getShiftType() != null) {
-      det.setShiftType(n.getShiftType());
-    }
+
+    nurseMapper.updateEntity(n, det);
     nurseHospitalDetailsRepository.save(det);
     assignment.setNurseDetails(det);
   }

@@ -4,7 +4,7 @@ import com.res.hms.appointment.dto.VitalsDTO;
 import com.res.hms.common.exception.ApiException;
 import com.res.hms.common.tenant.HospitalContext;
 import com.res.hms.domain.VitalRangeConfig;
-import com.res.hms.repository.VitalRangeConfigRepository;
+import com.res.hms.vital.repository.VitalRangeConfigRepository;
 import java.math.BigDecimal;
 import java.util.List;
 import java.util.UUID;

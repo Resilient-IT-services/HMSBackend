@@ -10,9 +10,9 @@ import com.res.hms.domain.Item;
 import com.res.hms.inventory.dto.InventoryStockDTO;
 import com.res.hms.inventory.dto.ItemDTO;
 import com.res.hms.inventory.dto.StockTransactionRequest;
-import com.res.hms.repository.InventoryStockRepository;
-import com.res.hms.repository.InventoryTransactionRepository;
-import com.res.hms.repository.ItemRepository;
+import com.res.hms.inventory.repository.InventoryStockRepository;
+import com.res.hms.inventory.repository.InventoryTransactionRepository;
+import com.res.hms.inventory.repository.ItemRepository;
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.UUID;
@@ -21,6 +21,8 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+
+import com.res.hms.inventory.mapper.InventoryMapper;
 
 @Slf4j
 @Service
@@ -32,6 +34,7 @@ public class InventoryService {
   private final InventoryTransactionRepository inventoryTransactionRepository;
   private final HospitalContext hospitalContext;
   private final ResourceLookup resourceLookup;
+  private final InventoryMapper inventoryMapper;
 
   public PageResponse<ItemDTO> listItems(int page, int size, String search) {
     UUID hospitalId = hospitalContext.requireHospitalId();
@@ -41,25 +44,22 @@ public class InventoryService {
       return PageResponse.from(
           itemRepository
               .findAllByHospitalIdAndNameContainingIgnoreCase(hospitalId, search, pageRequest)
-              .map(this::toDto));
+              .map(inventoryMapper::toDto));
     }
 
     return PageResponse.from(
         itemRepository
             .findAllByHospitalIdOrderByCreatedAtDesc(hospitalId, pageRequest)
-            .map(this::toDto));
+            .map(inventoryMapper::toDto));
   }
 
   @Transactional
   public ItemDTO createItem(ItemDTO dto) {
     UUID hospitalId = hospitalContext.requireHospitalId();
-    Item item = new Item();
+    Item item = inventoryMapper.toEntity(dto);
     item.setHospitalId(hospitalId);
-    item.setName(dto.getName());
-    item.setCategory(dto.getCategory());
-    item.setUnit(dto.getUnit());
     item = itemRepository.save(item);
-    return toDto(item);
+    return inventoryMapper.toDto(item);
   }
 
   @Transactional
@@ -96,7 +96,6 @@ public class InventoryService {
     } else if (request.getType() == InventoryTransactionType.STOCK_OUT) {
       newQuantity = stock.getQuantity().subtract(request.getQuantity());
     } else { // ADJUSTMENT
-      // For ADJUSTMENT, we might want a different logic, but let's assume it's a delta
       newQuantity = stock.getQuantity().add(request.getQuantity());
     }
 
@@ -104,20 +103,12 @@ public class InventoryService {
     stock.setLastUpdated(LocalDateTime.now());
     stock = inventoryStockRepository.save(stock);
 
-    return InventoryStockDTO.builder()
-        .itemId(item.getId())
-        .itemName(item.getName())
-        .quantity(stock.getQuantity())
-        .lastUpdated(stock.getLastUpdated())
-        .build();
+    InventoryStockDTO dto = inventoryMapper.toDto(stock);
+    dto.setItemName(item.getName());
+    return dto;
   }
 
   public ItemDTO toDto(Item item) {
-    return ItemDTO.builder()
-        .id(item.getId())
-        .name(item.getName())
-        .category(item.getCategory())
-        .unit(item.getUnit())
-        .build();
+    return inventoryMapper.toDto(item);
   }
 }

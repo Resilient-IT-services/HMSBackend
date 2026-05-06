@@ -11,7 +11,7 @@ import com.res.hms.domain.PrescriptionItem;
 import com.res.hms.prescription.dto.PrescriptionDTO;
 import com.res.hms.prescription.dto.PrescriptionItemDTO;
 import com.res.hms.prescription.repository.PrescriptionRepository;
-import com.res.hms.repository.MedicineRepository;
+import com.res.hms.pharmacy.repository.MedicineRepository;
 import java.util.List;
 import java.util.UUID;
 import java.util.stream.Collectors;
@@ -21,9 +21,17 @@ import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import com.res.hms.prescription.mapper.PrescriptionMapper;
+
 @Service
 @RequiredArgsConstructor
 public class PrescriptionService {
+
+  private final PrescriptionRepository prescriptionRepository;
+  private final MedicineRepository medicineRepository;
+  private final AppointmentRepository appointmentRepository;
+  private final HospitalContext hospitalContext;
+  private final PrescriptionMapper prescriptionMapper;
 
   @Transactional(readOnly = true)
   public PageResponse<PrescriptionDTO> list(int page, int size) {
@@ -31,13 +39,8 @@ public class PrescriptionService {
     return PageResponse.from(
         prescriptionRepository
             .findAllByHospitalId(hospitalId, PageRequest.of(page, size))
-            .map(this::toDto));
+            .map(prescriptionMapper::toDto));
   }
-
-  private final PrescriptionRepository prescriptionRepository;
-  private final MedicineRepository medicineRepository;
-  private final AppointmentRepository appointmentRepository;
-  private final HospitalContext hospitalContext;
 
   @Transactional
   public PrescriptionDTO createPrescription(PrescriptionDTO dto) {
@@ -84,14 +87,14 @@ public class PrescriptionService {
       }
     }
 
-    return toDto(prescriptionRepository.save(prescription));
+    return prescriptionMapper.toDto(prescriptionRepository.save(prescription));
   }
 
   @Transactional(readOnly = true)
   public List<PrescriptionDTO> getPatientPrescriptions(UUID patientId) {
     UUID hospitalId = hospitalContext.requireHospitalId();
     return prescriptionRepository.findByPatientIdAndHospitalId(patientId, hospitalId).stream()
-        .map(this::toDto)
+        .map(prescriptionMapper::toDto)
         .collect(Collectors.toList());
   }
 
@@ -100,59 +103,12 @@ public class PrescriptionService {
     UUID hospitalId = hospitalContext.requireHospitalId();
     return prescriptionRepository
         .findByIdAndHospitalId(id, hospitalId)
-        .map(this::toDto)
+        .map(prescriptionMapper::toDto)
         .orElseThrow(
             () -> new ApiException("NOT_FOUND", "Prescription not found", HttpStatus.NOT_FOUND));
   }
 
   public PrescriptionDTO toDto(Prescription prescription) {
-    if (prescription == null) {
-      return null;
-    }
-
-    PrescriptionDTO.PrescriptionDTOBuilder builder =
-        PrescriptionDTO.builder().id(prescription.getId());
-
-    if (prescription.getPatient() != null) {
-      builder
-          .patientId(prescription.getPatient().getId())
-          .patientName(prescription.getPatient().getFullName());
-    }
-
-    if (prescription.getDoctorProfile() != null) {
-      builder
-          .doctorId(prescription.getDoctorProfile().getId())
-          .doctorName(prescription.getDoctorProfile().getFullName());
-    }
-
-    if (prescription.getAppointment() != null) {
-      builder
-          .appointmentId(prescription.getAppointment().getId())
-          .createdAt(prescription.getAppointment().getCreatedAt());
-    }
-
-    if (prescription.getItems() != null) {
-      builder.items(
-          prescription.getItems().stream().map(this::toItemDto).collect(Collectors.toList()));
-    }
-
-    return builder.build();
-  }
-
-  private PrescriptionItemDTO toItemDto(PrescriptionItem item) {
-    if (item == null) {
-      return null;
-    }
-    PrescriptionItemDTO.PrescriptionItemDTOBuilder builder =
-        PrescriptionItemDTO.builder()
-            .id(item.getId())
-            .dosage(item.getDosage())
-            .duration(item.getDuration());
-
-    if (item.getMedicine() != null) {
-      builder.medicineId(item.getMedicine().getId()).medicineName(item.getMedicine().getName());
-    }
-
-    return builder.build();
+    return prescriptionMapper.toDto(prescription);
   }
 }

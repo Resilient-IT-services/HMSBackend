@@ -1,5 +1,4 @@
 package com.res.hms.user.service;
-
 import com.res.hms.domain.AdminHospitalDetails;
 import com.res.hms.domain.DoctorHospitalDetails;
 import com.res.hms.domain.DoctorProfile;
@@ -13,7 +12,7 @@ import com.res.hms.domain.ReceptionistProfile;
 import com.res.hms.domain.RoleCode;
 import com.res.hms.domain.UserAccount;
 import com.res.hms.domain.UserRoleAssignment;
-import com.res.hms.repository.HospitalRepository;
+import com.res.hms.hospital.repository.HospitalRepository;
 import com.res.hms.user.dto.AdminHospitalDetailsDTO;
 import com.res.hms.user.dto.DoctorHospitalDetailsDTO;
 import com.res.hms.user.dto.HospitalMembershipResponse;
@@ -30,21 +29,18 @@ import java.util.stream.Collectors;
 import org.mapstruct.InjectionStrategy;
 import org.mapstruct.Mapper;
 import org.mapstruct.Mapping;
+import org.mapstruct.MappingTarget;
 import org.mapstruct.ReportingPolicy;
 import org.springframework.beans.factory.annotation.Autowired;
-
 @Mapper(
     componentModel = "spring",
     unmappedTargetPolicy = ReportingPolicy.IGNORE,
     injectionStrategy = InjectionStrategy.CONSTRUCTOR)
 public abstract class UserMapper {
-
   @Autowired protected HospitalRepository hospitalRepository;
   @Autowired protected com.res.hms.common.tenant.HospitalContext hospitalContext;
-
   @Mapping(target = "memberships", expression = "java(mapSummaryMemberships(user))")
   public abstract UserSummaryDTO toSummaryDTO(UserAccount user);
-
   @Mapping(target = "memberships", expression = "java(mapMemberships(user))")
   @Mapping(target = "doctorInfo", source = "doctorProfile")
   @Mapping(target = "nurseInfo", source = "nurseProfile")
@@ -52,12 +48,33 @@ public abstract class UserMapper {
   @Mapping(target = "labTechInfo", source = "labTechProfile")
   @Mapping(target = "receptionistInfo", source = "receptionistProfile")
   public abstract UserDetailsDTO toDetailsDTO(UserAccount user);
-
+  @Mapping(target = "id", ignore = true)
+  @Mapping(target = "doctorProfile", ignore = true)
+  @Mapping(target = "nurseProfile", ignore = true)
+  @Mapping(target = "pharmacistProfile", ignore = true)
+  @Mapping(target = "labTechProfile", ignore = true)
+  @Mapping(target = "receptionistProfile", ignore = true)
+  @Mapping(target = "assignments", ignore = true)
+  @Mapping(target = "passwordHash", ignore = true)
+  @Mapping(target = "username", ignore = true)
+  @Mapping(target = "superuser", ignore = true)
+  public abstract void updateEntity(UserDetailsDTO dto, @MappingTarget UserAccount user);
+  @Mapping(target = "id", ignore = true)
+  @Mapping(target = "user", ignore = true)
+  @Mapping(target = "hospitalId", ignore = true)
+  @Mapping(target = "role", ignore = true)
+  @Mapping(target = "doctorDetails", ignore = true)
+  @Mapping(target = "nurseDetails", ignore = true)
+  @Mapping(target = "adminDetails", ignore = true)
+  @Mapping(target = "pharmacistDetails", ignore = true)
+  @Mapping(target = "receptionistDetails", ignore = true)
+  @Mapping(target = "schedules", ignore = true)
+  public abstract void updateEntity(
+      UserDetailsDTO.RoleAssignmentDTO dto, @MappingTarget UserRoleAssignment assignment);
   protected List<HospitalMembershipResponse> mapHospitalMemberships(UserAccount user) {
     if (user.getAssignments() == null) {
       return Collections.emptyList();
     }
-
     return user.getAssignments().stream()
         .collect(Collectors.groupingBy(UserRoleAssignment::getHospitalId))
         .entrySet()
@@ -70,18 +87,15 @@ public abstract class UserMapper {
               if (hospital == null && hospitalId != null) {
                 hospital = hospitalRepository.findById(hospitalId).orElse(null);
               }
-
               Set<RoleCode> roles =
                   entry.getValue().stream()
                       .map(a -> a.getRole().getCode())
                       .collect(Collectors.toSet());
-
               String specialization =
                   user.getDoctorProfile() != null
                       ? user.getDoctorProfile().getSpecialization()
                       : null;
               String department = first.getDepartmentName();
-
               return new HospitalMembershipResponse(
                   hospitalId,
                   hospital != null ? hospital.getName() : "Global Access",
@@ -92,7 +106,6 @@ public abstract class UserMapper {
             })
         .collect(Collectors.toList());
   }
-
   @Mapping(target = "assignmentId", source = "id")
   @Mapping(target = "roleCode", expression = "java(assignment.getRole().getCode().name())")
   @Mapping(target = "doctorDetails", source = "doctorDetails")

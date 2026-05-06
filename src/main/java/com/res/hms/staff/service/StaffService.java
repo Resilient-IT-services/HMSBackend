@@ -7,7 +7,7 @@ import com.res.hms.domain.DoctorProfile;
 import com.res.hms.domain.RoleCode;
 import com.res.hms.domain.UserAccount;
 import com.res.hms.domain.UserRoleAssignment;
-import com.res.hms.repository.UserRoleAssignmentRepository;
+import com.res.hms.user.repository.UserRoleAssignmentRepository;
 import com.res.hms.staff.dto.DoctorStaffResponse;
 import com.res.hms.staff.dto.NurseStaffResponse;
 import jakarta.persistence.criteria.Join;
@@ -26,12 +26,15 @@ import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import com.res.hms.staff.mapper.StaffMapper;
+
 @Service
 @RequiredArgsConstructor
 public class StaffService {
 
   private final UserRoleAssignmentRepository assignmentRepository;
   private final HospitalContext hospitalContext;
+  private final StaffMapper staffMapper;
 
   @Transactional(readOnly = true)
   public PageResponse<DoctorStaffResponse> getDoctors(
@@ -89,7 +92,7 @@ public class StaffService {
         };
 
     Page<UserRoleAssignment> assignments = assignmentRepository.findAll(spec, pageable);
-    return PageResponse.from(assignments.map(this::mapToDoctorResponse));
+    return PageResponse.from(assignments.map(staffMapper::toDoctorResponse));
   }
 
   @Transactional(readOnly = true)
@@ -124,42 +127,6 @@ public class StaffService {
         };
 
     Page<UserRoleAssignment> assignments = assignmentRepository.findAll(spec, pageable);
-    return PageResponse.from(assignments.map(this::mapToNurseResponse));
-  }
-
-  private DoctorStaffResponse mapToDoctorResponse(UserRoleAssignment a) {
-    UserAccount u = a.getUser();
-    DoctorProfile d = u.getDoctorProfile();
-    DoctorHospitalDetails det = a.getDoctorDetails();
-
-    return DoctorStaffResponse.builder()
-        .userId(u.getId())
-        .doctorId(d != null ? d.getId() : null)
-        .assignmentId(a.getId())
-        .fullName(u.getFullName())
-        .phone(u.getPhone())
-        .gender(u.getGender())
-        .departmentName(a.getDepartmentName())
-        .specialization(d != null ? d.getSpecialization() : null)
-        .consultationFee(det != null ? det.getConsultationFee() : null)
-        .build();
-  }
-
-  private NurseStaffResponse mapToNurseResponse(UserRoleAssignment a) {
-    UserAccount u = a.getUser();
-    var n = u.getNurseProfile();
-    var det = a.getNurseDetails();
-
-    return NurseStaffResponse.builder()
-        .userId(u.getId())
-        .nurseId(n != null ? n.getId() : null)
-        .assignmentId(a.getId())
-        .fullName(u.getFullName())
-        .phone(u.getPhone())
-        .gender(u.getGender())
-        .departmentName(a.getDepartmentName())
-        .certificationLevel(n != null ? n.getCertificationLevel() : null)
-        .shiftType(det != null ? det.getShiftType() : null)
-        .build();
+    return PageResponse.from(assignments.map(staffMapper::toNurseResponse));
   }
 }

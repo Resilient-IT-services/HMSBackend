@@ -22,12 +22,18 @@ public interface DoctorProfileRepository extends JpaRepository<DoctorProfile, UU
       @Param("licenseNumber") String licenseNumber, @Param("userId") UUID userId);
 
   @Query(
-      "SELECT d FROM DoctorProfile d JOIN d.user u JOIN u.assignments a "
+      value = "SELECT d FROM DoctorProfile d JOIN FETCH d.user u JOIN u.assignments a "
+          + "WHERE a.hospitalId = :hospitalId AND a.role.code = com.res.hms.domain.RoleCode.DOCTOR",
+      countQuery = "SELECT count(d) FROM DoctorProfile d JOIN d.user u JOIN u.assignments a "
           + "WHERE a.hospitalId = :hospitalId AND a.role.code = com.res.hms.domain.RoleCode.DOCTOR")
   Page<DoctorProfile> findAllByHospitalId(@Param("hospitalId") UUID hospitalId, Pageable pageable);
 
   @Query(
-      "SELECT d FROM DoctorProfile d JOIN d.user u JOIN u.assignments a "
+      value = "SELECT d FROM DoctorProfile d JOIN FETCH d.user u JOIN u.assignments a "
+          + "WHERE a.hospitalId = :hospitalId AND a.role.code = com.res.hms.domain.RoleCode.DOCTOR "
+          + "AND (LOWER(u.fullName) LIKE :query OR "
+          + "LOWER(d.specialization) LIKE :query)",
+      countQuery = "SELECT count(d) FROM DoctorProfile d JOIN d.user u JOIN u.assignments a "
           + "WHERE a.hospitalId = :hospitalId AND a.role.code = com.res.hms.domain.RoleCode.DOCTOR "
           + "AND (LOWER(u.fullName) LIKE :query OR "
           + "LOWER(d.specialization) LIKE :query)")
@@ -37,7 +43,7 @@ public interface DoctorProfileRepository extends JpaRepository<DoctorProfile, UU
   Optional<DoctorProfile> findByIdAndUserId(UUID id, UUID userId);
 
   @Query(
-      "SELECT d FROM DoctorProfile d JOIN d.user u JOIN u.assignments a "
+      "SELECT d FROM DoctorProfile d JOIN FETCH d.user u JOIN u.assignments a "
           + "WHERE d.id = :id AND a.hospitalId = :hospitalId AND a.role.code = com.res.hms.domain.RoleCode.DOCTOR")
   Optional<DoctorProfile> findByIdAndHospitalId(
       @Param("id") UUID id, @Param("hospitalId") UUID hospitalId);

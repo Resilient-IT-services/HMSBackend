@@ -3,7 +3,7 @@ package com.res.hms.user.service;
 import com.res.hms.domain.RoleCode;
 import com.res.hms.domain.UserAccount;
 import com.res.hms.domain.UserRoleAssignment;
-import com.res.hms.repository.UserAccountRepository;
+import com.res.hms.user.repository.UserAccountRepository;
 import com.res.hms.user.security.HospitalUserPrincipal;
 import java.util.HashMap;
 import java.util.HashSet;

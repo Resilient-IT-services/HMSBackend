@@ -9,25 +9,35 @@ import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
 public interface AppointmentRepository extends BaseRepository<Appointment> {
+  @Query(
+      value = "SELECT a FROM Appointment a JOIN FETCH a.patient JOIN FETCH a.doctorProfile d JOIN FETCH d.user "
+          + "WHERE a.hospitalId = :hospitalId "
+          + "ORDER BY a.appointmentTime DESC",
+      countQuery = "SELECT count(a) FROM Appointment a WHERE a.hospitalId = :hospitalId")
   Page<Appointment> findAllByHospitalIdOrderByAppointmentTimeDesc(
       UUID hospitalId, Pageable pageable);
 
   @Query(
-      "SELECT a FROM Appointment a "
+      value = "SELECT a FROM Appointment a JOIN FETCH a.patient JOIN FETCH a.doctorProfile d JOIN FETCH d.user "
           + "WHERE a.hospitalId = :hospitalId AND "
           + "CAST(a.appointmentTime AS date) = :date "
-          + "ORDER BY a.appointmentTime DESC")
+          + "ORDER BY a.appointmentTime DESC",
+      countQuery = "SELECT count(a) FROM Appointment a WHERE a.hospitalId = :hospitalId AND CAST(a.appointmentTime AS date) = :date")
   Page<Appointment> findAllByHospitalIdAndDate(
       @Param("hospitalId") UUID hospitalId,
       @Param("date") java.time.LocalDate date,
       Pageable pageable);
 
   @Query(
-      "SELECT a FROM Appointment a JOIN a.patient p JOIN a.doctorProfile d JOIN d.user u "
+      value = "SELECT a FROM Appointment a JOIN FETCH a.patient p JOIN FETCH a.doctorProfile d JOIN FETCH d.user u "
           + "WHERE a.hospitalId = :hospitalId AND "
           + "(LOWER(p.fullName) LIKE :query OR "
           + "LOWER(u.fullName) LIKE :query) "
-          + "ORDER BY a.appointmentTime DESC")
+          + "ORDER BY a.appointmentTime DESC",
+      countQuery = "SELECT count(a) FROM Appointment a JOIN a.patient p JOIN a.doctorProfile d JOIN d.user u "
+          + "WHERE a.hospitalId = :hospitalId AND "
+          + "(LOWER(p.fullName) LIKE :query OR "
+          + "LOWER(u.fullName) LIKE :query)")
   Page<Appointment> search(
       @Param("hospitalId") UUID hospitalId, @Param("query") String query, Pageable pageable);
 

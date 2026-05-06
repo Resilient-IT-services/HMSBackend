@@ -5,7 +5,7 @@ import com.res.hms.common.exception.ApiException;
 import com.res.hms.domain.Hospital;
 import com.res.hms.domain.HospitalStatus;
 import com.res.hms.hospital.dto.HospitalDTO;
-import com.res.hms.repository.HospitalRepository;
+import com.res.hms.hospital.repository.HospitalRepository;
 import java.util.UUID;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.PageRequest;
@@ -14,17 +14,20 @@ import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import com.res.hms.hospital.mapper.HospitalMapper;
+
 @Service
 @RequiredArgsConstructor
 public class HospitalService {
 
   private final HospitalRepository hospitalRepository;
+  private final HospitalMapper hospitalMapper;
 
   @Transactional(readOnly = true)
   public HospitalDTO getById(UUID id) {
     return hospitalRepository
         .findById(id)
-        .map(this::toDto)
+        .map(hospitalMapper::toDto)
         .orElseThrow(
             () -> new ApiException("NOT_FOUND", "Hospital not found", HttpStatus.NOT_FOUND));
   }
@@ -49,22 +52,10 @@ public class HospitalService {
     }
 
     return PageResponse.from(
-        hospitalRepository.findAll(spec, PageRequest.of(page, size)).map(this::toDto));
+        hospitalRepository.findAll(spec, PageRequest.of(page, size)).map(hospitalMapper::toDto));
   }
 
   public HospitalDTO toDto(Hospital hospital) {
-    return HospitalDTO.builder()
-        .id(hospital.getId())
-        .name(hospital.getName())
-        .code(hospital.getCode())
-        .address(hospital.getAddress())
-        .city(hospital.getCity())
-        .state(hospital.getState())
-        .pincode(hospital.getPincode())
-        .status(hospital.getStatus())
-        .gstin(hospital.getGstin())
-        .registrationNo(hospital.getRegistrationNo())
-        .settings(hospital.getSettings())
-        .build();
+    return hospitalMapper.toDto(hospital);
   }
 }

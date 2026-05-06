@@ -18,6 +18,9 @@ import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import com.res.hms.appointment.mapper.AppointmentMapper;
+import com.res.hms.appointment.mapper.VitalsMapper;
+
 @Service
 @RequiredArgsConstructor
 public class AppointmentService {
@@ -25,6 +28,8 @@ public class AppointmentService {
   private final AppointmentRepository appointmentRepository;
   private final HospitalContext hospitalContext;
   private final ResourceLookup resourceLookup;
+  private final AppointmentMapper appointmentMapper;
+  private final VitalsMapper vitalsMapper;
 
   @Lazy private final PrescriptionService prescriptionService;
 
@@ -102,54 +107,10 @@ public class AppointmentService {
     if (appointment == null) {
       return null;
     }
-
-    AppointmentDTO.AppointmentDTOBuilder builder =
-        AppointmentDTO.builder()
-            .id(appointment.getId())
-            .appointmentTime(appointment.getAppointmentTime())
-            .status(appointment.getStatus())
-            .tokenNumber(appointment.getTokenNumber())
-            .sessionPeriod(appointment.getSessionPeriod())
-            .chiefComplaints(appointment.getChiefComplaints())
-            .diagnosis(appointment.getDiagnosis())
-            .clinicalNotes(appointment.getClinicalNotes())
-            .icdCodes(appointment.getIcdCodes())
-            .notes(appointment.getNotes())
-            .vitals(toVitalsDto(appointment.getVitals()))
-            .prescription(
-                appointment.getPrescription() != null
-                    ? prescriptionService.toDto(appointment.getPrescription())
-                    : null);
-
-    if (appointment.getPatient() != null) {
-      builder
-          .patientId(appointment.getPatient().getId())
-          .patientName(appointment.getPatient().getFullName());
+    AppointmentDTO dto = appointmentMapper.toDto(appointment);
+    if (appointment.getPrescription() != null) {
+      dto.setPrescription(prescriptionService.toDto(appointment.getPrescription()));
     }
-
-    if (appointment.getDoctorProfile() != null) {
-      builder
-          .doctorId(appointment.getDoctorProfile().getId())
-          .doctorName(appointment.getDoctorProfile().getFullName());
-    }
-
-    return builder.build();
-  }
-
-  private com.res.hms.appointment.dto.VitalsDTO toVitalsDto(com.res.hms.domain.Vitals vitals) {
-    if (vitals == null) {
-      return null;
-    }
-    return com.res.hms.appointment.dto.VitalsDTO.builder()
-        .bloodPressure(vitals.getBloodPressure())
-        .systolic(vitals.getSystolic())
-        .diastolic(vitals.getDiastolic())
-        .heartRate(vitals.getHeartRate())
-        .oxygenLevel(vitals.getOxygenLevel())
-        .temperatureUnit(vitals.getTemperatureUnit())
-        .temperature(vitals.getTemperature())
-        .weightUnit(vitals.getWeightUnit())
-        .weight(vitals.getWeight())
-        .build();
+    return dto;
   }
 }

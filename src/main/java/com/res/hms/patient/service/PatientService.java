@@ -11,6 +11,8 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Service;
 
+import com.res.hms.patient.mapper.PatientMapper;
+
 @Service
 @RequiredArgsConstructor
 public class PatientService {
@@ -18,6 +20,7 @@ public class PatientService {
   private final PatientRepository patientRepository;
   private final HospitalContext hospitalContext;
   private final ResourceLookup resourceLookup;
+  private final PatientMapper patientMapper;
 
   public PageResponse<PatientDTO> list(int page, int size, String search) {
     UUID hospitalId = hospitalContext.requireHospitalId();
@@ -26,18 +29,18 @@ public class PatientService {
     if (search != null && !search.trim().isEmpty()) {
       String searchPattern = "%" + search.trim().toLowerCase() + "%";
       return PageResponse.from(
-          patientRepository.search(hospitalId, searchPattern, pageRequest).map(this::toDto));
+          patientRepository.search(hospitalId, searchPattern, pageRequest).map(patientMapper::toDto));
     }
 
     return PageResponse.from(
         patientRepository
             .findAllByHospitalIdOrderByCreatedAtDesc(hospitalId, pageRequest)
-            .map(this::toDto));
+            .map(patientMapper::toDto));
   }
 
   public PatientDTO get(UUID id) {
     UUID hospitalId = hospitalContext.requireHospitalId();
-    return toDto(requirePatient(id, hospitalId));
+    return patientMapper.toDto(requirePatient(id, hospitalId));
   }
 
   public Patient requirePatient(UUID id, UUID hospitalId) {
@@ -46,17 +49,6 @@ public class PatientService {
   }
 
   public PatientDTO toDto(Patient patient) {
-    return PatientDTO.builder()
-        .id(patient.getId())
-        .fullName(patient.getFullName())
-        .patientCode(patient.getPatientCode())
-        .email(patient.getEmail())
-        .medicalHistory(patient.getMedicalHistory())
-        .gender(patient.getGender())
-        .dob(patient.getDob())
-        .phone(patient.getPhone())
-        .bloodGroup(patient.getBloodGroup())
-        .address(patient.getAddress())
-        .build();
+    return patientMapper.toDto(patient);
   }
 }

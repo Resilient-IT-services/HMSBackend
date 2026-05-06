@@ -1,0 +1,76 @@
+package com.res.hms.pharmacy.repository;
+
+import com.res.hms.common.repository.BaseRepository;
+import com.res.hms.domain.PharmacyStock;
+import jakarta.persistence.LockModeType;
+import java.time.LocalDate;
+import java.util.List;
+import java.util.Optional;
+import java.util.UUID;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.jpa.repository.Lock;
+import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.repository.query.Param;
+
+public interface PharmacyStockRepository extends BaseRepository<PharmacyStock> {
+  Page<PharmacyStock> findAllByHospitalIdAndQuantityLessThan(
+      UUID hospitalId, Integer threshold, Pageable pageable);
+
+  Optional<PharmacyStock> findByIdAndHospitalId(UUID id, UUID hospitalId);
+
+  Optional<PharmacyStock> findByHospitalIdAndMedicineIdAndBatchNumber(
+      UUID hospitalId, UUID medicineId, String batchNumber);
+
+  @Query(
+      """
+      SELECT s FROM PharmacyStock s
+      JOIN FETCH s.medicine
+      WHERE s.hospitalId = :hospitalId
+      ORDER BY s.medicine.name, s.expiryDate ASC
+      """)
+  Page<PharmacyStock> findDetailedStock(@Param("hospitalId") UUID hospitalId, Pageable pageable);
+
+  @Query(
+      """
+      SELECT s FROM PharmacyStock s
+      JOIN FETCH s.medicine
+      WHERE s.hospitalId = :hospitalId
+        AND s.quantity > 0
+        AND (s.expiryDate IS NULL OR s.expiryDate >= :today)
+        AND s.medicine.id = :medicineId
+      ORDER BY s.expiryDate ASC, s.createdAt ASC
+      """)
+  @Lock(LockModeType.PESSIMISTIC_WRITE)
+  List<PharmacyStock> findDispensableBatchesForUpdate(
+      @Param("hospitalId") UUID hospitalId,
+      @Param("medicineId") UUID medicineId,
+      @Param("today") LocalDate today);
+
+  @Query(
+      """
+      SELECT COALESCE(SUM(s.quantity), 0) FROM PharmacyStock s
+      WHERE s.hospitalId = :hospitalId
+        AND s.medicine.id = :medicineId
+        AND s.quantity > 0
+        AND (s.expiryDate IS NULL OR s.expiryDate >= :today)
+      """)
+  Long availableQuantity(
+      @Param("hospitalId") UUID hospitalId,
+      @Param("medicineId") UUID medicineId,
+      @Param("today") LocalDate today);
+
+  @Query(
+      """
+      SELECT s FROM PharmacyStock s
+      JOIN FETCH s.medicine
+      WHERE s.hospitalId = :hospitalId
+        AND s.quantity > 0
+        AND s.expiryDate BETWEEN :today AND :until
+      ORDER BY s.expiryDate ASC
+      """)
+  List<PharmacyStock> findExpiringBatches(
+      @Param("hospitalId") UUID hospitalId,
+      @Param("today") LocalDate today,
+      @Param("until") LocalDate until);
+}

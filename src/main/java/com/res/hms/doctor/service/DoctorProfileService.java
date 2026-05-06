@@ -14,8 +14,8 @@ import com.res.hms.domain.Hospital;
 import com.res.hms.domain.RoleCode;
 import com.res.hms.domain.UserAccount;
 import com.res.hms.domain.UserRoleAssignment;
-import com.res.hms.repository.DoctorHospitalDetailsRepository;
-import com.res.hms.repository.HospitalRepository;
+import com.res.hms.doctor.repository.DoctorHospitalDetailsRepository;
+import com.res.hms.hospital.repository.HospitalRepository;
 import com.res.hms.user.dto.DoctorHospitalDetailsDTO;
 import com.res.hms.user.dto.UserDetailsDTO;
 import java.time.LocalTime;
@@ -26,6 +26,12 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import com.res.hms.user.repository.UserRoleAssignmentRepository;
+import com.res.hms.doctor.repository.DoctorScheduleRepository;
+import com.res.hms.doctor.repository.DoctorAvailabilityExceptionRepository;
+
+import com.res.hms.doctor.mapper.DoctorMapper;
+
 @Service
 @RequiredArgsConstructor
 public class DoctorProfileService {
@@ -35,10 +41,11 @@ public class DoctorProfileService {
   private final HospitalRepository hospitalRepository;
   private final HospitalContext hospitalContext;
   private final ResourceLookup resourceLookup;
+  private final DoctorMapper doctorMapper;
 
-  private final com.res.hms.repository.UserRoleAssignmentRepository assignmentRepository;
-  private final com.res.hms.repository.DoctorScheduleRepository scheduleRepository;
-  private final com.res.hms.repository.DoctorAvailabilityExceptionRepository
+  private final UserRoleAssignmentRepository assignmentRepository;
+  private final DoctorScheduleRepository scheduleRepository;
+  private final DoctorAvailabilityExceptionRepository
       availabilityExceptionRepository;
   private final com.res.hms.appointment.repository.AppointmentRepository appointmentRepository;
 
@@ -317,12 +324,8 @@ public class DoctorProfileService {
                   d.setUser(user);
                   return d;
                 });
-    if (info.getSpecialization() != null) {
-      doctorProfile.setSpecialization(info.getSpecialization());
-    }
-    if (info.getBio() != null) {
-      doctorProfile.setBio(info.getBio());
-    }
+
+    doctorMapper.updateEntity(info, doctorProfile);
     if (info.getLicenseNumber() != null) {
       doctorProfile.setLicenseNumber(normalizeLicenseNumber(info.getLicenseNumber()));
     }
@@ -350,22 +353,11 @@ public class DoctorProfileService {
           DoctorSchedule::getId,
           ScheduleDTO::getId,
           dto -> {
-            DoctorSchedule s = new DoctorSchedule();
+            DoctorSchedule s = doctorMapper.toScheduleEntity(dto);
             s.setAssignment(assignment);
-            s.setDayOfWeek(dto.getDayOfWeek());
-            s.setStartTime(dto.getStartTime());
-            s.setEndTime(dto.getEndTime());
-            s.setSlotDurationMinutes(dto.getSlotDurationMinutes());
-            s.setMaxPatients(dto.getMaxPatients());
             return s;
           },
-          (existing, dto) -> {
-            existing.setDayOfWeek(dto.getDayOfWeek());
-            existing.setStartTime(dto.getStartTime());
-            existing.setEndTime(dto.getEndTime());
-            existing.setSlotDurationMinutes(dto.getSlotDurationMinutes());
-            existing.setMaxPatients(dto.getMaxPatients());
-          },
+          (existing, dto) -> doctorMapper.updateEntity(dto, existing),
           assignment.getSchedules()::remove);
     }
 
@@ -381,27 +373,12 @@ public class DoctorProfileService {
           DoctorAvailabilityException::getId,
           AvailabilityExceptionDTO::getId,
           dto -> {
-            DoctorAvailabilityException ex = new DoctorAvailabilityException();
+            DoctorAvailabilityException ex = doctorMapper.toExceptionEntity(dto);
             ex.setDoctorProfile(doctorProfile);
             ex.setHospital(hospital);
-            ex.setDate(dto.getDate());
-            ex.setType(dto.getType());
-            ex.setStartTime(dto.getStartTime());
-            ex.setEndTime(dto.getEndTime());
-            ex.setMode(dto.getMode());
-            ex.setSlotDurationMinutes(dto.getSlotDurationMinutes());
-            ex.setNote(dto.getNote());
             return ex;
           },
-          (existing, dto) -> {
-            existing.setDate(dto.getDate());
-            existing.setType(dto.getType());
-            existing.setStartTime(dto.getStartTime());
-            existing.setEndTime(dto.getEndTime());
-            existing.setMode(dto.getMode());
-            existing.setSlotDurationMinutes(dto.getSlotDurationMinutes());
-            existing.setNote(dto.getNote());
-          },
+          (existing, dto) -> doctorMapper.updateEntity(dto, existing),
           doctorProfile.getAvailabilityExceptions()::remove);
     }
 
@@ -417,19 +394,8 @@ public class DoctorProfileService {
                   newDet.setAssignment(assignment);
                   return newDet;
                 });
-    if (d.getConsultationFee() != null) {
-      det.setConsultationFee(d.getConsultationFee());
-    }
-    if (d.getFollowUpDays() != null) {
-      det.setFollowUpDays(d.getFollowUpDays());
-    }
-    if (d.getCommissionType() != null) {
-      det.setCommissionType(d.getCommissionType());
-    }
-    if (d.getCommissionValue() != null) {
-      det.setCommissionValue(d.getCommissionValue());
-    }
-    det.setVisitingConsultant(d.isVisitingConsultant());
+
+    doctorMapper.updateEntity(d, det);
     doctorHospitalDetailsRepository.save(det);
     assignment.setDoctorDetails(det);
   }

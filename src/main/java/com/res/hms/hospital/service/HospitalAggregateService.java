@@ -4,12 +4,14 @@ import com.res.hms.common.exception.ApiException;
 import com.res.hms.domain.Hospital;
 import com.res.hms.domain.HospitalStatus;
 import com.res.hms.hospital.dto.HospitalDTO;
-import com.res.hms.repository.HospitalRepository;
+import com.res.hms.hospital.repository.HospitalRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+
+import com.res.hms.hospital.mapper.HospitalMapper;
 
 @Slf4j
 @Service
@@ -18,6 +20,7 @@ public class HospitalAggregateService {
 
   private final HospitalRepository hospitalRepository;
   private final HospitalService hospitalService;
+  private final HospitalMapper hospitalMapper;
 
   @Transactional
   public HospitalDTO saveHospitalAggregate(HospitalDTO dto) {
@@ -52,7 +55,7 @@ public class HospitalAggregateService {
     Hospital hospital = new Hospital();
     hospital.setCode(dto.getCode());
     hospital.setStatus(dto.getStatus() != null ? dto.getStatus() : HospitalStatus.ACTIVE);
-    updateHospitalFields(hospital, dto);
+    hospitalMapper.updateEntity(dto, hospital);
     return hospital;
   }
 
@@ -72,19 +75,6 @@ public class HospitalAggregateService {
     if (dto.getStatus() != null) {
       hospital.setStatus(dto.getStatus());
     }
-    updateHospitalFields(hospital, dto);
-  }
-
-  private void updateHospitalFields(Hospital hospital, HospitalDTO dto) {
-    hospital.setName(dto.getName());
-    hospital.setAddress(dto.getAddress());
-    hospital.setCity(dto.getCity());
-    hospital.setState(dto.getState());
-    hospital.setPincode(dto.getPincode());
-    hospital.setGstin(dto.getGstin());
-    hospital.setRegistrationNo(dto.getRegistrationNo());
-    if (dto.getSettings() != null) {
-      hospital.setSettings(dto.getSettings());
-    }
+    hospitalMapper.updateEntity(dto, hospital);
   }
 }

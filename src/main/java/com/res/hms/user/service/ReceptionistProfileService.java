@@ -5,8 +5,8 @@ import com.res.hms.domain.ReceptionistProfile;
 import com.res.hms.domain.RoleCode;
 import com.res.hms.domain.UserAccount;
 import com.res.hms.domain.UserRoleAssignment;
-import com.res.hms.repository.ReceptionistHospitalDetailsRepository;
-import com.res.hms.repository.ReceptionistProfileRepository;
+import com.res.hms.staff.repository.ReceptionistHospitalDetailsRepository;
+import com.res.hms.staff.repository.ReceptionistProfileRepository;
 import com.res.hms.user.dto.ReceptionistHospitalDetailsDTO;
 import com.res.hms.user.dto.UserDetailsDTO;
 import java.util.Set;
@@ -14,12 +14,15 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import com.res.hms.staff.mapper.StaffInternalMapper;
+
 @Service
 @RequiredArgsConstructor
 public class ReceptionistProfileService {
 
   private final ReceptionistProfileRepository receptionistProfileRepository;
   private final ReceptionistHospitalDetailsRepository receptionistHospitalDetailsRepository;
+  private final StaffInternalMapper staffInternalMapper;
 
   @Transactional
   public void updateProfile(
@@ -34,10 +37,8 @@ public class ReceptionistProfileService {
                     p.setUser(user);
                     return p;
                   });
-      if (info.getLanguagesSpoken() != null) {
-        profile.setLanguagesSpoken(info.getLanguagesSpoken());
-      }
-      profile.setInsuranceSpecialist(info.isInsuranceSpecialist());
+
+      staffInternalMapper.updateEntity(info, profile);
       receptionistProfileRepository.save(profile);
       user.setReceptionistProfile(profile);
     }
@@ -57,12 +58,8 @@ public class ReceptionistProfileService {
                   newDet.setAssignment(a);
                   return newDet;
                 });
-    if (r.getDeskLocation() != null) {
-      det.setDeskLocation(r.getDeskLocation());
-    }
-    if (r.getEmergencyContactNumber() != null) {
-      det.setEmergencyContactNumber(r.getEmergencyContactNumber());
-    }
+
+    staffInternalMapper.updateEntity(r, det);
     receptionistHospitalDetailsRepository.save(det);
     a.setReceptionistDetails(det);
   }

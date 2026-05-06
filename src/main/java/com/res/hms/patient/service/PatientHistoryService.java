@@ -11,6 +11,8 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import com.res.hms.patient.mapper.PatientHistoryMapper;
+
 @Service
 @RequiredArgsConstructor
 public class PatientHistoryService {
@@ -19,20 +21,19 @@ public class PatientHistoryService {
   private final AppointmentRepository appointmentRepository;
   private final AppointmentService appointmentService;
   private final HospitalContext hospitalContext;
+  private final PatientHistoryMapper patientHistoryMapper;
 
   @Transactional(readOnly = true)
   public PatientHistoryDTO getFullHistory(UUID patientId) {
     UUID hospitalId = hospitalContext.requireHospitalId();
     Patient patient = patientService.requirePatient(patientId, hospitalId);
 
-    return PatientHistoryDTO.builder()
-        .patient(patientService.toDto(patient))
-        .visits(
-            appointmentRepository
-                .findByPatientIdAndHospitalIdOrderByAppointmentTimeDesc(patientId, hospitalId)
-                .stream()
-                .map(appointmentService::toDto)
-                .collect(Collectors.toList()))
-        .build();
+    return patientHistoryMapper.toDto(
+        patientService.toDto(patient),
+        appointmentRepository
+            .findByPatientIdAndHospitalIdOrderByAppointmentTimeDesc(patientId, hospitalId)
+            .stream()
+            .map(appointmentService::toDto)
+            .collect(Collectors.toList()));
   }
 }

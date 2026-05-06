@@ -19,6 +19,8 @@ import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import com.res.hms.billing.mapper.BillingMapper;
+
 @Service
 @RequiredArgsConstructor
 public class BillingService {
@@ -27,6 +29,7 @@ public class BillingService {
   private final AppointmentRepository appointmentRepository;
   private final PatientService patientService;
   private final HospitalContext hospitalContext;
+  private final BillingMapper billingMapper;
 
   @Transactional
   public BillingDTO createBilling(BillingDTO dto) {
@@ -70,7 +73,7 @@ public class BillingService {
       }
     }
 
-    return toDto(billingRepository.save(billing));
+    return billingMapper.toDto(billingRepository.save(billing));
   }
 
   @Transactional(readOnly = true)
@@ -78,7 +81,7 @@ public class BillingService {
     UUID hospitalId = hospitalContext.requireHospitalId();
     return billingRepository
         .findByAppointmentIdAndHospitalId(appointmentId, hospitalId)
-        .map(this::toDto)
+        .map(billingMapper::toDto)
         .orElseThrow(() -> new ApiException("NOT_FOUND", "Bill not found", HttpStatus.NOT_FOUND));
   }
 
@@ -112,33 +115,10 @@ public class BillingService {
       }
     }
 
-    return toDto(billingRepository.save(billing));
+    return billingMapper.toDto(billingRepository.save(billing));
   }
 
   public BillingDTO toDto(Billing billing) {
-    return BillingDTO.builder()
-        .id(billing.getId())
-        .patientId(billing.getPatient().getId())
-        .patientName(billing.getPatient().getFullName())
-        .appointmentId(billing.getAppointment() != null ? billing.getAppointment().getId() : null)
-        .sourceType(billing.getSourceType())
-        .status(billing.getStatus())
-        .totalAmount(billing.getTotalAmount())
-        .discount(billing.getDiscount())
-        .paymentMethod(billing.getPaymentMethod())
-        .createdAt(billing.getCreatedAt())
-        .items(
-            billing.getItems().stream()
-                .map(
-                    item ->
-                        BillingItemDTO.builder()
-                            .id(item.getId())
-                            .itemName(item.getItemName())
-                            .amount(item.getAmount())
-                            .quantity(item.getQuantity())
-                            .subtotal(item.getSubtotal())
-                            .build())
-                .collect(Collectors.toList()))
-        .build();
+    return billingMapper.toDto(billing);
   }
 }
