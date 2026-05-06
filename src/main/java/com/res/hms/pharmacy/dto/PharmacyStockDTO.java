@@ -16,8 +16,13 @@ public class PharmacyStockDTO {
   private UUID id;
   private UUID medicineId;
   private String medicineName;
+  private String genericName;
+  private String composition;
   private String batchNumber;
   private LocalDate expiryDate;
   private Integer quantity;
+  private Integer totalQuantity;
+  private BigDecimal purchasePrice;
+  private BigDecimal sellingPrice;
   private BigDecimal price;
 }

@@ -2,7 +2,9 @@ package com.res.hms.domain;
 
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
+import jakarta.persistence.Index;
 import jakarta.persistence.Table;
+import jakarta.persistence.UniqueConstraint;
 import java.math.BigDecimal;
 import lombok.Getter;
 import lombok.Setter;
@@ -10,8 +12,19 @@ import lombok.Setter;
 @Getter
 @Setter
 @Entity
-@Table(name = "medicine")
-public class Medicine extends HospitalScopedEntity {
+@Table(
+    name = "medicine",
+    uniqueConstraints = {
+      @UniqueConstraint(
+          name = "uk_medicine_name_strength_form",
+          columnNames = {"name", "generic_name", "strength", "form"})
+    },
+    indexes = {
+      @Index(name = "idx_medicine_name", columnList = "name"),
+      @Index(name = "idx_medicine_generic_name", columnList = "generic_name"),
+      @Index(name = "idx_medicine_composition", columnList = "composition")
+    })
+public class Medicine extends BaseEntity {
 
   @Column(nullable = false)
   private String name;
@@ -20,6 +33,13 @@ public class Medicine extends HospitalScopedEntity {
   private String genericName;
 
   private String composition;
+
+  private String strength;
+
+  private String form;
+
+  @Column(name = "schedule_type")
+  private String scheduleType;
 
   private String category;
 

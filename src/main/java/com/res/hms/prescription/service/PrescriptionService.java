@@ -4,7 +4,6 @@ import com.res.hms.appointment.repository.AppointmentRepository;
 import com.res.hms.common.api.PageResponse;
 import com.res.hms.common.exception.ApiException;
 import com.res.hms.common.tenant.HospitalContext;
-import com.res.hms.common.util.ResourceLookup;
 import com.res.hms.domain.Appointment;
 import com.res.hms.domain.Medicine;
 import com.res.hms.domain.Prescription;
@@ -39,7 +38,6 @@ public class PrescriptionService {
   private final MedicineRepository medicineRepository;
   private final AppointmentRepository appointmentRepository;
   private final HospitalContext hospitalContext;
-  private final ResourceLookup resourceLookup;
 
   @Transactional
   public PrescriptionDTO createPrescription(PrescriptionDTO dto) {
@@ -70,11 +68,12 @@ public class PrescriptionService {
     if (dto.getItems() != null) {
       for (PrescriptionItemDTO itemDto : dto.getItems()) {
         Medicine medicine =
-            resourceLookup.findRequired(
-                itemDto.getMedicineId(),
-                hospitalId,
-                medicineRepository::findByIdAndHospitalId,
-                "Medicine");
+            medicineRepository
+                .findById(itemDto.getMedicineId())
+                .orElseThrow(
+                    () ->
+                        new ApiException(
+                            "NOT_FOUND", "Medicine not found", HttpStatus.NOT_FOUND));
 
         PrescriptionItem item = new PrescriptionItem();
         item.setPrescription(prescription);

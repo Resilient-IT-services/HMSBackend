@@ -40,20 +40,20 @@ class MedicineControllerIntegrationTest {
   void setup() throws Exception {
     testHospitalId = testDataHelper.createHospitalIfMissing("TEST_MED", "Test Hospital Med");
 
-    if (!userAccountRepository.existsByUsername("med_admin")) {
-      UserAccount hospitalAdmin = new UserAccount();
-      hospitalAdmin.setUsername("med_admin");
-      hospitalAdmin.setPasswordHash(passwordEncoder.encode("admin123"));
-      hospitalAdmin.setActive(true);
+    String username = "med_admin_" + UUID.randomUUID().toString().substring(0, 8);
+    UserAccount hospitalAdmin = new UserAccount();
+    hospitalAdmin.setUsername(username);
+    hospitalAdmin.setPasswordHash(passwordEncoder.encode("admin123"));
+    hospitalAdmin.setActive(true);
+    hospitalAdmin.setSuperuser(true);
 
-      UserRoleAssignment assignment = new UserRoleAssignment();
-      assignment.setUser(hospitalAdmin);
-      assignment.setHospitalId(testHospitalId);
-      assignment.setRole(roleRepository.findByCode(RoleCode.ADMIN).orElseThrow());
-      hospitalAdmin.getAssignments().add(assignment);
+    UserRoleAssignment assignment = new UserRoleAssignment();
+    assignment.setUser(hospitalAdmin);
+    assignment.setHospitalId(testHospitalId);
+    assignment.setRole(roleRepository.findByCode(RoleCode.ADMIN).orElseThrow());
+    hospitalAdmin.getAssignments().add(assignment);
 
-      userAccountRepository.save(hospitalAdmin);
-    }
+    userAccountRepository.save(hospitalAdmin);
 
     session =
         (MockHttpSession)
@@ -61,11 +61,33 @@ class MedicineControllerIntegrationTest {
                 .perform(
                     post("/api/v1/auth/login")
                         .contentType(MediaType.APPLICATION_JSON)
-                        .content("{\"username\": \"med_admin\", \"password\": \"admin123\"}"))
+                        .content("{\"username\": \"" + username + "\", \"password\": \"admin123\"}"))
                 .andExpect(status().isOk())
                 .andReturn()
                 .getRequest()
                 .getSession(false);
+  }
+
+  @Test
+  void testDuplicateMedicineValidation() throws Exception {
+    String medicineJson = "{\"name\": \"Azithromycin\", \"strength\": \"250mg\"}";
+
+    // 1. Create first time
+    mockMvc.perform(post("/api/v1/pharmacy/medicines")
+        .session(session)
+        .header("X-Hospital-Id", testHospitalId.toString())
+        .contentType(MediaType.APPLICATION_JSON)
+        .content(medicineJson))
+        .andExpect(status().isOk());
+
+    // 2. Create again (duplicate)
+    mockMvc.perform(post("/api/v1/pharmacy/medicines")
+        .session(session)
+        .header("X-Hospital-Id", testHospitalId.toString())
+        .contentType(MediaType.APPLICATION_JSON)
+        .content(medicineJson))
+        .andExpect(status().isConflict())
+        .andExpect(jsonPath("$.error.code").value("DUPLICATE_MEDICINE"));
   }
 
   @Test
@@ -144,7 +166,7 @@ class MedicineControllerIntegrationTest {
     // 2. List Stock
     mockMvc
         .perform(
-            get("/api/v1/pharmacy/medicines/stock")
+            get("/api/v1/pharmacy/stock")
                 .session(session)
                 .header("X-Hospital-Id", testHospitalId.toString()))
         .andExpect(status().isOk())
@@ -155,7 +177,7 @@ class MedicineControllerIntegrationTest {
     // 3. Filter Low Stock (Threshold is 20 in service)
     mockMvc
         .perform(
-            get("/api/v1/pharmacy/medicines/stock")
+            get("/api/v1/pharmacy/stock")
                 .session(session)
                 .header("X-Hospital-Id", testHospitalId.toString())
                 .param("lowStock", "true"))

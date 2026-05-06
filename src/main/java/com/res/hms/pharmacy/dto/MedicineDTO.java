@@ -21,6 +21,9 @@ public class MedicineDTO {
 
   private String genericName;
   private String composition;
+  private String strength;
+  private String form;
+  private String scheduleType;
   private String category;
   private String manufacturer;
 
