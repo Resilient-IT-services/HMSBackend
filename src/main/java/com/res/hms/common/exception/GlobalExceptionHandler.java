@@ -88,6 +88,8 @@ public class GlobalExceptionHandler {
         message = "NurseProfile license number already exists";
       } else if (rootMsg.contains("pharmacist_profile_pci_reg_no_key")) {
         message = "Pharmacist PCI registration number already exists";
+      } else if (rootMsg.contains("uk_medicine_name_strength_form")) {
+        message = "Medicine with same name, generic name, strength, and form already exists";
       }
     }
 

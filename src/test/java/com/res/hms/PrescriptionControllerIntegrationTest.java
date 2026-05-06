@@ -104,7 +104,6 @@ class PrescriptionControllerIntegrationTest {
   void testCreateAndGetPrescription() throws Exception {
     // 1. Create Medicine
     com.res.hms.domain.Medicine med = new com.res.hms.domain.Medicine();
-    med.setHospitalId(hospitalId);
     med.setName("Paracetamol");
     UUID medicineId = medicineRepository.save(med).getId();
 
