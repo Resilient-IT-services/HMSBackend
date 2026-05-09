@@ -1,11 +1,11 @@
 package com.res.hms.user.service;
 
-import com.res.hms.domain.Role;
-import com.res.hms.domain.RoleCode;
-import com.res.hms.domain.UserAccount;
-import com.res.hms.domain.UserRoleAssignment;
-import com.res.hms.iam.application.UserMapper;
-import com.res.hms.repository.HospitalRepository;
+import com.res.hms.iam.domain.Role;
+import com.res.hms.iam.domain.RoleCode;
+import com.res.hms.iam.domain.UserAccount;
+import com.res.hms.iam.domain.UserRoleAssignment;
+import com.res.hms.iam.application.service.UserMapper;
+import com.res.hms.hospital.infrastructure.repository.HospitalRepository;
 import java.util.UUID;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -13,6 +13,8 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mapstruct.factory.Mappers;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+
+import static org.junit.jupiter.api.Assertions.assertEquals;
 
 @ExtendWith(MockitoExtension.class)
 class UserMapperTest {

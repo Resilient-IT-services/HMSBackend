@@ -1,9 +1,11 @@
-package com.res.hms.core.exception;
+package com.res.hms.common.exception;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
+import com.res.hms.core.exception.ApiException;
+import com.res.hms.core.exception.GlobalExceptionHandler;
 import jakarta.validation.ConstraintViolation;
 import jakarta.validation.ConstraintViolationException;
 import jakarta.validation.Path;

@@ -7,19 +7,23 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.res.hms.appointment.dto.AppointmentDTO;
-import com.res.hms.appointment.dto.UpdateAppointmentStatusRequest;
-import com.res.hms.appointment.dto.VitalsDTO;
-import com.res.hms.domain.AppointmentStatus;
-import com.res.hms.domain.Gender;
-import com.res.hms.domain.RoleCode;
-import com.res.hms.domain.UserAccount;
-import com.res.hms.repository.RoleRepository;
-import com.res.hms.repository.UserAccountRepository;
+
 import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.UUID;
+
+import com.res.hms.clinical.application.appointment.dto.AppointmentDTO;
+import com.res.hms.clinical.application.appointment.dto.UpdateAppointmentStatusRequest;
+import com.res.hms.clinical.application.appointment.dto.VitalsDTO;
+import com.res.hms.clinical.domain.AppointmentStatus;
+import com.res.hms.core.domain.Gender;
+import com.res.hms.iam.domain.DoctorProfile;
+import com.res.hms.iam.domain.RoleCode;
+import com.res.hms.iam.domain.UserAccount;
+import com.res.hms.iam.domain.UserRoleAssignment;
+import com.res.hms.iam.infrastructure.repository.RoleRepository;
+import com.res.hms.iam.infrastructure.repository.UserAccountRepository;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -64,12 +68,12 @@ class AppointmentControllerIntegrationTest {
     drUser.setGender(Gender.MALE);
     drUser.setDob(LocalDate.of(1980, 1, 1));
 
-    com.res.hms.domain.DoctorProfile drProfile = new com.res.hms.domain.DoctorProfile();
+    DoctorProfile drProfile = new DoctorProfile();
     drProfile.setUser(drUser);
     drProfile.setSpecialization("General");
     drUser.setDoctorProfile(drProfile);
 
-    com.res.hms.domain.UserRoleAssignment drAssign = new com.res.hms.domain.UserRoleAssignment();
+    UserRoleAssignment drAssign = new UserRoleAssignment();
     drAssign.setUser(drUser);
     drAssign.setHospitalId(hospitalId);
     drAssign.setRole(roleRepository.findByCode(RoleCode.DOCTOR).orElseThrow());

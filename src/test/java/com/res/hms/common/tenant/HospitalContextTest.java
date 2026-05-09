@@ -1,16 +1,20 @@
-package com.res.hms.core.tenant;
+package com.res.hms.common.tenant;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 
 import com.res.hms.core.exception.ApiException;
-import com.res.hms.domain.RoleCode;
-import com.res.hms.user.security.HospitalUserPrincipal;
+
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
+
+import com.res.hms.core.tenant.HospitalContext;
+import com.res.hms.core.tenant.TenantContext;
+import com.res.hms.iam.application.security.HospitalUserPrincipal;
+import com.res.hms.iam.domain.RoleCode;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;

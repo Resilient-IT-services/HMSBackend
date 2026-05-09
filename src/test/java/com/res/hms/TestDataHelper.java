@@ -1,15 +1,20 @@
 package com.res.hms;
 
-import com.res.hms.domain.Hospital;
-import com.res.hms.domain.HospitalStatus;
-import com.res.hms.domain.Role;
-import com.res.hms.domain.RoleCode;
-import com.res.hms.domain.UserAccount;
-import com.res.hms.domain.UserRoleAssignment;
-import com.res.hms.repository.HospitalRepository;
-import com.res.hms.repository.RoleRepository;
-import com.res.hms.repository.UserAccountRepository;
+
 import java.util.UUID;
+
+import com.res.hms.clinical.application.patient.repository.PatientRepository;
+import com.res.hms.clinical.domain.Patient;
+import com.res.hms.core.domain.Gender;
+import com.res.hms.hospital.domain.Hospital;
+import com.res.hms.hospital.domain.HospitalStatus;
+import com.res.hms.hospital.infrastructure.repository.HospitalRepository;
+import com.res.hms.iam.domain.Role;
+import com.res.hms.iam.domain.RoleCode;
+import com.res.hms.iam.domain.UserAccount;
+import com.res.hms.iam.domain.UserRoleAssignment;
+import com.res.hms.iam.infrastructure.repository.RoleRepository;
+import com.res.hms.iam.infrastructure.repository.UserAccountRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
@@ -21,14 +26,14 @@ public class TestDataHelper {
 
   @Autowired private HospitalRepository hospitalRepository;
 
-  @Autowired private com.res.hms.patient.repository.PatientRepository patientRepository;
+  @Autowired private PatientRepository patientRepository;
 
   @Transactional(propagation = Propagation.REQUIRES_NEW)
-  public com.res.hms.domain.Patient createTestPatient(UUID hospitalId) {
-    com.res.hms.domain.Patient p = new com.res.hms.domain.Patient();
+  public Patient createTestPatient(UUID hospitalId) {
+    Patient p = new Patient();
     p.setHospitalId(hospitalId);
     p.setFullName("Test Patient");
-    p.setGender(com.res.hms.domain.Gender.FEMALE);
+    p.setGender(Gender.FEMALE);
     p.setPatientCode("P-" + UUID.randomUUID().toString().substring(0, 8));
     return patientRepository.save(p);
   }

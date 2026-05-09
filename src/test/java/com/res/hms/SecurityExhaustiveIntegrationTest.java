@@ -3,8 +3,8 @@ package com.res.hms;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 
 import com.res.hms.core.exception.ApiException;
-import com.res.hms.user.dto.UserDetailsDTO;
-import com.res.hms.user.service.UserAggregateService;
+import com.res.hms.iam.application.dto.UserDetailsDTO;
+import com.res.hms.iam.application.service.UserAggregateService;
 import java.util.List;
 import java.util.UUID;
 import org.junit.jupiter.api.BeforeEach;
@@ -43,7 +43,7 @@ class SecurityExhaustiveIntegrationTest {
         UserDetailsDTO.builder()
             .username("new_user")
             .fullName("New User")
-            .gender(com.res.hms.domain.Gender.MALE)
+            .gender(com.res.hms.core.domain.Gender.MALE)
             .dob(java.time.LocalDate.of(1990, 1, 1))
             .memberships(List.of()) // No memberships
             .build();
@@ -58,7 +58,7 @@ class SecurityExhaustiveIntegrationTest {
         UserDetailsDTO.builder()
             .username("sa_user")
             .fullName("SA User")
-            .gender(com.res.hms.domain.Gender.MALE)
+            .gender(com.res.hms.core.domain.Gender.MALE)
             .dob(java.time.LocalDate.of(1990, 1, 1))
             .doctorInfo(
                 UserDetailsDTO.DoctorInfo.builder()

@@ -6,18 +6,24 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.res.hms.domain.AppointmentStatus;
-import com.res.hms.domain.Gender;
-import com.res.hms.domain.RoleCode;
-import com.res.hms.domain.UserAccount;
-import com.res.hms.prescription.dto.PrescriptionDTO;
-import com.res.hms.prescription.dto.PrescriptionItemDTO;
-import com.res.hms.repository.RoleRepository;
-import com.res.hms.repository.UserAccountRepository;
+import com.res.hms.clinical.domain.Appointment;
+import com.res.hms.clinical.domain.AppointmentStatus;
+import com.res.hms.core.domain.Gender;
+import com.res.hms.iam.domain.DoctorProfile;
+import com.res.hms.iam.domain.RoleCode;
+import com.res.hms.iam.domain.UserAccount;
+import com.res.hms.clinical.application.prescription.dto.PrescriptionDTO;
+import com.res.hms.clinical.application.prescription.dto.PrescriptionItemDTO;
+import com.res.hms.iam.domain.UserRoleAssignment;
+import com.res.hms.iam.infrastructure.repository.RoleRepository;
+import com.res.hms.iam.infrastructure.repository.UserAccountRepository;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.UUID;
+
+import com.res.hms.pharmacy.domain.Medicine;
+import com.res.hms.pharmacy.infrastructure.repository.MedicineRepository;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -41,12 +47,11 @@ class PrescriptionControllerIntegrationTest {
   @Autowired private RoleRepository roleRepository;
   @Autowired private PasswordEncoder passwordEncoder;
   @Autowired private TestDataHelper testDataHelper;
-  @Autowired private com.res.hms.appointment.repository.AppointmentRepository appointmentRepository;
-  @Autowired private com.res.hms.repository.MedicineRepository medicineRepository;
+  @Autowired private com.res.hms.clinical.infrastructure.repository.AppointmentRepository appointmentRepository;
+  @Autowired private MedicineRepository medicineRepository;
   @Autowired private ObjectMapper objectMapper;
 
   private UUID hospitalId;
-  private UUID doctorId;
   private UUID appointmentId;
   private MockHttpSession session;
 
@@ -60,25 +65,23 @@ class PrescriptionControllerIntegrationTest {
     drUser.setFullName("Dr. Prescriber");
     drUser.setPasswordHash(passwordEncoder.encode("password"));
     drUser.setActive(true);
-    drUser.setGender(Gender.MALE);
+    drUser.setGender(com.res.hms.core.domain.Gender.MALE);
     drUser.setDob(LocalDate.of(1980, 1, 1));
 
-    com.res.hms.domain.DoctorProfile drProfile = new com.res.hms.domain.DoctorProfile();
+    DoctorProfile drProfile = new DoctorProfile();
     drProfile.setUser(drUser);
     drProfile.setSpecialization("General");
     drUser.setDoctorProfile(drProfile);
 
-    com.res.hms.domain.UserRoleAssignment drAssign = new com.res.hms.domain.UserRoleAssignment();
+    UserRoleAssignment drAssign = new UserRoleAssignment();
     drAssign.setUser(drUser);
     drAssign.setHospitalId(hospitalId);
     drAssign.setRole(roleRepository.findByCode(RoleCode.DOCTOR).orElseThrow());
 
     drUser.getAssignments().add(drAssign);
     UserAccount saved = userAccountRepository.save(drUser);
-    doctorId = saved.getDoctorProfile().getId();
-
     // Create Appointment
-    com.res.hms.domain.Appointment apt = new com.res.hms.domain.Appointment();
+    Appointment apt = new Appointment();
     apt.setHospitalId(hospitalId);
     apt.setDoctorProfile(saved.getDoctorProfile());
     apt.setPatient(testDataHelper.createTestPatient(hospitalId));
@@ -103,7 +106,7 @@ class PrescriptionControllerIntegrationTest {
   @Test
   void testCreateAndGetPrescription() throws Exception {
     // 1. Create Medicine
-    com.res.hms.domain.Medicine med = new com.res.hms.domain.Medicine();
+    Medicine med = new Medicine();
     med.setName("Paracetamol");
     UUID medicineId = medicineRepository.save(med).getId();
 

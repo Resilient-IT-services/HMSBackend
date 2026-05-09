@@ -2,26 +2,27 @@ package com.res.hms;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
-
-import com.res.hms.audit.dto.AuditDetail;
-import com.res.hms.audit.repository.AuditLogRepository;
-import com.res.hms.doctor.dto.DoctorEducation;
-import com.res.hms.doctor.repository.DoctorProfileRepository;
-import com.res.hms.domain.AuditLog;
-import com.res.hms.domain.DoctorProfile;
-import com.res.hms.domain.Hospital;
-import com.res.hms.domain.HospitalStatus;
-import com.res.hms.domain.ProficiencyLevel;
-import com.res.hms.domain.ReceptionistProfile;
-import com.res.hms.domain.UserAccount;
-import com.res.hms.hospital.dto.HospitalSettings;
-import com.res.hms.repository.HospitalRepository;
-import com.res.hms.repository.ReceptionistProfileRepository;
-import com.res.hms.repository.UserAccountRepository;
-import com.res.hms.user.dto.ReceptionistFluency;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Map;
+
+import com.res.hms.audit.application.dto.AuditDetail;
+import com.res.hms.audit.domain.AuditAction;
+import com.res.hms.audit.domain.AuditLog;
+import com.res.hms.audit.infrastructure.repository.AuditLogRepository;
+import com.res.hms.core.domain.ProficiencyLevel;
+import com.res.hms.hospital.application.dto.HospitalSettings;
+import com.res.hms.hospital.domain.Hospital;
+import com.res.hms.hospital.domain.HospitalStatus;
+import com.res.hms.hospital.infrastructure.repository.HospitalRepository;
+import com.res.hms.iam.application.dto.DoctorEducation;
+import com.res.hms.iam.application.dto.ReceptionistFluency;
+import com.res.hms.iam.application.repository.DoctorProfileRepository;
+import com.res.hms.iam.domain.DoctorProfile;
+import com.res.hms.iam.domain.ReceptionistProfile;
+import com.res.hms.iam.domain.UserAccount;
+import com.res.hms.iam.infrastructure.repository.ReceptionistProfileRepository;
+import com.res.hms.iam.infrastructure.repository.UserAccountRepository;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
@@ -43,7 +44,7 @@ class JsonFieldsIntegrationTest {
   void auditLogDetailsJsonMapping() {
     AuditLog log = new AuditLog();
     log.setEntityName("TestEntity");
-    log.setAction(com.res.hms.domain.AuditAction.CREATE);
+    log.setAction(AuditAction.CREATE);
     log.setCreatedAt(LocalDateTime.now());
     log.setUpdatedAt(LocalDateTime.now());
 

@@ -5,19 +5,24 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
-import com.res.hms.domain.AppointmentStatus;
-import com.res.hms.domain.DoctorProfile;
-import com.res.hms.domain.DoctorSchedule;
-import com.res.hms.domain.Gender;
-import com.res.hms.domain.RoleCode;
-import com.res.hms.domain.UserAccount;
-import com.res.hms.domain.UserRoleAssignment;
-import com.res.hms.repository.RoleRepository;
-import com.res.hms.repository.UserAccountRepository;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.LocalTime;
 import java.util.UUID;
+
+import com.res.hms.clinical.domain.Appointment;
+import com.res.hms.clinical.domain.AppointmentStatus;
+import com.res.hms.clinical.domain.DoctorAvailabilityException;
+import com.res.hms.clinical.domain.DoctorSchedule;
+import com.res.hms.clinical.infrastructure.repository.DoctorAvailabilityExceptionRepository;
+import com.res.hms.core.domain.Gender;
+import com.res.hms.hospital.infrastructure.repository.HospitalRepository;
+import com.res.hms.iam.domain.DoctorProfile;
+import com.res.hms.iam.domain.RoleCode;
+import com.res.hms.iam.domain.UserAccount;
+import com.res.hms.iam.domain.UserRoleAssignment;
+import com.res.hms.iam.infrastructure.repository.RoleRepository;
+import com.res.hms.iam.infrastructure.repository.UserAccountRepository;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -41,13 +46,13 @@ class DoctorControllerIntegrationTest {
   @Autowired private RoleRepository roleRepository;
   @Autowired private PasswordEncoder passwordEncoder;
   @Autowired private TestDataHelper testDataHelper;
-  @Autowired private com.res.hms.appointment.repository.AppointmentRepository appointmentRepository;
+  @Autowired private com.res.hms.clinical.infrastructure.repository.AppointmentRepository appointmentRepository;
 
   @Autowired
-  private com.res.hms.repository.DoctorAvailabilityExceptionRepository
+  private DoctorAvailabilityExceptionRepository
       availabilityExceptionRepository;
 
-  @Autowired private com.res.hms.repository.HospitalRepository hospitalRepository;
+  @Autowired private HospitalRepository hospitalRepository;
 
   private UUID hospitalId;
   private UUID doctorId;
@@ -121,7 +126,7 @@ class DoctorControllerIntegrationTest {
         .andExpect(jsonPath("$.data.sessions[0].nextSuggestedTime").value("09:00"));
 
     // Book 1 patient
-    com.res.hms.domain.Appointment apt = new com.res.hms.domain.Appointment();
+    Appointment apt = new Appointment();
     apt.setHospitalId(hospitalId);
     apt.setDoctorProfile(userAccountRepository.findByUsername("avail_dr").get().getDoctorProfile());
     apt.setPatient(testDataHelper.createTestPatient(hospitalId));
@@ -147,8 +152,8 @@ class DoctorControllerIntegrationTest {
     LocalDate tuesday = LocalDate.of(2026, 5, 12); // Tuesday
 
     // 1. Create a MODIFIED exception for Tuesday: 2-4 PM
-    com.res.hms.domain.DoctorAvailabilityException ex =
-        new com.res.hms.domain.DoctorAvailabilityException();
+    DoctorAvailabilityException ex =
+        new DoctorAvailabilityException();
     ex.setDoctorProfile(userAccountRepository.findByUsername("avail_dr").get().getDoctorProfile());
     ex.setHospital(hospitalRepository.findById(hospitalId).orElseThrow());
     ex.setDate(tuesday);

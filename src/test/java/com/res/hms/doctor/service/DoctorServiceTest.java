@@ -11,15 +11,18 @@ import static org.mockito.Mockito.when;
 
 import com.res.hms.core.exception.ApiException;
 import com.res.hms.core.tenant.HospitalContext;
+
 import com.res.hms.core.util.ResourceLookup;
-import com.res.hms.doctor.repository.DoctorProfileRepository;
-import com.res.hms.domain.DoctorProfile;
-import com.res.hms.domain.UserAccount;
-import com.res.hms.repository.DoctorHospitalDetailsRepository;
-import com.res.hms.repository.UserAccountRepository;
-import com.res.hms.user.dto.UserDetailsDTO;
 import java.util.Optional;
 import java.util.UUID;
+
+import com.res.hms.iam.application.dto.UserDetailsDTO;
+import com.res.hms.iam.application.repository.DoctorProfileRepository;
+import com.res.hms.iam.application.service.DoctorProfileService;
+import com.res.hms.iam.domain.DoctorProfile;
+import com.res.hms.iam.domain.UserAccount;
+import com.res.hms.iam.infrastructure.repository.DoctorHospitalDetailsRepository;
+import com.res.hms.iam.infrastructure.repository.UserAccountRepository;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.ArgumentCaptor;

@@ -6,13 +6,13 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.Mockito.when;
 
 import com.res.hms.core.tenant.HospitalContext;
-import com.res.hms.user.dto.AdminHospitalDetailsDTO;
-import com.res.hms.user.dto.NurseHospitalDetailsDTO;
-import com.res.hms.user.dto.PharmacistHospitalDetailsDTO;
-import com.res.hms.user.dto.ReceptionistHospitalDetailsDTO;
-import com.res.hms.user.dto.UserDetailsDTO;
-import com.res.hms.user.service.UserAggregateService;
-import com.res.hms.user.service.UserService;
+import com.res.hms.iam.application.dto.AdminHospitalDetailsDTO;
+import com.res.hms.iam.application.dto.NurseHospitalDetailsDTO;
+import com.res.hms.iam.application.dto.PharmacistHospitalDetailsDTO;
+import com.res.hms.iam.application.dto.ReceptionistHospitalDetailsDTO;
+import com.res.hms.iam.application.dto.UserDetailsDTO;
+import com.res.hms.iam.application.service.UserAggregateService;
+import com.res.hms.iam.application.service.UserService;
 import java.util.List;
 import java.util.UUID;
 import org.junit.jupiter.api.BeforeEach;
@@ -48,7 +48,7 @@ class RoleHospitalDetailsIntegrationTest {
             .username("nurse_test")
             .password("pass")
             .fullName("Nurse Joy")
-            .gender(com.res.hms.domain.Gender.FEMALE)
+            .gender(com.res.hms.core.domain.Gender.FEMALE)
             .dob(java.time.LocalDate.of(1990, 1, 1))
             .nurseInfo(UserDetailsDTO.NurseInfo.builder().nursingLicenseNo("NL-123").build())
             .memberships(
@@ -63,7 +63,7 @@ class RoleHospitalDetailsIntegrationTest {
                                     .nurseDetails(
                                         NurseHospitalDetailsDTO.builder()
                                             .floorLocation("2nd Floor")
-                                            .shiftType(com.res.hms.domain.ShiftType.NIGHT)
+                                            .shiftType(com.res.hms.core.domain.ShiftType.NIGHT)
                                             .build())
                                     .build()))
                         .build()))
@@ -90,7 +90,7 @@ class RoleHospitalDetailsIntegrationTest {
 
     assertNotNull(assignment.getNurseDetails());
     assertEquals("2nd Floor", assignment.getNurseDetails().getFloorLocation());
-    assertEquals(com.res.hms.domain.ShiftType.NIGHT, assignment.getNurseDetails().getShiftType());
+    assertEquals(com.res.hms.core.domain.ShiftType.NIGHT, assignment.getNurseDetails().getShiftType());
   }
 
   @Test
@@ -100,7 +100,7 @@ class RoleHospitalDetailsIntegrationTest {
             .username("recep_test")
             .password("pass")
             .fullName("Recep One")
-            .gender(com.res.hms.domain.Gender.MALE)
+            .gender(com.res.hms.core.domain.Gender.MALE)
             .dob(java.time.LocalDate.of(1995, 5, 5))
             .memberships(
                 List.of(
@@ -142,7 +142,7 @@ class RoleHospitalDetailsIntegrationTest {
             .username("admin_test")
             .password("pass")
             .fullName("Admin One")
-            .gender(com.res.hms.domain.Gender.MALE)
+            .gender(com.res.hms.core.domain.Gender.MALE)
             .dob(java.time.LocalDate.of(1985, 10, 10))
             .memberships(
                 List.of(
@@ -184,7 +184,7 @@ class RoleHospitalDetailsIntegrationTest {
             .username("pharmacist_test")
             .password("pass")
             .fullName("Pharmacist One")
-            .gender(com.res.hms.domain.Gender.MALE)
+            .gender(com.res.hms.core.domain.Gender.MALE)
             .dob(java.time.LocalDate.of(1990, 1, 1))
             .pharmacistInfo(
                 UserDetailsDTO.PharmacistInfo.builder()

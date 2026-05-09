@@ -5,15 +5,18 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
-import com.res.hms.audit.dto.AuditDetail;
-import com.res.hms.audit.repository.AuditLogRepository;
-import com.res.hms.core.tenant.HospitalContext;
-import com.res.hms.domain.AuditAction;
-import com.res.hms.domain.AuditLog;
+
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
+
+import com.res.hms.audit.application.dto.AuditDetail;
+import com.res.hms.audit.application.service.AuditLogService;
+import com.res.hms.audit.domain.AuditAction;
+import com.res.hms.audit.domain.AuditLog;
+import com.res.hms.audit.infrastructure.repository.AuditLogRepository;
+import com.res.hms.core.tenant.HospitalContext;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
