@@ -1,4 +1,4 @@
-package com.res.hms.audit.service;
+package com.res.hms.audit.application.service;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.mockito.ArgumentMatchers.any;

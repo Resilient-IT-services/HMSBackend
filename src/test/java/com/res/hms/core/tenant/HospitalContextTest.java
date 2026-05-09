@@ -1,4 +1,4 @@
-package com.res.hms.common.tenant;
+package com.res.hms.core.tenant;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNull;

@@ -1,4 +1,4 @@
-package com.res.hms.common.exception;
+package com.res.hms.core.exception;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.mockito.Mockito.mock;

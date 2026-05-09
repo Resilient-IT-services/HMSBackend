@@ -1,4 +1,4 @@
-package com.res.hms.user.service;
+package com.res.hms.iam.application.service;
 
 import com.res.hms.iam.domain.Role;
 import com.res.hms.iam.domain.RoleCode;

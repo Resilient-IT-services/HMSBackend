@@ -38,13 +38,10 @@ import org.springframework.beans.factory.annotation.Autowired;
     unmappedTargetPolicy = ReportingPolicy.IGNORE,
     injectionStrategy = InjectionStrategy.CONSTRUCTOR)
 public abstract class UserMapper {
-
   @Autowired protected HospitalRepository hospitalRepository;
   @Autowired protected com.res.hms.core.tenant.HospitalContext hospitalContext;
-
   @Mapping(target = "memberships", expression = "java(mapSummaryMemberships(user))")
   public abstract UserSummaryDTO toSummaryDTO(UserAccount user);
-
   @Mapping(target = "memberships", expression = "java(mapMemberships(user))")
   @Mapping(target = "doctorInfo", source = "doctorProfile")
   @Mapping(target = "nurseInfo", source = "nurseProfile")
