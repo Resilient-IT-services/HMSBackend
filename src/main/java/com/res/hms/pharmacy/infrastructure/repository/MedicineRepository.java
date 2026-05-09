@@ -42,6 +42,9 @@ public interface MedicineRepository extends JpaRepository<Medicine, UUID> {
 
   Optional<Medicine> findByNameIgnoreCase(String name);
 
+  @Query("SELECT m FROM Medicine m WHERE LOWER(m.name) = LOWER(:name)")
+  java.util.List<Medicine> findByExactName(@Param("name") String name);
+
   Optional<Medicine>
       findByNameIgnoreCaseAndGenericNameIgnoreCaseAndStrengthIgnoreCaseAndFormIgnoreCase(
           String name, String genericName, String strength, String form);

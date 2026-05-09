@@ -61,6 +61,7 @@ public class PrescriptionService {
     }
 
     Prescription prescription = new Prescription();
+    prescription.setHospitalId(hospitalId);
     prescription.setAppointment(appointment);
     prescription.setPatient(appointment.getPatient());
     prescription.setDoctorProfile(appointment.getDoctorProfile());
@@ -75,6 +76,7 @@ public class PrescriptionService {
                         new ApiException("NOT_FOUND", "Medicine not found", HttpStatus.NOT_FOUND));
 
         PrescriptionItem item = new PrescriptionItem();
+        item.setHospitalId(hospitalId);
         item.setPrescription(prescription);
         item.setMedicine(medicine);
         item.setDosage(itemDto.getDosage());

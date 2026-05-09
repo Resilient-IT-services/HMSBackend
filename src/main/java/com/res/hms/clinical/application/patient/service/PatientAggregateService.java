@@ -1,7 +1,7 @@
 package com.res.hms.clinical.application.patient.service;
 
 import com.res.hms.clinical.application.patient.dto.PatientDTO;
-import com.res.hms.clinical.application.patient.repository.PatientRepository;
+import com.res.hms.clinical.infrastructure.repository.PatientRepository;
 import com.res.hms.clinical.domain.Patient;
 import com.res.hms.core.exception.ApiException;
 import com.res.hms.core.tenant.HospitalContext;

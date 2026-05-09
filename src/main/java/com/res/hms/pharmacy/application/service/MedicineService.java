@@ -92,10 +92,11 @@ public class MedicineService {
           HttpStatus.CONFLICT);
     }
     Medicine medicine = new Medicine();
-    medicine.setId(UUID.randomUUID()); // Assign ID upfront for catalog linking
+    medicine.setName(dto.getName()); // Set mandatory field
+    medicine = medicineRepository.saveAndFlush(medicine); 
+    
     updateFields(medicine, dto);
-    medicine = medicineRepository.save(medicine);
-
+    
     if (dto.getCurrentStock() != null && dto.getCurrentStock() > 0) {
       addStock(
           StockRequest.builder()
@@ -195,6 +196,7 @@ public class MedicineService {
       int imported = 0;
       int skipped = 0;
       int notFound = 0;
+      String lastError = null;
 
       for (Row row : workbook.getSheetAt(0)) {
         if (row.getRowNum() == 0 || blank(row, 0)) {
@@ -209,19 +211,29 @@ public class MedicineService {
         String purchasePriceStr = text(row, 4);
         String sellingPriceStr = text(row, 5);
 
-        var medicineOpt = medicineRepository.findByNameIgnoreCase(medicineName);
-        if (medicineOpt.isEmpty()) {
+        var medicines = medicineRepository.findByExactName(medicineName);
+        if (medicines.isEmpty()) {
           log.warn("Medicine not found for stock import: {}", medicineName);
           notFound++;
           continue;
         }
+        var medicine = medicines.get(0);
 
         try {
+          LocalDate expiryDate = null;
+          if (hasText(expiryStr)) {
+            try {
+              expiryDate = LocalDate.parse(expiryStr);
+            } catch (Exception e) {
+              log.warn("Invalid date format in Excel row {}: {}", row.getRowNum(), expiryStr);
+            }
+          }
+
           addStock(
               StockRequest.builder()
-                  .medicineId(medicineOpt.get().getId())
+                  .medicineId(medicine.getId())
                   .batchNumber(batchNumber)
-                  .expiryDate(expiryStr != null ? LocalDate.parse(expiryStr) : null)
+                  .expiryDate(expiryDate)
                   .quantity(qtyStr != null ? (int) Double.parseDouble(qtyStr) : 0)
                   .purchasePrice(
                       purchasePriceStr != null ? new BigDecimal(purchasePriceStr) : BigDecimal.ZERO)
@@ -230,7 +242,8 @@ public class MedicineService {
                   .build());
           imported++;
         } catch (Exception e) {
-          log.error("Failed to import stock row: {}", row.getRowNum(), e);
+          log.error("Failed to import stock row {}: {}", row.getRowNum(), e.getMessage());
+          lastError = e.getMessage();
           skipped++;
         }
       }
@@ -240,6 +253,7 @@ public class MedicineService {
           .importedRows(imported)
           .skippedRows(skipped)
           .medicineNotFoundRows(notFound)
+          .lastError(lastError)
           .build();
     } catch (IOException e) {
       log.error("Stock Excel import failed", e);
@@ -522,8 +536,10 @@ public class MedicineService {
     return !hasText(text(row, cell));
   }
 
+  private final org.apache.poi.ss.usermodel.DataFormatter dataFormatter = new org.apache.poi.ss.usermodel.DataFormatter();
+
   private String text(Row row, int cell) {
     var value = row.getCell(cell);
-    return value == null ? null : value.toString().trim();
+    return value == null ? null : dataFormatter.formatCellValue(value).trim();
   }
 }

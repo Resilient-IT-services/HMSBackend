@@ -14,4 +14,5 @@ public class StockImportResponse {
   private int importedRows;
   private int skippedRows;
   private int medicineNotFoundRows;
+  private String lastError;
 }

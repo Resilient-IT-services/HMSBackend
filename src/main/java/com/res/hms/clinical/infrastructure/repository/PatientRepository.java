@@ -1,4 +1,4 @@
-package com.res.hms.clinical.application.patient.repository;
+package com.res.hms.clinical.infrastructure.repository;
 
 import com.res.hms.clinical.domain.Patient;
 import com.res.hms.core.repository.BaseRepository;

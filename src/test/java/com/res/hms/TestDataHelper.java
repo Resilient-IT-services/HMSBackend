@@ -3,7 +3,7 @@ package com.res.hms;
 
 import java.util.UUID;
 
-import com.res.hms.clinical.application.patient.repository.PatientRepository;
+import com.res.hms.clinical.infrastructure.repository.PatientRepository;
 import com.res.hms.clinical.domain.Patient;
 import com.res.hms.core.domain.Gender;
 import com.res.hms.hospital.domain.Hospital;

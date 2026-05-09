@@ -1,6 +1,6 @@
 package com.res.hms.search.application.service;
 
-import com.res.hms.clinical.application.patient.repository.PatientRepository;
+import com.res.hms.clinical.infrastructure.repository.PatientRepository;
 import com.res.hms.core.api.PageResponse;
 import com.res.hms.hospital.domain.Hospital;
 import com.res.hms.hospital.infrastructure.repository.HospitalRepository;

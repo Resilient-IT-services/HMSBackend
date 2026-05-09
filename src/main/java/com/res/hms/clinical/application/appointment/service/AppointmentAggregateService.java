@@ -72,6 +72,7 @@ public class AppointmentAggregateService {
     com.res.hms.clinical.domain.Vitals vitals = appointment.getVitals();
     if (vitals == null) {
       vitals = new com.res.hms.clinical.domain.Vitals();
+      vitals.setHospitalId(hospitalId);
       vitals.setAppointment(appointment);
       appointment.setVitals(vitals);
     }
@@ -121,7 +122,7 @@ public class AppointmentAggregateService {
     appointment.setDoctorProfile(profile);
     appointment.setStatus(dto.getStatus() != null ? dto.getStatus() : AppointmentStatus.SCHEDULED);
     appointment.setTokenNumber(generateNextToken(profile.getId(), dto.getAppointmentTime()));
-    updateAppointmentFields(appointment, dto);
+    updateAppointmentFields(appointment, dto, hospitalId);
     return appointment;
   }
 
@@ -150,7 +151,7 @@ public class AppointmentAggregateService {
           generateNextToken(appointment.getDoctorProfile().getId(), dto.getAppointmentTime()));
     }
 
-    updateAppointmentFields(appointment, dto);
+    updateAppointmentFields(appointment, dto, hospitalId);
   }
 
   private Integer generateNextToken(UUID doctorId, java.time.LocalDateTime appointmentTime) {
@@ -164,7 +165,7 @@ public class AppointmentAggregateService {
     return lastToken + 1;
   }
 
-  private void updateAppointmentFields(Appointment appointment, AppointmentDTO dto) {
+  private void updateAppointmentFields(Appointment appointment, AppointmentDTO dto, UUID hospitalId) {
     appointment.setAppointmentTime(dto.getAppointmentTime());
     appointment.setNotes(dto.getNotes());
 
@@ -172,6 +173,7 @@ public class AppointmentAggregateService {
       com.res.hms.clinical.domain.Vitals vitals = appointment.getVitals();
       if (vitals == null) {
         vitals = new com.res.hms.clinical.domain.Vitals();
+        vitals.setHospitalId(hospitalId);
         vitals.setAppointment(appointment);
         appointment.setVitals(vitals);
       }
