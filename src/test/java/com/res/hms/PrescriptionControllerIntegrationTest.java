@@ -80,11 +80,15 @@ class PrescriptionControllerIntegrationTest {
 
     drUser.getAssignments().add(drAssign);
     UserAccount saved = userAccountRepository.save(drUser);
+    com.res.hms.clinical.domain.Patient patient = testDataHelper.createTestPatient(hospitalId);
+
     // Create Appointment
     Appointment apt = new Appointment();
     apt.setHospitalId(hospitalId);
-    apt.setDoctorProfile(saved.getDoctorProfile());
-    apt.setPatient(testDataHelper.createTestPatient(hospitalId));
+    apt.setDoctorId(saved.getDoctorProfile().getId());
+    apt.setDoctorName(saved.getFullName());
+    apt.setPatientId(patient.getId());
+    apt.setPatientName(patient.getFullName());
     apt.setAppointmentTime(LocalDateTime.now().plusDays(1));
     apt.setStatus(AppointmentStatus.SCHEDULED);
     appointmentId = appointmentRepository.save(apt).getId();

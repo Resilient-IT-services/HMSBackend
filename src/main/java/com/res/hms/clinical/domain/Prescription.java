@@ -26,13 +26,11 @@ public class Prescription extends HospitalScopedEntity {
   @JoinColumn(name = "id")
   private Appointment appointment;
 
-  @ManyToOne(fetch = FetchType.LAZY, optional = false)
-  @JoinColumn(name = "patient_id", nullable = false)
-  private Patient patient;
+  @Column(name = "patient_id", nullable = false)
+  private java.util.UUID patientId;
 
-  @ManyToOne(fetch = FetchType.LAZY, optional = false)
-  @JoinColumn(name = "doctor_id", nullable = false)
-  private DoctorProfile doctorProfile;
+  @Column(name = "doctor_id", nullable = false)
+  private java.util.UUID doctorId;
 
   @Column(nullable = false)
   private boolean deleted = false;

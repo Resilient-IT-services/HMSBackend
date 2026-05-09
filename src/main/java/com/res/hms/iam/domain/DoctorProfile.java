@@ -47,9 +47,6 @@ public class DoctorProfile extends AuditableEntity {
   @Column(name = "education_json", columnDefinition = "jsonb")
   private DoctorEducation education;
 
-  @OneToMany(mappedBy = "doctorProfile", cascade = CascadeType.ALL, orphanRemoval = true)
-  private List<DoctorAvailabilityException> availabilityExceptions = new ArrayList<>();
-
   public String getFullName() {
     return user != null ? user.getFullName() : null;
   }

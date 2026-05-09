@@ -23,10 +23,10 @@ public interface AppointmentRepository extends BaseRepository<Appointment> {
       Pageable pageable);
 
   @Query(
-      "SELECT a FROM Appointment a JOIN a.patient p JOIN a.doctorProfile d JOIN d.user u "
+      "SELECT a FROM Appointment a "
           + "WHERE a.hospitalId = :hospitalId AND "
-          + "(LOWER(p.fullName) LIKE :query OR "
-          + "LOWER(u.fullName) LIKE :query) "
+          + "(LOWER(a.patientName) LIKE :query OR "
+          + "LOWER(a.doctorName) LIKE :query) "
           + "ORDER BY a.appointmentTime DESC")
   Page<Appointment> search(
       @Param("hospitalId") UUID hospitalId, @Param("query") String query, Pageable pageable);
@@ -41,7 +41,7 @@ public interface AppointmentRepository extends BaseRepository<Appointment> {
 
   @Query(
       "SELECT a FROM Appointment a "
-          + "WHERE a.doctorProfile.id = :doctorId "
+          + "WHERE a.doctorId = :doctorId "
           + "AND CAST(a.appointmentTime AS date) = :date "
           + "AND a.status NOT IN (com.res.hms.clinical.domain.AppointmentStatus.CANCELLED)")
   java.util.List<Appointment> findByDoctorIdAndDate(
@@ -49,7 +49,7 @@ public interface AppointmentRepository extends BaseRepository<Appointment> {
 
   @Query(
       "SELECT MAX(a.tokenNumber) FROM Appointment a "
-          + "WHERE a.doctorProfile.id = :doctorId "
+          + "WHERE a.doctorId = :doctorId "
           + "AND CAST(a.appointmentTime AS date) = :date")
   Integer findMaxTokenByDoctorAndDate(
       @Param("doctorId") UUID doctorId, @Param("date") java.time.LocalDate date);

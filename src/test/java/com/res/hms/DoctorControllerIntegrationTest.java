@@ -47,6 +47,7 @@ class DoctorControllerIntegrationTest {
   @Autowired private PasswordEncoder passwordEncoder;
   @Autowired private TestDataHelper testDataHelper;
   @Autowired private com.res.hms.clinical.infrastructure.repository.AppointmentRepository appointmentRepository;
+  @Autowired private com.res.hms.clinical.infrastructure.repository.DoctorScheduleRepository scheduleRepository;
 
   @Autowired
   private DoctorAvailabilityExceptionRepository
@@ -81,18 +82,19 @@ class DoctorControllerIntegrationTest {
     drAssign.setHospitalId(hospitalId);
     drAssign.setRole(roleRepository.findByCode(RoleCode.DOCTOR).orElseThrow());
 
-    // Add Schedule: Monday 9-11 AM, 15 min slots
-    DoctorSchedule schedule = new DoctorSchedule();
-    schedule.setAssignment(drAssign);
-    schedule.setDayOfWeek((short) 1); // Monday
-    schedule.setStartTime(LocalTime.of(9, 0));
-    schedule.setEndTime(LocalTime.of(11, 0));
-    schedule.setSlotDurationMinutes(60); // 1 hour slots for easy test
-    drAssign.getSchedules().add(schedule);
-
     drUser.getAssignments().add(drAssign);
     UserAccount saved = userAccountRepository.save(drUser);
     doctorId = saved.getDoctorProfile().getId();
+    UUID assignmentId = saved.getAssignments().iterator().next().getId();
+
+    // Add Schedule: Monday 9-11 AM, 1 hour slots
+    DoctorSchedule schedule = new DoctorSchedule();
+    schedule.setAssignmentId(assignmentId);
+    schedule.setDayOfWeek((short) 1); // Monday
+    schedule.setStartTime(LocalTime.of(9, 0));
+    schedule.setEndTime(LocalTime.of(11, 0));
+    schedule.setSlotDurationMinutes(60);
+    scheduleRepository.save(schedule);
 
     // Session
     session =
@@ -126,16 +128,20 @@ class DoctorControllerIntegrationTest {
         .andExpect(jsonPath("$.data.sessions[0].nextSuggestedTime").value("09:00"));
 
     // Book 1 patient
+    UserAccount drUser = userAccountRepository.findByUsername("avail_dr").get();
+    com.res.hms.clinical.domain.Patient patient = testDataHelper.createTestPatient(hospitalId);
+
     Appointment apt = new Appointment();
     apt.setHospitalId(hospitalId);
-    apt.setDoctorProfile(userAccountRepository.findByUsername("avail_dr").get().getDoctorProfile());
-    apt.setPatient(testDataHelper.createTestPatient(hospitalId));
+    apt.setDoctorId(drUser.getDoctorProfile().getId());
+    apt.setDoctorName(drUser.getFullName());
+    apt.setPatientId(patient.getId());
+    apt.setPatientName(patient.getFullName());
     apt.setAppointmentTime(LocalDateTime.of(nextMonday, LocalTime.of(9, 0)));
     apt.setStatus(AppointmentStatus.SCHEDULED);
     appointmentRepository.save(apt);
 
-    // Check again: currentBookings should be 1, suggestedTime should be 10:00 (since duration was
-    // 60 min in setup)
+    // Check again
     mockMvc
         .perform(
             get("/api/v1/doctors/" + doctorId + "/availability")
@@ -150,12 +156,13 @@ class DoctorControllerIntegrationTest {
   @Test
   void testGetAvailabilityWithModifiedException() throws Exception {
     LocalDate tuesday = LocalDate.of(2026, 5, 12); // Tuesday
+    UserAccount drUser = userAccountRepository.findByUsername("avail_dr").get();
 
     // 1. Create a MODIFIED exception for Tuesday: 2-4 PM
     DoctorAvailabilityException ex =
         new DoctorAvailabilityException();
-    ex.setDoctorProfile(userAccountRepository.findByUsername("avail_dr").get().getDoctorProfile());
-    ex.setHospital(hospitalRepository.findById(hospitalId).orElseThrow());
+    ex.setDoctorId(drUser.getDoctorProfile().getId());
+    ex.setHospitalId(hospitalId);
     ex.setDate(tuesday);
     ex.setType("MODIFIED");
     ex.setStartTime(LocalTime.of(14, 0));

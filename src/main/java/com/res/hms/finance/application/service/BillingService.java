@@ -32,25 +32,27 @@ public class BillingService {
   public BillingDTO createBilling(BillingDTO dto) {
     UUID hospitalId = hospitalContext.requireHospitalId();
 
-    Patient patient;
-    Appointment appointment = null;
+    Billing billing = new Billing();
+    billing.setHospitalId(hospitalId);
 
     if (dto.getAppointmentId() != null) {
-      appointment =
+      Appointment appointment =
           appointmentRepository
               .findByIdAndHospitalId(dto.getAppointmentId(), hospitalId)
               .orElseThrow(
                   () ->
                       new ApiException("NOT_FOUND", "Appointment not found", HttpStatus.NOT_FOUND));
-      patient = appointment.getPatient();
+      
+      billing.setAppointmentId(appointment.getId());
+      billing.setPatientId(appointment.getPatientId());
+      if (appointment.getDoctorId() != null) {
+        billing.setDoctorId(appointment.getDoctorId());
+        billing.setDoctorName(appointment.getDoctorName());
+      }
     } else {
-      patient = patientService.requirePatient(dto.getPatientId(), hospitalId);
+      billing.setPatientId(dto.getPatientId());
     }
 
-    Billing billing = new Billing();
-    billing.setHospitalId(hospitalId);
-    billing.setPatient(patient);
-    billing.setAppointment(appointment);
     billing.setSourceType(dto.getSourceType());
     billing.setStatus(dto.getStatus());
     billing.setTotalAmount(dto.getTotalAmount());
@@ -105,24 +107,33 @@ public class BillingService {
 
     // If billing is paid, and it's linked to an appointment with PAYMENT_PENDING status, update it
     if (status == com.res.hms.finance.domain.BillingStatus.PAID
-        && billing.getAppointment() != null) {
-      Appointment appointment = billing.getAppointment();
-      if (appointment.getStatus()
-          == com.res.hms.clinical.domain.AppointmentStatus.PAYMENT_PENDING) {
-        appointment.setStatus(com.res.hms.clinical.domain.AppointmentStatus.SCHEDULED);
-        appointmentRepository.save(appointment);
-      }
+        && billing.getAppointmentId() != null) {
+      appointmentRepository.findByIdAndHospitalId(billing.getAppointmentId(), hospitalId)
+          .ifPresent(appointment -> {
+            if (appointment.getStatus() == com.res.hms.clinical.domain.AppointmentStatus.PAYMENT_PENDING) {
+              appointment.setStatus(com.res.hms.clinical.domain.AppointmentStatus.SCHEDULED);
+              appointmentRepository.save(appointment);
+            }
+          });
     }
 
     return toDto(billingRepository.save(billing));
   }
 
   public BillingDTO toDto(Billing billing) {
+    UUID hospitalId = hospitalContext.requireHospitalId();
+    String patientName = "Unknown";
+    try {
+        patientName = patientService.get(billing.getPatientId()).getFullName();
+    } catch (Exception e) {
+        // Log or handle missing patient
+    }
+
     return BillingDTO.builder()
         .id(billing.getId())
-        .patientId(billing.getPatient().getId())
-        .patientName(billing.getPatient().getFullName())
-        .appointmentId(billing.getAppointment() != null ? billing.getAppointment().getId() : null)
+        .patientId(billing.getPatientId())
+        .patientName(patientName)
+        .appointmentId(billing.getAppointmentId())
         .sourceType(billing.getSourceType())
         .status(billing.getStatus())
         .totalAmount(billing.getTotalAmount())

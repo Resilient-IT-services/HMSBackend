@@ -137,7 +137,9 @@ public class DoctorProfileService {
       }
     } else {
       List<DoctorSchedule> baseSchedules =
-          assignment.getSchedules().stream().filter(s -> s.getDayOfWeek().equals(dbDay)).toList();
+          scheduleRepository.findByAssignmentId(assignment.getId()).stream()
+              .filter(s -> s.getDayOfWeek().equals(dbDay))
+              .toList();
 
       for (DoctorSchedule s : baseSchedules) {
         if (date.isAfter(today) || s.getEndTime().isAfter(now)) {
@@ -232,7 +234,9 @@ public class DoctorProfileService {
           allSlots);
     } else {
       List<DoctorSchedule> baseSchedules =
-          assignment.getSchedules().stream().filter(s -> s.getDayOfWeek().equals(dbDay)).toList();
+          scheduleRepository.findByAssignmentId(assignment.getId()).stream()
+              .filter(s -> s.getDayOfWeek().equals(dbDay))
+              .toList();
       for (DoctorSchedule s : baseSchedules) {
         generateSlots(
             s.getStartTime(),
@@ -349,14 +353,15 @@ public class DoctorProfileService {
       List<AvailabilityExceptionDTO> exceptions) {
 
     if (schedules != null) {
+      List<DoctorSchedule> existingSchedules = scheduleRepository.findByAssignmentId(assignment.getId());
       com.res.hms.core.util.CollectionMergeUtil.merge(
-          assignment.getSchedules(),
+          existingSchedules,
           schedules,
           DoctorSchedule::getId,
           ScheduleDTO::getId,
           dto -> {
             DoctorSchedule s = new DoctorSchedule();
-            s.setAssignment(assignment);
+            s.setAssignmentId(assignment.getId());
             s.setDayOfWeek(dto.getDayOfWeek());
             s.setStartTime(dto.getStartTime());
             s.setEndTime(dto.getEndTime());
@@ -371,24 +376,26 @@ public class DoctorProfileService {
             existing.setSlotDurationMinutes(dto.getSlotDurationMinutes());
             existing.setMaxPatients(dto.getMaxPatients());
           },
-          assignment.getSchedules()::remove);
+          s -> {
+              scheduleRepository.delete(s);
+          });
+      scheduleRepository.saveAll(existingSchedules);
     }
 
     if (exceptions != null && assignment.getUser().getDoctorProfile() != null) {
       DoctorProfile doctorProfile = assignment.getUser().getDoctorProfile();
-      Hospital hospital =
-          resourceLookup.findRequired(
-              assignment.getHospitalId(), hospitalRepository::findById, "Hospital");
+      List<DoctorAvailabilityException> existingExceptions = 
+          availabilityExceptionRepository.findByDoctorIdAndHospitalId(doctorProfile.getId(), assignment.getHospitalId());
 
       com.res.hms.core.util.CollectionMergeUtil.merge(
-          doctorProfile.getAvailabilityExceptions(),
+          existingExceptions,
           exceptions,
           DoctorAvailabilityException::getId,
           AvailabilityExceptionDTO::getId,
           dto -> {
             DoctorAvailabilityException ex = new DoctorAvailabilityException();
-            ex.setDoctorProfile(doctorProfile);
-            ex.setHospital(hospital);
+            ex.setDoctorId(doctorProfile.getId());
+            ex.setHospitalId(assignment.getHospitalId());
             ex.setDate(dto.getDate());
             ex.setType(dto.getType());
             ex.setStartTime(dto.getStartTime());
@@ -407,7 +414,10 @@ public class DoctorProfileService {
             existing.setSlotDurationMinutes(dto.getSlotDurationMinutes());
             existing.setNote(dto.getNote());
           },
-          doctorProfile.getAvailabilityExceptions()::remove);
+          ex -> {
+              availabilityExceptionRepository.delete(ex);
+          });
+      availabilityExceptionRepository.saveAll(existingExceptions);
     }
 
     if (d == null) {

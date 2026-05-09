@@ -21,9 +21,11 @@ public class PrescriptionItem extends HospitalScopedEntity {
   @JoinColumn(name = "prescription_id", nullable = false)
   private Prescription prescription;
 
-  @ManyToOne(fetch = FetchType.LAZY, optional = false)
-  @JoinColumn(name = "medicine_id", nullable = false)
-  private Medicine medicine;
+  @Column(name = "medicine_id", nullable = false)
+  private java.util.UUID medicineId;
+
+  @Column(name = "medicine_name")
+  private String medicineName;
 
   @Column(nullable = false)
   private String dosage;

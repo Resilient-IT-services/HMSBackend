@@ -20,13 +20,17 @@ import lombok.Setter;
 @Table(name = "appointment")
 public class Appointment extends HospitalScopedEntity {
 
-  @ManyToOne(fetch = FetchType.LAZY, optional = false)
-  @JoinColumn(name = "patient_id", nullable = false)
-  private Patient patient;
+  @Column(name = "patient_id", nullable = false)
+  private java.util.UUID patientId;
 
-  @ManyToOne(fetch = FetchType.LAZY, optional = false)
-  @JoinColumn(name = "doctor_id", nullable = false)
-  private DoctorProfile doctorProfile;
+  @Column(name = "patient_name")
+  private String patientName;
+
+  @Column(name = "doctor_id", nullable = false)
+  private java.util.UUID doctorId;
+
+  @Column(name = "doctor_name")
+  private String doctorName;
 
   @Column(name = "appointment_time", nullable = false)
   private LocalDateTime appointmentTime;

@@ -20,13 +20,11 @@ import lombok.Setter;
 @Table(name = "doctor_availability_exception")
 public class DoctorAvailabilityException extends BaseEntity {
 
-  @ManyToOne(fetch = FetchType.LAZY)
-  @JoinColumn(name = "doctor_id", nullable = false)
-  private DoctorProfile doctorProfile;
+  @Column(name = "doctor_id", nullable = false)
+  private java.util.UUID doctorId;
 
-  @ManyToOne(fetch = FetchType.LAZY)
-  @JoinColumn(name = "hospital_id", nullable = false)
-  private Hospital hospital;
+  @Column(name = "hospital_id", nullable = false)
+  private java.util.UUID hospitalId;
 
   @Column(name = "exception_date", nullable = false)
   private LocalDate date;

@@ -63,10 +63,7 @@ public abstract class UserMapper {
             entry -> {
               UUID hospitalId = entry.getKey();
               UserRoleAssignment first = entry.getValue().getFirst();
-              var hospital = first.getHospital();
-              if (hospital == null && hospitalId != null) {
-                hospital = hospitalRepository.findById(hospitalId).orElse(null);
-              }
+              var hospital = hospitalId != null ? hospitalRepository.findById(hospitalId).orElse(null) : null;
 
               Set<RoleCode> roles =
                   entry.getValue().stream()
@@ -97,23 +94,8 @@ public abstract class UserMapper {
   @Mapping(target = "adminDetails", source = "adminDetails")
   @Mapping(target = "pharmacistDetails", source = "pharmacistDetails")
   @Mapping(target = "receptionistDetails", source = "receptionistDetails")
-  @Mapping(target = "schedules", source = "schedules")
-  @Mapping(
-      target = "availabilityExceptions",
-      expression = "java(mapAvailabilityExceptions(assignment))")
   public abstract UserDetailsDTO.RoleAssignmentDTO toRoleAssignmentDTO(
       UserRoleAssignment assignment);
-
-  protected List<com.res.hms.iam.application.dto.AvailabilityExceptionDTO>
-      mapAvailabilityExceptions(UserRoleAssignment assignment) {
-    if (assignment.getUser() == null || assignment.getUser().getDoctorProfile() == null) {
-      return null;
-    }
-    return assignment.getUser().getDoctorProfile().getAvailabilityExceptions().stream()
-        .filter(ex -> ex.getHospital().getId().equals(assignment.getHospitalId()))
-        .map(this::toAvailabilityExceptionDTO)
-        .toList();
-  }
 
   @Mapping(target = "id", source = "id")
   public abstract UserDetailsDTO.DoctorInfo toDoctorInfo(DoctorProfile profile);
@@ -169,8 +151,13 @@ public abstract class UserMapper {
                   user.getDoctorProfile() != null
                       ? user.getDoctorProfile().getSpecialization()
                       : null;
-              String hospitalName =
-                  first.getHospital() != null ? first.getHospital().getName() : "Global Access";
+              
+              String hospitalName = "Global Access";
+              if (hospitalId != null) {
+                  hospitalName = hospitalRepository.findById(hospitalId)
+                      .map(com.res.hms.hospital.domain.Hospital::getName)
+                      .orElse("Global Access");
+              }
 
               String departmentName = first.getDepartmentName();
 
@@ -192,11 +179,7 @@ public abstract class UserMapper {
         .map(
             entry -> {
               UUID hospitalId = entry.getKey();
-              var first = entry.getValue().getFirst();
-              var hospital = first.getHospital();
-              if (hospital == null && hospitalId != null) {
-                hospital = hospitalRepository.findById(hospitalId).orElse(null);
-              }
+              var hospital = hospitalId != null ? hospitalRepository.findById(hospitalId).orElse(null) : null;
 
               String hospitalName = hospital != null ? hospital.getName() : "Global Access";
               String hospitalCode = hospital != null ? hospital.getCode() : "GLOBAL";

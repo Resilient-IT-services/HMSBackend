@@ -63,8 +63,8 @@ public class PrescriptionService {
     Prescription prescription = new Prescription();
     prescription.setHospitalId(hospitalId);
     prescription.setAppointment(appointment);
-    prescription.setPatient(appointment.getPatient());
-    prescription.setDoctorProfile(appointment.getDoctorProfile());
+    prescription.setPatientId(appointment.getPatientId());
+    prescription.setDoctorId(appointment.getDoctorId());
 
     if (dto.getItems() != null) {
       for (PrescriptionItemDTO itemDto : dto.getItems()) {
@@ -78,7 +78,8 @@ public class PrescriptionService {
         PrescriptionItem item = new PrescriptionItem();
         item.setHospitalId(hospitalId);
         item.setPrescription(prescription);
-        item.setMedicine(medicine);
+        item.setMedicineId(medicine.getId());
+        item.setMedicineName(medicine.getName());
         item.setDosage(itemDto.getDosage());
         item.setDuration(itemDto.getDuration());
         prescription.getItems().add(item);
@@ -112,24 +113,19 @@ public class PrescriptionService {
     }
 
     PrescriptionDTO.PrescriptionDTOBuilder builder =
-        PrescriptionDTO.builder().id(prescription.getId());
+        PrescriptionDTO.builder()
+            .id(prescription.getId())
+            .patientId(prescription.getPatientId())
+            .doctorId(prescription.getDoctorId());
 
-    if (prescription.getPatient() != null) {
-      builder
-          .patientId(prescription.getPatient().getId())
-          .patientName(prescription.getPatient().getFullName());
-    }
-
-    if (prescription.getDoctorProfile() != null) {
-      builder
-          .doctorId(prescription.getDoctorProfile().getId())
-          .doctorName(prescription.getDoctorProfile().getFullName());
-    }
-
+    // We can fetch names from Appointment or denormalize them into Prescription too.
+    // Since Prescription has @MapsId with Appointment, we can fetch Appointment.
     if (prescription.getAppointment() != null) {
       builder
           .appointmentId(prescription.getAppointment().getId())
-          .createdAt(prescription.getAppointment().getCreatedAt());
+          .createdAt(prescription.getAppointment().getCreatedAt())
+          .patientName(prescription.getAppointment().getPatientName())
+          .doctorName(prescription.getAppointment().getDoctorName());
     }
 
     if (prescription.getItems() != null) {
@@ -144,16 +140,12 @@ public class PrescriptionService {
     if (item == null) {
       return null;
     }
-    PrescriptionItemDTO.PrescriptionItemDTOBuilder builder =
-        PrescriptionItemDTO.builder()
-            .id(item.getId())
-            .dosage(item.getDosage())
-            .duration(item.getDuration());
-
-    if (item.getMedicine() != null) {
-      builder.medicineId(item.getMedicine().getId()).medicineName(item.getMedicine().getName());
-    }
-
-    return builder.build();
+    return PrescriptionItemDTO.builder()
+        .id(item.getId())
+        .medicineId(item.getMedicineId())
+        .medicineName(item.getMedicineName())
+        .dosage(item.getDosage())
+        .duration(item.getDuration())
+        .build();
   }
 }

@@ -25,13 +25,17 @@ import lombok.Setter;
 @Table(name = "billing")
 public class Billing extends HospitalScopedEntity {
 
-  @ManyToOne(fetch = FetchType.LAZY, optional = false)
-  @JoinColumn(name = "patient_id", nullable = false)
-  private Patient patient;
+  @Column(name = "patient_id", nullable = false)
+  private java.util.UUID patientId;
 
-  @ManyToOne(fetch = FetchType.LAZY)
-  @JoinColumn(name = "appointment_id")
-  private Appointment appointment;
+  @Column(name = "appointment_id")
+  private java.util.UUID appointmentId;
+
+  @Column(name = "doctor_id")
+  private java.util.UUID doctorId;
+
+  @Column(name = "doctor_name")
+  private String doctorName;
 
   @Enumerated(EnumType.STRING)
   @Column(name = "source_type", nullable = false)

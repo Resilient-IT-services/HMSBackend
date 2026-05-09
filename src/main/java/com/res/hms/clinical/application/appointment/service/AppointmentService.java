@@ -122,16 +122,16 @@ public class AppointmentService {
                     ? prescriptionService.toDto(appointment.getPrescription())
                     : null);
 
-    if (appointment.getPatient() != null) {
+    if (appointment.getPatientId() != null) {
       builder
-          .patientId(appointment.getPatient().getId())
-          .patientName(appointment.getPatient().getFullName());
+          .patientId(appointment.getPatientId())
+          .patientName(appointment.getPatientName());
     }
 
-    if (appointment.getDoctorProfile() != null) {
+    if (appointment.getDoctorId() != null) {
       builder
-          .doctorId(appointment.getDoctorProfile().getId())
-          .doctorName(appointment.getDoctorProfile().getFullName());
+          .doctorId(appointment.getDoctorId())
+          .doctorName(appointment.getDoctorName());
     }
 
     return builder.build();

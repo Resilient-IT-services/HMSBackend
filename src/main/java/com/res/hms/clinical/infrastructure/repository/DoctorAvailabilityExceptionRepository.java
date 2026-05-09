@@ -12,8 +12,11 @@ import org.springframework.stereotype.Repository;
 @Repository
 public interface DoctorAvailabilityExceptionRepository
     extends JpaRepository<DoctorAvailabilityException, UUID> {
+
+  List<DoctorAvailabilityException> findByDoctorIdAndHospitalId(UUID doctorId, UUID hospitalId);
+
   @Query(
-      "SELECT e FROM DoctorAvailabilityException e WHERE e.doctorProfile.id = :doctorId AND e.hospital.id = :hospitalId AND e.date = :date")
+      "SELECT e FROM DoctorAvailabilityException e WHERE e.doctorId = :doctorId AND e.hospitalId = :hospitalId AND e.date = :date")
   List<DoctorAvailabilityException> findByDoctorIdAndHospitalIdAndDate(
       @Param("doctorId") UUID doctorId,
       @Param("hospitalId") UUID hospitalId,

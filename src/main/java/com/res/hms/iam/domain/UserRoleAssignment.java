@@ -28,10 +28,6 @@ public class UserRoleAssignment extends BaseEntity {
   @JoinColumn(name = "user_id", nullable = false)
   private UserAccount user;
 
-  @ManyToOne(fetch = FetchType.LAZY)
-  @JoinColumn(name = "hospital_id", insertable = false, updatable = false)
-  private Hospital hospital;
-
   @Column(name = "hospital_id")
   private UUID hospitalId;
 
@@ -59,7 +55,4 @@ public class UserRoleAssignment extends BaseEntity {
 
   @OneToOne(mappedBy = "assignment", fetch = FetchType.LAZY)
   private ReceptionistHospitalDetails receptionistDetails;
-
-  @OneToMany(mappedBy = "assignment", cascade = CascadeType.ALL, orphanRemoval = true)
-  private List<DoctorSchedule> schedules = new ArrayList<>();
 }

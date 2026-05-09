@@ -15,12 +15,12 @@ public interface BillingRepository extends BaseRepository<Billing> {
   Optional<Billing> findByAppointmentIdAndHospitalId(UUID appointmentId, UUID hospitalId);
 
   @Query(
-      "SELECT new com.res.hms.finance.application.dto.RevenueReportDTO(d.user.fullName, COUNT(b), SUM(b.totalAmount - COALESCE(b.discount, 0))) "
-          + "FROM Billing b JOIN b.appointment a JOIN a.doctorProfile d "
+      "SELECT new com.res.hms.finance.application.dto.RevenueReportDTO(b.doctorName, COUNT(b), SUM(b.totalAmount - COALESCE(b.discount, 0))) "
+          + "FROM Billing b "
           + "WHERE b.hospitalId = :hospitalId AND b.status = 'PAID' "
-          + "AND (:doctorId IS NULL OR d.id = :doctorId) "
+          + "AND (:doctorId IS NULL OR b.doctorId = :doctorId) "
           + "AND b.createdAt >= :startDate AND b.createdAt <= :endDate "
-          + "GROUP BY d.user.fullName")
+          + "GROUP BY b.doctorName")
   List<RevenueReportDTO> getDoctorRevenueReport(
       @Param("hospitalId") UUID hospitalId,
       @Param("doctorId") UUID doctorId,

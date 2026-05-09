@@ -25,9 +25,8 @@ public class DoctorSchedule {
   @GeneratedValue(strategy = GenerationType.UUID)
   private UUID id;
 
-  @ManyToOne(fetch = FetchType.LAZY)
-  @JoinColumn(name = "assignment_id", nullable = false)
-  private UserRoleAssignment assignment;
+  @Column(name = "assignment_id", nullable = false)
+  private java.util.UUID assignmentId;
 
   @Column(name = "day_of_week", nullable = false)
   private Short dayOfWeek; // 1-7 (Monday-Sunday) to match DB check constraint

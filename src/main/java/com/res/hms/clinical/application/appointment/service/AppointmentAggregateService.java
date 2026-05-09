@@ -118,8 +118,10 @@ public class AppointmentAggregateService {
 
     Appointment appointment = new Appointment();
     appointment.setHospitalId(hospitalId);
-    appointment.setPatient(patient);
-    appointment.setDoctorProfile(profile);
+    appointment.setPatientId(patient.getId());
+    appointment.setPatientName(patient.getFullName());
+    appointment.setDoctorId(profile.getId());
+    appointment.setDoctorName(profile.getFullName());
     appointment.setStatus(dto.getStatus() != null ? dto.getStatus() : AppointmentStatus.SCHEDULED);
     appointment.setTokenNumber(generateNextToken(profile.getId(), dto.getAppointmentTime()));
     updateAppointmentFields(appointment, dto, hospitalId);
@@ -127,7 +129,7 @@ public class AppointmentAggregateService {
   }
 
   private void updateAppointment(Appointment appointment, AppointmentDTO dto, UUID hospitalId) {
-    boolean doctorChanged = !appointment.getDoctorProfile().getId().equals(dto.getDoctorId());
+    boolean doctorChanged = !appointment.getDoctorId().equals(dto.getDoctorId());
     boolean dateChanged =
         !appointment
             .getAppointmentTime()
@@ -136,11 +138,13 @@ public class AppointmentAggregateService {
 
     if (doctorChanged) {
       DoctorProfile profile = doctorProfileService.requireDoctor(dto.getDoctorId(), hospitalId);
-      appointment.setDoctorProfile(profile);
+      appointment.setDoctorId(profile.getId());
+      appointment.setDoctorName(profile.getFullName());
     }
-    if (!appointment.getPatient().getId().equals(dto.getPatientId())) {
+    if (!appointment.getPatientId().equals(dto.getPatientId())) {
       Patient patient = patientService.requirePatient(dto.getPatientId(), hospitalId);
-      appointment.setPatient(patient);
+      appointment.setPatientId(patient.getId());
+      appointment.setPatientName(patient.getFullName());
     }
     if (dto.getStatus() != null) {
       appointment.setStatus(dto.getStatus());
@@ -148,7 +152,7 @@ public class AppointmentAggregateService {
 
     if (doctorChanged || dateChanged) {
       appointment.setTokenNumber(
-          generateNextToken(appointment.getDoctorProfile().getId(), dto.getAppointmentTime()));
+          generateNextToken(appointment.getDoctorId(), dto.getAppointmentTime()));
     }
 
     updateAppointmentFields(appointment, dto, hospitalId);
