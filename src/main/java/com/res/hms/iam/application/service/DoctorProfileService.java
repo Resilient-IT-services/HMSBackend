@@ -1,23 +1,23 @@
 package com.res.hms.iam.application.service;
 
+import com.res.hms.clinical.domain.DoctorAvailabilityException;
+import com.res.hms.clinical.domain.DoctorSchedule;
 import com.res.hms.core.tenant.HospitalContext;
 import com.res.hms.core.util.ResourceLookup;
+import com.res.hms.hospital.domain.Hospital;
+import com.res.hms.hospital.infrastructure.repository.HospitalRepository;
 import com.res.hms.iam.application.dto.AvailabilityExceptionDTO;
 import com.res.hms.iam.application.dto.DoctorAvailabilityResponse;
+import com.res.hms.iam.application.dto.DoctorHospitalDetailsDTO;
 import com.res.hms.iam.application.dto.ScheduleDTO;
+import com.res.hms.iam.application.dto.UserDetailsDTO;
 import com.res.hms.iam.application.repository.DoctorProfileRepository;
-import com.res.hms.clinical.domain.DoctorAvailabilityException;
 import com.res.hms.iam.domain.DoctorHospitalDetails;
 import com.res.hms.iam.domain.DoctorProfile;
-import com.res.hms.clinical.domain.DoctorSchedule;
-import com.res.hms.hospital.domain.Hospital;
 import com.res.hms.iam.domain.RoleCode;
 import com.res.hms.iam.domain.UserAccount;
 import com.res.hms.iam.domain.UserRoleAssignment;
 import com.res.hms.iam.infrastructure.repository.DoctorHospitalDetailsRepository;
-import com.res.hms.hospital.infrastructure.repository.HospitalRepository;
-import com.res.hms.iam.application.dto.DoctorHospitalDetailsDTO;
-import com.res.hms.iam.application.dto.UserDetailsDTO;
 import java.time.LocalTime;
 import java.util.List;
 import java.util.Optional;
@@ -36,11 +36,14 @@ public class DoctorProfileService {
   private final HospitalContext hospitalContext;
   private final ResourceLookup resourceLookup;
 
-  private final com.res.hms.iam.infrastructure.repository.UserRoleAssignmentRepository assignmentRepository;
-  private final com.res.hms.clinical.infrastructure.repository.DoctorScheduleRepository scheduleRepository;
+  private final com.res.hms.iam.infrastructure.repository.UserRoleAssignmentRepository
+      assignmentRepository;
+  private final com.res.hms.clinical.infrastructure.repository.DoctorScheduleRepository
+      scheduleRepository;
   private final com.res.hms.clinical.infrastructure.repository.DoctorAvailabilityExceptionRepository
       availabilityExceptionRepository;
-  private final com.res.hms.clinical.infrastructure.repository.AppointmentRepository appointmentRepository;
+  private final com.res.hms.clinical.infrastructure.repository.AppointmentRepository
+      appointmentRepository;
 
   @Transactional(readOnly = true)
   public DoctorAvailabilityResponse getAvailableSlots(UUID doctorId, java.time.LocalDate date) {
@@ -290,7 +293,9 @@ public class DoctorProfileService {
   }
 
   private int countBookingsInRange(
-      java.util.List<com.res.hms.clinical.domain.Appointment> appointments, LocalTime start, LocalTime end) {
+      java.util.List<com.res.hms.clinical.domain.Appointment> appointments,
+      LocalTime start,
+      LocalTime end) {
     return (int)
         appointments.stream()
             .map(a -> a.getAppointmentTime().toLocalTime())

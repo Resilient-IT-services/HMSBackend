@@ -1,7 +1,5 @@
 package com.res.hms.clinical.api;
 
-
-
 import com.res.hms.clinical.application.appointment.dto.AppointmentDTO;
 import com.res.hms.clinical.application.appointment.dto.UpdateAppointmentStatusRequest;
 import com.res.hms.clinical.application.appointment.service.AppointmentAggregateService;

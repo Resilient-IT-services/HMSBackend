@@ -1,4 +1,4 @@
-package com.res.hms.pharmacy.application;
+package com.res.hms.pharmacy.application.dto;
 
 import jakarta.validation.constraints.NotBlank;
 import java.math.BigDecimal;

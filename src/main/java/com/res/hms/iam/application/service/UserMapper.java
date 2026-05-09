@@ -1,5 +1,14 @@
 package com.res.hms.iam.application.service;
 
+import com.res.hms.hospital.infrastructure.repository.HospitalRepository;
+import com.res.hms.iam.application.dto.AdminHospitalDetailsDTO;
+import com.res.hms.iam.application.dto.DoctorHospitalDetailsDTO;
+import com.res.hms.iam.application.dto.HospitalMembershipResponse;
+import com.res.hms.iam.application.dto.NurseHospitalDetailsDTO;
+import com.res.hms.iam.application.dto.PharmacistHospitalDetailsDTO;
+import com.res.hms.iam.application.dto.ReceptionistHospitalDetailsDTO;
+import com.res.hms.iam.application.dto.UserDetailsDTO;
+import com.res.hms.iam.application.dto.UserSummaryDTO;
 import com.res.hms.iam.domain.AdminHospitalDetails;
 import com.res.hms.iam.domain.DoctorHospitalDetails;
 import com.res.hms.iam.domain.DoctorProfile;
@@ -13,15 +22,6 @@ import com.res.hms.iam.domain.ReceptionistProfile;
 import com.res.hms.iam.domain.RoleCode;
 import com.res.hms.iam.domain.UserAccount;
 import com.res.hms.iam.domain.UserRoleAssignment;
-import com.res.hms.hospital.infrastructure.repository.HospitalRepository;
-import com.res.hms.iam.application.dto.AdminHospitalDetailsDTO;
-import com.res.hms.iam.application.dto.DoctorHospitalDetailsDTO;
-import com.res.hms.iam.application.dto.HospitalMembershipResponse;
-import com.res.hms.iam.application.dto.NurseHospitalDetailsDTO;
-import com.res.hms.iam.application.dto.PharmacistHospitalDetailsDTO;
-import com.res.hms.iam.application.dto.ReceptionistHospitalDetailsDTO;
-import com.res.hms.iam.application.dto.UserDetailsDTO;
-import com.res.hms.iam.application.dto.UserSummaryDTO;
 import java.util.Collections;
 import java.util.List;
 import java.util.Set;
@@ -107,8 +107,8 @@ public abstract class UserMapper {
   public abstract UserDetailsDTO.RoleAssignmentDTO toRoleAssignmentDTO(
       UserRoleAssignment assignment);
 
-  protected List<com.res.hms.iam.application.dto.AvailabilityExceptionDTO> mapAvailabilityExceptions(
-      UserRoleAssignment assignment) {
+  protected List<com.res.hms.iam.application.dto.AvailabilityExceptionDTO>
+      mapAvailabilityExceptions(UserRoleAssignment assignment) {
     if (assignment.getUser() == null || assignment.getUser().getDoctorProfile() == null) {
       return null;
     }
@@ -133,8 +133,9 @@ public abstract class UserMapper {
   public abstract com.res.hms.iam.application.dto.ScheduleDTO toScheduleDTO(
       com.res.hms.clinical.domain.DoctorSchedule schedule);
 
-  public abstract com.res.hms.iam.application.dto.AvailabilityExceptionDTO toAvailabilityExceptionDTO(
-      com.res.hms.clinical.domain.DoctorAvailabilityException unavailability);
+  public abstract com.res.hms.iam.application.dto.AvailabilityExceptionDTO
+      toAvailabilityExceptionDTO(
+          com.res.hms.clinical.domain.DoctorAvailabilityException unavailability);
 
   public abstract DoctorHospitalDetailsDTO toDoctorHospitalDetailsDTO(
       DoctorHospitalDetails details);

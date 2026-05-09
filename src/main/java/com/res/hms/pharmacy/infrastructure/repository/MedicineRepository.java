@@ -42,8 +42,9 @@ public interface MedicineRepository extends JpaRepository<Medicine, UUID> {
 
   Optional<Medicine> findByNameIgnoreCase(String name);
 
-  Optional<Medicine> findByNameIgnoreCaseAndGenericNameIgnoreCaseAndStrengthIgnoreCaseAndFormIgnoreCase(
-      String name, String genericName, String strength, String form);
+  Optional<Medicine>
+      findByNameIgnoreCaseAndGenericNameIgnoreCaseAndStrengthIgnoreCaseAndFormIgnoreCase(
+          String name, String genericName, String strength, String form);
 
   @Query(
       """

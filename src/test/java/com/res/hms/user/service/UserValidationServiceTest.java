@@ -6,7 +6,7 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.when;
 
-import com.res.hms.common.exception.ApiException;
+import com.res.hms.core.exception.ApiException;
 import com.res.hms.doctor.repository.DoctorProfileRepository;
 import com.res.hms.nurse.repository.NurseProfileRepository;
 import com.res.hms.repository.LabTechProfileRepository;

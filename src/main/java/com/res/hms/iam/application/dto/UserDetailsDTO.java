@@ -1,11 +1,5 @@
 package com.res.hms.iam.application.dto;
 
-import com.res.hms.iam.application.dto.AdminHospitalDetailsDTO;
-import com.res.hms.iam.application.dto.DoctorEducation;
-import com.res.hms.iam.application.dto.DoctorHospitalDetailsDTO;
-import com.res.hms.iam.application.dto.NurseHospitalDetailsDTO;
-import com.res.hms.iam.application.dto.PharmacistHospitalDetailsDTO;
-import com.res.hms.iam.application.dto.ReceptionistHospitalDetailsDTO;
 import com.res.hms.core.domain.Gender;
 import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.validation.constraints.Email;

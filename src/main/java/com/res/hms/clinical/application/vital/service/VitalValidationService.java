@@ -108,7 +108,8 @@ public class VitalValidationService {
     if (c.getUnit() != null && unit != null) {
       try {
         com.res.hms.core.domain.WeightUnit settingUnit =
-            com.res.hms.core.domain.WeightUnit.valueOf(c.getUnit().toUpperCase(java.util.Locale.ROOT));
+            com.res.hms.core.domain.WeightUnit.valueOf(
+                c.getUnit().toUpperCase(java.util.Locale.ROOT));
         valueToValidate = convertWeight(value, unit, settingUnit);
       } catch (IllegalArgumentException e) {
         // Skip conversion
@@ -118,15 +119,19 @@ public class VitalValidationService {
   }
 
   private BigDecimal convertWeight(
-      BigDecimal value, com.res.hms.core.domain.WeightUnit from, com.res.hms.core.domain.WeightUnit to) {
+      BigDecimal value,
+      com.res.hms.core.domain.WeightUnit from,
+      com.res.hms.core.domain.WeightUnit to) {
     if (from == to) {
       return value;
     }
     BigDecimal rate = new BigDecimal("2.20462");
-    if (from == com.res.hms.core.domain.WeightUnit.KG && to == com.res.hms.core.domain.WeightUnit.LB) {
+    if (from == com.res.hms.core.domain.WeightUnit.KG
+        && to == com.res.hms.core.domain.WeightUnit.LB) {
       return value.multiply(rate).setScale(2, java.math.RoundingMode.HALF_UP);
     }
-    if (from == com.res.hms.core.domain.WeightUnit.LB && to == com.res.hms.core.domain.WeightUnit.KG) {
+    if (from == com.res.hms.core.domain.WeightUnit.LB
+        && to == com.res.hms.core.domain.WeightUnit.KG) {
       return value.divide(rate, 2, java.math.RoundingMode.HALF_UP);
     }
     return value;

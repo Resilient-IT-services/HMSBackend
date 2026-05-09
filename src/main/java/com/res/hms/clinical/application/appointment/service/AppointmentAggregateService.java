@@ -1,15 +1,16 @@
 package com.res.hms.clinical.application.appointment.service;
+
 import com.res.hms.clinical.application.appointment.dto.AppointmentDTO;
 import com.res.hms.clinical.application.appointment.dto.VitalsDTO;
 import com.res.hms.clinical.application.patient.service.PatientService;
+import com.res.hms.clinical.domain.Appointment;
+import com.res.hms.clinical.domain.AppointmentStatus;
+import com.res.hms.clinical.domain.Patient;
 import com.res.hms.clinical.infrastructure.repository.AppointmentRepository;
 import com.res.hms.core.exception.ApiException;
 import com.res.hms.core.tenant.HospitalContext;
-import com.res.hms.clinical.domain.Appointment;
-import com.res.hms.clinical.domain.AppointmentStatus;
 import com.res.hms.iam.application.service.DoctorProfileService;
 import com.res.hms.iam.domain.DoctorProfile;
-import com.res.hms.clinical.domain.Patient;
 import java.util.UUID;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -27,7 +28,8 @@ public class AppointmentAggregateService {
   private final PatientService patientService;
   private final DoctorProfileService doctorProfileService;
   private final HospitalContext hospitalContext;
-  private final com.res.hms.clinical.application.vital.service.VitalValidationService vitalValidationService;
+  private final com.res.hms.clinical.application.vital.service.VitalValidationService
+      vitalValidationService;
 
   @Transactional
   public AppointmentDTO saveAppointmentAggregate(AppointmentDTO dto) {
@@ -97,8 +99,7 @@ public class AppointmentAggregateService {
     return appointmentService.toDto(appointmentRepository.save(appointment));
   }
 
-  private void mapVitalsDtoToEntity(
-      VitalsDTO dto, com.res.hms.clinical.domain.Vitals entity) {
+  private void mapVitalsDtoToEntity(VitalsDTO dto, com.res.hms.clinical.domain.Vitals entity) {
     entity.setBloodPressure(dto.getBloodPressure());
     entity.setSystolic(dto.getSystolic());
     entity.setDiastolic(dto.getDiastolic());

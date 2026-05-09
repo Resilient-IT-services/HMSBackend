@@ -2,7 +2,7 @@ package com.res.hms;
 
 import static org.junit.jupiter.api.Assertions.assertThrows;
 
-import com.res.hms.common.exception.ApiException;
+import com.res.hms.core.exception.ApiException;
 import com.res.hms.user.dto.UserDetailsDTO;
 import com.res.hms.user.service.UserAggregateService;
 import java.util.List;

@@ -1,10 +1,10 @@
-package com.res.hms.common.tenant;
+package com.res.hms.core.tenant;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 
-import com.res.hms.common.exception.ApiException;
+import com.res.hms.core.exception.ApiException;
 import com.res.hms.domain.RoleCode;
 import com.res.hms.user.security.HospitalUserPrincipal;
 import java.util.HashMap;

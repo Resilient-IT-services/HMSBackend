@@ -5,7 +5,7 @@ import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.Mockito.when;
 
-import com.res.hms.common.tenant.HospitalContext;
+import com.res.hms.core.tenant.HospitalContext;
 import com.res.hms.user.dto.AdminHospitalDetailsDTO;
 import com.res.hms.user.dto.NurseHospitalDetailsDTO;
 import com.res.hms.user.dto.PharmacistHospitalDetailsDTO;

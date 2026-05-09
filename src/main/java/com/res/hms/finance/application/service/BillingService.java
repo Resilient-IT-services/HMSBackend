@@ -1,16 +1,16 @@
 package com.res.hms.finance.application.service;
 
+import com.res.hms.clinical.application.patient.service.PatientService;
+import com.res.hms.clinical.domain.Appointment;
+import com.res.hms.clinical.domain.Patient;
 import com.res.hms.clinical.infrastructure.repository.AppointmentRepository;
-import com.res.hms.finance.application.dto.BillingDTO;
-import com.res.hms.finance.application.dto.BillingItemDTO;
-import com.res.hms.finance.infrastructure.repository.BillingRepository;
 import com.res.hms.core.exception.ApiException;
 import com.res.hms.core.tenant.HospitalContext;
-import com.res.hms.clinical.domain.Appointment;
+import com.res.hms.finance.application.dto.BillingDTO;
+import com.res.hms.finance.application.dto.BillingItemDTO;
 import com.res.hms.finance.domain.Billing;
 import com.res.hms.finance.domain.BillingItem;
-import com.res.hms.clinical.domain.Patient;
-import com.res.hms.clinical.application.patient.service.PatientService;
+import com.res.hms.finance.infrastructure.repository.BillingRepository;
 import java.math.BigDecimal;
 import java.util.UUID;
 import java.util.stream.Collectors;
@@ -104,9 +104,11 @@ public class BillingService {
     }
 
     // If billing is paid, and it's linked to an appointment with PAYMENT_PENDING status, update it
-    if (status == com.res.hms.finance.domain.BillingStatus.PAID && billing.getAppointment() != null) {
+    if (status == com.res.hms.finance.domain.BillingStatus.PAID
+        && billing.getAppointment() != null) {
       Appointment appointment = billing.getAppointment();
-      if (appointment.getStatus() == com.res.hms.clinical.domain.AppointmentStatus.PAYMENT_PENDING) {
+      if (appointment.getStatus()
+          == com.res.hms.clinical.domain.AppointmentStatus.PAYMENT_PENDING) {
         appointment.setStatus(com.res.hms.clinical.domain.AppointmentStatus.SCHEDULED);
         appointmentRepository.save(appointment);
       }

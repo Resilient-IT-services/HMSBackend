@@ -25,7 +25,7 @@ public class ArchitectureTest {
               "com.res.hms..service..",
               "com.res.hms..dto..",
               "com.res.hms.domain..",
-              "com.res.hms.common..",
+              "com.res.hms.core..",
               "com.res.hms.user.service..",
               "java..",
               "jakarta..",

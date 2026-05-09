@@ -1,9 +1,8 @@
 package com.res.hms.clinical.infrastructure.repository;
 
 import com.res.hms.clinical.domain.Appointment;
-import java.util.UUID;
-
 import com.res.hms.core.repository.BaseRepository;
+import java.util.UUID;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.Query;

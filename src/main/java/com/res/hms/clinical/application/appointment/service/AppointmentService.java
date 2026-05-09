@@ -2,14 +2,14 @@ package com.res.hms.clinical.application.appointment.service;
 
 import com.res.hms.clinical.application.appointment.dto.AppointmentDTO;
 import com.res.hms.clinical.application.appointment.dto.UpdateAppointmentStatusRequest;
+import com.res.hms.clinical.application.prescription.service.PrescriptionService;
+import com.res.hms.clinical.domain.Appointment;
 import com.res.hms.clinical.infrastructure.repository.AppointmentRepository;
 import com.res.hms.core.api.PageResponse;
 import com.res.hms.core.audit.Auditable;
 import com.res.hms.core.exception.ApiException;
 import com.res.hms.core.tenant.HospitalContext;
 import com.res.hms.core.util.ResourceLookup;
-import com.res.hms.clinical.domain.Appointment;
-import com.res.hms.clinical.application.prescription.service.PrescriptionService;
 import java.util.UUID;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Lazy;
@@ -64,7 +64,8 @@ public class AppointmentService {
   }
 
   @Transactional(readOnly = true)
-  public com.res.hms.clinical.application.appointment.dto.AppointmentStatsDTO getStats(java.time.LocalDate date) {
+  public com.res.hms.clinical.application.appointment.dto.AppointmentStatsDTO getStats(
+      java.time.LocalDate date) {
     UUID hospitalId = hospitalContext.requireHospitalId();
     java.util.List<Object[]> results = appointmentRepository.getStatsByDate(hospitalId, date);
 
@@ -136,7 +137,8 @@ public class AppointmentService {
     return builder.build();
   }
 
-  private com.res.hms.clinical.application.appointment.dto.VitalsDTO toVitalsDto(com.res.hms.clinical.domain.Vitals vitals) {
+  private com.res.hms.clinical.application.appointment.dto.VitalsDTO toVitalsDto(
+      com.res.hms.clinical.domain.Vitals vitals) {
     if (vitals == null) {
       return null;
     }

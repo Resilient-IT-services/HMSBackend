@@ -7,7 +7,7 @@ import static org.mockito.Mockito.when;
 
 import com.res.hms.audit.dto.AuditDetail;
 import com.res.hms.audit.repository.AuditLogRepository;
-import com.res.hms.common.tenant.HospitalContext;
+import com.res.hms.core.tenant.HospitalContext;
 import com.res.hms.domain.AuditAction;
 import com.res.hms.domain.AuditLog;
 import java.time.LocalDateTime;
@@ -81,6 +81,6 @@ class AuditLogServiceTest {
     when(hospitalContext.isSuperAdmin()).thenReturn(false);
 
     org.junit.jupiter.api.Assertions.assertThrows(
-        com.res.hms.common.exception.ApiException.class, () -> auditLogService.list(0, 10));
+        com.res.hms.core.exception.ApiException.class, () -> auditLogService.list(0, 10));
   }
 }

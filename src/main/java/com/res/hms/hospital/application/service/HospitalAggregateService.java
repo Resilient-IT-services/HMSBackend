@@ -1,9 +1,9 @@
 package com.res.hms.hospital.application.service;
 
 import com.res.hms.core.exception.ApiException;
+import com.res.hms.hospital.application.dto.HospitalDTO;
 import com.res.hms.hospital.domain.Hospital;
 import com.res.hms.hospital.domain.HospitalStatus;
-import com.res.hms.hospital.application.dto.HospitalDTO;
 import com.res.hms.hospital.infrastructure.repository.HospitalRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;

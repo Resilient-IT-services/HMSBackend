@@ -9,9 +9,9 @@ import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
-import com.res.hms.common.exception.ApiException;
-import com.res.hms.common.tenant.HospitalContext;
-import com.res.hms.common.util.ResourceLookup;
+import com.res.hms.core.exception.ApiException;
+import com.res.hms.core.tenant.HospitalContext;
+import com.res.hms.core.util.ResourceLookup;
 import com.res.hms.doctor.repository.DoctorProfileRepository;
 import com.res.hms.domain.DoctorProfile;
 import com.res.hms.domain.UserAccount;

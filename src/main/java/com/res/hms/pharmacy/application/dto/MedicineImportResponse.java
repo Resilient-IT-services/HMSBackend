@@ -1,4 +1,4 @@
-package com.res.hms.pharmacy.application;
+package com.res.hms.pharmacy.application.dto;
 
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -9,9 +9,8 @@ import lombok.NoArgsConstructor;
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
-public class StockImportResponse {
+public class MedicineImportResponse {
   private int totalRows;
   private int importedRows;
   private int skippedRows;
-  private int medicineNotFoundRows;
 }

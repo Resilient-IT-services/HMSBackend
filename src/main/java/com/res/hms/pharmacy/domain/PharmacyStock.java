@@ -1,5 +1,6 @@
 package com.res.hms.pharmacy.domain;
 
+import com.res.hms.core.domain.HospitalScopedEntity;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.FetchType;
@@ -19,9 +20,15 @@ import lombok.Setter;
 @Table(
     name = "pharmacy_stock",
     indexes = {
-      @Index(name = "idx_pharmacy_stock_hospital_medicine", columnList = "hospital_id, medicine_id"),
-      @Index(name = "idx_pharmacy_stock_fefo", columnList = "hospital_id, medicine_id, expiry_date"),
-      @Index(name = "idx_pharmacy_stock_batch", columnList = "hospital_id, medicine_id, batch_number")
+      @Index(
+          name = "idx_pharmacy_stock_hospital_medicine",
+          columnList = "hospital_id, medicine_id"),
+      @Index(
+          name = "idx_pharmacy_stock_fefo",
+          columnList = "hospital_id, medicine_id, expiry_date"),
+      @Index(
+          name = "idx_pharmacy_stock_batch",
+          columnList = "hospital_id, medicine_id, batch_number")
     })
 public class PharmacyStock extends HospitalScopedEntity {
 

@@ -1,10 +1,9 @@
 package com.res.hms.core.tenant;
 
 import com.res.hms.core.exception.ApiException;
+import com.res.hms.iam.application.security.HospitalUserPrincipal;
 import java.util.Optional;
 import java.util.UUID;
-
-import com.res.hms.iam.application.security.HospitalUserPrincipal;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.authentication.AnonymousAuthenticationToken;
 import org.springframework.security.core.Authentication;

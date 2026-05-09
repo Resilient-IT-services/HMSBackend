@@ -1,10 +1,10 @@
 package com.res.hms.clinical.application.vital.service;
 
+import com.res.hms.clinical.application.vital.dto.VitalSettingDTO;
 import com.res.hms.core.tenant.HospitalContext;
 import com.res.hms.hospital.domain.VitalRangeConfig;
 import com.res.hms.hospital.domain.VitalType;
 import com.res.hms.hospital.infrastructure.repository.VitalRangeConfigRepository;
-import com.res.hms.clinical.application.vital.dto.VitalSettingDTO;
 import java.util.List;
 import java.util.UUID;
 import java.util.stream.Collectors;

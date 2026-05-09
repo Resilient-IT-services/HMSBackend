@@ -1,10 +1,10 @@
 package com.res.hms.clinical.application.patient.service;
 
-import com.res.hms.clinical.infrastructure.repository.AppointmentRepository;
 import com.res.hms.clinical.application.appointment.service.AppointmentService;
-import com.res.hms.core.tenant.HospitalContext;
-import com.res.hms.clinical.domain.Patient;
 import com.res.hms.clinical.application.patient.dto.PatientHistoryDTO;
+import com.res.hms.clinical.domain.Patient;
+import com.res.hms.clinical.infrastructure.repository.AppointmentRepository;
+import com.res.hms.core.tenant.HospitalContext;
 import java.util.UUID;
 import java.util.stream.Collectors;
 import lombok.RequiredArgsConstructor;

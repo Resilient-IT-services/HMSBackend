@@ -2,14 +2,14 @@ package com.res.hms.iam.application.service;
 
 import com.res.hms.core.api.PageResponse;
 import com.res.hms.core.tenant.HospitalContext;
+import com.res.hms.iam.application.dto.DoctorStaffResponse;
+import com.res.hms.iam.application.dto.NurseStaffResponse;
 import com.res.hms.iam.domain.DoctorHospitalDetails;
 import com.res.hms.iam.domain.DoctorProfile;
 import com.res.hms.iam.domain.RoleCode;
 import com.res.hms.iam.domain.UserAccount;
 import com.res.hms.iam.domain.UserRoleAssignment;
 import com.res.hms.iam.infrastructure.repository.UserRoleAssignmentRepository;
-import com.res.hms.iam.application.dto.DoctorStaffResponse;
-import com.res.hms.iam.application.dto.NurseStaffResponse;
 import jakarta.persistence.criteria.Join;
 import jakarta.persistence.criteria.JoinType;
 import jakarta.persistence.criteria.Predicate;

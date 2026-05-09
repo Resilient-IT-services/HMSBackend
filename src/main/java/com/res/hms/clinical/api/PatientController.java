@@ -1,10 +1,10 @@
 package com.res.hms.clinical.api;
 
-import com.res.hms.core.api.ApiResponse;
-import com.res.hms.core.api.PageResponse;
 import com.res.hms.clinical.application.patient.dto.PatientDTO;
 import com.res.hms.clinical.application.patient.service.PatientAggregateService;
 import com.res.hms.clinical.application.patient.service.PatientService;
+import com.res.hms.core.api.ApiResponse;
+import com.res.hms.core.api.PageResponse;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import java.util.UUID;
@@ -27,8 +27,10 @@ public class PatientController {
 
   private final PatientService patientService;
   private final PatientAggregateService patientAggregateService;
-  private final com.res.hms.clinical.application.prescription.service.PrescriptionService prescriptionService;
-  private final com.res.hms.clinical.application.patient.service.PatientHistoryService patientHistoryService;
+  private final com.res.hms.clinical.application.prescription.service.PrescriptionService
+      prescriptionService;
+  private final com.res.hms.clinical.application.patient.service.PatientHistoryService
+      patientHistoryService;
 
   @PostMapping
   @PreAuthorize("hasAnyRole('ADMIN','RECEPTIONIST','NURSE','SUPER_ADMIN')")
@@ -53,8 +55,9 @@ public class PatientController {
 
   @GetMapping("/{patientId}/prescriptions")
   @PreAuthorize("hasAnyRole('ADMIN','RECEPTIONIST','NURSE','DOCTOR','PHARMACIST','SUPER_ADMIN')")
-  public ApiResponse<java.util.List<com.res.hms.clinical.application.prescription.dto.PrescriptionDTO>> getPrescriptions(
-      @PathVariable UUID patientId) {
+  public ApiResponse<
+          java.util.List<com.res.hms.clinical.application.prescription.dto.PrescriptionDTO>>
+      getPrescriptions(@PathVariable UUID patientId) {
     return ApiResponse.success(prescriptionService.getPatientPrescriptions(patientId));
   }
 

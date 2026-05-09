@@ -65,7 +65,8 @@ class StockImportIntegrationTest {
                 .perform(
                     post("/api/v1/auth/login")
                         .contentType(MediaType.APPLICATION_JSON)
-                        .content("{\"username\": \"" + username + "\", \"password\": \"admin123\"}"))
+                        .content(
+                            "{\"username\": \"" + username + "\", \"password\": \"admin123\"}"))
                 .andExpect(status().isOk())
                 .andReturn()
                 .getRequest()
@@ -75,11 +76,13 @@ class StockImportIntegrationTest {
   @Test
   void testStockImport() throws Exception {
     // 1. Create a Medicine first (Master record must exist)
-    mockMvc.perform(post("/api/v1/pharmacy/medicines")
-        .session(session)
-        .header("X-Hospital-Id", testHospitalId.toString())
-        .contentType(MediaType.APPLICATION_JSON)
-        .content("{\"name\": \"ExcelMedicine\", \"strength\": \"500mg\"}"))
+    mockMvc
+        .perform(
+            post("/api/v1/pharmacy/medicines")
+                .session(session)
+                .header("X-Hospital-Id", testHospitalId.toString())
+                .contentType(MediaType.APPLICATION_JSON)
+                .content("{\"name\": \"ExcelMedicine\", \"strength\": \"500mg\"}"))
         .andExpect(status().isOk());
 
     // 2. Prepare Excel file
@@ -110,14 +113,20 @@ class StockImportIntegrationTest {
     byte[] content = bos.toByteArray();
     workbook.close();
 
-    MockMultipartFile file = new MockMultipartFile(
-        "file", "stock.xlsx", "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet", content);
+    MockMultipartFile file =
+        new MockMultipartFile(
+            "file",
+            "stock.xlsx",
+            "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+            content);
 
     // 3. Import
-    mockMvc.perform(MockMvcRequestBuilders.multipart("/api/v1/pharmacy/stock/import")
-        .file(file)
-        .session(session)
-        .header("X-Hospital-Id", testHospitalId.toString()))
+    mockMvc
+        .perform(
+            MockMvcRequestBuilders.multipart("/api/v1/pharmacy/stock/import")
+                .file(file)
+                .session(session)
+                .header("X-Hospital-Id", testHospitalId.toString()))
         .andExpect(status().isOk())
         .andExpect(jsonPath("$.data.totalRows").value(2))
         .andExpect(jsonPath("$.data.importedRows").value(1))

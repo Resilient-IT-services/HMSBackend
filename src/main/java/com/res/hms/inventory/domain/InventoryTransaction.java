@@ -1,5 +1,6 @@
 package com.res.hms.inventory.domain;
 
+import com.res.hms.core.domain.HospitalScopedEntity;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.EnumType;

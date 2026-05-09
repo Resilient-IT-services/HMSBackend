@@ -3,8 +3,8 @@ package com.res.hms;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.Mockito.when;
 
-import com.res.hms.common.exception.ApiException;
-import com.res.hms.common.tenant.HospitalContext;
+import com.res.hms.core.exception.ApiException;
+import com.res.hms.core.tenant.HospitalContext;
 import com.res.hms.doctor.dto.ScheduleDTO;
 import com.res.hms.domain.Gender;
 import com.res.hms.user.dto.UserDetailsDTO;

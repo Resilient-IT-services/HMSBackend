@@ -1,16 +1,16 @@
 package com.res.hms.clinical.application.prescription.service;
 
+import com.res.hms.clinical.application.prescription.dto.PrescriptionDTO;
+import com.res.hms.clinical.application.prescription.dto.PrescriptionItemDTO;
+import com.res.hms.clinical.application.prescription.repository.PrescriptionRepository;
+import com.res.hms.clinical.domain.Appointment;
+import com.res.hms.clinical.domain.Prescription;
+import com.res.hms.clinical.domain.PrescriptionItem;
 import com.res.hms.clinical.infrastructure.repository.AppointmentRepository;
 import com.res.hms.core.api.PageResponse;
 import com.res.hms.core.exception.ApiException;
 import com.res.hms.core.tenant.HospitalContext;
-import com.res.hms.clinical.domain.Appointment;
 import com.res.hms.pharmacy.domain.Medicine;
-import com.res.hms.clinical.domain.Prescription;
-import com.res.hms.clinical.domain.PrescriptionItem;
-import com.res.hms.clinical.application.prescription.dto.PrescriptionDTO;
-import com.res.hms.clinical.application.prescription.dto.PrescriptionItemDTO;
-import com.res.hms.clinical.application.prescription.repository.PrescriptionRepository;
 import com.res.hms.pharmacy.infrastructure.repository.MedicineRepository;
 import java.util.List;
 import java.util.UUID;
@@ -72,8 +72,7 @@ public class PrescriptionService {
                 .findById(itemDto.getMedicineId())
                 .orElseThrow(
                     () ->
-                        new ApiException(
-                            "NOT_FOUND", "Medicine not found", HttpStatus.NOT_FOUND));
+                        new ApiException("NOT_FOUND", "Medicine not found", HttpStatus.NOT_FOUND));
 
         PrescriptionItem item = new PrescriptionItem();
         item.setPrescription(prescription);

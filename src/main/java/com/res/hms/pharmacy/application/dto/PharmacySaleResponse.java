@@ -1,4 +1,4 @@
-package com.res.hms.pharmacy.application;
+package com.res.hms.pharmacy.application.dto;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;

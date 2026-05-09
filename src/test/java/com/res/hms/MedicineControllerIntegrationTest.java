@@ -61,7 +61,8 @@ class MedicineControllerIntegrationTest {
                 .perform(
                     post("/api/v1/auth/login")
                         .contentType(MediaType.APPLICATION_JSON)
-                        .content("{\"username\": \"" + username + "\", \"password\": \"admin123\"}"))
+                        .content(
+                            "{\"username\": \"" + username + "\", \"password\": \"admin123\"}"))
                 .andExpect(status().isOk())
                 .andReturn()
                 .getRequest()
@@ -73,19 +74,23 @@ class MedicineControllerIntegrationTest {
     String medicineJson = "{\"name\": \"Azithromycin\", \"strength\": \"250mg\"}";
 
     // 1. Create first time
-    mockMvc.perform(post("/api/v1/pharmacy/medicines")
-        .session(session)
-        .header("X-Hospital-Id", testHospitalId.toString())
-        .contentType(MediaType.APPLICATION_JSON)
-        .content(medicineJson))
+    mockMvc
+        .perform(
+            post("/api/v1/pharmacy/medicines")
+                .session(session)
+                .header("X-Hospital-Id", testHospitalId.toString())
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(medicineJson))
         .andExpect(status().isOk());
 
     // 2. Create again (duplicate)
-    mockMvc.perform(post("/api/v1/pharmacy/medicines")
-        .session(session)
-        .header("X-Hospital-Id", testHospitalId.toString())
-        .contentType(MediaType.APPLICATION_JSON)
-        .content(medicineJson))
+    mockMvc
+        .perform(
+            post("/api/v1/pharmacy/medicines")
+                .session(session)
+                .header("X-Hospital-Id", testHospitalId.toString())
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(medicineJson))
         .andExpect(status().isConflict())
         .andExpect(jsonPath("$.error.code").value("DUPLICATE_MEDICINE"));
   }

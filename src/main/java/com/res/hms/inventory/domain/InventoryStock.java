@@ -1,5 +1,6 @@
 package com.res.hms.inventory.domain;
 
+import com.res.hms.core.domain.HospitalScopedEntity;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.Table;
@@ -28,6 +29,5 @@ public class InventoryStock extends HospitalScopedEntity {
   @Column(name = "last_updated", nullable = false)
   private LocalDateTime lastUpdated;
 
-  @jakarta.persistence.Version
-  private Long version;
+  @jakarta.persistence.Version private Long version;
 }

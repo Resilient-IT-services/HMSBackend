@@ -1,6 +1,5 @@
 package com.res.hms.audit.application.dto;
 
-import com.res.hms.audit.application.dto.AuditDetail;
 import com.res.hms.audit.domain.AuditAction;
 import java.util.UUID;
 

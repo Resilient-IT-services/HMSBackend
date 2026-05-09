@@ -1,4 +1,4 @@
-package com.res.hms.pharmacy.application;
+package com.res.hms.pharmacy.application.dto;
 
 import java.util.UUID;
 import lombok.Builder;

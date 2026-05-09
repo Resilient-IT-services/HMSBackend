@@ -1,9 +1,9 @@
 package com.res.hms.clinical.api;
 
-import com.res.hms.core.api.ApiResponse;
-import com.res.hms.core.api.PageResponse;
 import com.res.hms.clinical.application.prescription.dto.PrescriptionDTO;
 import com.res.hms.clinical.application.prescription.service.PrescriptionService;
+import com.res.hms.core.api.ApiResponse;
+import com.res.hms.core.api.PageResponse;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import java.util.UUID;

@@ -1,10 +1,11 @@
 package com.res.hms.clinical.application.patient.service;
 
+import com.res.hms.clinical.application.patient.dto.PatientDTO;
 import com.res.hms.clinical.application.patient.repository.PatientRepository;
+import com.res.hms.clinical.domain.Patient;
 import com.res.hms.core.api.PageResponse;
 import com.res.hms.core.tenant.HospitalContext;
-import com.res.hms.clinical.domain.Patient;
-import com.res.hms.clinical.application.patient.dto.PatientDTO;
+import com.res.hms.core.util.ResourceLookup;
 import java.util.UUID;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.PageRequest;
@@ -16,7 +17,7 @@ public class PatientService {
 
   private final PatientRepository patientRepository;
   private final HospitalContext hospitalContext;
-  private final com.res.hms.common.util.ResourceLookup resourceLookup;
+  private final ResourceLookup resourceLookup;
 
   public PageResponse<PatientDTO> list(int page, int size, String search) {
     UUID hospitalId = hospitalContext.requireHospitalId();

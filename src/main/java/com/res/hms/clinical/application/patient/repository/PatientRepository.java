@@ -1,7 +1,7 @@
 package com.res.hms.clinical.application.patient.repository;
 
-import com.res.hms.core.repository.BaseRepository;
 import com.res.hms.clinical.domain.Patient;
+import com.res.hms.core.repository.BaseRepository;
 import java.util.UUID;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;

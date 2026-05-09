@@ -1,4 +1,4 @@
-package com.res.hms.common.exception;
+package com.res.hms.core.exception;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.mockito.Mockito.mock;
@@ -34,7 +34,7 @@ class GlobalExceptionHandlerTest {
 
     assertEquals(HttpStatus.NOT_FOUND, response.getStatusCode());
     assertEquals(
-        "NOT_FOUND", ((com.res.hms.common.api.ApiResponse<?>) response.getBody()).error().code());
+        "NOT_FOUND", ((com.res.hms.core.api.ApiResponse<?>) response.getBody()).error().code());
   }
 
   @Test
@@ -51,7 +51,7 @@ class GlobalExceptionHandlerTest {
     assertEquals(HttpStatus.BAD_REQUEST, response.getStatusCode());
     assertEquals(
         "username is required",
-        ((com.res.hms.common.api.ApiResponse<?>) response.getBody())
+        ((com.res.hms.core.api.ApiResponse<?>) response.getBody())
             .error()
             .details()
             .get("username"));
@@ -72,7 +72,7 @@ class GlobalExceptionHandlerTest {
     assertEquals(HttpStatus.BAD_REQUEST, response.getStatusCode());
     assertEquals(
         "must not be blank",
-        ((com.res.hms.common.api.ApiResponse<?>) response.getBody())
+        ((com.res.hms.core.api.ApiResponse<?>) response.getBody())
             .error()
             .details()
             .get("create.username"));
@@ -84,7 +84,7 @@ class GlobalExceptionHandlerTest {
 
     assertEquals(HttpStatus.FORBIDDEN, response.getStatusCode());
     assertEquals(
-        "FORBIDDEN", ((com.res.hms.common.api.ApiResponse<?>) response.getBody()).error().code());
+        "FORBIDDEN", ((com.res.hms.core.api.ApiResponse<?>) response.getBody()).error().code());
   }
 
   @Test
@@ -93,8 +93,7 @@ class GlobalExceptionHandlerTest {
 
     assertEquals(HttpStatus.INTERNAL_SERVER_ERROR, response.getStatusCode());
     assertEquals(
-        "SYSTEM_ERROR",
-        ((com.res.hms.common.api.ApiResponse<?>) response.getBody()).error().code());
+        "SYSTEM_ERROR", ((com.res.hms.core.api.ApiResponse<?>) response.getBody()).error().code());
   }
 
   @Test
@@ -109,7 +108,7 @@ class GlobalExceptionHandlerTest {
     assertEquals(HttpStatus.CONFLICT, response.getStatusCode());
     assertEquals(
         "Username already exists",
-        ((com.res.hms.common.api.ApiResponse<?>) response.getBody()).error().message());
+        ((com.res.hms.core.api.ApiResponse<?>) response.getBody()).error().message());
   }
 
   @Test
@@ -122,7 +121,7 @@ class GlobalExceptionHandlerTest {
     assertEquals(HttpStatus.CONFLICT, response.getStatusCode());
     assertEquals(
         "A data integrity violation occurred",
-        ((com.res.hms.common.api.ApiResponse<?>) response.getBody()).error().message());
+        ((com.res.hms.core.api.ApiResponse<?>) response.getBody()).error().message());
   }
 
   static class SampleController {

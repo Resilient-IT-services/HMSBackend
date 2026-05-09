@@ -1,8 +1,8 @@
 package com.res.hms.hospital.api;
 
-import com.res.hms.core.api.ApiResponse;
 import com.res.hms.clinical.application.vital.dto.VitalSettingDTO;
 import com.res.hms.clinical.application.vital.service.VitalSettingService;
+import com.res.hms.core.api.ApiResponse;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import java.util.List;

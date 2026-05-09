@@ -1,22 +1,22 @@
-package com.res.hms.pharmacy.application;
+package com.res.hms.pharmacy.application.service;
 
 import com.res.hms.core.api.PageResponse;
 import com.res.hms.core.exception.ApiException;
 import com.res.hms.core.tenant.HospitalContext;
+import com.res.hms.pharmacy.application.dto.MedicineDTO;
+import com.res.hms.pharmacy.application.dto.MedicineImportResponse;
+import com.res.hms.pharmacy.application.dto.PharmacyReturnRequest;
+import com.res.hms.pharmacy.application.dto.PharmacyReturnResponse;
+import com.res.hms.pharmacy.application.dto.PharmacySaleRequest;
+import com.res.hms.pharmacy.application.dto.PharmacySaleResponse;
+import com.res.hms.pharmacy.application.dto.PharmacyStockDTO;
+import com.res.hms.pharmacy.application.dto.StockImportResponse;
+import com.res.hms.pharmacy.application.dto.StockRequest;
 import com.res.hms.pharmacy.domain.Medicine;
 import com.res.hms.pharmacy.domain.PharmacyReturn;
 import com.res.hms.pharmacy.domain.PharmacySale;
 import com.res.hms.pharmacy.domain.PharmacySaleItem;
 import com.res.hms.pharmacy.domain.PharmacyStock;
-import com.res.hms.pharmacy.application.dto.MedicineDTO;
-import com.res.hms.pharmacy.application.MedicineImportResponse;
-import com.res.hms.pharmacy.application.PharmacyReturnRequest;
-import com.res.hms.pharmacy.application.PharmacyReturnResponse;
-import com.res.hms.pharmacy.application.PharmacySaleRequest;
-import com.res.hms.pharmacy.application.PharmacySaleResponse;
-import com.res.hms.pharmacy.application.PharmacyStockDTO;
-import com.res.hms.pharmacy.application.StockImportResponse;
-import com.res.hms.pharmacy.application.StockRequest;
 import com.res.hms.pharmacy.infrastructure.repository.HospitalMedicineCatalogRepository;
 import com.res.hms.pharmacy.infrastructure.repository.MedicineRepository;
 import com.res.hms.pharmacy.infrastructure.repository.PharmacyReturnRepository;
@@ -60,9 +60,11 @@ public class MedicineService {
   public PageResponse<MedicineDTO> list(int page, int size, String search) {
     PageRequest pageRequest = PageRequest.of(page, size);
     if (hasText(search)) {
-      return PageResponse.from(medicineRepository.searchMaster(search.trim(), pageRequest).map(this::toDto));
+      return PageResponse.from(
+          medicineRepository.searchMaster(search.trim(), pageRequest).map(this::toDto));
     }
-    return PageResponse.from(medicineRepository.findAllByOrderByCreatedAtDesc(pageRequest).map(this::toDto));
+    return PageResponse.from(
+        medicineRepository.findAllByOrderByCreatedAtDesc(pageRequest).map(this::toDto));
   }
 
   @Transactional(readOnly = true)
@@ -70,7 +72,8 @@ public class MedicineService {
     UUID hospitalId = hospitalContext.requireHospitalId();
     return PageResponse.from(
         medicineRepository
-            .searchAvailableForHospital(hospitalId, search == null ? "" : search.trim(), PageRequest.of(page, size))
+            .searchAvailableForHospital(
+                hospitalId, search == null ? "" : search.trim(), PageRequest.of(page, size))
             .map(this::toDto));
   }
 
@@ -154,8 +157,7 @@ public class MedicineService {
         String manufacturer = text(row, 5);
         String scheduleType = text(row, 6);
 
-        if (medicineRepository.existsDuplicate(
-            name, genericName, strength, form)) {
+        if (medicineRepository.existsDuplicate(name, genericName, strength, form)) {
           log.info("Skipping duplicate medicine: {} {} {}", name, strength, form);
           skipped++;
           continue;
@@ -283,10 +285,12 @@ public class MedicineService {
     if (lowStock) {
       return PageResponse.from(
           pharmacyStockRepository
-              .findAllByHospitalIdAndQuantityLessThan(hospitalId, DEFAULT_LOW_STOCK_THRESHOLD, pageRequest)
+              .findAllByHospitalIdAndQuantityLessThan(
+                  hospitalId, DEFAULT_LOW_STOCK_THRESHOLD, pageRequest)
               .map(this::toStockDto));
     }
-    return PageResponse.from(pharmacyStockRepository.findDetailedStock(hospitalId, pageRequest).map(this::toStockDto));
+    return PageResponse.from(
+        pharmacyStockRepository.findDetailedStock(hospitalId, pageRequest).map(this::toStockDto));
   }
 
   @Transactional
@@ -303,7 +307,8 @@ public class MedicineService {
       Medicine medicine = requireMedicine(requestedItem.getMedicineId());
       int remaining = requestedItem.getQuantity();
       List<PharmacyStock> batches =
-          pharmacyStockRepository.findDispensableBatchesForUpdate(hospitalId, medicine.getId(), today);
+          pharmacyStockRepository.findDispensableBatchesForUpdate(
+              hospitalId, medicine.getId(), today);
 
       for (PharmacyStock batch : batches) {
         if (remaining == 0) {
@@ -342,10 +347,12 @@ public class MedicineService {
     PharmacySaleItem saleItem =
         pharmacySaleItemRepository
             .findByIdAndHospitalId(request.getSaleItemId(), hospitalId)
-            .orElseThrow(() -> new ApiException("NOT_FOUND", "Sale item not found", HttpStatus.NOT_FOUND));
+            .orElseThrow(
+                () -> new ApiException("NOT_FOUND", "Sale item not found", HttpStatus.NOT_FOUND));
 
     if (request.getQuantity() > saleItem.getQuantity()) {
-      throw new ApiException("INVALID_RETURN", "Return quantity exceeds sale quantity", HttpStatus.BAD_REQUEST);
+      throw new ApiException(
+          "INVALID_RETURN", "Return quantity exceeds sale quantity", HttpStatus.BAD_REQUEST);
     }
 
     PharmacyStock stock = saleItem.getStock();
@@ -372,7 +379,9 @@ public class MedicineService {
   public List<PharmacyStockDTO> expiryAlerts(int days) {
     UUID hospitalId = hospitalContext.requireHospitalId();
     LocalDate today = LocalDate.now();
-    return pharmacyStockRepository.findExpiringBatches(hospitalId, today, today.plusDays(days)).stream()
+    return pharmacyStockRepository
+        .findExpiringBatches(hospitalId, today, today.plusDays(days))
+        .stream()
         .map(this::toStockDto)
         .collect(Collectors.toList());
   }
@@ -390,7 +399,8 @@ public class MedicineService {
   public Medicine requireMedicine(UUID id) {
     return medicineRepository
         .findById(id)
-        .orElseThrow(() -> new ApiException("NOT_FOUND", "Medicine not found", HttpStatus.NOT_FOUND));
+        .orElseThrow(
+            () -> new ApiException("NOT_FOUND", "Medicine not found", HttpStatus.NOT_FOUND));
   }
 
   private PharmacySaleResponse toSaleResponse(PharmacySale sale) {
