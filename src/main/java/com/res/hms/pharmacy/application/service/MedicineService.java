@@ -92,6 +92,7 @@ public class MedicineService {
           HttpStatus.CONFLICT);
     }
     Medicine medicine = new Medicine();
+    medicine.setId(UUID.randomUUID()); // Assign ID upfront for catalog linking
     updateFields(medicine, dto);
     medicine = medicineRepository.save(medicine);
 

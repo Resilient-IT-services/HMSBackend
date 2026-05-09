@@ -21,12 +21,12 @@ public class ArchitectureTest {
           .should()
           .onlyDependOnClassesThat()
           .resideInAnyPackage(
-              "com.res.hms.api..",
-              "com.res.hms..service..",
-              "com.res.hms..dto..",
-              "com.res.hms.core.domain..",
+              "com.res.hms..api..",
+              "com.res.hms..application..",
+              "com.res.hms..application.service..",
+              "com.res.hms..application.dto..",
+              "com.res.hms..domain..",
               "com.res.hms.core..",
-              "com.res.hms.iam.application.service..",
               "java..",
               "jakarta..",
               "org.springframework..",
