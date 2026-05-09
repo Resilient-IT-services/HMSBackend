@@ -1,17 +1,18 @@
 package com.res.hms.config;
 
-import com.res.hms.domain.Role;
-import com.res.hms.domain.RoleCode;
-import com.res.hms.domain.UserAccount;
-import com.res.hms.repository.HospitalRepository;
-import com.res.hms.repository.RoleRepository;
-import com.res.hms.repository.UserAccountRepository;
-import java.util.Arrays;
+import com.res.hms.hospital.infrastructure.repository.HospitalRepository;
+import com.res.hms.iam.domain.Role;
+import com.res.hms.iam.domain.RoleCode;
+import com.res.hms.iam.domain.UserAccount;
+import com.res.hms.iam.infrastructure.repository.RoleRepository;
+import com.res.hms.iam.infrastructure.repository.UserAccountRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.boot.CommandLineRunner;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.security.crypto.password.PasswordEncoder;
+
+import java.util.Arrays;
 
 @Configuration
 @RequiredArgsConstructor
