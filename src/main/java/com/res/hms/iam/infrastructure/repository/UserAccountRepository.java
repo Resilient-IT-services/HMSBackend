@@ -14,7 +14,13 @@ import org.springframework.data.repository.query.Param;
 
 public interface UserAccountRepository
     extends JpaRepository<UserAccount, UUID>, JpaSpecificationExecutor<UserAccount> {
-  Optional<UserAccount> findByUsername(String username);
+  @Query(
+      "SELECT DISTINCT u FROM UserAccount u "
+          + "LEFT JOIN FETCH u.assignments a "
+          + "LEFT JOIN FETCH a.role r "
+          + "LEFT JOIN FETCH u.doctorProfile d "
+          + "WHERE u.username = :username AND u.deleted = false")
+  Optional<UserAccount> findByUsername(@Param("username") String username);
 
   boolean existsByUsername(String username);
 
@@ -23,22 +29,20 @@ public interface UserAccountRepository
   boolean existsByEmailAndIdNot(String email, UUID id);
 
   List<UserAccount> findAllByDeletedFalse();
+@Query(
+    "SELECT DISTINCT u FROM UserAccount u "
+        + "LEFT JOIN FETCH u.assignments a "
+        + "LEFT JOIN FETCH a.role r "
+        + "LEFT JOIN FETCH u.doctorProfile d "
+        + "WHERE (:hospitalId IS NULL OR a.hospitalId = :hospitalId) "
+        + "AND (:active IS NULL OR u.active = :active) "
+        + "AND (:deleted IS NULL OR u.deleted = :deleted) "
+        + "AND (:roleCode IS NULL OR r.code = :roleCode) "
+        + "AND (:search IS NULL OR "
+        + "     LOWER(u.fullName) LIKE :search OR "
+        + "     LOWER(u.email) LIKE :search OR "
+        + "     LOWER(u.username) LIKE :search)")
 
-  @Query(
-      "SELECT DISTINCT u FROM UserAccount u "
-          + "LEFT JOIN FETCH u.assignments a "
-          + "LEFT JOIN FETCH a.role r "
-          + "LEFT JOIN FETCH a.hospital h "
-          + "LEFT JOIN FETCH u.doctorProfile d "
-          + "WHERE (:hospitalId IS NULL OR a.hospitalId = :hospitalId) "
-          + "AND (:active IS NULL OR u.active = :active) "
-          + "AND (:deleted IS NULL OR u.deleted = :deleted) "
-          + "AND (:roleCode IS NULL OR r.code = :roleCode) "
-          + "AND (:search IS NULL OR "
-          + "     LOWER(u.fullName) LIKE :search OR "
-          + "     LOWER(u.email) LIKE :search OR "
-          + "     LOWER(u.username) LIKE :search OR "
-          + "     LOWER(h.name) LIKE :search)")
   Page<UserAccount> searchUsers(
       @Param("hospitalId") UUID hospitalId,
       @Param("active") Boolean active,

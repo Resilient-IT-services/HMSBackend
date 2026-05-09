@@ -88,13 +88,13 @@ public class MedicineController {
   }
 
   @PostMapping("/stock/import")
-  @PreAuthorize("hasRole('PHARMACIST')")
+  @PreAuthorize("hasAnyRole('ADMIN','PHARMACIST','SUPER_ADMIN')")
   public ApiResponse<StockImportResponse> importStock(@RequestParam MultipartFile file) {
     return ApiResponse.success(medicineService.importStockExcel(file));
   }
 
   @PostMapping("/stock")
-  @PreAuthorize("hasRole('PHARMACIST')")
+  @PreAuthorize("hasAnyRole('ADMIN','PHARMACIST','SUPER_ADMIN')")
   public ApiResponse<PharmacyStockDTO> addStock(@Valid @RequestBody StockRequest request) {
     return ApiResponse.success(medicineService.addStock(request));
   }
