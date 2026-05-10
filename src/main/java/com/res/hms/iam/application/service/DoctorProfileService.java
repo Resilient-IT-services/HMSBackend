@@ -19,6 +19,7 @@ import com.res.hms.iam.domain.UserRoleAssignment;
 import com.res.hms.iam.infrastructure.repository.DoctorHospitalDetailsRepository;
 import java.time.LocalTime;
 import java.util.List;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.UUID;
 import lombok.RequiredArgsConstructor;
@@ -378,8 +379,13 @@ public class DoctorProfileService {
           },
           s -> {
             scheduleRepository.delete(s);
+            existingSchedules.remove(s);
           });
-      scheduleRepository.saveAll(existingSchedules);
+      // Filter out any remaining nulls or deleted items before saveAll to be safe
+      List<DoctorSchedule> toSave = existingSchedules.stream()
+          .filter(Objects::nonNull)
+          .toList();
+      scheduleRepository.saveAll(toSave);
     }
 
     if (exceptions != null && assignment.getUser().getDoctorProfile() != null) {
@@ -417,8 +423,13 @@ public class DoctorProfileService {
           },
           ex -> {
             availabilityExceptionRepository.delete(ex);
+            existingExceptions.remove(ex);
           });
-      availabilityExceptionRepository.saveAll(existingExceptions);
+      // Filter out any remaining nulls or deleted items before saveAll to be safe
+      List<DoctorAvailabilityException> toSave = existingExceptions.stream()
+          .filter(Objects::nonNull)
+          .toList();
+      availabilityExceptionRepository.saveAll(toSave);
     }
 
     if (d == null) {
@@ -453,5 +464,44 @@ public class DoctorProfileService {
   public DoctorProfile requireDoctor(UUID id, UUID hospitalId) {
     return resourceLookup.findRequired(
         id, hospitalId, doctorProfileRepository::findByIdAndHospitalId, "DoctorProfile");
+  }
+
+  @Transactional(readOnly = true)
+  public List<ScheduleDTO> getScheduleDTOs(UUID assignmentId) {
+    return scheduleRepository.findByAssignmentId(assignmentId).stream()
+        .map(
+            s ->
+                ScheduleDTO.builder()
+                    .id(s.getId())
+                    .dayOfWeek(s.getDayOfWeek().shortValue())
+                    .startTime(s.getStartTime())
+                    .endTime(s.getEndTime())
+                    .slotDurationMinutes(s.getSlotDurationMinutes())
+                    .maxPatients(s.getMaxPatients())
+                    .build())
+        .toList();
+  }
+
+  @Transactional(readOnly = true)
+  public List<AvailabilityExceptionDTO> getExceptionDTOs(UUID userId, UUID hospitalId) {
+    DoctorProfile profile = doctorProfileRepository.findByUserId(userId).orElse(null);
+    if (profile == null) {
+      return java.util.Collections.emptyList();
+    }
+    return availabilityExceptionRepository.findByDoctorIdAndHospitalId(profile.getId(), hospitalId)
+        .stream()
+        .map(
+            e ->
+                AvailabilityExceptionDTO.builder()
+                    .id(e.getId())
+                    .date(e.getDate())
+                    .type(e.getType())
+                    .startTime(e.getStartTime())
+                    .endTime(e.getEndTime())
+                    .mode(e.getMode())
+                    .slotDurationMinutes(e.getSlotDurationMinutes())
+                    .note(e.getNote())
+                    .build())
+        .toList();
   }
 }

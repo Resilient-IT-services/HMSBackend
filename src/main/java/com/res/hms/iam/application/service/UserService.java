@@ -28,6 +28,7 @@ public class UserService {
   private final UserMapper userMapper;
   private final ResourceLookup resourceLookup;
   private final PasswordEncoder passwordEncoder;
+  private final DoctorProfileService doctorProfileService;
 
   @Transactional
   public void resetPassword(UUID userId, AdminResetPasswordRequest request) {
@@ -73,8 +74,23 @@ public class UserService {
 
   @Transactional(readOnly = true)
   public UserDetailsDTO getFullProfile(UUID userId) {
-    return userMapper.toDetailsDTO(
-        resourceLookup.findRequired(userId, userAccountRepository::findById, "User"));
+    UserAccount user = resourceLookup.findRequired(userId, userAccountRepository::findById, "User");
+    UserDetailsDTO dto = userMapper.toDetailsDTO(user);
+
+    // Orchestrate cross-domain data population (restore schedules visibility)
+    if (dto.getMemberships() != null) {
+      dto.getMemberships().forEach(membership -> {
+        if (membership.getRoleAssignments() != null) {
+          membership.getRoleAssignments().forEach(ra -> {
+            if ("DOCTOR".equals(ra.getRoleCode())) {
+              ra.setSchedules(doctorProfileService.getScheduleDTOs(ra.getAssignmentId()));
+              ra.setAvailabilityExceptions(doctorProfileService.getExceptionDTOs(user.getId(), membership.getHospitalId()));
+            }
+          });
+        }
+      });
+    }
+    return dto;
   }
 
   @Transactional
