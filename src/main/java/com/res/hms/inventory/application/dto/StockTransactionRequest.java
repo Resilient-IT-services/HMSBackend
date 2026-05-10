@@ -1,10 +1,12 @@
 package com.res.hms.inventory.application.dto;
 
-import com.res.hms.inventory.domain.InventoryTransactionType;
-import jakarta.validation.constraints.NotNull;
-import jakarta.validation.constraints.Positive;
 import java.math.BigDecimal;
 import java.util.UUID;
+
+import com.res.hms.inventory.domain.InventoryTransactionType;
+
+import jakarta.validation.constraints.NotNull;
+import jakarta.validation.constraints.Positive;
 import lombok.Data;
 
 @Data

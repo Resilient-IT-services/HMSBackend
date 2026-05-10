@@ -1,21 +1,24 @@
 package com.res.hms.search.application.service;
 
+import java.util.ArrayList;
+import java.util.List;
+import java.util.UUID;
+import java.util.stream.Collectors;
+
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageImpl;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.jpa.domain.Specification;
+import org.springframework.stereotype.Service;
+
 import com.res.hms.clinical.infrastructure.repository.PatientRepository;
 import com.res.hms.core.api.PageResponse;
 import com.res.hms.hospital.domain.Hospital;
 import com.res.hms.hospital.infrastructure.repository.HospitalRepository;
 import com.res.hms.iam.infrastructure.repository.UserAccountRepository;
 import com.res.hms.search.application.dto.SearchResultDTO;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.UUID;
-import java.util.stream.Collectors;
+
 import lombok.RequiredArgsConstructor;
-import org.springframework.data.domain.Page;
-import org.springframework.data.domain.PageImpl;
-import org.springframework.data.domain.PageRequest;
-import org.springframework.data.jpa.domain.Specification;
-import org.springframework.stereotype.Service;
 
 @Service
 @RequiredArgsConstructor

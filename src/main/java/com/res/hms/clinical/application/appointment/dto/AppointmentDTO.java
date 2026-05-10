@@ -1,13 +1,15 @@
 package com.res.hms.clinical.application.appointment.dto;
 
-import com.res.hms.clinical.domain.AppointmentStatus;
-import com.res.hms.clinical.domain.SessionPeriod;
-import com.res.hms.core.validation.OnCreate;
-import jakarta.validation.constraints.Future;
-import jakarta.validation.constraints.NotNull;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.UUID;
+
+import com.res.hms.clinical.domain.AppointmentStatus;
+import com.res.hms.clinical.domain.SessionPeriod;
+import com.res.hms.core.validation.OnCreate;
+
+import jakarta.validation.constraints.Future;
+import jakarta.validation.constraints.NotNull;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;

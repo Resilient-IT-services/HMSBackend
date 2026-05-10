@@ -1,7 +1,8 @@
 package com.res.hms.inventory.application.dto;
 
-import jakarta.validation.constraints.NotBlank;
 import java.util.UUID;
+
+import jakarta.validation.constraints.NotBlank;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;

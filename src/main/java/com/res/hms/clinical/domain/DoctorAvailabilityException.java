@@ -1,16 +1,13 @@
 package com.res.hms.clinical.domain;
 
-import com.res.hms.core.domain.BaseEntity;
-import com.res.hms.hospital.domain.Hospital;
-import com.res.hms.iam.domain.DoctorProfile;
-import jakarta.persistence.Column;
-import jakarta.persistence.Entity;
-import jakarta.persistence.FetchType;
-import jakarta.persistence.JoinColumn;
-import jakarta.persistence.ManyToOne;
-import jakarta.persistence.Table;
 import java.time.LocalDate;
 import java.time.LocalTime;
+
+import com.res.hms.core.domain.BaseEntity;
+
+import jakarta.persistence.Column;
+import jakarta.persistence.Entity;
+import jakarta.persistence.Table;
 import lombok.Getter;
 import lombok.Setter;
 

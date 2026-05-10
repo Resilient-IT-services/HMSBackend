@@ -5,25 +5,11 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.res.hms.clinical.domain.Appointment;
-import com.res.hms.clinical.domain.AppointmentStatus;
-import com.res.hms.core.domain.Gender;
-import com.res.hms.iam.domain.DoctorProfile;
-import com.res.hms.iam.domain.RoleCode;
-import com.res.hms.iam.domain.UserAccount;
-import com.res.hms.clinical.application.prescription.dto.PrescriptionDTO;
-import com.res.hms.clinical.application.prescription.dto.PrescriptionItemDTO;
-import com.res.hms.iam.domain.UserRoleAssignment;
-import com.res.hms.iam.infrastructure.repository.RoleRepository;
-import com.res.hms.iam.infrastructure.repository.UserAccountRepository;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.UUID;
 
-import com.res.hms.pharmacy.domain.Medicine;
-import com.res.hms.pharmacy.infrastructure.repository.MedicineRepository;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -35,6 +21,20 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.transaction.annotation.Transactional;
+
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.res.hms.clinical.application.prescription.dto.PrescriptionDTO;
+import com.res.hms.clinical.application.prescription.dto.PrescriptionItemDTO;
+import com.res.hms.clinical.domain.Appointment;
+import com.res.hms.clinical.domain.AppointmentStatus;
+import com.res.hms.iam.domain.DoctorProfile;
+import com.res.hms.iam.domain.RoleCode;
+import com.res.hms.iam.domain.UserAccount;
+import com.res.hms.iam.domain.UserRoleAssignment;
+import com.res.hms.iam.infrastructure.repository.RoleRepository;
+import com.res.hms.iam.infrastructure.repository.UserAccountRepository;
+import com.res.hms.pharmacy.domain.Medicine;
+import com.res.hms.pharmacy.infrastructure.repository.MedicineRepository;
 
 @SpringBootTest
 @AutoConfigureMockMvc
@@ -127,7 +127,7 @@ class PrescriptionControllerIntegrationTest {
                         .build()))
             .build();
 
-    mockMvc
+    var response = mockMvc
         .perform(
             post("/api/v1/pharmacy/prescriptions")
                 .session(session)
@@ -137,16 +137,20 @@ class PrescriptionControllerIntegrationTest {
         .andExpect(status().isOk())
         .andExpect(jsonPath("$.data.appointmentId").value(appointmentId.toString()))
         .andExpect(jsonPath("$.data.items.length()").value(1))
-        .andExpect(jsonPath("$.data.items[0].medicineName").value("Paracetamol"));
+        .andExpect(jsonPath("$.data.items[0].medicineName").value("Paracetamol"))
+        .andReturn();
 
-    // 3. Get Prescription by ID (which is same as appointmentId)
+    String content = response.getResponse().getContentAsString();
+    UUID prescriptionId = UUID.fromString(com.jayway.jsonpath.JsonPath.read(content, "$.data.id"));
+
+    // 3. Get Prescription by its actual ID
     mockMvc
         .perform(
-            get("/api/v1/pharmacy/prescriptions/" + appointmentId)
+            get("/api/v1/pharmacy/prescriptions/" + prescriptionId)
                 .session(session)
                 .header("X-Hospital-Id", hospitalId.toString()))
         .andExpect(status().isOk())
-        .andExpect(jsonPath("$.data.id").value(appointmentId.toString()))
+        .andExpect(jsonPath("$.data.id").value(prescriptionId.toString()))
         .andExpect(jsonPath("$.data.items[0].dosage").value("500mg"));
   }
 

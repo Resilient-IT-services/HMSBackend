@@ -1,16 +1,19 @@
 package com.res.hms.clinical.application.vital.service;
 
+import java.math.BigDecimal;
+import java.util.List;
+import java.util.UUID;
+
+import org.springframework.http.HttpStatus;
+import org.springframework.stereotype.Service;
+
 import com.res.hms.clinical.application.appointment.dto.VitalsDTO;
 import com.res.hms.core.exception.ApiException;
 import com.res.hms.core.tenant.HospitalContext;
 import com.res.hms.hospital.domain.VitalRangeConfig;
 import com.res.hms.hospital.infrastructure.repository.VitalRangeConfigRepository;
-import java.math.BigDecimal;
-import java.util.List;
-import java.util.UUID;
+
 import lombok.RequiredArgsConstructor;
-import org.springframework.http.HttpStatus;
-import org.springframework.stereotype.Service;
 
 @Service
 @RequiredArgsConstructor

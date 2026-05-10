@@ -1,7 +1,9 @@
 package com.res.hms.iam.application.dto;
 
-import com.res.hms.finance.domain.CommissionType;
 import java.math.BigDecimal;
+
+import com.res.hms.finance.domain.CommissionType;
+
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;

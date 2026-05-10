@@ -1,16 +1,14 @@
 package com.res.hms.clinical.domain;
 
+import java.time.LocalDateTime;
+
 import com.res.hms.core.domain.HospitalScopedEntity;
-import com.res.hms.iam.domain.DoctorProfile;
+
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.EnumType;
 import jakarta.persistence.Enumerated;
-import jakarta.persistence.FetchType;
-import jakarta.persistence.JoinColumn;
-import jakarta.persistence.ManyToOne;
 import jakarta.persistence.Table;
-import java.time.LocalDateTime;
 import lombok.Getter;
 import lombok.Setter;
 
@@ -68,10 +66,4 @@ public class Appointment extends HospitalScopedEntity {
       cascade = jakarta.persistence.CascadeType.ALL,
       fetch = jakarta.persistence.FetchType.LAZY)
   private Vitals vitals;
-
-  @jakarta.persistence.OneToOne(
-      mappedBy = "appointment",
-      cascade = jakarta.persistence.CascadeType.ALL,
-      fetch = jakarta.persistence.FetchType.LAZY)
-  private Prescription prescription;
 }

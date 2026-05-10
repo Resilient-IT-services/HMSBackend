@@ -6,20 +6,21 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.when;
 
-import com.res.hms.core.exception.ApiException;
-import com.res.hms.iam.application.repository.DoctorProfileRepository;
-import com.res.hms.iam.application.service.UserValidationService;
-import com.res.hms.iam.infrastructure.repository.NurseProfileRepository;
-import com.res.hms.iam.infrastructure.repository.LabTechProfileRepository;
-import com.res.hms.iam.infrastructure.repository.PharmacistProfileRepository;
-import com.res.hms.iam.application.dto.UserDetailsDTO;
 import java.util.List;
 import java.util.UUID;
+
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+
+import com.res.hms.core.exception.ApiException;
+import com.res.hms.iam.application.dto.UserDetailsDTO;
+import com.res.hms.iam.application.repository.DoctorProfileRepository;
+import com.res.hms.iam.infrastructure.repository.LabTechProfileRepository;
+import com.res.hms.iam.infrastructure.repository.NurseProfileRepository;
+import com.res.hms.iam.infrastructure.repository.PharmacistProfileRepository;
 
 @ExtendWith(MockitoExtension.class)
 class UserValidationServiceTest {

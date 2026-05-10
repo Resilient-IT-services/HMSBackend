@@ -6,24 +6,11 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
-
 import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.UUID;
 
-import com.res.hms.clinical.application.appointment.dto.AppointmentDTO;
-import com.res.hms.clinical.application.appointment.dto.UpdateAppointmentStatusRequest;
-import com.res.hms.clinical.application.appointment.dto.VitalsDTO;
-import com.res.hms.clinical.domain.AppointmentStatus;
-import com.res.hms.core.domain.Gender;
-import com.res.hms.iam.domain.DoctorProfile;
-import com.res.hms.iam.domain.RoleCode;
-import com.res.hms.iam.domain.UserAccount;
-import com.res.hms.iam.domain.UserRoleAssignment;
-import com.res.hms.iam.infrastructure.repository.RoleRepository;
-import com.res.hms.iam.infrastructure.repository.UserAccountRepository;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -35,6 +22,19 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.transaction.annotation.Transactional;
+
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.res.hms.clinical.application.appointment.dto.AppointmentDTO;
+import com.res.hms.clinical.application.appointment.dto.UpdateAppointmentStatusRequest;
+import com.res.hms.clinical.application.appointment.dto.VitalsDTO;
+import com.res.hms.clinical.domain.AppointmentStatus;
+import com.res.hms.core.domain.Gender;
+import com.res.hms.iam.domain.DoctorProfile;
+import com.res.hms.iam.domain.RoleCode;
+import com.res.hms.iam.domain.UserAccount;
+import com.res.hms.iam.domain.UserRoleAssignment;
+import com.res.hms.iam.infrastructure.repository.RoleRepository;
+import com.res.hms.iam.infrastructure.repository.UserAccountRepository;
 
 @SpringBootTest
 @AutoConfigureMockMvc

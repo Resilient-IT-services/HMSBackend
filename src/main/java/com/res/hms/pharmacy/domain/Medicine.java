@@ -1,6 +1,7 @@
 package com.res.hms.pharmacy.domain;
 
 import com.res.hms.core.domain.BaseEntity;
+
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.Index;

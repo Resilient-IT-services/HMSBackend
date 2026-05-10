@@ -1,5 +1,19 @@
 package com.res.hms.pharmacy.application.service;
 
+import java.math.BigDecimal;
+import java.time.LocalDate;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Optional;
+import java.util.UUID;
+import java.util.stream.Collectors;
+
+import org.springframework.data.domain.PageRequest;
+import org.springframework.http.HttpStatus;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.multipart.MultipartFile;
+
 import com.res.hms.core.api.PageResponse;
 import com.res.hms.core.exception.ApiException;
 import com.res.hms.core.tenant.HospitalContext;
@@ -23,23 +37,9 @@ import com.res.hms.pharmacy.infrastructure.repository.PharmacyReturnRepository;
 import com.res.hms.pharmacy.infrastructure.repository.PharmacySaleItemRepository;
 import com.res.hms.pharmacy.infrastructure.repository.PharmacySaleRepository;
 import com.res.hms.pharmacy.infrastructure.repository.PharmacyStockRepository;
-import java.io.IOException;
-import java.math.BigDecimal;
-import java.time.LocalDate;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Optional;
-import java.util.UUID;
-import java.util.stream.Collectors;
+
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.apache.poi.ss.usermodel.Row;
-import org.apache.poi.ss.usermodel.WorkbookFactory;
-import org.springframework.data.domain.PageRequest;
-import org.springframework.http.HttpStatus;
-import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
-import org.springframework.web.multipart.MultipartFile;
 
 @Slf4j
 @Service
@@ -55,6 +55,8 @@ public class MedicineService {
   private final PharmacySaleItemRepository pharmacySaleItemRepository;
   private final PharmacyReturnRepository pharmacyReturnRepository;
   private final HospitalContext hospitalContext;
+  private final com.res.hms.core.service.DomainEventPublisher eventPublisher;
+  private final PharmacyExcelService pharmacyExcelService;
 
   @Transactional(readOnly = true)
   public PageResponse<MedicineDTO> list(int page, int size, String search) {
@@ -92,11 +94,11 @@ public class MedicineService {
           HttpStatus.CONFLICT);
     }
     Medicine medicine = new Medicine();
-    medicine.setName(dto.getName()); // Set mandatory field
-    medicine = medicineRepository.saveAndFlush(medicine); 
-    
+    medicine.setName(dto.getName());
+    medicine = medicineRepository.saveAndFlush(medicine);
+
     updateFields(medicine, dto);
-    
+
     if (dto.getCurrentStock() != null && dto.getCurrentStock() > 0) {
       addStock(
           StockRequest.builder()
@@ -116,7 +118,6 @@ public class MedicineService {
   @Transactional
   public MedicineDTO update(UUID id, MedicineDTO dto) {
     Medicine medicine = requireMedicine(id);
-    // Check for duplicate if name/strength/form changed
     if (!(medicine.getName().equalsIgnoreCase(dto.getName())
         && equalsIgnoreCase(medicine.getGenericName(), dto.getGenericName())
         && equalsIgnoreCase(medicine.getStrength(), dto.getStrength())
@@ -140,131 +141,21 @@ public class MedicineService {
 
   @Transactional
   public MedicineImportResponse importExcel(MultipartFile file) {
-    try (var workbook = WorkbookFactory.create(file.getInputStream())) {
-      int totalRows = 0;
-      int imported = 0;
-      int skipped = 0;
-
-      for (Row row : workbook.getSheetAt(0)) {
-        if (row.getRowNum() == 0 || blank(row, 0)) {
-          continue;
-        }
-
-        totalRows++;
-        String name = text(row, 0);
-        String genericName = text(row, 1);
-        String composition = text(row, 2);
-        String strength = text(row, 3);
-        String form = text(row, 4);
-        String manufacturer = text(row, 5);
-        String scheduleType = text(row, 6);
-
-        if (medicineRepository.existsDuplicate(name, genericName, strength, form)) {
-          log.info("Skipping duplicate medicine: {} {} {}", name, strength, form);
-          skipped++;
-          continue;
-        }
-
-        Medicine medicine = new Medicine();
-        medicine.setName(name);
-        medicine.setGenericName(genericName);
-        medicine.setComposition(composition);
-        medicine.setStrength(strength);
-        medicine.setForm(form);
-        medicine.setManufacturer(manufacturer);
-        medicine.setScheduleType(scheduleType);
-        medicineRepository.save(medicine);
-        imported++;
-      }
-
-      return MedicineImportResponse.builder()
-          .totalRows(totalRows)
-          .importedRows(imported)
-          .skippedRows(skipped)
-          .build();
-    } catch (IOException e) {
-      log.error("Excel import failed", e);
-      throw new ApiException(
-          "IMPORT_FAILED", "Unable to read medicine Excel file", HttpStatus.BAD_REQUEST);
-    }
+    return pharmacyExcelService.importMedicines(file);
   }
 
   @Transactional
   public StockImportResponse importStockExcel(MultipartFile file) {
-    try (var workbook = WorkbookFactory.create(file.getInputStream())) {
-      int totalRows = 0;
-      int imported = 0;
-      int skipped = 0;
-      int notFound = 0;
-      String lastError = null;
-
-      for (Row row : workbook.getSheetAt(0)) {
-        if (row.getRowNum() == 0 || blank(row, 0)) {
-          continue;
-        }
-
-        totalRows++;
-        String medicineName = text(row, 0);
-        String batchNumber = text(row, 1);
-        String expiryStr = text(row, 2);
-        String qtyStr = text(row, 3);
-        String purchasePriceStr = text(row, 4);
-        String sellingPriceStr = text(row, 5);
-
-        var medicines = medicineRepository.findByExactName(medicineName);
-        if (medicines.isEmpty()) {
-          log.warn("Medicine not found for stock import: {}", medicineName);
-          notFound++;
-          continue;
-        }
-        var medicine = medicines.get(0);
-
-        try {
-          LocalDate expiryDate = null;
-          if (hasText(expiryStr)) {
-            try {
-              expiryDate = LocalDate.parse(expiryStr);
-            } catch (Exception e) {
-              log.warn("Invalid date format in Excel row {}: {}", row.getRowNum(), expiryStr);
-            }
-          }
-
-          addStock(
-              StockRequest.builder()
-                  .medicineId(medicine.getId())
-                  .batchNumber(batchNumber)
-                  .expiryDate(expiryDate)
-                  .quantity(qtyStr != null ? (int) Double.parseDouble(qtyStr) : 0)
-                  .purchasePrice(
-                      purchasePriceStr != null ? new BigDecimal(purchasePriceStr) : BigDecimal.ZERO)
-                  .sellingPrice(
-                      sellingPriceStr != null ? new BigDecimal(sellingPriceStr) : BigDecimal.ZERO)
-                  .build());
-          imported++;
-        } catch (Exception e) {
-          log.error("Failed to import stock row {}: {}", row.getRowNum(), e.getMessage());
-          lastError = e.getMessage();
-          skipped++;
-        }
-      }
-
-      return StockImportResponse.builder()
-          .totalRows(totalRows)
-          .importedRows(imported)
-          .skippedRows(skipped)
-          .medicineNotFoundRows(notFound)
-          .lastError(lastError)
-          .build();
-    } catch (IOException e) {
-      log.error("Stock Excel import failed", e);
-      throw new ApiException(
-          "IMPORT_FAILED", "Unable to read stock Excel file", HttpStatus.BAD_REQUEST);
-    }
+    return pharmacyExcelService.importStock(file);
   }
 
   private boolean equalsIgnoreCase(String s1, String s2) {
-    if (s1 == null && s2 == null) return true;
-    if (s1 == null || s2 == null) return false;
+    if (s1 == null && s2 == null) {
+      return true;
+    }
+    if (s1 == null || s2 == null) {
+      return false;
+    }
     return s1.equalsIgnoreCase(s2);
   }
 
@@ -353,7 +244,13 @@ public class MedicineService {
     }
 
     sale.setTotalAmount(total);
-    return toSaleResponse(pharmacySaleRepository.save(sale));
+    PharmacySale saved = pharmacySaleRepository.save(sale);
+
+    eventPublisher.publish("pharmacy_sale", saved.getId(),
+        new com.res.hms.pharmacy.application.event.PharmacySaleCompletedEvent(
+            saved.getId(), saved.getPatientId(), hospitalId));
+
+    return toSaleResponse(saved);
   }
 
   @Transactional
@@ -530,16 +427,5 @@ public class MedicineService {
 
   private boolean hasText(String value) {
     return value != null && !value.trim().isEmpty();
-  }
-
-  private boolean blank(Row row, int cell) {
-    return !hasText(text(row, cell));
-  }
-
-  private final org.apache.poi.ss.usermodel.DataFormatter dataFormatter = new org.apache.poi.ss.usermodel.DataFormatter();
-
-  private String text(Row row, int cell) {
-    var value = row.getCell(cell);
-    return value == null ? null : dataFormatter.formatCellValue(value).trim();
   }
 }

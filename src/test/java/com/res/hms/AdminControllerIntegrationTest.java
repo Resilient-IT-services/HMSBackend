@@ -8,8 +8,6 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 
 import java.util.UUID;
 
-import com.res.hms.iam.domain.UserAccount;
-import com.res.hms.iam.infrastructure.repository.UserAccountRepository;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -20,6 +18,9 @@ import org.springframework.mock.web.MockHttpSession;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.web.servlet.MockMvc;
+
+import com.res.hms.iam.domain.UserAccount;
+import com.res.hms.iam.infrastructure.repository.UserAccountRepository;
 
 @SpringBootTest
 @AutoConfigureMockMvc

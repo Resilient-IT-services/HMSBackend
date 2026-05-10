@@ -1,15 +1,17 @@
 package com.res.hms.finance.infrastructure.repository;
 
-import com.res.hms.core.repository.BaseRepository;
-import com.res.hms.finance.application.dto.PaymentSummaryDTO;
-import com.res.hms.finance.application.dto.RevenueReportDTO;
-import com.res.hms.finance.domain.Billing;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
+
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
+
+import com.res.hms.core.repository.BaseRepository;
+import com.res.hms.finance.application.dto.PaymentSummaryDTO;
+import com.res.hms.finance.application.dto.RevenueReportDTO;
+import com.res.hms.finance.domain.Billing;
 
 public interface BillingRepository extends BaseRepository<Billing> {
   Optional<Billing> findByAppointmentIdAndHospitalId(UUID appointmentId, UUID hospitalId);

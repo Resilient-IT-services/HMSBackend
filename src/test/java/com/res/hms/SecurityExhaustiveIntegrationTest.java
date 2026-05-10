@@ -2,11 +2,9 @@ package com.res.hms;
 
 import static org.junit.jupiter.api.Assertions.assertThrows;
 
-import com.res.hms.core.exception.ApiException;
-import com.res.hms.iam.application.dto.UserDetailsDTO;
-import com.res.hms.iam.application.service.UserAggregateService;
 import java.util.List;
 import java.util.UUID;
+
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -14,6 +12,10 @@ import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.transaction.annotation.Transactional;
+
+import com.res.hms.core.exception.ApiException;
+import com.res.hms.iam.application.dto.UserDetailsDTO;
+import com.res.hms.iam.application.service.UserAggregateService;
 
 @SpringBootTest
 @ActiveProfiles("test")

@@ -1,10 +1,12 @@
 package com.res.hms.iam.application.dto;
 
-import com.res.hms.core.domain.Gender;
-import io.swagger.v3.oas.annotations.media.Schema;
 import java.time.LocalDate;
 import java.util.List;
 import java.util.UUID;
+
+import com.res.hms.core.domain.Gender;
+
+import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;

@@ -1,10 +1,17 @@
 package com.res.hms.iam.application.service;
 
+import java.time.LocalTime;
+import java.util.List;
+import java.util.Optional;
+import java.util.UUID;
+
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+
 import com.res.hms.clinical.domain.DoctorAvailabilityException;
 import com.res.hms.clinical.domain.DoctorSchedule;
 import com.res.hms.core.tenant.HospitalContext;
 import com.res.hms.core.util.ResourceLookup;
-import com.res.hms.hospital.domain.Hospital;
 import com.res.hms.hospital.infrastructure.repository.HospitalRepository;
 import com.res.hms.iam.application.dto.AvailabilityExceptionDTO;
 import com.res.hms.iam.application.dto.DoctorAvailabilityResponse;
@@ -18,13 +25,8 @@ import com.res.hms.iam.domain.RoleCode;
 import com.res.hms.iam.domain.UserAccount;
 import com.res.hms.iam.domain.UserRoleAssignment;
 import com.res.hms.iam.infrastructure.repository.DoctorHospitalDetailsRepository;
-import java.time.LocalTime;
-import java.util.List;
-import java.util.Optional;
-import java.util.UUID;
+
 import lombok.RequiredArgsConstructor;
-import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
 
 @Service
 @RequiredArgsConstructor

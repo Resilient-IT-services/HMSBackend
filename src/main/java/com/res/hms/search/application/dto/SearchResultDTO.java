@@ -1,6 +1,7 @@
 package com.res.hms.search.application.dto;
 
 import java.util.UUID;
+
 import lombok.Builder;
 import lombok.Data;
 

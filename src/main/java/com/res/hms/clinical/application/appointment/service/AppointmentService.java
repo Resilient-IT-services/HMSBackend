@@ -1,7 +1,15 @@
 package com.res.hms.clinical.application.appointment.service;
 
+import java.util.UUID;
+
+import org.springframework.data.domain.PageRequest;
+import org.springframework.http.HttpStatus;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+
 import com.res.hms.clinical.application.appointment.dto.AppointmentDTO;
 import com.res.hms.clinical.application.appointment.dto.UpdateAppointmentStatusRequest;
+import com.res.hms.clinical.application.prescription.repository.PrescriptionRepository;
 import com.res.hms.clinical.application.prescription.service.PrescriptionService;
 import com.res.hms.clinical.domain.Appointment;
 import com.res.hms.clinical.infrastructure.repository.AppointmentRepository;
@@ -10,23 +18,18 @@ import com.res.hms.core.audit.Auditable;
 import com.res.hms.core.exception.ApiException;
 import com.res.hms.core.tenant.HospitalContext;
 import com.res.hms.core.util.ResourceLookup;
-import java.util.UUID;
+
 import lombok.RequiredArgsConstructor;
-import org.springframework.context.annotation.Lazy;
-import org.springframework.data.domain.PageRequest;
-import org.springframework.http.HttpStatus;
-import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
 
 @Service
 @RequiredArgsConstructor
 public class AppointmentService {
 
   private final AppointmentRepository appointmentRepository;
+  private final PrescriptionRepository prescriptionRepository;
+  private final PrescriptionService prescriptionService;
   private final HospitalContext hospitalContext;
   private final ResourceLookup resourceLookup;
-
-  @Lazy private final PrescriptionService prescriptionService;
 
   @Transactional(readOnly = true)
   public AppointmentDTO getById(UUID id) {
@@ -116,11 +119,11 @@ public class AppointmentService {
             .clinicalNotes(appointment.getClinicalNotes())
             .icdCodes(appointment.getIcdCodes())
             .notes(appointment.getNotes())
-            .vitals(toVitalsDto(appointment.getVitals()))
-            .prescription(
-                appointment.getPrescription() != null
-                    ? prescriptionService.toDto(appointment.getPrescription())
-                    : null);
+            .vitals(toVitalsDto(appointment.getVitals()));
+
+    // Fetch prescription via appointmentId instead of direct entity link or shared ID
+    prescriptionRepository.findByAppointmentId(appointment.getId())
+        .ifPresent(p -> builder.prescription(prescriptionService.toDto(p)));
 
     if (appointment.getPatientId() != null) {
       builder

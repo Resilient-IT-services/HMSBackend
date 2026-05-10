@@ -1,17 +1,16 @@
 package com.res.hms.clinical.domain;
 
+import java.util.ArrayList;
+import java.util.List;
+
 import com.res.hms.core.domain.HospitalScopedEntity;
-import com.res.hms.iam.domain.DoctorProfile;
+
 import jakarta.persistence.CascadeType;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.FetchType;
-import jakarta.persistence.JoinColumn;
-import jakarta.persistence.ManyToOne;
 import jakarta.persistence.OneToMany;
 import jakarta.persistence.Table;
-import java.util.ArrayList;
-import java.util.List;
 import lombok.Getter;
 import lombok.Setter;
 
@@ -21,16 +20,20 @@ import lombok.Setter;
 @Table(name = "prescription")
 public class Prescription extends HospitalScopedEntity {
 
-  @jakarta.persistence.OneToOne(fetch = FetchType.LAZY)
-  @jakarta.persistence.MapsId
-  @JoinColumn(name = "id")
-  private Appointment appointment;
+  @Column(name = "appointment_id", nullable = false)
+  private java.util.UUID appointmentId;
 
   @Column(name = "patient_id", nullable = false)
   private java.util.UUID patientId;
 
+  @Column(name = "patient_name")
+  private String patientName;
+
   @Column(name = "doctor_id", nullable = false)
   private java.util.UUID doctorId;
+
+  @Column(name = "doctor_name")
+  private String doctorName;
 
   @Column(nullable = false)
   private boolean deleted = false;

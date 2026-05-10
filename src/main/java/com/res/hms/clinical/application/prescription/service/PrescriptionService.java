@@ -1,5 +1,14 @@
 package com.res.hms.clinical.application.prescription.service;
 
+import java.util.List;
+import java.util.UUID;
+import java.util.stream.Collectors;
+
+import org.springframework.data.domain.PageRequest;
+import org.springframework.http.HttpStatus;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+
 import com.res.hms.clinical.application.prescription.dto.PrescriptionDTO;
 import com.res.hms.clinical.application.prescription.dto.PrescriptionItemDTO;
 import com.res.hms.clinical.application.prescription.repository.PrescriptionRepository;
@@ -12,14 +21,8 @@ import com.res.hms.core.exception.ApiException;
 import com.res.hms.core.tenant.HospitalContext;
 import com.res.hms.pharmacy.domain.Medicine;
 import com.res.hms.pharmacy.infrastructure.repository.MedicineRepository;
-import java.util.List;
-import java.util.UUID;
-import java.util.stream.Collectors;
+
 import lombok.RequiredArgsConstructor;
-import org.springframework.data.domain.PageRequest;
-import org.springframework.http.HttpStatus;
-import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
 
 @Service
 @RequiredArgsConstructor
@@ -55,16 +58,18 @@ public class PrescriptionService {
                 () -> new ApiException("NOT_FOUND", "Appointment not found", HttpStatus.NOT_FOUND));
 
     // Check if prescription already exists for this appointment
-    if (prescriptionRepository.existsById(appointment.getId())) {
+    if (prescriptionRepository.existsByAppointmentId(appointment.getId())) {
       throw new ApiException(
           "CONFLICT", "Prescription already exists for this appointment", HttpStatus.CONFLICT);
     }
 
     Prescription prescription = new Prescription();
     prescription.setHospitalId(hospitalId);
-    prescription.setAppointment(appointment);
+    prescription.setAppointmentId(appointment.getId());
     prescription.setPatientId(appointment.getPatientId());
+    prescription.setPatientName(appointment.getPatientName());
     prescription.setDoctorId(appointment.getDoctorId());
+    prescription.setDoctorName(appointment.getDoctorName());
 
     if (dto.getItems() != null) {
       for (PrescriptionItemDTO itemDto : dto.getItems()) {
@@ -116,17 +121,11 @@ public class PrescriptionService {
         PrescriptionDTO.builder()
             .id(prescription.getId())
             .patientId(prescription.getPatientId())
-            .doctorId(prescription.getDoctorId());
-
-    // We can fetch names from Appointment or denormalize them into Prescription too.
-    // Since Prescription has @MapsId with Appointment, we can fetch Appointment.
-    if (prescription.getAppointment() != null) {
-      builder
-          .appointmentId(prescription.getAppointment().getId())
-          .createdAt(prescription.getAppointment().getCreatedAt())
-          .patientName(prescription.getAppointment().getPatientName())
-          .doctorName(prescription.getAppointment().getDoctorName());
-    }
+            .patientName(prescription.getPatientName())
+            .doctorId(prescription.getDoctorId())
+            .doctorName(prescription.getDoctorName())
+            .appointmentId(prescription.getAppointmentId())
+            .createdAt(prescription.getCreatedAt());
 
     if (prescription.getItems() != null) {
       builder.items(

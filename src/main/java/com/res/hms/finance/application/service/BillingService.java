@@ -1,8 +1,15 @@
 package com.res.hms.finance.application.service;
 
+import java.math.BigDecimal;
+import java.util.UUID;
+import java.util.stream.Collectors;
+
+import org.springframework.http.HttpStatus;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+
 import com.res.hms.clinical.application.patient.service.PatientService;
 import com.res.hms.clinical.domain.Appointment;
-import com.res.hms.clinical.domain.Patient;
 import com.res.hms.clinical.infrastructure.repository.AppointmentRepository;
 import com.res.hms.core.exception.ApiException;
 import com.res.hms.core.tenant.HospitalContext;
@@ -11,13 +18,8 @@ import com.res.hms.finance.application.dto.BillingItemDTO;
 import com.res.hms.finance.domain.Billing;
 import com.res.hms.finance.domain.BillingItem;
 import com.res.hms.finance.infrastructure.repository.BillingRepository;
-import java.math.BigDecimal;
-import java.util.UUID;
-import java.util.stream.Collectors;
+
 import lombok.RequiredArgsConstructor;
-import org.springframework.http.HttpStatus;
-import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
 
 @Service
 @RequiredArgsConstructor

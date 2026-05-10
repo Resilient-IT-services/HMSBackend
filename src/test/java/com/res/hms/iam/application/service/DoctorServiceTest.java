@@ -9,20 +9,9 @@ import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
-import com.res.hms.core.exception.ApiException;
-import com.res.hms.core.tenant.HospitalContext;
-
-import com.res.hms.core.util.ResourceLookup;
 import java.util.Optional;
 import java.util.UUID;
 
-import com.res.hms.iam.application.dto.UserDetailsDTO;
-import com.res.hms.iam.application.repository.DoctorProfileRepository;
-import com.res.hms.iam.application.service.DoctorProfileService;
-import com.res.hms.iam.domain.DoctorProfile;
-import com.res.hms.iam.domain.UserAccount;
-import com.res.hms.iam.infrastructure.repository.DoctorHospitalDetailsRepository;
-import com.res.hms.iam.infrastructure.repository.UserAccountRepository;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.ArgumentCaptor;
@@ -30,6 +19,16 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.http.HttpStatus;
+
+import com.res.hms.core.exception.ApiException;
+import com.res.hms.core.tenant.HospitalContext;
+import com.res.hms.core.util.ResourceLookup;
+import com.res.hms.iam.application.dto.UserDetailsDTO;
+import com.res.hms.iam.application.repository.DoctorProfileRepository;
+import com.res.hms.iam.domain.DoctorProfile;
+import com.res.hms.iam.domain.UserAccount;
+import com.res.hms.iam.infrastructure.repository.DoctorHospitalDetailsRepository;
+import com.res.hms.iam.infrastructure.repository.UserAccountRepository;
 
 @ExtendWith(MockitoExtension.class)
 class DoctorServiceTest {
