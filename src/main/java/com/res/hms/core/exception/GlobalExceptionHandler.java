@@ -101,15 +101,9 @@ public class GlobalExceptionHandler {
   public ResponseEntity<ApiResponse<Void>> handleUnhandled(Exception exception) {
     log.error("Unhandled exception occurred: {}", exception.getMessage(), exception);
 
-    Map<String, Object> details = new HashMap<>();
-    if (exception.getMessage() != null) {
-      details.put("message", exception.getMessage());
-    }
-    details.put("type", exception.getClass().getSimpleName());
-
     return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
         .body(
             ApiResponse.failure(
-                new ApiError("SYSTEM_ERROR", "Unexpected error occurred", details)));
+                new ApiError("SYSTEM_ERROR", "An unexpected error occurred", Map.of())));
   }
 }

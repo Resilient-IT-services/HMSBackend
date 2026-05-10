@@ -92,8 +92,23 @@ class GlobalExceptionHandlerTest {
     ResponseEntity<?> response = handler.handleUnhandled(new IllegalStateException("boom"));
 
     assertEquals(HttpStatus.INTERNAL_SERVER_ERROR, response.getStatusCode());
-    assertEquals(
-        "SYSTEM_ERROR", ((com.res.hms.core.api.ApiResponse<?>) response.getBody()).error().code());
+    com.res.hms.core.api.ApiResponse<?> body =
+        (com.res.hms.core.api.ApiResponse<?>) response.getBody();
+    assertEquals("SYSTEM_ERROR", body.error().code());
+    assertEquals("An unexpected error occurred", body.error().message());
+  }
+
+  @Test
+  void handleUnhandledDoesNotLeakMessage() {
+    String secretMessage = "Internal database connection error at 192.168.1.100";
+    ResponseEntity<?> response = handler.handleUnhandled(new RuntimeException(secretMessage));
+
+    assertEquals(HttpStatus.INTERNAL_SERVER_ERROR, response.getStatusCode());
+    com.res.hms.core.api.ApiResponse<?> body =
+        (com.res.hms.core.api.ApiResponse<?>) response.getBody();
+    assertEquals("SYSTEM_ERROR", body.error().code());
+    assertEquals("An unexpected error occurred", body.error().message());
+    assertEquals(0, body.error().details().size());
   }
 
   @Test
