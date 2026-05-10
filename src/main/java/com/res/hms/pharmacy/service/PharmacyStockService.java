@@ -1,12 +1,14 @@
 package com.res.hms.pharmacy.service;
 
 import com.res.hms.common.api.PageResponse;
+import com.res.hms.common.exception.ApiException;
 import com.res.hms.common.tenant.HospitalContext;
 import com.res.hms.domain.Medicine;
 import com.res.hms.domain.PharmacyStock;
 import com.res.hms.pharmacy.dto.PharmacyStockDTO;
 import com.res.hms.pharmacy.dto.StockRequest;
 import com.res.hms.pharmacy.mapper.PharmacyStockMapper;
+import com.res.hms.pharmacy.repository.PharmacySaleItemRepository;
 import com.res.hms.pharmacy.repository.PharmacyStockRepository;
 import java.time.LocalDate;
 import java.util.List;
@@ -14,6 +16,7 @@ import java.util.UUID;
 import java.util.stream.Collectors;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.PageRequest;
+import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -24,6 +27,7 @@ public class PharmacyStockService {
   private static final int DEFAULT_LOW_STOCK_THRESHOLD = 20;
 
   private final PharmacyStockRepository pharmacyStockRepository;
+  private final PharmacySaleItemRepository pharmacySaleItemRepository;
   private final HospitalContext hospitalContext;
   private final MedicineMasterService medicineMasterService;
   private final PharmacyStockMapper pharmacyStockMapper;
@@ -90,5 +94,24 @@ public class PharmacyStockService {
         pharmacyStockRepository.availableQuantity(
             stock.getHospitalId(), stock.getMedicine().getId(), LocalDate.now());
     return pharmacyStockMapper.toDto(stock, total);
+  }
+
+  @Transactional
+  public void deleteStock(UUID id) {
+    UUID hospitalId = hospitalContext.requireHospitalId();
+    PharmacyStock stock =
+        pharmacyStockRepository
+            .findByIdAndHospitalId(id, hospitalId)
+            .orElseThrow(
+                () -> new ApiException("NOT_FOUND", "Stock not found", HttpStatus.NOT_FOUND));
+
+    if (pharmacySaleItemRepository.existsByStockId(id)) {
+      throw new ApiException(
+          "STOCK_IN_USE",
+          "Cannot delete stock that has been used in sales. Adjust quantity instead.",
+          HttpStatus.CONFLICT);
+    }
+
+    pharmacyStockRepository.delete(stock);
   }
 }

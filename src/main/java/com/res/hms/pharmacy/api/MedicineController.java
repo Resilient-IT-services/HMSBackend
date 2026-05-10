@@ -125,6 +125,13 @@ public class MedicineController {
     return ApiResponse.success(pharmacyStockService.addStock(request));
   }
 
+  @DeleteMapping("/stock/{id}")
+  @PreAuthorize("hasAnyRole('PHARMACIST','ADMIN','SUPER_ADMIN')")
+  public ApiResponse<Void> deleteStock(@PathVariable UUID id) {
+    pharmacyStockService.deleteStock(id);
+    return ApiResponse.success(null);
+  }
+
   @GetMapping("/stock")
   @PreAuthorize("hasAnyRole('ADMIN','PHARMACIST','DOCTOR','NURSE','SUPER_ADMIN')")
   public ApiResponse<PageResponse<PharmacyStockDTO>> listStock(

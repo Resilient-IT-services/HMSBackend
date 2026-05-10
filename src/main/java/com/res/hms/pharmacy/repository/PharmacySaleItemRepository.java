@@ -18,4 +18,6 @@ public interface PharmacySaleItemRepository extends JpaRepository<PharmacySaleIt
       """)
   Optional<PharmacySaleItem> findByIdAndHospitalId(
       @Param("id") UUID id, @Param("hospitalId") UUID hospitalId);
+
+  boolean existsByStockId(UUID stockId);
 }
