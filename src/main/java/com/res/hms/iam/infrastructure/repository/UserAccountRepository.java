@@ -1,18 +1,16 @@
 package com.res.hms.iam.infrastructure.repository;
 
+import com.res.hms.iam.domain.RoleCode;
+import com.res.hms.iam.domain.UserAccount;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
-
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
-
-import com.res.hms.iam.domain.RoleCode;
-import com.res.hms.iam.domain.UserAccount;
 
 public interface UserAccountRepository
     extends JpaRepository<UserAccount, UUID>, JpaSpecificationExecutor<UserAccount> {
@@ -31,20 +29,20 @@ public interface UserAccountRepository
   boolean existsByEmailAndIdNot(String email, UUID id);
 
   List<UserAccount> findAllByDeletedFalse();
-@Query(
-    "SELECT DISTINCT u FROM UserAccount u "
-        + "LEFT JOIN FETCH u.assignments a "
-        + "LEFT JOIN FETCH a.role r "
-        + "LEFT JOIN FETCH u.doctorProfile d "
-        + "WHERE (:hospitalId IS NULL OR a.hospitalId = :hospitalId) "
-        + "AND (:active IS NULL OR u.active = :active) "
-        + "AND (:deleted IS NULL OR u.deleted = :deleted) "
-        + "AND (:roleCode IS NULL OR r.code = :roleCode) "
-        + "AND (:search IS NULL OR "
-        + "     LOWER(u.fullName) LIKE :search OR "
-        + "     LOWER(u.email) LIKE :search OR "
-        + "     LOWER(u.username) LIKE :search)")
 
+  @Query(
+      "SELECT DISTINCT u FROM UserAccount u "
+          + "LEFT JOIN FETCH u.assignments a "
+          + "LEFT JOIN FETCH a.role r "
+          + "LEFT JOIN FETCH u.doctorProfile d "
+          + "WHERE (:hospitalId IS NULL OR a.hospitalId = :hospitalId) "
+          + "AND (:active IS NULL OR u.active = :active) "
+          + "AND (:deleted IS NULL OR u.deleted = :deleted) "
+          + "AND (:roleCode IS NULL OR r.code = :roleCode) "
+          + "AND (:search IS NULL OR "
+          + "     LOWER(u.fullName) LIKE :search OR "
+          + "     LOWER(u.email) LIKE :search OR "
+          + "     LOWER(u.username) LIKE :search)")
   Page<UserAccount> searchUsers(
       @Param("hospitalId") UUID hospitalId,
       @Param("active") Boolean active,

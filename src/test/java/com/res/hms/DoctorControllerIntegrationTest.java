@@ -5,23 +5,6 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
-import java.time.LocalDate;
-import java.time.LocalDateTime;
-import java.time.LocalTime;
-import java.util.UUID;
-
-import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Test;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
-import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.http.MediaType;
-import org.springframework.mock.web.MockHttpSession;
-import org.springframework.security.crypto.password.PasswordEncoder;
-import org.springframework.test.context.ActiveProfiles;
-import org.springframework.test.web.servlet.MockMvc;
-import org.springframework.transaction.annotation.Transactional;
-
 import com.res.hms.clinical.domain.Appointment;
 import com.res.hms.clinical.domain.AppointmentStatus;
 import com.res.hms.clinical.domain.DoctorAvailabilityException;
@@ -35,6 +18,21 @@ import com.res.hms.iam.domain.UserAccount;
 import com.res.hms.iam.domain.UserRoleAssignment;
 import com.res.hms.iam.infrastructure.repository.RoleRepository;
 import com.res.hms.iam.infrastructure.repository.UserAccountRepository;
+import java.time.LocalDate;
+import java.time.LocalDateTime;
+import java.time.LocalTime;
+import java.util.UUID;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
+import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.http.MediaType;
+import org.springframework.mock.web.MockHttpSession;
+import org.springframework.security.crypto.password.PasswordEncoder;
+import org.springframework.test.context.ActiveProfiles;
+import org.springframework.test.web.servlet.MockMvc;
+import org.springframework.transaction.annotation.Transactional;
 
 @SpringBootTest
 @AutoConfigureMockMvc
@@ -47,12 +45,16 @@ class DoctorControllerIntegrationTest {
   @Autowired private RoleRepository roleRepository;
   @Autowired private PasswordEncoder passwordEncoder;
   @Autowired private TestDataHelper testDataHelper;
-  @Autowired private com.res.hms.clinical.infrastructure.repository.AppointmentRepository appointmentRepository;
-  @Autowired private com.res.hms.clinical.infrastructure.repository.DoctorScheduleRepository scheduleRepository;
 
   @Autowired
-  private DoctorAvailabilityExceptionRepository
-      availabilityExceptionRepository;
+  private com.res.hms.clinical.infrastructure.repository.AppointmentRepository
+      appointmentRepository;
+
+  @Autowired
+  private com.res.hms.clinical.infrastructure.repository.DoctorScheduleRepository
+      scheduleRepository;
+
+  @Autowired private DoctorAvailabilityExceptionRepository availabilityExceptionRepository;
 
   @Autowired private HospitalRepository hospitalRepository;
 
@@ -160,8 +162,7 @@ class DoctorControllerIntegrationTest {
     UserAccount drUser = userAccountRepository.findByUsername("avail_dr").get();
 
     // 1. Create a MODIFIED exception for Tuesday: 2-4 PM
-    DoctorAvailabilityException ex =
-        new DoctorAvailabilityException();
+    DoctorAvailabilityException ex = new DoctorAvailabilityException();
     ex.setDoctorId(drUser.getDoctorProfile().getId());
     ex.setHospitalId(hospitalId);
     ex.setDate(tuesday);

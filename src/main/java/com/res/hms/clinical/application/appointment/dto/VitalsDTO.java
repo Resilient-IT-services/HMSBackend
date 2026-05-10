@@ -1,12 +1,10 @@
 package com.res.hms.clinical.application.appointment.dto;
 
-import java.math.BigDecimal;
-
 import com.res.hms.core.domain.TemperatureUnit;
 import com.res.hms.core.domain.WeightUnit;
-
 import jakarta.validation.constraints.Pattern;
 import jakarta.validation.constraints.Positive;
+import java.math.BigDecimal;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;

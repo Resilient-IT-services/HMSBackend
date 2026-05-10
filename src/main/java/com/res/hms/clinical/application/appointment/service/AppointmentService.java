@@ -1,12 +1,5 @@
 package com.res.hms.clinical.application.appointment.service;
 
-import java.util.UUID;
-
-import org.springframework.data.domain.PageRequest;
-import org.springframework.http.HttpStatus;
-import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
-
 import com.res.hms.clinical.application.appointment.dto.AppointmentDTO;
 import com.res.hms.clinical.application.appointment.dto.UpdateAppointmentStatusRequest;
 import com.res.hms.clinical.application.prescription.repository.PrescriptionRepository;
@@ -18,8 +11,12 @@ import com.res.hms.core.audit.Auditable;
 import com.res.hms.core.exception.ApiException;
 import com.res.hms.core.tenant.HospitalContext;
 import com.res.hms.core.util.ResourceLookup;
-
+import java.util.UUID;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.http.HttpStatus;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 @Service
 @RequiredArgsConstructor
@@ -122,19 +119,16 @@ public class AppointmentService {
             .vitals(toVitalsDto(appointment.getVitals()));
 
     // Fetch prescription via appointmentId instead of direct entity link or shared ID
-    prescriptionRepository.findByAppointmentId(appointment.getId())
+    prescriptionRepository
+        .findByAppointmentId(appointment.getId())
         .ifPresent(p -> builder.prescription(prescriptionService.toDto(p)));
 
     if (appointment.getPatientId() != null) {
-      builder
-          .patientId(appointment.getPatientId())
-          .patientName(appointment.getPatientName());
+      builder.patientId(appointment.getPatientId()).patientName(appointment.getPatientName());
     }
 
     if (appointment.getDoctorId() != null) {
-      builder
-          .doctorId(appointment.getDoctorId())
-          .doctorName(appointment.getDoctorName());
+      builder.doctorId(appointment.getDoctorId()).doctorName(appointment.getDoctorName());
     }
 
     return builder.build();

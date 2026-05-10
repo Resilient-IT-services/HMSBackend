@@ -1,9 +1,7 @@
 package com.res.hms.clinical.application.appointment.dto;
 
-import java.util.Map;
-
 import com.res.hms.clinical.domain.AppointmentStatus;
-
+import java.util.Map;
 import lombok.Builder;
 import lombok.Data;
 

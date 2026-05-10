@@ -1,7 +1,6 @@
 package com.res.hms.clinical.domain;
 
 import com.res.hms.core.domain.HospitalScopedEntity;
-
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.FetchType;

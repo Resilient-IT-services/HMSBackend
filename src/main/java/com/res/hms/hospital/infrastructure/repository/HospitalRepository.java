@@ -1,12 +1,10 @@
 package com.res.hms.hospital.infrastructure.repository;
 
+import com.res.hms.hospital.domain.Hospital;
 import java.util.Optional;
 import java.util.UUID;
-
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
-
-import com.res.hms.hospital.domain.Hospital;
 
 public interface HospitalRepository
     extends JpaRepository<Hospital, UUID>, JpaSpecificationExecutor<Hospital> {

@@ -1,16 +1,14 @@
 package com.res.hms.clinical.domain;
 
-import java.util.ArrayList;
-import java.util.List;
-
 import com.res.hms.core.domain.HospitalScopedEntity;
-
 import jakarta.persistence.CascadeType;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.FetchType;
 import jakarta.persistence.OneToMany;
 import jakarta.persistence.Table;
+import java.util.ArrayList;
+import java.util.List;
 import lombok.Getter;
 import lombok.Setter;
 

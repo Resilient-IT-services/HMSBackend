@@ -1,13 +1,5 @@
 package com.res.hms.finance.application.service;
 
-import java.math.BigDecimal;
-import java.util.UUID;
-import java.util.stream.Collectors;
-
-import org.springframework.http.HttpStatus;
-import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
-
 import com.res.hms.clinical.application.patient.service.PatientService;
 import com.res.hms.clinical.domain.Appointment;
 import com.res.hms.clinical.infrastructure.repository.AppointmentRepository;
@@ -18,8 +10,13 @@ import com.res.hms.finance.application.dto.BillingItemDTO;
 import com.res.hms.finance.domain.Billing;
 import com.res.hms.finance.domain.BillingItem;
 import com.res.hms.finance.infrastructure.repository.BillingRepository;
-
+import java.math.BigDecimal;
+import java.util.UUID;
+import java.util.stream.Collectors;
 import lombok.RequiredArgsConstructor;
+import org.springframework.http.HttpStatus;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 @Service
 @RequiredArgsConstructor
@@ -44,7 +41,7 @@ public class BillingService {
               .orElseThrow(
                   () ->
                       new ApiException("NOT_FOUND", "Appointment not found", HttpStatus.NOT_FOUND));
-      
+
       billing.setAppointmentId(appointment.getId());
       billing.setPatientId(appointment.getPatientId());
       if (appointment.getDoctorId() != null) {
@@ -110,13 +107,16 @@ public class BillingService {
     // If billing is paid, and it's linked to an appointment with PAYMENT_PENDING status, update it
     if (status == com.res.hms.finance.domain.BillingStatus.PAID
         && billing.getAppointmentId() != null) {
-      appointmentRepository.findByIdAndHospitalId(billing.getAppointmentId(), hospitalId)
-          .ifPresent(appointment -> {
-            if (appointment.getStatus() == com.res.hms.clinical.domain.AppointmentStatus.PAYMENT_PENDING) {
-              appointment.setStatus(com.res.hms.clinical.domain.AppointmentStatus.SCHEDULED);
-              appointmentRepository.save(appointment);
-            }
-          });
+      appointmentRepository
+          .findByIdAndHospitalId(billing.getAppointmentId(), hospitalId)
+          .ifPresent(
+              appointment -> {
+                if (appointment.getStatus()
+                    == com.res.hms.clinical.domain.AppointmentStatus.PAYMENT_PENDING) {
+                  appointment.setStatus(com.res.hms.clinical.domain.AppointmentStatus.SCHEDULED);
+                  appointmentRepository.save(appointment);
+                }
+              });
     }
 
     return toDto(billingRepository.save(billing));
@@ -126,9 +126,9 @@ public class BillingService {
     UUID hospitalId = hospitalContext.requireHospitalId();
     String patientName = "Unknown";
     try {
-        patientName = patientService.get(billing.getPatientId()).getFullName();
+      patientName = patientService.get(billing.getPatientId()).getFullName();
     } catch (Exception e) {
-        // Log or handle missing patient
+      // Log or handle missing patient
     }
 
     return BillingDTO.builder()

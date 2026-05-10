@@ -5,17 +5,6 @@ import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.Mockito.when;
 
-import java.util.List;
-import java.util.UUID;
-
-import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Test;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.boot.test.mock.mockito.MockBean;
-import org.springframework.test.context.ActiveProfiles;
-import org.springframework.transaction.annotation.Transactional;
-
 import com.res.hms.core.tenant.HospitalContext;
 import com.res.hms.iam.application.dto.AdminHospitalDetailsDTO;
 import com.res.hms.iam.application.dto.NurseHospitalDetailsDTO;
@@ -24,6 +13,15 @@ import com.res.hms.iam.application.dto.ReceptionistHospitalDetailsDTO;
 import com.res.hms.iam.application.dto.UserDetailsDTO;
 import com.res.hms.iam.application.service.UserAggregateService;
 import com.res.hms.iam.application.service.UserService;
+import java.util.List;
+import java.util.UUID;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.boot.test.mock.mockito.MockBean;
+import org.springframework.test.context.ActiveProfiles;
+import org.springframework.transaction.annotation.Transactional;
 
 @SpringBootTest
 @ActiveProfiles("test")
@@ -92,7 +90,8 @@ class RoleHospitalDetailsIntegrationTest {
 
     assertNotNull(assignment.getNurseDetails());
     assertEquals("2nd Floor", assignment.getNurseDetails().getFloorLocation());
-    assertEquals(com.res.hms.core.domain.ShiftType.NIGHT, assignment.getNurseDetails().getShiftType());
+    assertEquals(
+        com.res.hms.core.domain.ShiftType.NIGHT, assignment.getNurseDetails().getShiftType());
   }
 
   @Test

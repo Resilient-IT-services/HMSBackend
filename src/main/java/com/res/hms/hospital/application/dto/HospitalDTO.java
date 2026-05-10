@@ -1,10 +1,8 @@
 package com.res.hms.hospital.application.dto;
 
-import java.util.UUID;
-
 import com.res.hms.hospital.domain.HospitalStatus;
-
 import jakarta.validation.constraints.NotBlank;
+import java.util.UUID;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;

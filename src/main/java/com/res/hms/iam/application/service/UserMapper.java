@@ -1,17 +1,5 @@
 package com.res.hms.iam.application.service;
 
-import java.util.Collections;
-import java.util.List;
-import java.util.Set;
-import java.util.UUID;
-import java.util.stream.Collectors;
-
-import org.mapstruct.InjectionStrategy;
-import org.mapstruct.Mapper;
-import org.mapstruct.Mapping;
-import org.mapstruct.ReportingPolicy;
-import org.springframework.beans.factory.annotation.Autowired;
-
 import com.res.hms.hospital.infrastructure.repository.HospitalRepository;
 import com.res.hms.iam.application.dto.AdminHospitalDetailsDTO;
 import com.res.hms.iam.application.dto.DoctorHospitalDetailsDTO;
@@ -34,6 +22,16 @@ import com.res.hms.iam.domain.ReceptionistProfile;
 import com.res.hms.iam.domain.RoleCode;
 import com.res.hms.iam.domain.UserAccount;
 import com.res.hms.iam.domain.UserRoleAssignment;
+import java.util.Collections;
+import java.util.List;
+import java.util.Set;
+import java.util.UUID;
+import java.util.stream.Collectors;
+import org.mapstruct.InjectionStrategy;
+import org.mapstruct.Mapper;
+import org.mapstruct.Mapping;
+import org.mapstruct.ReportingPolicy;
+import org.springframework.beans.factory.annotation.Autowired;
 
 @Mapper(
     componentModel = "spring",
@@ -42,8 +40,10 @@ import com.res.hms.iam.domain.UserRoleAssignment;
 public abstract class UserMapper {
   @Autowired protected HospitalRepository hospitalRepository;
   @Autowired protected com.res.hms.core.tenant.HospitalContext hospitalContext;
+
   @Mapping(target = "memberships", expression = "java(mapSummaryMemberships(user))")
   public abstract UserSummaryDTO toSummaryDTO(UserAccount user);
+
   @Mapping(target = "memberships", expression = "java(mapMemberships(user))")
   @Mapping(target = "doctorInfo", source = "doctorProfile")
   @Mapping(target = "nurseInfo", source = "nurseProfile")
@@ -65,7 +65,8 @@ public abstract class UserMapper {
             entry -> {
               UUID hospitalId = entry.getKey();
               UserRoleAssignment first = entry.getValue().getFirst();
-              var hospital = hospitalId != null ? hospitalRepository.findById(hospitalId).orElse(null) : null;
+              var hospital =
+                  hospitalId != null ? hospitalRepository.findById(hospitalId).orElse(null) : null;
 
               Set<RoleCode> roles =
                   entry.getValue().stream()
@@ -153,12 +154,14 @@ public abstract class UserMapper {
                   user.getDoctorProfile() != null
                       ? user.getDoctorProfile().getSpecialization()
                       : null;
-              
+
               String hospitalName = "Global Access";
               if (hospitalId != null) {
-                  hospitalName = hospitalRepository.findById(hospitalId)
-                      .map(com.res.hms.hospital.domain.Hospital::getName)
-                      .orElse("Global Access");
+                hospitalName =
+                    hospitalRepository
+                        .findById(hospitalId)
+                        .map(com.res.hms.hospital.domain.Hospital::getName)
+                        .orElse("Global Access");
               }
 
               String departmentName = first.getDepartmentName();
@@ -181,7 +184,8 @@ public abstract class UserMapper {
         .map(
             entry -> {
               UUID hospitalId = entry.getKey();
-              var hospital = hospitalId != null ? hospitalRepository.findById(hospitalId).orElse(null) : null;
+              var hospital =
+                  hospitalId != null ? hospitalRepository.findById(hospitalId).orElse(null) : null;
 
               String hospitalName = hospital != null ? hospital.getName() : "Global Access";
               String hospitalCode = hospital != null ? hospital.getCode() : "GLOBAL";

@@ -1,9 +1,7 @@
 package com.res.hms.iam.application.dto;
 
-import java.time.LocalTime;
-
 import com.fasterxml.jackson.annotation.JsonFormat;
-
+import java.time.LocalTime;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;

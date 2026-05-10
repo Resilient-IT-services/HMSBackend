@@ -1,13 +1,5 @@
 package com.res.hms.iam.application.service;
 
-import java.util.List;
-import java.util.Set;
-import java.util.UUID;
-import java.util.stream.Collectors;
-
-import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
-
 import com.res.hms.core.util.ResourceLookup;
 import com.res.hms.iam.application.dto.UserDetailsDTO;
 import com.res.hms.iam.domain.Role;
@@ -15,8 +7,13 @@ import com.res.hms.iam.domain.RoleCode;
 import com.res.hms.iam.domain.UserAccount;
 import com.res.hms.iam.domain.UserRoleAssignment;
 import com.res.hms.iam.infrastructure.repository.RoleRepository;
-
+import java.util.List;
+import java.util.Set;
+import java.util.UUID;
+import java.util.stream.Collectors;
 import lombok.RequiredArgsConstructor;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 @Service
 @RequiredArgsConstructor
@@ -112,7 +109,9 @@ public class UserMembershipService {
             .ifPresent(
                 a -> {
                   a.setDepartmentName(ra.getDepartmentName());
-                  a.setActive(ra.getActive());
+                  if (ra.getActive() != null) {
+                    a.setActive(ra.getActive());
+                  }
                 });
       }
     }

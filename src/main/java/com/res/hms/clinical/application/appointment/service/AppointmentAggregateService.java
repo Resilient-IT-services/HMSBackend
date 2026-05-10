@@ -1,11 +1,5 @@
 package com.res.hms.clinical.application.appointment.service;
 
-import java.util.UUID;
-
-import org.springframework.http.HttpStatus;
-import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
-
 import com.res.hms.clinical.application.appointment.dto.AppointmentDTO;
 import com.res.hms.clinical.application.appointment.dto.VitalsDTO;
 import com.res.hms.clinical.application.patient.service.PatientService;
@@ -17,9 +11,12 @@ import com.res.hms.core.exception.ApiException;
 import com.res.hms.core.tenant.HospitalContext;
 import com.res.hms.iam.application.service.DoctorProfileService;
 import com.res.hms.iam.domain.DoctorProfile;
-
+import java.util.UUID;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.http.HttpStatus;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 @Slf4j
 @Service
@@ -60,9 +57,11 @@ public class AppointmentAggregateService {
     }
 
     appointmentRepository.saveAndFlush(appointment);
-    
+
     if (isNew) {
-      eventPublisher.publish("appointment", appointment.getId(), 
+      eventPublisher.publish(
+          "appointment",
+          appointment.getId(),
           new com.res.hms.clinical.application.event.AppointmentBookedEvent(
               appointment.getId(), appointment.getPatientId(), hospitalId));
     }
@@ -182,7 +181,8 @@ public class AppointmentAggregateService {
     return lastToken + 1;
   }
 
-  private void updateAppointmentFields(Appointment appointment, AppointmentDTO dto, UUID hospitalId) {
+  private void updateAppointmentFields(
+      Appointment appointment, AppointmentDTO dto, UUID hospitalId) {
     appointment.setAppointmentTime(dto.getAppointmentTime());
     appointment.setNotes(dto.getNotes());
 

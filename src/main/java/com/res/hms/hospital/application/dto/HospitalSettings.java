@@ -1,7 +1,6 @@
 package com.res.hms.hospital.application.dto;
 
 import java.util.Map;
-
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;

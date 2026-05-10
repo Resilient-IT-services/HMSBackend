@@ -1,15 +1,19 @@
 package com.res.hms.pharmacy.application.service;
 
-import static org.junit.jupiter.api.Assertions.*;
-import static org.mockito.ArgumentMatchers.*;
-import static org.mockito.Mockito.*;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
 
-import java.io.ByteArrayInputStream;
+import com.res.hms.core.exception.ApiException;
+import com.res.hms.core.tenant.HospitalContext;
+import com.res.hms.pharmacy.infrastructure.repository.MedicineRepository;
+import com.res.hms.pharmacy.infrastructure.repository.PharmacyStockRepository;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
-import java.util.Optional;
 import java.util.UUID;
-
 import org.apache.poi.xssf.usermodel.XSSFWorkbook;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -19,81 +23,87 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.mock.web.MockMultipartFile;
 
-import com.res.hms.core.exception.ApiException;
-import com.res.hms.core.tenant.HospitalContext;
-import com.res.hms.pharmacy.domain.Medicine;
-import com.res.hms.pharmacy.infrastructure.repository.MedicineRepository;
-import com.res.hms.pharmacy.infrastructure.repository.PharmacyStockRepository;
-
 @ExtendWith(MockitoExtension.class)
 class PharmacyExcelServiceTest {
 
-    @Mock private MedicineRepository medicineRepository;
-    @Mock private PharmacyStockRepository pharmacyStockRepository;
-    @Mock private HospitalContext hospitalContext;
-    @Mock private MedicineService medicineService;
+  @Mock private MedicineRepository medicineRepository;
+  @Mock private PharmacyStockRepository pharmacyStockRepository;
+  @Mock private HospitalContext hospitalContext;
+  @Mock private MedicineService medicineService;
 
-    @InjectMocks
-    private PharmacyExcelService excelService;
+  @InjectMocks private PharmacyExcelService excelService;
 
-    private UUID hospitalId;
+  private UUID hospitalId;
 
-    @BeforeEach
-    void setUp() {
-        hospitalId = UUID.randomUUID();
-    }
+  @BeforeEach
+  void setUp() {
+    hospitalId = UUID.randomUUID();
+  }
 
-    @Test
-    void testImportMedicines_Success() throws IOException {
-        var workbook = new XSSFWorkbook();
-        var sheet = workbook.createSheet();
-        var header = sheet.createRow(0);
-        header.createCell(0).setCellValue("Name");
-        
-        var row = sheet.createRow(1);
-        row.createCell(0).setCellValue("New Med");
-        row.createCell(3).setCellValue("500mg");
+  @Test
+  void testImportMedicines_Success() throws IOException {
+    var workbook = new XSSFWorkbook();
+    var sheet = workbook.createSheet();
+    var header = sheet.createRow(0);
+    header.createCell(0).setCellValue("Name");
 
-        var out = new ByteArrayOutputStream();
-        workbook.write(out);
-        workbook.close();
+    var row = sheet.createRow(1);
+    row.createCell(0).setCellValue("New Med");
+    row.createCell(3).setCellValue("500mg");
 
-        var file = new MockMultipartFile("file", "test.xlsx", "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet", out.toByteArray());
+    var out = new ByteArrayOutputStream();
+    workbook.write(out);
+    workbook.close();
 
-        when(medicineRepository.existsDuplicate(anyString(), any(), anyString(), any())).thenReturn(false);
+    var file =
+        new MockMultipartFile(
+            "file",
+            "test.xlsx",
+            "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+            out.toByteArray());
 
-        var result = excelService.importMedicines(file);
+    when(medicineRepository.existsDuplicate(anyString(), any(), anyString(), any()))
+        .thenReturn(false);
 
-        assertEquals(1, result.getImportedRows());
-        assertEquals(0, result.getSkippedRows());
-        verify(medicineRepository).save(any());
-    }
+    var result = excelService.importMedicines(file);
 
-    @Test
-    void testImportStock_MedicineNotFound() throws IOException {
-        var workbook = new XSSFWorkbook();
-        var sheet = workbook.createSheet();
-        sheet.createRow(0).createCell(0).setCellValue("Name");
-        sheet.createRow(1).createCell(0).setCellValue("Unknown");
+    assertEquals(1, result.getImportedRows());
+    assertEquals(0, result.getSkippedRows());
+    verify(medicineRepository).save(any());
+  }
 
-        var out = new ByteArrayOutputStream();
-        workbook.write(out);
-        workbook.close();
+  @Test
+  void testImportStock_MedicineNotFound() throws IOException {
+    var workbook = new XSSFWorkbook();
+    var sheet = workbook.createSheet();
+    sheet.createRow(0).createCell(0).setCellValue("Name");
+    sheet.createRow(1).createCell(0).setCellValue("Unknown");
 
-        var file = new MockMultipartFile("file", "test.xlsx", "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet", out.toByteArray());
+    var out = new ByteArrayOutputStream();
+    workbook.write(out);
+    workbook.close();
 
-        when(medicineRepository.findByExactName("Unknown")).thenReturn(java.util.Collections.emptyList());
+    var file =
+        new MockMultipartFile(
+            "file",
+            "test.xlsx",
+            "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+            out.toByteArray());
 
-        var result = excelService.importStock(file);
+    when(medicineRepository.findByExactName("Unknown"))
+        .thenReturn(java.util.Collections.emptyList());
 
-        assertEquals(0, result.getImportedRows());
-        assertEquals(1, result.getMedicineNotFoundRows());
-    }
+    var result = excelService.importStock(file);
 
-    @Test
-    void testImportStock_InvalidFile() {
-        var file = new MockMultipartFile("file", "test.txt", "text/plain", "invalid content".getBytes());
-        
-        assertThrows(ApiException.class, () -> excelService.importStock(file));
-    }
+    assertEquals(0, result.getImportedRows());
+    assertEquals(1, result.getMedicineNotFoundRows());
+  }
+
+  @Test
+  void testImportStock_InvalidFile() {
+    var file =
+        new MockMultipartFile("file", "test.txt", "text/plain", "invalid content".getBytes());
+
+    assertThrows(ApiException.class, () -> excelService.importStock(file));
+  }
 }

@@ -1,14 +1,12 @@
 package com.res.hms.iam.infrastructure.repository;
 
+import com.res.hms.iam.domain.DoctorHospitalDetails;
 import java.util.Optional;
 import java.util.UUID;
-
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
-
-import com.res.hms.iam.domain.DoctorHospitalDetails;
 
 @Repository
 public interface DoctorHospitalDetailsRepository

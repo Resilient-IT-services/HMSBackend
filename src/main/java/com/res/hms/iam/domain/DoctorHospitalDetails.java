@@ -1,11 +1,7 @@
 package com.res.hms.iam.domain;
 
-import java.math.BigDecimal;
-import java.util.UUID;
-
 import com.res.hms.core.domain.AuditableEntity;
 import com.res.hms.finance.domain.CommissionType;
-
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.EnumType;
@@ -16,6 +12,8 @@ import jakarta.persistence.JoinColumn;
 import jakarta.persistence.MapsId;
 import jakarta.persistence.OneToOne;
 import jakarta.persistence.Table;
+import java.math.BigDecimal;
+import java.util.UUID;
 import lombok.Getter;
 import lombok.Setter;
 

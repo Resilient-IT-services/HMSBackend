@@ -1,14 +1,12 @@
 package com.res.hms.core.util;
 
+import com.res.hms.core.exception.ApiException;
 import java.util.Optional;
 import java.util.UUID;
 import java.util.function.BiFunction;
 import java.util.function.Function;
-
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Component;
-
-import com.res.hms.core.exception.ApiException;
 
 @Component
 public class ResourceLookup {

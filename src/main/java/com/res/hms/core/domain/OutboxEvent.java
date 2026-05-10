@@ -16,24 +16,24 @@ import lombok.Setter;
 @Getter
 @Setter
 public class OutboxEvent {
-    @Id
-    @GeneratedValue(strategy = GenerationType.UUID)
-    private UUID id;
+  @Id
+  @GeneratedValue(strategy = GenerationType.UUID)
+  private UUID id;
 
-    @Column(nullable = false)
-    private String aggregateType;
+  @Column(nullable = false)
+  private String aggregateType;
 
-    @Column(nullable = false)
-    private UUID aggregateId;
+  @Column(nullable = false)
+  private UUID aggregateId;
 
-    @Column(nullable = false)
-    private String eventType;
+  @Column(nullable = false)
+  private String eventType;
 
-    @Column(columnDefinition = "jsonb", nullable = false)
-    private String payload;
+  @Column(columnDefinition = "jsonb", nullable = false)
+  private String payload;
 
-    @Column(nullable = false)
-    private LocalDateTime createdAt = LocalDateTime.now();
+  @Column(nullable = false)
+  private LocalDateTime createdAt = LocalDateTime.now();
 
-    private LocalDateTime processedAt;
+  private LocalDateTime processedAt;
 }

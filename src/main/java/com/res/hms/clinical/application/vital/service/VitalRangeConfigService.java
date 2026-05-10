@@ -1,19 +1,16 @@
 package com.res.hms.clinical.application.vital.service;
 
-import java.util.List;
-import java.util.UUID;
-import java.util.stream.Collectors;
-
-import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
-
 import com.res.hms.clinical.application.vital.dto.VitalRangeConfigDTO;
 import com.res.hms.core.tenant.HospitalContext;
 import com.res.hms.hospital.domain.VitalRangeConfig;
 import com.res.hms.hospital.domain.VitalType;
 import com.res.hms.hospital.infrastructure.repository.VitalRangeConfigRepository;
-
+import java.util.List;
+import java.util.UUID;
+import java.util.stream.Collectors;
 import lombok.RequiredArgsConstructor;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 @Service
 @RequiredArgsConstructor

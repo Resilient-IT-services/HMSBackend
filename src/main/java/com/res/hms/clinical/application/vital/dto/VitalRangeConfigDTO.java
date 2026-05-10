@@ -1,10 +1,8 @@
 package com.res.hms.clinical.application.vital.dto;
 
+import com.res.hms.hospital.domain.VitalType;
 import java.math.BigDecimal;
 import java.util.UUID;
-
-import com.res.hms.hospital.domain.VitalType;
-
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;

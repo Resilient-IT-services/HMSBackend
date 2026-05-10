@@ -1,20 +1,17 @@
 package com.res.hms.iam.api;
 
-import java.math.BigDecimal;
-
-import org.springframework.security.access.prepost.PreAuthorize;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestParam;
-import org.springframework.web.bind.annotation.RestController;
-
 import com.res.hms.core.api.ApiResponse;
 import com.res.hms.core.api.PageResponse;
 import com.res.hms.iam.application.dto.DoctorStaffResponse;
 import com.res.hms.iam.application.dto.NurseStaffResponse;
 import com.res.hms.iam.application.service.StaffService;
-
+import java.math.BigDecimal;
 import lombok.RequiredArgsConstructor;
+import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.RestController;
 
 @RestController
 @RequestMapping("/api/v1/staff")

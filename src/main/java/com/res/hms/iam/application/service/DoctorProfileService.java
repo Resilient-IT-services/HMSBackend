@@ -1,13 +1,5 @@
 package com.res.hms.iam.application.service;
 
-import java.time.LocalTime;
-import java.util.List;
-import java.util.Optional;
-import java.util.UUID;
-
-import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
-
 import com.res.hms.clinical.domain.DoctorAvailabilityException;
 import com.res.hms.clinical.domain.DoctorSchedule;
 import com.res.hms.core.tenant.HospitalContext;
@@ -25,8 +17,13 @@ import com.res.hms.iam.domain.RoleCode;
 import com.res.hms.iam.domain.UserAccount;
 import com.res.hms.iam.domain.UserRoleAssignment;
 import com.res.hms.iam.infrastructure.repository.DoctorHospitalDetailsRepository;
-
+import java.time.LocalTime;
+import java.util.List;
+import java.util.Optional;
+import java.util.UUID;
 import lombok.RequiredArgsConstructor;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 @Service
 @RequiredArgsConstructor
@@ -355,7 +352,8 @@ public class DoctorProfileService {
       List<AvailabilityExceptionDTO> exceptions) {
 
     if (schedules != null) {
-      List<DoctorSchedule> existingSchedules = scheduleRepository.findByAssignmentId(assignment.getId());
+      List<DoctorSchedule> existingSchedules =
+          scheduleRepository.findByAssignmentId(assignment.getId());
       com.res.hms.core.util.CollectionMergeUtil.merge(
           existingSchedules,
           schedules,
@@ -379,15 +377,16 @@ public class DoctorProfileService {
             existing.setMaxPatients(dto.getMaxPatients());
           },
           s -> {
-              scheduleRepository.delete(s);
+            scheduleRepository.delete(s);
           });
       scheduleRepository.saveAll(existingSchedules);
     }
 
     if (exceptions != null && assignment.getUser().getDoctorProfile() != null) {
       DoctorProfile doctorProfile = assignment.getUser().getDoctorProfile();
-      List<DoctorAvailabilityException> existingExceptions = 
-          availabilityExceptionRepository.findByDoctorIdAndHospitalId(doctorProfile.getId(), assignment.getHospitalId());
+      List<DoctorAvailabilityException> existingExceptions =
+          availabilityExceptionRepository.findByDoctorIdAndHospitalId(
+              doctorProfile.getId(), assignment.getHospitalId());
 
       com.res.hms.core.util.CollectionMergeUtil.merge(
           existingExceptions,
@@ -417,7 +416,7 @@ public class DoctorProfileService {
             existing.setNote(dto.getNote());
           },
           ex -> {
-              availabilityExceptionRepository.delete(ex);
+            availabilityExceptionRepository.delete(ex);
           });
       availabilityExceptionRepository.saveAll(existingExceptions);
     }

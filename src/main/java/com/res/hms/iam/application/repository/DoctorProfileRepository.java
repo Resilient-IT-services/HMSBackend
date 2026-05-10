@@ -1,15 +1,13 @@
 package com.res.hms.iam.application.repository;
 
+import com.res.hms.iam.domain.DoctorProfile;
 import java.util.Optional;
 import java.util.UUID;
-
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
-
-import com.res.hms.iam.domain.DoctorProfile;
 
 public interface DoctorProfileRepository extends JpaRepository<DoctorProfile, UUID> {
   Optional<DoctorProfile> findByUserId(UUID userId);

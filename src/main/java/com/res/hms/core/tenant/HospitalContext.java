@@ -1,16 +1,14 @@
 package com.res.hms.core.tenant;
 
+import com.res.hms.core.exception.ApiException;
+import com.res.hms.iam.application.security.HospitalUserPrincipal;
 import java.util.Optional;
 import java.util.UUID;
-
 import org.springframework.http.HttpStatus;
 import org.springframework.security.authentication.AnonymousAuthenticationToken;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Component;
-
-import com.res.hms.core.exception.ApiException;
-import com.res.hms.iam.application.security.HospitalUserPrincipal;
 
 @Component
 public class HospitalContext {

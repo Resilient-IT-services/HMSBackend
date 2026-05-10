@@ -1,7 +1,6 @@
 package com.res.hms.finance.application.dto;
 
 import java.math.BigDecimal;
-
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;

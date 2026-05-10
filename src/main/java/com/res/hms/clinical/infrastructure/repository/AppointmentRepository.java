@@ -1,14 +1,12 @@
 package com.res.hms.clinical.infrastructure.repository;
 
+import com.res.hms.clinical.domain.Appointment;
+import com.res.hms.core.repository.BaseRepository;
 import java.util.UUID;
-
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
-
-import com.res.hms.clinical.domain.Appointment;
-import com.res.hms.core.repository.BaseRepository;
 
 public interface AppointmentRepository extends BaseRepository<Appointment> {
   Page<Appointment> findAllByHospitalIdOrderByAppointmentTimeDesc(

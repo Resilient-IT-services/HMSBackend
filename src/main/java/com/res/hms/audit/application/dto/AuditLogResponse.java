@@ -1,8 +1,7 @@
 package com.res.hms.audit.application.dto;
 
-import java.util.UUID;
-
 import com.res.hms.audit.domain.AuditAction;
+import java.util.UUID;
 
 public record AuditLogResponse(
     UUID id,

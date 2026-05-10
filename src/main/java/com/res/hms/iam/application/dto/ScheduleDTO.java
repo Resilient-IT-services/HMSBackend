@@ -1,11 +1,9 @@
 package com.res.hms.iam.application.dto;
 
+import com.fasterxml.jackson.annotation.JsonFormat;
+import io.swagger.v3.oas.annotations.media.Schema;
 import java.time.LocalTime;
 import java.util.UUID;
-
-import com.fasterxml.jackson.annotation.JsonFormat;
-
-import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;

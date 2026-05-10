@@ -2,7 +2,6 @@ package com.res.hms.clinical.application.vital.dto;
 
 import java.math.BigDecimal;
 import java.util.UUID;
-
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;

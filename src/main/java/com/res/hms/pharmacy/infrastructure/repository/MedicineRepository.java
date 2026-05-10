@@ -1,15 +1,13 @@
 package com.res.hms.pharmacy.infrastructure.repository;
 
+import com.res.hms.pharmacy.domain.Medicine;
 import java.util.Optional;
 import java.util.UUID;
-
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
-
-import com.res.hms.pharmacy.domain.Medicine;
 
 public interface MedicineRepository extends JpaRepository<Medicine, UUID> {
 

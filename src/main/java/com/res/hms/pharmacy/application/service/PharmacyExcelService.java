@@ -1,17 +1,5 @@
 package com.res.hms.pharmacy.application.service;
 
-import java.io.IOException;
-import java.math.BigDecimal;
-import java.time.LocalDate;
-import java.util.UUID;
-
-import org.apache.poi.ss.usermodel.Row;
-import org.apache.poi.ss.usermodel.WorkbookFactory;
-import org.springframework.http.HttpStatus;
-import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
-import org.springframework.web.multipart.MultipartFile;
-
 import com.res.hms.core.exception.ApiException;
 import com.res.hms.core.tenant.HospitalContext;
 import com.res.hms.pharmacy.application.dto.MedicineImportResponse;
@@ -21,9 +9,18 @@ import com.res.hms.pharmacy.domain.Medicine;
 import com.res.hms.pharmacy.domain.PharmacyStock;
 import com.res.hms.pharmacy.infrastructure.repository.MedicineRepository;
 import com.res.hms.pharmacy.infrastructure.repository.PharmacyStockRepository;
-
+import java.io.IOException;
+import java.math.BigDecimal;
+import java.time.LocalDate;
+import java.util.UUID;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.poi.ss.usermodel.Row;
+import org.apache.poi.ss.usermodel.WorkbookFactory;
+import org.springframework.http.HttpStatus;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.multipart.MultipartFile;
 
 @Slf4j
 @Service
@@ -33,7 +30,8 @@ public class PharmacyExcelService {
   private final MedicineRepository medicineRepository;
   private final PharmacyStockRepository pharmacyStockRepository;
   private final HospitalContext hospitalContext;
-  private final org.apache.poi.ss.usermodel.DataFormatter dataFormatter = new org.apache.poi.ss.usermodel.DataFormatter();
+  private final org.apache.poi.ss.usermodel.DataFormatter dataFormatter =
+      new org.apache.poi.ss.usermodel.DataFormatter();
 
   @Transactional
   public MedicineImportResponse importMedicines(MultipartFile file) {
@@ -162,9 +160,12 @@ public class PharmacyExcelService {
 
   private void addStockInternal(StockRequest request) {
     UUID hospitalId = hospitalContext.requireHospitalId();
-    Medicine medicine = medicineRepository.findById(request.getMedicineId())
-        .orElseThrow(() -> new ApiException("NOT_FOUND", "Medicine not found", HttpStatus.NOT_FOUND));
-    
+    Medicine medicine =
+        medicineRepository
+            .findById(request.getMedicineId())
+            .orElseThrow(
+                () -> new ApiException("NOT_FOUND", "Medicine not found", HttpStatus.NOT_FOUND));
+
     PharmacyStock stock =
         pharmacyStockRepository
             .findByHospitalIdAndMedicineIdAndBatchNumber(

@@ -1,19 +1,16 @@
 package com.res.hms.clinical.application.vital.service;
 
-import java.math.BigDecimal;
-import java.util.UUID;
-
-import org.springframework.boot.CommandLineRunner;
-import org.springframework.stereotype.Component;
-import org.springframework.transaction.annotation.Transactional;
-
 import com.res.hms.hospital.domain.VitalRangeConfig;
 import com.res.hms.hospital.domain.VitalType;
 import com.res.hms.hospital.infrastructure.repository.HospitalRepository;
 import com.res.hms.hospital.infrastructure.repository.VitalRangeConfigRepository;
-
+import java.math.BigDecimal;
+import java.util.UUID;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.boot.CommandLineRunner;
+import org.springframework.stereotype.Component;
+import org.springframework.transaction.annotation.Transactional;
 
 @Slf4j
 @Component

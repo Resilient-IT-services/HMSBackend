@@ -1,11 +1,9 @@
 package com.res.hms.iam.application.dto;
 
-import java.util.UUID;
-
 import com.res.hms.core.domain.CertificationLevel;
 import com.res.hms.core.domain.Gender;
 import com.res.hms.core.domain.ShiftType;
-
+import java.util.UUID;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;

@@ -3,11 +3,16 @@ package com.res.hms;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.Mockito.when;
 
+import com.res.hms.core.domain.Gender;
+import com.res.hms.core.exception.ApiException;
+import com.res.hms.core.tenant.HospitalContext;
+import com.res.hms.iam.application.dto.ScheduleDTO;
+import com.res.hms.iam.application.dto.UserDetailsDTO;
+import com.res.hms.iam.application.service.UserAggregateService;
 import java.time.LocalDate;
 import java.time.LocalTime;
 import java.util.List;
 import java.util.UUID;
-
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -15,13 +20,6 @@ import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.transaction.annotation.Transactional;
-
-import com.res.hms.core.domain.Gender;
-import com.res.hms.core.exception.ApiException;
-import com.res.hms.core.tenant.HospitalContext;
-import com.res.hms.iam.application.dto.ScheduleDTO;
-import com.res.hms.iam.application.dto.UserDetailsDTO;
-import com.res.hms.iam.application.service.UserAggregateService;
 
 @SpringBootTest
 @ActiveProfiles("test")

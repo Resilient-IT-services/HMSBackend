@@ -1,19 +1,5 @@
 package com.res.hms.pharmacy.application.service;
 
-import java.math.BigDecimal;
-import java.time.LocalDate;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Optional;
-import java.util.UUID;
-import java.util.stream.Collectors;
-
-import org.springframework.data.domain.PageRequest;
-import org.springframework.http.HttpStatus;
-import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
-import org.springframework.web.multipart.MultipartFile;
-
 import com.res.hms.core.api.PageResponse;
 import com.res.hms.core.exception.ApiException;
 import com.res.hms.core.tenant.HospitalContext;
@@ -37,9 +23,20 @@ import com.res.hms.pharmacy.infrastructure.repository.PharmacyReturnRepository;
 import com.res.hms.pharmacy.infrastructure.repository.PharmacySaleItemRepository;
 import com.res.hms.pharmacy.infrastructure.repository.PharmacySaleRepository;
 import com.res.hms.pharmacy.infrastructure.repository.PharmacyStockRepository;
-
+import java.math.BigDecimal;
+import java.time.LocalDate;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Optional;
+import java.util.UUID;
+import java.util.stream.Collectors;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.http.HttpStatus;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.multipart.MultipartFile;
 
 @Slf4j
 @Service
@@ -246,7 +243,9 @@ public class MedicineService {
     sale.setTotalAmount(total);
     PharmacySale saved = pharmacySaleRepository.save(sale);
 
-    eventPublisher.publish("pharmacy_sale", saved.getId(),
+    eventPublisher.publish(
+        "pharmacy_sale",
+        saved.getId(),
         new com.res.hms.pharmacy.application.event.PharmacySaleCompletedEvent(
             saved.getId(), saved.getPatientId(), hospitalId));
 

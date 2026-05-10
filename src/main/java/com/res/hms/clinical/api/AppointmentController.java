@@ -1,7 +1,17 @@
 package com.res.hms.clinical.api;
 
+import com.res.hms.clinical.application.appointment.dto.AppointmentDTO;
+import com.res.hms.clinical.application.appointment.dto.UpdateAppointmentStatusRequest;
+import com.res.hms.clinical.application.appointment.service.AppointmentAggregateService;
+import com.res.hms.clinical.application.appointment.service.AppointmentService;
+import com.res.hms.core.api.ApiResponse;
+import com.res.hms.core.api.PageResponse;
+import com.res.hms.core.validation.OnCreate;
+import com.res.hms.core.validation.OnUpdate;
+import io.swagger.v3.oas.annotations.tags.Tag;
+import jakarta.validation.Valid;
 import java.util.UUID;
-
+import lombok.RequiredArgsConstructor;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -13,19 +23,6 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
-
-import com.res.hms.clinical.application.appointment.dto.AppointmentDTO;
-import com.res.hms.clinical.application.appointment.dto.UpdateAppointmentStatusRequest;
-import com.res.hms.clinical.application.appointment.service.AppointmentAggregateService;
-import com.res.hms.clinical.application.appointment.service.AppointmentService;
-import com.res.hms.core.api.ApiResponse;
-import com.res.hms.core.api.PageResponse;
-import com.res.hms.core.validation.OnCreate;
-import com.res.hms.core.validation.OnUpdate;
-
-import io.swagger.v3.oas.annotations.tags.Tag;
-import jakarta.validation.Valid;
-import lombok.RequiredArgsConstructor;
 
 @Tag(name = "Appointments")
 @RestController

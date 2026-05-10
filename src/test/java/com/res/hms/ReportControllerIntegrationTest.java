@@ -5,9 +5,13 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
+import com.res.hms.iam.domain.RoleCode;
+import com.res.hms.iam.domain.UserAccount;
+import com.res.hms.iam.domain.UserRoleAssignment;
+import com.res.hms.iam.infrastructure.repository.RoleRepository;
+import com.res.hms.iam.infrastructure.repository.UserAccountRepository;
 import java.time.LocalDate;
 import java.util.UUID;
-
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -18,12 +22,6 @@ import org.springframework.mock.web.MockHttpSession;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.web.servlet.MockMvc;
-
-import com.res.hms.iam.domain.RoleCode;
-import com.res.hms.iam.domain.UserAccount;
-import com.res.hms.iam.domain.UserRoleAssignment;
-import com.res.hms.iam.infrastructure.repository.RoleRepository;
-import com.res.hms.iam.infrastructure.repository.UserAccountRepository;
 
 @SpringBootTest
 @AutoConfigureMockMvc

@@ -1,20 +1,17 @@
 package com.res.hms.clinical.application.prescription.repository;
 
+import com.res.hms.clinical.domain.Prescription;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
-
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 
-import com.res.hms.clinical.domain.Prescription;
-
 public interface PrescriptionRepository extends JpaRepository<Prescription, UUID> {
 
-  @Query(
-      "SELECT p FROM Prescription p WHERE p.hospitalId = :hospitalId ORDER BY p.createdAt DESC")
+  @Query("SELECT p FROM Prescription p WHERE p.hospitalId = :hospitalId ORDER BY p.createdAt DESC")
   Page<Prescription> findAllByHospitalId(UUID hospitalId, Pageable pageable);
 
   @Query(

@@ -1,20 +1,17 @@
 package com.res.hms.audit.domain;
 
-import java.util.UUID;
-
-import org.hibernate.annotations.Type;
-
 import com.res.hms.audit.application.dto.AuditDetail;
 import com.res.hms.core.domain.BaseEntity;
-
 import io.hypersistence.utils.hibernate.type.json.JsonType;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.EnumType;
 import jakarta.persistence.Enumerated;
 import jakarta.persistence.Table;
+import java.util.UUID;
 import lombok.Getter;
 import lombok.Setter;
+import org.hibernate.annotations.Type;
 
 @Getter
 @Setter

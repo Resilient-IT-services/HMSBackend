@@ -1,18 +1,15 @@
 package com.res.hms.iam.application.service;
 
-import java.util.UUID;
-
-import org.springframework.http.HttpStatus;
-import org.springframework.stereotype.Service;
-
 import com.res.hms.core.exception.ApiException;
 import com.res.hms.iam.application.dto.UserDetailsDTO;
 import com.res.hms.iam.application.repository.DoctorProfileRepository;
 import com.res.hms.iam.infrastructure.repository.LabTechProfileRepository;
 import com.res.hms.iam.infrastructure.repository.NurseProfileRepository;
 import com.res.hms.iam.infrastructure.repository.PharmacistProfileRepository;
-
+import java.util.UUID;
 import lombok.RequiredArgsConstructor;
+import org.springframework.http.HttpStatus;
+import org.springframework.stereotype.Service;
 
 @Service
 @RequiredArgsConstructor

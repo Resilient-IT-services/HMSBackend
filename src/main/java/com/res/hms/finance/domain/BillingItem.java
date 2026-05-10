@@ -1,15 +1,13 @@
 package com.res.hms.finance.domain;
 
-import java.math.BigDecimal;
-
 import com.res.hms.core.domain.HospitalScopedEntity;
-
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.FetchType;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.Table;
+import java.math.BigDecimal;
 import lombok.Getter;
 import lombok.Setter;
 

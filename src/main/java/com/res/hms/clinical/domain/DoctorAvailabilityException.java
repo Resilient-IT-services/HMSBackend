@@ -1,13 +1,11 @@
 package com.res.hms.clinical.domain;
 
-import java.time.LocalDate;
-import java.time.LocalTime;
-
 import com.res.hms.core.domain.BaseEntity;
-
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.Table;
+import java.time.LocalDate;
+import java.time.LocalTime;
 import lombok.Getter;
 import lombok.Setter;
 

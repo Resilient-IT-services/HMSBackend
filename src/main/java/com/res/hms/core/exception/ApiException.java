@@ -1,7 +1,6 @@
 package com.res.hms.core.exception;
 
 import java.util.Map;
-
 import org.springframework.http.HttpStatus;
 
 public class ApiException extends RuntimeException {

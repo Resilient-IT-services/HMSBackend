@@ -1,8 +1,14 @@
 package com.res.hms.iam.api;
 
+import com.res.hms.core.api.ApiResponse;
+import com.res.hms.core.api.PageResponse;
+import com.res.hms.iam.application.dto.DoctorAvailabilityResponse;
+import com.res.hms.iam.application.dto.UserSummaryDTO;
+import com.res.hms.iam.application.service.DoctorProfileService;
+import com.res.hms.iam.application.service.UserService;
 import java.time.LocalDate;
 import java.util.UUID;
-
+import lombok.RequiredArgsConstructor;
 import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -10,15 +16,6 @@ import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
-
-import com.res.hms.core.api.ApiResponse;
-import com.res.hms.core.api.PageResponse;
-import com.res.hms.iam.application.dto.DoctorAvailabilityResponse;
-import com.res.hms.iam.application.dto.UserSummaryDTO;
-import com.res.hms.iam.application.service.DoctorProfileService;
-import com.res.hms.iam.application.service.UserService;
-
-import lombok.RequiredArgsConstructor;
 
 @RestController
 @RequestMapping("/api/v1/doctors")

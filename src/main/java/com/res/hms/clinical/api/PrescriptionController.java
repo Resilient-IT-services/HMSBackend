@@ -1,7 +1,13 @@
 package com.res.hms.clinical.api;
 
+import com.res.hms.clinical.application.prescription.dto.PrescriptionDTO;
+import com.res.hms.clinical.application.prescription.service.PrescriptionService;
+import com.res.hms.core.api.ApiResponse;
+import com.res.hms.core.api.PageResponse;
+import io.swagger.v3.oas.annotations.tags.Tag;
+import jakarta.validation.Valid;
 import java.util.UUID;
-
+import lombok.RequiredArgsConstructor;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -10,15 +16,6 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
-
-import com.res.hms.clinical.application.prescription.dto.PrescriptionDTO;
-import com.res.hms.clinical.application.prescription.service.PrescriptionService;
-import com.res.hms.core.api.ApiResponse;
-import com.res.hms.core.api.PageResponse;
-
-import io.swagger.v3.oas.annotations.tags.Tag;
-import jakarta.validation.Valid;
-import lombok.RequiredArgsConstructor;
 
 @Tag(name = "Prescriptions")
 @RestController

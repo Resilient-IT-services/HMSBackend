@@ -1,16 +1,14 @@
 package com.res.hms.iam.application.service;
 
+import com.res.hms.core.exception.ApiException;
+import com.res.hms.iam.application.dto.ScheduleDTO;
+import com.res.hms.iam.application.dto.UserDetailsDTO;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
-
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Component;
-
-import com.res.hms.core.exception.ApiException;
-import com.res.hms.iam.application.dto.ScheduleDTO;
-import com.res.hms.iam.application.dto.UserDetailsDTO;
 
 @Component
 public class DoctorScheduleValidator {

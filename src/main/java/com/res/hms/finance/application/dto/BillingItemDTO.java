@@ -2,7 +2,6 @@ package com.res.hms.finance.application.dto;
 
 import java.math.BigDecimal;
 import java.util.UUID;
-
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;

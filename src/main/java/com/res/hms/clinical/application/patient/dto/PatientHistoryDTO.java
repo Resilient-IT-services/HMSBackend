@@ -1,9 +1,7 @@
 package com.res.hms.clinical.application.patient.dto;
 
-import java.util.List;
-
 import com.res.hms.clinical.application.appointment.dto.AppointmentDTO;
-
+import java.util.List;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
