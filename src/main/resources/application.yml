@@ -31,7 +31,7 @@ logging:
 server:
   port: ${SERVER_PORT:8081}
   error:
-    include-stacktrace: ${SERVER_ERROR_STACKTRACE:always}
+    include-stacktrace: ${SERVER_ERROR_STACKTRACE:never}
   servlet:
     session:
       timeout: 30m
