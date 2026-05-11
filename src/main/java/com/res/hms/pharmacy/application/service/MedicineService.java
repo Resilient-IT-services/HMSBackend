@@ -67,6 +67,78 @@ public class MedicineService {
         medicineRepository.findAllByOrderByCreatedAtDesc(pageRequest).map(this::toDto));
   }
 
+  @Transactional
+  public MedicineImportResponse importExcel(MultipartFile file) {
+    return pharmacyExcelService.importMedicines(file);
+  }
+
+  @Transactional
+  public MedicineDTO create(MedicineDTO request) {
+    Medicine medicine = new Medicine();
+    updateFields(medicine, request);
+    return toDto(medicineRepository.save(medicine));
+  }
+
+  @Transactional(readOnly = true)
+  public MedicineDTO get(UUID id) {
+    return toDto(requireMedicine(id));
+  }
+
+  @Transactional
+  public MedicineDTO update(UUID id, MedicineDTO request) {
+    Medicine medicine = requireMedicine(id);
+    updateFields(medicine, request);
+    return toDto(medicineRepository.save(medicine));
+  }
+
+  @Transactional
+  public void delete(UUID id) {
+    Medicine medicine = requireMedicine(id);
+    medicineRepository.delete(medicine);
+  }
+
+  @Transactional
+  public StockImportResponse importStockExcel(MultipartFile file) {
+    return pharmacyExcelService.importStock(file);
+  }
+
+  @Transactional
+  public PharmacyStockDTO addStock(StockRequest request) {
+    UUID hospitalId = hospitalContext.requireHospitalId();
+    Medicine medicine = requireMedicine(request.getMedicineId());
+
+    PharmacyStock stock =
+        pharmacyStockRepository
+            .findByHospitalIdAndMedicineIdAndBatchNumber(
+                hospitalId, medicine.getId(), request.getBatchNumber())
+            .orElseGet(
+                () -> {
+                  PharmacyStock s = new PharmacyStock();
+                  s.setHospitalId(hospitalId);
+                  s.setMedicine(medicine);
+                  s.setBatchNumber(request.getBatchNumber());
+                  s.setQuantity(0);
+                  return s;
+                });
+
+    stock.setExpiryDate(request.getExpiryDate());
+    stock.setQuantity(stock.getQuantity() + request.getQuantity());
+    stock.setPurchasePrice(request.getPurchasePrice());
+    stock.setSellingPrice(request.getSellingPrice());
+    PharmacyStock saved = pharmacyStockRepository.save(stock);
+    return toStockDto(saved);
+  }
+
+  @Transactional(readOnly = true)
+  public PageResponse<MedicineDTO> searchAvailable(int page, int size, String search) {
+    UUID hospitalId = hospitalContext.requireHospitalId();
+    PageRequest pageRequest = PageRequest.of(page, size);
+    return PageResponse.from(
+        medicineRepository
+            .searchAvailableForHospital(hospitalId, search != null ? search.trim() : "", pageRequest)
+            .map(this::toDto));
+  }
+
   @Transactional(readOnly = true)
   public PageResponse<MedicineSummaryDTO> listSummary(int page, int size, String search) {
     PageRequest pageRequest = PageRequest.of(page, size);
