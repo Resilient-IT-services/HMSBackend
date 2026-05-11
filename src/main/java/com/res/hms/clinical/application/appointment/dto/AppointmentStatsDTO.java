@@ -9,5 +9,6 @@ import lombok.Data;
 @Builder
 public class AppointmentStatsDTO {
   private long total;
+  private long upcoming;
   private Map<AppointmentStatus, Long> byStatus;
 }

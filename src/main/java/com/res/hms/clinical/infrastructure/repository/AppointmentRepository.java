@@ -9,11 +9,14 @@ import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
 public interface AppointmentRepository extends BaseRepository<Appointment> {
+  @Query("SELECT a FROM Appointment a LEFT JOIN FETCH a.patient LEFT JOIN FETCH a.doctor "
+          + "WHERE a.hospitalId = :hospitalId "
+          + "ORDER BY a.appointmentTime DESC")
   Page<Appointment> findAllByHospitalIdOrderByAppointmentTimeDesc(
-      UUID hospitalId, Pageable pageable);
+      @Param("hospitalId") UUID hospitalId, Pageable pageable);
 
   @Query(
-      "SELECT a FROM Appointment a "
+      "SELECT a FROM Appointment a LEFT JOIN FETCH a.patient LEFT JOIN FETCH a.doctor "
           + "WHERE a.hospitalId = :hospitalId AND "
           + "CAST(a.appointmentTime AS date) = :date "
           + "ORDER BY a.appointmentTime DESC")
@@ -23,7 +26,7 @@ public interface AppointmentRepository extends BaseRepository<Appointment> {
       Pageable pageable);
 
   @Query(
-      "SELECT a FROM Appointment a "
+      "SELECT a FROM Appointment a LEFT JOIN FETCH a.patient LEFT JOIN FETCH a.doctor "
           + "WHERE a.hospitalId = :hospitalId AND "
           + "(LOWER(a.patientName) LIKE :query OR "
           + "LOWER(a.doctorName) LIKE :query) "
@@ -37,6 +40,13 @@ public interface AppointmentRepository extends BaseRepository<Appointment> {
           + "CAST(a.appointmentTime AS date) = :date "
           + "GROUP BY a.status")
   java.util.List<Object[]> getStatsByDate(
+      @Param("hospitalId") UUID hospitalId, @Param("date") java.time.LocalDate date);
+
+  @Query(
+      "SELECT COUNT(a) FROM Appointment a "
+          + "WHERE a.hospitalId = :hospitalId AND "
+          + "CAST(a.appointmentTime AS date) > :date")
+  long countUpcoming(
       @Param("hospitalId") UUID hospitalId, @Param("date") java.time.LocalDate date);
 
   @Query(

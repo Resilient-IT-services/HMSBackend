@@ -21,7 +21,6 @@ public class AppointmentSummaryDTO {
   private String doctorName;
   private String doctorSpecialization;
   private LocalDateTime appointmentTime;
-  private String timeSlot;
   private AppointmentStatus status;
   private Integer tokenNumber;
 }

@@ -82,8 +82,11 @@ public class AppointmentService {
       total += count;
     }
 
+    long upcoming = appointmentRepository.countUpcoming(hospitalId, date);
+
     return com.res.hms.clinical.application.appointment.dto.AppointmentStatsDTO.builder()
         .total(total)
+        .upcoming(upcoming)
         .byStatus(byStatus)
         .build();
   }
@@ -171,12 +174,11 @@ public class AppointmentService {
         .id(appointment.getId())
         .patientId(appointment.getPatientId())
         .patientName(appointment.getPatientName())
-        .patientCode(appointment.getPatientCode())
+        .patientCode(appointment.getPatient() != null ? appointment.getPatient().getPatientCode() : null)
         .doctorId(appointment.getDoctorId())
         .doctorName(appointment.getDoctorName())
-        .doctorSpecialization(appointment.getDoctorSpecialization())
+        .doctorSpecialization(appointment.getDoctor() != null ? appointment.getDoctor().getSpecialization() : null)
         .appointmentTime(appointment.getAppointmentTime())
-        .timeSlot(appointment.getTimeSlot())
         .status(appointment.getStatus())
         .tokenNumber(appointment.getTokenNumber())
         .build();

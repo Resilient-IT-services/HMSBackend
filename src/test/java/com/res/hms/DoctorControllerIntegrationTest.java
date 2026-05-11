@@ -115,7 +115,10 @@ class DoctorControllerIntegrationTest {
 
   @Test
   void testGetAvailability() throws Exception {
-    LocalDate nextMonday = LocalDate.of(2026, 5, 11); // A future Monday
+    LocalDate nextMonday = LocalDate.now().plusWeeks(1);
+    while (nextMonday.getDayOfWeek().getValue() != 1) {
+      nextMonday = nextMonday.plusDays(1);
+    }
 
     // Initial check: Should have 1 session (9-11 AM)
     mockMvc

@@ -78,6 +78,13 @@ public class PatientController {
     return ApiResponse.success(patientHistoryService.getFullHistory(patientId));
   }
 
+  @GetMapping("/{patientId}/history-summary")
+  @PreAuthorize("hasAnyRole('ADMIN','DOCTOR','NURSE','SUPER_ADMIN')")
+  public ApiResponse<com.res.hms.clinical.application.patient.dto.PatientHistorySummaryDTO>
+      getHistorySummary(@PathVariable UUID patientId) {
+    return ApiResponse.success(patientHistoryService.getHistorySummary(patientId));
+  }
+
   @PutMapping("/{patientId}")
   @PreAuthorize("hasAnyRole('ADMIN','RECEPTIONIST','NURSE','SUPER_ADMIN')")
   public ApiResponse<PatientDTO> update(

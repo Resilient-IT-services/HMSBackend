@@ -24,6 +24,10 @@ public class Prescription extends HospitalScopedEntity {
   @Column(name = "patient_id", nullable = false)
   private java.util.UUID patientId;
 
+  @jakarta.persistence.ManyToOne(fetch = jakarta.persistence.FetchType.LAZY)
+  @jakarta.persistence.JoinColumn(name = "patient_id", insertable = false, updatable = false)
+  private Patient patient;
+
   @Column(name = "patient_name")
   private String patientName;
 
@@ -32,6 +36,9 @@ public class Prescription extends HospitalScopedEntity {
 
   @Column(name = "doctor_name")
   private String doctorName;
+
+  @Column(nullable = false)
+  private String status = "ACTIVE";
 
   @Column(nullable = false)
   private boolean deleted = false;

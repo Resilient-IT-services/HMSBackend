@@ -11,14 +11,14 @@ import org.springframework.data.jpa.repository.Query;
 
 public interface PrescriptionRepository extends JpaRepository<Prescription, UUID> {
 
-  @Query("SELECT p FROM Prescription p WHERE p.hospitalId = :hospitalId ORDER BY p.createdAt DESC")
+  @Query("SELECT p FROM Prescription p LEFT JOIN FETCH p.patient WHERE p.hospitalId = :hospitalId ORDER BY p.createdAt DESC")
   Page<Prescription> findAllByHospitalId(UUID hospitalId, Pageable pageable);
 
   @Query(
-      "SELECT p FROM Prescription p WHERE p.patientId = :patientId AND p.hospitalId = :hospitalId")
+      "SELECT p FROM Prescription p LEFT JOIN FETCH p.patient WHERE p.patientId = :patientId AND p.hospitalId = :hospitalId")
   List<Prescription> findByPatientIdAndHospitalId(UUID patientId, UUID hospitalId);
 
-  @Query("SELECT p FROM Prescription p WHERE p.id = :id AND p.hospitalId = :hospitalId")
+  @Query("SELECT p FROM Prescription p LEFT JOIN FETCH p.patient WHERE p.id = :id AND p.hospitalId = :hospitalId")
   Optional<Prescription> findByIdAndHospitalId(UUID id, UUID hospitalId);
 
   Optional<Prescription> findByAppointmentId(UUID appointmentId);

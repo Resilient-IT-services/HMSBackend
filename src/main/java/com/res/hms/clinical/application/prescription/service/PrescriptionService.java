@@ -45,6 +45,7 @@ public class PrescriptionService {
         .id(prescription.getId())
         .patientId(prescription.getPatientId())
         .patientName(prescription.getPatientName())
+        .patientCode(prescription.getPatient() != null ? prescription.getPatient().getPatientCode() : null)
         .doctorId(prescription.getDoctorId())
         .doctorName(prescription.getDoctorName())
         .appointmentId(prescription.getAppointmentId())

@@ -2,6 +2,7 @@ package com.res.hms.clinical.application.patient.service;
 
 import com.res.hms.clinical.application.appointment.service.AppointmentService;
 import com.res.hms.clinical.application.patient.dto.PatientHistoryDTO;
+import com.res.hms.clinical.application.patient.dto.PatientHistorySummaryDTO;
 import com.res.hms.clinical.domain.Patient;
 import com.res.hms.clinical.infrastructure.repository.AppointmentRepository;
 import com.res.hms.core.tenant.HospitalContext;
@@ -32,6 +33,22 @@ public class PatientHistoryService {
                 .findByPatientIdAndHospitalIdOrderByAppointmentTimeDesc(patientId, hospitalId)
                 .stream()
                 .map(appointmentService::toDto)
+                .collect(Collectors.toList()))
+        .build();
+  }
+
+  @Transactional(readOnly = true)
+  public PatientHistorySummaryDTO getHistorySummary(UUID patientId) {
+    UUID hospitalId = hospitalContext.requireHospitalId();
+    Patient patient = patientService.requirePatient(patientId, hospitalId);
+
+    return PatientHistorySummaryDTO.builder()
+        .patient(patientService.toSummaryDto(patient))
+        .visits(
+            appointmentRepository
+                .findByPatientIdAndHospitalIdOrderByAppointmentTimeDesc(patientId, hospitalId)
+                .stream()
+                .map(appointmentService::toSummaryDto)
                 .collect(Collectors.toList()))
         .build();
   }

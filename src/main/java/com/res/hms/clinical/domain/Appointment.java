@@ -5,6 +5,7 @@ import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.EnumType;
 import jakarta.persistence.Enumerated;
+import jakarta.persistence.JoinColumn;
 import jakarta.persistence.Table;
 import java.time.LocalDateTime;
 import lombok.Getter;
@@ -19,11 +20,19 @@ public class Appointment extends HospitalScopedEntity {
   @Column(name = "patient_id", nullable = false)
   private java.util.UUID patientId;
 
+  @jakarta.persistence.ManyToOne(fetch = jakarta.persistence.FetchType.LAZY)
+  @JoinColumn(name = "patient_id", insertable = false, updatable = false)
+  private Patient patient;
+
   @Column(name = "patient_name")
   private String patientName;
 
   @Column(name = "doctor_id", nullable = false)
   private java.util.UUID doctorId;
+
+  @jakarta.persistence.ManyToOne(fetch = jakarta.persistence.FetchType.LAZY)
+  @JoinColumn(name = "doctor_id", insertable = false, updatable = false)
+  private com.res.hms.iam.domain.DoctorProfile doctor;
 
   @Column(name = "doctor_name")
   private String doctorName;
