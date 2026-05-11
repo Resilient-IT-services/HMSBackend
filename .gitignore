@@ -33,6 +33,10 @@ build/
 out/
 *.class
 
+# Coverage
+build/reports/jacoco/
+/coverage/
+
 .idea/
 *.iml
 /.gradle-user-home/.tmp/gradle1487943446235536516.bin
