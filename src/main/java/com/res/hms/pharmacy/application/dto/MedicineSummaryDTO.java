@@ -14,6 +14,7 @@ public class MedicineSummaryDTO {
   private UUID id;
   private String name;
   private String genericName;
+  private String composition;
   private String strength;
   private String form;
   private String category;

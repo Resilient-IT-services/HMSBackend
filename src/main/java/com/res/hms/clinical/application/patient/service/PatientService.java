@@ -57,6 +57,11 @@ public class PatientService {
     return toDto(requirePatient(id, hospitalId));
   }
 
+  public PatientSummaryDTO getSummary(UUID id) {
+    UUID hospitalId = hospitalContext.requireHospitalId();
+    return toSummaryDto(requirePatient(id, hospitalId));
+  }
+
   public Patient requirePatient(UUID id, UUID hospitalId) {
     return resourceLookup.findRequired(
         id, hospitalId, patientRepository::findByIdAndHospitalId, "Patient");
@@ -83,6 +88,7 @@ public class PatientService {
         .fullName(patient.getFullName())
         .patientCode(patient.getPatientCode())
         .gender(patient.getGender())
+        .dob(patient.getDob())
         .phone(patient.getPhone())
         .build();
   }

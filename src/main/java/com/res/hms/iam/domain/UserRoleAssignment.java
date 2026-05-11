@@ -25,6 +25,10 @@ public class UserRoleAssignment extends BaseEntity {
   @Column(name = "hospital_id")
   private UUID hospitalId;
 
+  @ManyToOne(fetch = FetchType.LAZY)
+  @JoinColumn(name = "hospital_id", insertable = false, updatable = false)
+  private com.res.hms.hospital.domain.Hospital hospital;
+
   @Column(name = "department_name")
   private String departmentName;
 

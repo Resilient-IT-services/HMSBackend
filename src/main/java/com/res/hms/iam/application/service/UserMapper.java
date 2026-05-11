@@ -65,8 +65,7 @@ public abstract class UserMapper {
             entry -> {
               UUID hospitalId = entry.getKey();
               UserRoleAssignment first = entry.getValue().getFirst();
-              var hospital =
-                  hospitalId != null ? hospitalRepository.findById(hospitalId).orElse(null) : null;
+              var hospital = first.getHospital();
 
               Set<RoleCode> roles =
                   entry.getValue().stream()
@@ -158,10 +157,9 @@ public abstract class UserMapper {
               String hospitalName = "Global Access";
               if (hospitalId != null) {
                 hospitalName =
-                    hospitalRepository
-                        .findById(hospitalId)
-                        .map(com.res.hms.hospital.domain.Hospital::getName)
-                        .orElse("Global Access");
+                    first.getHospital() != null
+                        ? first.getHospital().getName()
+                        : "Global Access";
               }
 
               String departmentName = first.getDepartmentName();
@@ -184,8 +182,8 @@ public abstract class UserMapper {
         .map(
             entry -> {
               UUID hospitalId = entry.getKey();
-              var hospital =
-                  hospitalId != null ? hospitalRepository.findById(hospitalId).orElse(null) : null;
+              UserRoleAssignment first = entry.getValue().getFirst();
+              var hospital = first.getHospital();
 
               String hospitalName = hospital != null ? hospital.getName() : "Global Access";
               String hospitalCode = hospital != null ? hospital.getCode() : "GLOBAL";

@@ -70,131 +70,45 @@ public class MedicineService {
   @Transactional(readOnly = true)
   public PageResponse<MedicineSummaryDTO> listSummary(int page, int size, String search) {
     PageRequest pageRequest = PageRequest.of(page, size);
+    org.springframework.data.domain.Page<Medicine> medicinesPage;
     if (hasText(search)) {
-      return PageResponse.from(
-          medicineRepository.searchMaster(search.trim(), pageRequest).map(this::toSummaryDto));
-    }
-    return PageResponse.from(
-        medicineRepository.findAllByOrderByCreatedAtDesc(pageRequest).map(this::toSummaryDto));
-  }
-
-  @Transactional(readOnly = true)
-  public PageResponse<MedicineDTO> searchAvailable(int page, int size, String search) {
-    UUID hospitalId = hospitalContext.requireHospitalId();
-    return PageResponse.from(
-        medicineRepository
-            .searchAvailableForHospital(
-                hospitalId, search == null ? "" : search.trim(), PageRequest.of(page, size))
-            .map(this::toDto));
-  }
-
-  @Transactional(readOnly = true)
-  public MedicineDTO get(UUID id) {
-    return toDto(requireMedicine(id));
-  }
-
-  @Transactional
-  public MedicineDTO create(MedicineDTO dto) {
-    if (medicineRepository.existsDuplicate(
-        dto.getName(), dto.getGenericName(), dto.getStrength(), dto.getForm())) {
-      throw new ApiException(
-          "DUPLICATE_MEDICINE",
-          "Medicine with same name, generic name, strength, and form already exists",
-          HttpStatus.CONFLICT);
-    }
-    Medicine medicine = new Medicine();
-    medicine.setName(dto.getName());
-    medicine = medicineRepository.saveAndFlush(medicine);
-
-    updateFields(medicine, dto);
-
-    if (dto.getCurrentStock() != null && dto.getCurrentStock() > 0) {
-      addStock(
-          StockRequest.builder()
-              .medicineId(medicine.getId())
-              .batchNumber(dto.getBatchNumber() != null ? dto.getBatchNumber() : "INITIAL")
-              .quantity(dto.getCurrentStock())
-              .expiryDate(dto.getExpiryDate())
-              .purchasePrice(
-                  dto.getPurchasePrice() != null ? dto.getPurchasePrice() : BigDecimal.ZERO)
-              .sellingPrice(dto.getSellingPrice() != null ? dto.getSellingPrice() : BigDecimal.ZERO)
-              .build());
+      medicinesPage = medicineRepository.searchMaster(search.trim(), pageRequest);
+    } else {
+      medicinesPage = medicineRepository.findAllByOrderByCreatedAtDesc(pageRequest);
     }
 
-    return toDto(medicine);
-  }
-
-  @Transactional
-  public MedicineDTO update(UUID id, MedicineDTO dto) {
-    Medicine medicine = requireMedicine(id);
-    if (!(medicine.getName().equalsIgnoreCase(dto.getName())
-        && equalsIgnoreCase(medicine.getGenericName(), dto.getGenericName())
-        && equalsIgnoreCase(medicine.getStrength(), dto.getStrength())
-        && equalsIgnoreCase(medicine.getForm(), dto.getForm()))) {
-      if (medicineRepository.existsDuplicate(
-          dto.getName(), dto.getGenericName(), dto.getStrength(), dto.getForm())) {
-        throw new ApiException(
-            "DUPLICATE_MEDICINE",
-            "Medicine with same name, generic name, strength, and form already exists",
-            HttpStatus.CONFLICT);
+    UUID hospitalId = hospitalContext.getHospitalIdOrNull();
+    java.util.Map<UUID, Integer> stockMap = new java.util.HashMap<>();
+    if (hospitalId != null && !medicinesPage.isEmpty()) {
+      List<UUID> medicineIds = medicinesPage.getContent().stream().map(Medicine::getId).toList();
+      List<Object[]> quantities =
+          pharmacyStockRepository.availableQuantities(hospitalId, medicineIds, LocalDate.now());
+      for (Object[] row : quantities) {
+        stockMap.put((UUID) row[0], ((Long) row[1]).intValue());
       }
     }
-    updateFields(medicine, dto);
-    return toDto(medicineRepository.save(medicine));
+
+    return PageResponse.from(
+        medicinesPage.map(m -> toSummaryDtoWithStock(m, stockMap.getOrDefault(m.getId(), 0))));
   }
 
-  @Transactional
-  public void delete(UUID id) {
-    medicineRepository.delete(requireMedicine(id));
-  }
-
-  @Transactional
-  public MedicineImportResponse importExcel(MultipartFile file) {
-    return pharmacyExcelService.importMedicines(file);
-  }
-
-  @Transactional
-  public StockImportResponse importStockExcel(MultipartFile file) {
-    return pharmacyExcelService.importStock(file);
-  }
-
-  private boolean equalsIgnoreCase(String s1, String s2) {
-    if (s1 == null && s2 == null) {
-      return true;
-    }
-    if (s1 == null || s2 == null) {
-      return false;
-    }
-    return s1.equalsIgnoreCase(s2);
-  }
-
-  @Transactional
-  public PharmacyStockDTO addStock(StockRequest request) {
-    UUID hospitalId = hospitalContext.requireHospitalId();
-    Medicine medicine = requireMedicine(request.getMedicineId());
-    PharmacyStock stock =
-        pharmacyStockRepository
-            .findByHospitalIdAndMedicineIdAndBatchNumber(
-                hospitalId, request.getMedicineId(), request.getBatchNumber())
-            .orElseGet(
-                () -> {
-                  PharmacyStock s = new PharmacyStock();
-                  s.setHospitalId(hospitalId);
-                  s.setMedicine(medicine);
-                  s.setBatchNumber(request.getBatchNumber());
-                  s.setQuantity(0);
-                  return s;
-                });
-
-    stock.setExpiryDate(request.getExpiryDate());
-    stock.setQuantity(stock.getQuantity() + request.getQuantity());
-    stock.setPurchasePrice(request.getPurchasePrice());
-    stock.setSellingPrice(request.getSellingPrice());
-    return toStockDto(pharmacyStockRepository.save(stock));
+  private MedicineSummaryDTO toSummaryDtoWithStock(Medicine medicine, int stock) {
+    return MedicineSummaryDTO.builder()
+        .id(medicine.getId())
+        .name(medicine.getName())
+        .genericName(medicine.getGenericName())
+        .composition(medicine.getComposition())
+        .strength(medicine.getStrength())
+        .form(medicine.getForm())
+        .category(medicine.getCategory())
+        .manufacturer(medicine.getManufacturer())
+        .currentStock(stock)
+        .build();
   }
 
   @Transactional(readOnly = true)
-  public PageResponse<PharmacyStockDTO> listStock(int page, int size, boolean lowStock) {
+  public PageResponse<PharmacyStockDTO> listStock(
+      int page, int size, String search, boolean lowStock) {
     UUID hospitalId = hospitalContext.requireHospitalId();
     PageRequest pageRequest = PageRequest.of(page, size);
     if (lowStock) {
@@ -202,10 +116,32 @@ public class MedicineService {
           pharmacyStockRepository
               .findAllByHospitalIdAndQuantityLessThan(
                   hospitalId, DEFAULT_LOW_STOCK_THRESHOLD, pageRequest)
-              .map(this::toStockDto));
+              .map(this::toStockDtoSimple));
+    }
+    if (hasText(search)) {
+      return PageResponse.from(
+          pharmacyStockRepository
+              .searchDetailedStock(hospitalId, search.trim(), pageRequest)
+              .map(this::toStockDtoSimple));
     }
     return PageResponse.from(
-        pharmacyStockRepository.findDetailedStock(hospitalId, pageRequest).map(this::toStockDto));
+        pharmacyStockRepository.findDetailedStock(hospitalId, pageRequest).map(this::toStockDtoSimple));
+  }
+
+  private PharmacyStockDTO toStockDtoSimple(PharmacyStock stock) {
+    return PharmacyStockDTO.builder()
+        .id(stock.getId())
+        .medicineId(stock.getMedicine().getId())
+        .medicineName(stock.getMedicine().getName())
+        .genericName(stock.getMedicine().getGenericName())
+        .composition(stock.getMedicine().getComposition())
+        .batchNumber(stock.getBatchNumber())
+        .expiryDate(stock.getExpiryDate())
+        .quantity(stock.getQuantity())
+        .purchasePrice(stock.getPurchasePrice())
+        .sellingPrice(stock.getSellingPrice())
+        .price(stock.getSellingPrice())
+        .build();
   }
 
   @Transactional

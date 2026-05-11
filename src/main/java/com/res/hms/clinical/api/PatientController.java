@@ -63,6 +63,12 @@ public class PatientController {
     return ApiResponse.success(patientService.get(patientId));
   }
 
+  @GetMapping("/{patientId}/summary")
+  @PreAuthorize("hasAnyRole('ADMIN','RECEPTIONIST','NURSE','DOCTOR','SUPER_ADMIN')")
+  public ApiResponse<PatientSummaryDTO> getSummary(@PathVariable UUID patientId) {
+    return ApiResponse.success(patientService.getSummary(patientId));
+  }
+
   @GetMapping("/{patientId}/prescriptions")
   @PreAuthorize("hasAnyRole('ADMIN','RECEPTIONIST','NURSE','DOCTOR','PHARMACIST','SUPER_ADMIN')")
   public ApiResponse<

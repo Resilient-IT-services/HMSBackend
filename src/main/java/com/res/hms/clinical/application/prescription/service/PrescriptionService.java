@@ -27,12 +27,17 @@ import org.springframework.transaction.annotation.Transactional;
 public class PrescriptionService {
 
   @Transactional(readOnly = true)
-  public PageResponse<PrescriptionSummaryDTO> listSummary(int page, int size) {
+  public PageResponse<PrescriptionSummaryDTO> listSummary(int page, int size, String search) {
     UUID hospitalId = hospitalContext.requireHospitalId();
+    PageRequest pageRequest = PageRequest.of(page, size);
+    if (search != null && !search.trim().isEmpty()) {
+      return PageResponse.from(
+          prescriptionRepository
+              .searchPrescriptions(hospitalId, search.trim(), pageRequest)
+              .map(this::toSummaryDto));
+    }
     return PageResponse.from(
-        prescriptionRepository
-            .findAllByHospitalId(hospitalId, PageRequest.of(page, size))
-            .map(this::toSummaryDto));
+        prescriptionRepository.findAllByHospitalId(hospitalId, pageRequest).map(this::toSummaryDto));
   }
 
   @Transactional(readOnly = true)
@@ -56,12 +61,17 @@ public class PrescriptionService {
   }
 
   @Transactional(readOnly = true)
-  public PageResponse<PrescriptionDTO> list(int page, int size) {
+  public PageResponse<PrescriptionDTO> list(int page, int size, String search) {
     UUID hospitalId = hospitalContext.requireHospitalId();
+    PageRequest pageRequest = PageRequest.of(page, size);
+    if (search != null && !search.trim().isEmpty()) {
+      return PageResponse.from(
+          prescriptionRepository
+              .searchPrescriptions(hospitalId, search.trim(), pageRequest)
+              .map(this::toDto));
+    }
     return PageResponse.from(
-        prescriptionRepository
-            .findAllByHospitalId(hospitalId, PageRequest.of(page, size))
-            .map(this::toDto));
+        prescriptionRepository.findAllByHospitalId(hospitalId, pageRequest).map(this::toDto));
   }
 
   private final PrescriptionRepository prescriptionRepository;

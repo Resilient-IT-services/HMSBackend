@@ -34,6 +34,7 @@ public interface UserAccountRepository
       "SELECT DISTINCT u FROM UserAccount u "
           + "LEFT JOIN FETCH u.assignments a "
           + "LEFT JOIN FETCH a.role r "
+          + "LEFT JOIN FETCH a.hospital h "
           + "LEFT JOIN FETCH u.doctorProfile d "
           + "WHERE (:hospitalId IS NULL OR a.hospitalId = :hospitalId) "
           + "AND (:active IS NULL OR u.active = :active) "

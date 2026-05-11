@@ -27,15 +27,19 @@ public class PrescriptionController {
   @GetMapping
   @PreAuthorize("hasAnyRole('ADMIN','DOCTOR','NURSE','PHARMACIST','SUPER_ADMIN')")
   public ApiResponse<PageResponse<PrescriptionDTO>> list(
-      @RequestParam(defaultValue = "0") int page, @RequestParam(defaultValue = "20") int size) {
-    return ApiResponse.success(prescriptionService.list(page, size));
+      @RequestParam(defaultValue = "0") int page,
+      @RequestParam(defaultValue = "20") int size,
+      @RequestParam(required = false) String search) {
+    return ApiResponse.success(prescriptionService.list(page, size, search));
   }
 
   @GetMapping("/summary")
   @PreAuthorize("hasAnyRole('ADMIN','DOCTOR','NURSE','PHARMACIST','SUPER_ADMIN')")
   public ApiResponse<PageResponse<PrescriptionSummaryDTO>> listSummary(
-      @RequestParam(defaultValue = "0") int page, @RequestParam(defaultValue = "20") int size) {
-    return ApiResponse.success(prescriptionService.listSummary(page, size));
+      @RequestParam(defaultValue = "0") int page,
+      @RequestParam(defaultValue = "20") int size,
+      @RequestParam(required = false) String search) {
+    return ApiResponse.success(prescriptionService.listSummary(page, size, search));
   }
 
   private final PrescriptionService prescriptionService;

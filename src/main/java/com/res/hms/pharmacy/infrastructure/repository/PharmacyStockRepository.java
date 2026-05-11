@@ -36,6 +36,20 @@ public interface PharmacyStockRepository extends BaseRepository<PharmacyStock> {
       SELECT s FROM PharmacyStock s
       JOIN FETCH s.medicine
       WHERE s.hospitalId = :hospitalId
+        AND (LOWER(s.medicine.name) LIKE LOWER(CONCAT('%', :search, '%'))
+             OR LOWER(s.batchNumber) LIKE LOWER(CONCAT('%', :search, '%')))
+      ORDER BY s.medicine.name, s.expiryDate ASC
+      """)
+  Page<PharmacyStock> searchDetailedStock(
+      @Param("hospitalId") UUID hospitalId,
+      @Param("search") String search,
+      Pageable pageable);
+
+  @Query(
+      """
+      SELECT s FROM PharmacyStock s
+      JOIN FETCH s.medicine
+      WHERE s.hospitalId = :hospitalId
         AND s.quantity > 0
         AND (s.expiryDate IS NULL OR s.expiryDate >= :today)
         AND s.medicine.id = :medicineId
@@ -58,6 +72,20 @@ public interface PharmacyStockRepository extends BaseRepository<PharmacyStock> {
   Long availableQuantity(
       @Param("hospitalId") UUID hospitalId,
       @Param("medicineId") UUID medicineId,
+      @Param("today") LocalDate today);
+
+  @Query(
+      """
+      SELECT s.medicine.id, COALESCE(SUM(s.quantity), 0) FROM PharmacyStock s
+      WHERE s.hospitalId = :hospitalId
+        AND s.medicine.id IN :medicineIds
+        AND s.quantity > 0
+        AND (s.expiryDate IS NULL OR s.expiryDate >= :today)
+      GROUP BY s.medicine.id
+      """)
+  List<Object[]> availableQuantities(
+      @Param("hospitalId") UUID hospitalId,
+      @Param("medicineIds") List<UUID> medicineIds,
       @Param("today") LocalDate today);
 
   @Query(

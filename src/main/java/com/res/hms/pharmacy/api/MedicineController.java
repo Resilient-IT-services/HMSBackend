@@ -115,8 +115,9 @@ public class MedicineController {
   public ApiResponse<PageResponse<PharmacyStockDTO>> listStock(
       @RequestParam(defaultValue = "0") int page,
       @RequestParam(defaultValue = "20") int size,
+      @RequestParam(required = false) String search,
       @RequestParam(defaultValue = "false") boolean lowStock) {
-    return ApiResponse.success(medicineService.listStock(page, Math.min(size, 100), lowStock));
+    return ApiResponse.success(medicineService.listStock(page, Math.min(size, 100), search, lowStock));
   }
 
   @PostMapping("/sales")

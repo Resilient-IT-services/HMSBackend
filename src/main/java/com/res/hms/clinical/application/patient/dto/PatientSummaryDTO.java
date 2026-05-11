@@ -16,5 +16,6 @@ public class PatientSummaryDTO {
   private String fullName;
   private String patientCode;
   private Gender gender;
+  private java.time.LocalDate dob;
   private String phone;
 }
