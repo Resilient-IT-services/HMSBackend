@@ -1,7 +1,9 @@
 package com.res.hms.iam.application.service;
 
 import com.res.hms.core.api.PageResponse;
+import com.res.hms.core.exception.ApiException;
 import com.res.hms.core.tenant.HospitalContext;
+import com.res.hms.core.util.ResourceLookup;
 import com.res.hms.iam.application.dto.DoctorStaffResponse;
 import com.res.hms.iam.application.dto.NurseStaffResponse;
 import com.res.hms.iam.domain.DoctorHospitalDetails;
@@ -23,6 +25,7 @@ import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.data.jpa.domain.Specification;
+import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -32,6 +35,29 @@ public class StaffService {
 
   private final UserRoleAssignmentRepository assignmentRepository;
   private final HospitalContext hospitalContext;
+  private final ResourceLookup resourceLookup;
+
+  @Transactional(readOnly = true)
+  public DoctorStaffResponse getDoctor(UUID doctorId) {
+    UUID hospitalId = hospitalContext.requireHospitalId();
+    UserRoleAssignment assignment =
+        assignmentRepository
+            .findByDoctorIdAndHospitalId(doctorId, hospitalId)
+            .orElseThrow(
+                () -> new ApiException("NOT_FOUND", "Doctor not found", HttpStatus.NOT_FOUND));
+    return mapToDoctorResponse(assignment);
+  }
+
+  @Transactional(readOnly = true)
+  public NurseStaffResponse getNurse(UUID nurseId) {
+    UUID hospitalId = hospitalContext.requireHospitalId();
+    UserRoleAssignment assignment =
+        assignmentRepository
+            .findByNurseIdAndHospitalId(nurseId, hospitalId)
+            .orElseThrow(
+                () -> new ApiException("NOT_FOUND", "Nurse not found", HttpStatus.NOT_FOUND));
+    return mapToNurseResponse(assignment);
+  }
 
   @Transactional(readOnly = true)
   public PageResponse<DoctorStaffResponse> getDoctors(

@@ -4,7 +4,9 @@ import com.res.hms.core.api.ApiResponse;
 import com.res.hms.core.api.PageResponse;
 import com.res.hms.pharmacy.application.dto.MedicineDTO;
 import com.res.hms.pharmacy.application.dto.MedicineImportResponse;
+import com.res.hms.pharmacy.application.dto.MedicineSummaryDTO;
 import com.res.hms.pharmacy.application.dto.PharmacyReturnRequest;
+import com.res.hms.pharmacy.application.service.MedicineService;
 import com.res.hms.pharmacy.application.dto.PharmacyReturnResponse;
 import com.res.hms.pharmacy.application.dto.PharmacySaleRequest;
 import com.res.hms.pharmacy.application.dto.PharmacySaleResponse;
@@ -56,6 +58,15 @@ public class MedicineController {
       @RequestParam(defaultValue = "20") int size,
       @RequestParam(required = false) String search) {
     return ApiResponse.success(medicineService.list(page, Math.min(size, 100), search));
+  }
+
+  @GetMapping("/medicines/summary")
+  @PreAuthorize("hasAnyRole('ADMIN','PHARMACIST','DOCTOR','NURSE','SUPER_ADMIN')")
+  public ApiResponse<PageResponse<MedicineSummaryDTO>> listSummary(
+      @RequestParam(defaultValue = "0") int page,
+      @RequestParam(defaultValue = "20") int size,
+      @RequestParam(required = false) String search) {
+    return ApiResponse.success(medicineService.listSummary(page, Math.min(size, 100), search));
   }
 
   @GetMapping("/medicines/available")

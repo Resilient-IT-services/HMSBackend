@@ -1,6 +1,7 @@
 package com.res.hms.clinical.application.patient.service;
 
 import com.res.hms.clinical.application.patient.dto.PatientDTO;
+import com.res.hms.clinical.application.patient.dto.PatientSummaryDTO;
 import com.res.hms.clinical.domain.Patient;
 import com.res.hms.clinical.infrastructure.repository.PatientRepository;
 import com.res.hms.core.api.PageResponse;
@@ -35,6 +36,22 @@ public class PatientService {
             .map(this::toDto));
   }
 
+  public PageResponse<PatientSummaryDTO> listSummary(int page, int size, String search) {
+    UUID hospitalId = hospitalContext.requireHospitalId();
+    PageRequest pageRequest = PageRequest.of(page, size);
+
+    if (search != null && !search.trim().isEmpty()) {
+      String searchPattern = "%" + search.trim().toLowerCase() + "%";
+      return PageResponse.from(
+          patientRepository.search(hospitalId, searchPattern, pageRequest).map(this::toSummaryDto));
+    }
+
+    return PageResponse.from(
+        patientRepository
+            .findAllByHospitalIdOrderByCreatedAtDesc(hospitalId, pageRequest)
+            .map(this::toSummaryDto));
+  }
+
   public PatientDTO get(UUID id) {
     UUID hospitalId = hospitalContext.requireHospitalId();
     return toDto(requirePatient(id, hospitalId));
@@ -57,6 +74,16 @@ public class PatientService {
         .phone(patient.getPhone())
         .bloodGroup(patient.getBloodGroup())
         .address(patient.getAddress())
+        .build();
+  }
+
+  public PatientSummaryDTO toSummaryDto(Patient patient) {
+    return PatientSummaryDTO.builder()
+        .id(patient.getId())
+        .fullName(patient.getFullName())
+        .patientCode(patient.getPatientCode())
+        .gender(patient.getGender())
+        .phone(patient.getPhone())
         .build();
   }
 }

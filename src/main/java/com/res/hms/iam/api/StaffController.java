@@ -6,9 +6,11 @@ import com.res.hms.iam.application.dto.DoctorStaffResponse;
 import com.res.hms.iam.application.dto.NurseStaffResponse;
 import com.res.hms.iam.application.service.StaffService;
 import java.math.BigDecimal;
+import java.util.UUID;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
@@ -19,6 +21,18 @@ import org.springframework.web.bind.annotation.RestController;
 public class StaffController {
 
   private final StaffService staffService;
+
+  @GetMapping("/doctors/{doctorId}")
+  @PreAuthorize("isAuthenticated()")
+  public ApiResponse<DoctorStaffResponse> getDoctor(@PathVariable UUID doctorId) {
+    return ApiResponse.success(staffService.getDoctor(doctorId));
+  }
+
+  @GetMapping("/nurses/{nurseId}")
+  @PreAuthorize("isAuthenticated()")
+  public ApiResponse<NurseStaffResponse> getNurse(@PathVariable UUID nurseId) {
+    return ApiResponse.success(staffService.getNurse(nurseId));
+  }
 
   @GetMapping("/doctors")
   @PreAuthorize("isAuthenticated()")

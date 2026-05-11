@@ -5,6 +5,7 @@ import com.res.hms.core.exception.ApiException;
 import com.res.hms.core.tenant.HospitalContext;
 import com.res.hms.pharmacy.application.dto.MedicineDTO;
 import com.res.hms.pharmacy.application.dto.MedicineImportResponse;
+import com.res.hms.pharmacy.application.dto.MedicineSummaryDTO;
 import com.res.hms.pharmacy.application.dto.PharmacyReturnRequest;
 import com.res.hms.pharmacy.application.dto.PharmacyReturnResponse;
 import com.res.hms.pharmacy.application.dto.PharmacySaleRequest;
@@ -64,6 +65,17 @@ public class MedicineService {
     }
     return PageResponse.from(
         medicineRepository.findAllByOrderByCreatedAtDesc(pageRequest).map(this::toDto));
+  }
+
+  @Transactional(readOnly = true)
+  public PageResponse<MedicineSummaryDTO> listSummary(int page, int size, String search) {
+    PageRequest pageRequest = PageRequest.of(page, size);
+    if (hasText(search)) {
+      return PageResponse.from(
+          medicineRepository.searchMaster(search.trim(), pageRequest).map(this::toSummaryDto));
+    }
+    return PageResponse.from(
+        medicineRepository.findAllByOrderByCreatedAtDesc(pageRequest).map(this::toSummaryDto));
   }
 
   @Transactional(readOnly = true)
@@ -357,6 +369,33 @@ public class MedicineService {
         .sellingPrice(stock.getSellingPrice())
         .price(stock.getSellingPrice())
         .build();
+  }
+
+  public MedicineSummaryDTO toSummaryDto(Medicine medicine) {
+    if (medicine == null) {
+      return null;
+    }
+
+    MedicineSummaryDTO.MedicineSummaryDTOBuilder builder =
+        MedicineSummaryDTO.builder()
+            .id(medicine.getId())
+            .name(medicine.getName())
+            .genericName(medicine.getGenericName())
+            .strength(medicine.getStrength())
+            .form(medicine.getForm())
+            .category(medicine.getCategory())
+            .manufacturer(medicine.getManufacturer());
+
+    Optional.ofNullable(hospitalContext.getHospitalIdOrNull())
+        .ifPresent(
+            hospitalId -> {
+              Long total =
+                  pharmacyStockRepository.availableQuantity(
+                      hospitalId, medicine.getId(), LocalDate.now());
+              builder.currentStock(total != null ? total.intValue() : 0);
+            });
+
+    return builder.build();
   }
 
   public MedicineDTO toDto(Medicine medicine) {

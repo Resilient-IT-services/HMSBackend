@@ -5,6 +5,9 @@ import com.res.hms.clinical.domain.Patient;
 import com.res.hms.clinical.infrastructure.repository.PatientRepository;
 import com.res.hms.core.exception.ApiException;
 import com.res.hms.core.tenant.HospitalContext;
+import jakarta.annotation.PostConstruct;
+import java.time.LocalDateTime;
+import java.util.List;
 import java.util.UUID;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -20,6 +23,15 @@ public class PatientAggregateService {
   private final PatientRepository patientRepository;
   private final PatientService patientService;
   private final HospitalContext hospitalContext;
+
+  @PostConstruct
+  public void init() {
+    try {
+      backfillMissingPatientCodes();
+    } catch (Exception e) {
+      log.error("Failed to backfill missing patient codes during startup", e);
+    }
+  }
 
   @Transactional
   public PatientDTO savePatientAggregate(PatientDTO dto) {
@@ -42,11 +54,49 @@ public class PatientAggregateService {
     return patientService.toDto(patient);
   }
 
+  @Transactional
+  public void backfillMissingPatientCodes() {
+    log.info("Starting backfill for missing patient codes");
+    List<Patient> patients = patientRepository.findAllByPatientCodeIsNullOrderByCreatedAtAsc();
+    log.info("Found {} patients with missing codes", patients.size());
+
+    for (Patient patient : patients) {
+      String newCode = generatePatientCode(patient.getHospitalId(), patient.getCreatedAt());
+      patient.setPatientCode(newCode);
+      patientRepository.save(patient);
+      log.info("Backfilled patient {} with code {}", patient.getId(), newCode);
+    }
+    patientRepository.flush();
+  }
+
   private Patient createPatient(PatientDTO dto, UUID hospitalId) {
     Patient patient = new Patient();
     patient.setHospitalId(hospitalId);
     updatePatientFields(patient, dto);
+    patient.setPatientCode(generatePatientCode(hospitalId, LocalDateTime.now()));
     return patient;
+  }
+
+  private String generatePatientCode(UUID hospitalId, LocalDateTime date) {
+    String yearSuffix = String.valueOf(date.getYear()).substring(2);
+    String prefix = yearSuffix + "-%";
+
+    return patientRepository
+        .findLastPatientCode(hospitalId, prefix)
+        .map(
+            lastCode -> {
+              try {
+                String[] parts = lastCode.split("-");
+                if (parts.length == 2) {
+                  int lastNumber = Integer.parseInt(parts[1]);
+                  return yearSuffix + "-" + String.format("%03d", lastNumber + 1);
+                }
+              } catch (NumberFormatException e) {
+                log.warn("Failed to parse last patient code: {}", lastCode);
+              }
+              return yearSuffix + "-001";
+            })
+        .orElse(yearSuffix + "-001");
   }
 
   private void updatePatient(Patient patient, PatientDTO dto) {

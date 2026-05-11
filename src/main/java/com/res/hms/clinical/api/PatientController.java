@@ -1,6 +1,7 @@
 package com.res.hms.clinical.api;
 
 import com.res.hms.clinical.application.patient.dto.PatientDTO;
+import com.res.hms.clinical.application.patient.dto.PatientSummaryDTO;
 import com.res.hms.clinical.application.patient.service.PatientAggregateService;
 import com.res.hms.clinical.application.patient.service.PatientService;
 import com.res.hms.core.api.ApiResponse;
@@ -45,6 +46,15 @@ public class PatientController {
       @RequestParam(defaultValue = "20") int size,
       @RequestParam(required = false) String search) {
     return ApiResponse.success(patientService.list(page, Math.min(size, 100), search));
+  }
+
+  @GetMapping("/summary")
+  @PreAuthorize("hasAnyRole('ADMIN','RECEPTIONIST','NURSE','DOCTOR','SUPER_ADMIN')")
+  public ApiResponse<PageResponse<PatientSummaryDTO>> listSummary(
+      @RequestParam(defaultValue = "0") int page,
+      @RequestParam(defaultValue = "20") int size,
+      @RequestParam(required = false) String search) {
+    return ApiResponse.success(patientService.listSummary(page, Math.min(size, 100), search));
   }
 
   @GetMapping("/{patientId}")

@@ -1,6 +1,7 @@
 package com.res.hms.clinical.api;
 
 import com.res.hms.clinical.application.appointment.dto.AppointmentDTO;
+import com.res.hms.clinical.application.appointment.dto.AppointmentSummaryDTO;
 import com.res.hms.clinical.application.appointment.dto.UpdateAppointmentStatusRequest;
 import com.res.hms.clinical.application.appointment.service.AppointmentAggregateService;
 import com.res.hms.clinical.application.appointment.service.AppointmentService;
@@ -50,6 +51,20 @@ public class AppointmentController {
               iso = org.springframework.format.annotation.DateTimeFormat.ISO.DATE)
           java.time.LocalDate date) {
     return ApiResponse.success(appointmentService.list(page, Math.min(size, 100), search, date));
+  }
+
+  @GetMapping("/summary")
+  @PreAuthorize("hasAnyRole('ADMIN','RECEPTIONIST','NURSE','DOCTOR','SUPER_ADMIN')")
+  public ApiResponse<PageResponse<AppointmentSummaryDTO>> listSummary(
+      @RequestParam(defaultValue = "0") int page,
+      @RequestParam(defaultValue = "20") int size,
+      @RequestParam(required = false) String search,
+      @RequestParam(required = false)
+          @org.springframework.format.annotation.DateTimeFormat(
+              iso = org.springframework.format.annotation.DateTimeFormat.ISO.DATE)
+          java.time.LocalDate date) {
+    return ApiResponse.success(
+        appointmentService.listSummary(page, Math.min(size, 100), search, date));
   }
 
   @GetMapping("/stats")

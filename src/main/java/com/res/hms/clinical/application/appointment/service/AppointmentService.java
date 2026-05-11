@@ -1,6 +1,7 @@
 package com.res.hms.clinical.application.appointment.service;
 
 import com.res.hms.clinical.application.appointment.dto.AppointmentDTO;
+import com.res.hms.clinical.application.appointment.dto.AppointmentSummaryDTO;
 import com.res.hms.clinical.application.appointment.dto.UpdateAppointmentStatusRequest;
 import com.res.hms.clinical.application.prescription.repository.PrescriptionRepository;
 import com.res.hms.clinical.application.prescription.service.PrescriptionService;
@@ -99,6 +100,33 @@ public class AppointmentService {
     return toDto(appointmentRepository.save(appointment));
   }
 
+  @Transactional(readOnly = true)
+  public PageResponse<AppointmentSummaryDTO> listSummary(
+      int page, int size, String search, java.time.LocalDate date) {
+    UUID hospitalId = hospitalContext.requireHospitalId();
+    PageRequest pageRequest = PageRequest.of(page, size);
+
+    if (search != null && !search.trim().isEmpty()) {
+      String searchPattern = "%" + search.trim().toLowerCase() + "%";
+      return PageResponse.from(
+          appointmentRepository
+              .search(hospitalId, searchPattern, pageRequest)
+              .map(this::toSummaryDto));
+    }
+
+    if (date != null) {
+      return PageResponse.from(
+          appointmentRepository
+              .findAllByHospitalIdAndDate(hospitalId, date, pageRequest)
+              .map(this::toSummaryDto));
+    }
+
+    return PageResponse.from(
+        appointmentRepository
+            .findAllByHospitalIdOrderByAppointmentTimeDesc(hospitalId, pageRequest)
+            .map(this::toSummaryDto));
+  }
+
   public AppointmentDTO toDto(Appointment appointment) {
     if (appointment == null) {
       return null;
@@ -132,6 +160,26 @@ public class AppointmentService {
     }
 
     return builder.build();
+  }
+
+  public AppointmentSummaryDTO toSummaryDto(Appointment appointment) {
+    if (appointment == null) {
+      return null;
+    }
+
+    return AppointmentSummaryDTO.builder()
+        .id(appointment.getId())
+        .patientId(appointment.getPatientId())
+        .patientName(appointment.getPatientName())
+        .patientCode(appointment.getPatientCode())
+        .doctorId(appointment.getDoctorId())
+        .doctorName(appointment.getDoctorName())
+        .doctorSpecialization(appointment.getDoctorSpecialization())
+        .appointmentTime(appointment.getAppointmentTime())
+        .timeSlot(appointment.getTimeSlot())
+        .status(appointment.getStatus())
+        .tokenNumber(appointment.getTokenNumber())
+        .build();
   }
 
   private com.res.hms.clinical.application.appointment.dto.VitalsDTO toVitalsDto(

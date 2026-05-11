@@ -1,6 +1,7 @@
 package com.res.hms.clinical.api;
 
 import com.res.hms.clinical.application.prescription.dto.PrescriptionDTO;
+import com.res.hms.clinical.application.prescription.dto.PrescriptionSummaryDTO;
 import com.res.hms.clinical.application.prescription.service.PrescriptionService;
 import com.res.hms.core.api.ApiResponse;
 import com.res.hms.core.api.PageResponse;
@@ -28,6 +29,13 @@ public class PrescriptionController {
   public ApiResponse<PageResponse<PrescriptionDTO>> list(
       @RequestParam(defaultValue = "0") int page, @RequestParam(defaultValue = "20") int size) {
     return ApiResponse.success(prescriptionService.list(page, size));
+  }
+
+  @GetMapping("/summary")
+  @PreAuthorize("hasAnyRole('ADMIN','DOCTOR','NURSE','PHARMACIST','SUPER_ADMIN')")
+  public ApiResponse<PageResponse<PrescriptionSummaryDTO>> listSummary(
+      @RequestParam(defaultValue = "0") int page, @RequestParam(defaultValue = "20") int size) {
+    return ApiResponse.success(prescriptionService.listSummary(page, size));
   }
 
   private final PrescriptionService prescriptionService;

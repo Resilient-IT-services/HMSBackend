@@ -2,6 +2,7 @@ package com.res.hms.clinical.application.prescription.service;
 
 import com.res.hms.clinical.application.prescription.dto.PrescriptionDTO;
 import com.res.hms.clinical.application.prescription.dto.PrescriptionItemDTO;
+import com.res.hms.clinical.application.prescription.dto.PrescriptionSummaryDTO;
 import com.res.hms.clinical.application.prescription.repository.PrescriptionRepository;
 import com.res.hms.clinical.domain.Appointment;
 import com.res.hms.clinical.domain.Prescription;
@@ -24,6 +25,34 @@ import org.springframework.transaction.annotation.Transactional;
 @Service
 @RequiredArgsConstructor
 public class PrescriptionService {
+
+  @Transactional(readOnly = true)
+  public PageResponse<PrescriptionSummaryDTO> listSummary(int page, int size) {
+    UUID hospitalId = hospitalContext.requireHospitalId();
+    return PageResponse.from(
+        prescriptionRepository
+            .findAllByHospitalId(hospitalId, PageRequest.of(page, size))
+            .map(this::toSummaryDto));
+  }
+
+  @Transactional(readOnly = true)
+  public PrescriptionSummaryDTO toSummaryDto(Prescription prescription) {
+    if (prescription == null) {
+      return null;
+    }
+
+    return PrescriptionSummaryDTO.builder()
+        .id(prescription.getId())
+        .patientId(prescription.getPatientId())
+        .patientName(prescription.getPatientName())
+        .doctorId(prescription.getDoctorId())
+        .doctorName(prescription.getDoctorName())
+        .appointmentId(prescription.getAppointmentId())
+        .status(prescription.getStatus())
+        .createdAt(prescription.getCreatedAt())
+        .itemCount(prescription.getItems() != null ? prescription.getItems().size() : 0)
+        .build();
+  }
 
   @Transactional(readOnly = true)
   public PageResponse<PrescriptionDTO> list(int page, int size) {
