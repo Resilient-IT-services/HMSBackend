@@ -27,6 +27,7 @@ public interface PatientRepository extends BaseRepository<Patient> {
   @Query(
       "SELECT p FROM Patient p WHERE p.hospitalId = :hospitalId AND "
           + "(LOWER(p.fullName) LIKE :query OR "
+          + "LOWER(p.patientCode) LIKE :query OR "
           + "p.phone LIKE :query)")
   Page<Patient> search(
       @Param("hospitalId") UUID hospitalId, @Param("query") String query, Pageable pageable);
