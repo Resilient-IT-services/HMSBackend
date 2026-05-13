@@ -38,6 +38,26 @@ public class PatientAggregateService {
     log.info("Starting aggregate save for patient: {}", dto.getFullName());
     UUID hospitalId = hospitalContext.requireHospitalId();
 
+    String fullName = dto.getFullName() != null ? dto.getFullName().trim() : null;
+    String phone = dto.getPhone() != null ? dto.getPhone().trim() : null;
+
+    if (dto.getId() == null) {
+      if (patientRepository.existsByFullNameAndPhoneAndHospitalId(fullName, phone, hospitalId)) {
+        throw new ApiException(
+            "ALREADY_EXISTS",
+            "Patient with this name and phone number already exists",
+            HttpStatus.CONFLICT);
+      }
+    } else {
+      if (patientRepository.existsByFullNameAndPhoneAndHospitalIdAndIdNot(
+          fullName, phone, hospitalId, dto.getId())) {
+        throw new ApiException(
+            "ALREADY_EXISTS",
+            "Another patient with this name and phone number already exists",
+            HttpStatus.CONFLICT);
+      }
+    }
+
     Patient patient;
     if (dto.getId() == null) {
       patient = createPatient(dto, hospitalId);
@@ -82,7 +102,7 @@ public class PatientAggregateService {
     String prefix = yearSuffix + "-%";
 
     return patientRepository
-        .findLastPatientCode(hospitalId, prefix)
+        .findLastPatientCodeGlobal(prefix)
         .map(
             lastCode -> {
               try {
@@ -104,10 +124,10 @@ public class PatientAggregateService {
   }
 
   private void updatePatientFields(Patient patient, PatientDTO dto) {
-    patient.setFullName(dto.getFullName());
+    patient.setFullName(dto.getFullName() != null ? dto.getFullName().trim() : null);
     patient.setGender(dto.getGender());
     patient.setDob(dto.getDob());
-    patient.setPhone(dto.getPhone());
+    patient.setPhone(dto.getPhone() != null ? dto.getPhone().trim() : null);
     patient.setEmail(dto.getEmail());
     patient.setMedicalHistory(dto.getMedicalHistory());
     patient.setBloodGroup(dto.getBloodGroup());
