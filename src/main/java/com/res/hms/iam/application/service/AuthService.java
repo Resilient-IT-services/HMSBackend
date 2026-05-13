@@ -47,7 +47,7 @@ public class AuthService {
       context.setAuthentication(authentication);
       SecurityContextHolder.setContext(context);
       securityContextRepository.saveContext(context, httpRequest, httpResponse);
-    } catch (BadCredentialsException exception) {
+    } catch (org.springframework.security.core.AuthenticationException exception) {
       throw new ApiException(
           "AUTH_ERROR",
           "Invalid username or password",

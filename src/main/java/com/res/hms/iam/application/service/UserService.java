@@ -95,6 +95,10 @@ public class UserService {
 
   @Transactional
   public void deleteUser(UUID id) {
+    if (java.util.Objects.equals(id, hospitalContext.currentUserIdOrNull())) {
+      throw new ApiException(
+          "BUSINESS_RULE_VIOLATION", "Users cannot delete themselves", HttpStatus.BAD_REQUEST);
+    }
     UserAccount user = resourceLookup.findRequired(id, userAccountRepository::findById, "User");
     user.setDeleted(true);
     userAccountRepository.save(user);

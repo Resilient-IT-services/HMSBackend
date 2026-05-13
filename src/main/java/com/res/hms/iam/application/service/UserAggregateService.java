@@ -111,9 +111,15 @@ public class UserAggregateService {
     if (dto.getPhone() != null) {
       user.setPhone(dto.getPhone());
     }
-    if (isSuper && dto.getSuperuser() != null) {
-      user.setSuperuser(dto.getSuperuser());
-    }
+      if (isSuper && dto.getSuperuser() != null) {
+          user.setSuperuser(dto.getSuperuser());
+      }
+      if (dto.getActive() != null) {
+          if (!dto.getActive() && Objects.equals(user.getId(), hospitalContext.currentUserIdOrNull())) {
+              throw new ApiException("BUSINESS_RULE_VIOLATION", "Users cannot deactivate themselves", HttpStatus.BAD_REQUEST);
+          }
+          user.setActive(dto.getActive());
+      }
   }
 
   private void mergeMemberships(
