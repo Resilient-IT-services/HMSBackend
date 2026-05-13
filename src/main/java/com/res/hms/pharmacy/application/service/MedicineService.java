@@ -74,8 +74,41 @@ public class MedicineService {
 
   @Transactional
   public MedicineDTO create(MedicineDTO request) {
+    if (medicineRepository.existsDuplicate(
+        request.getName(),
+        request.getGenericName(),
+        request.getStrength(),
+        request.getForm())) {
+      throw new ApiException("DUPLICATE_MEDICINE", "Medicine already exists", HttpStatus.CONFLICT);
+    }
+
     Medicine medicine = new Medicine();
     updateFields(medicine, request);
+
+    if (request.getCurrentStock() != null
+        && request.getCurrentStock() > 0
+        && hasText(request.getBatchNumber())) {
+      Optional.ofNullable(hospitalContext.getHospitalIdOrNull())
+          .ifPresent(
+              hospitalId -> {
+                PharmacyStock stock = new PharmacyStock();
+                stock.setHospitalId(hospitalId);
+                stock.setMedicine(medicine);
+                stock.setBatchNumber(request.getBatchNumber());
+                stock.setQuantity(request.getCurrentStock());
+                stock.setExpiryDate(request.getExpiryDate());
+                stock.setPurchasePrice(
+                    request.getPurchasePrice() != null
+                        ? request.getPurchasePrice()
+                        : BigDecimal.ZERO);
+                stock.setSellingPrice(
+                    request.getSellingPrice() != null
+                        ? request.getSellingPrice()
+                        : BigDecimal.ZERO);
+                pharmacyStockRepository.save(stock);
+              });
+    }
+
     return toDto(medicineRepository.save(medicine));
   }
 
@@ -450,6 +483,9 @@ public class MedicineService {
     medicine.setStorageTemperature(dto.getTemperature());
     medicine.setStorageHumidity(dto.getHumidity());
     medicine.setSpecialNotes(dto.getSpecialNotes());
+
+    // Ensure medicine is saved first to have an ID for the catalog association
+    medicineRepository.save(medicine);
 
     Optional.ofNullable(hospitalContext.getHospitalIdOrNull())
         .ifPresent(

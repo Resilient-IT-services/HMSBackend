@@ -23,12 +23,14 @@ public interface DoctorProfileRepository extends JpaRepository<DoctorProfile, UU
 
   @Query(
       "SELECT d FROM DoctorProfile d JOIN d.user u JOIN u.assignments a "
-          + "WHERE a.hospitalId = :hospitalId AND a.role.code = com.res.hms.iam.domain.RoleCode.DOCTOR")
+          + "WHERE a.hospitalId = :hospitalId AND a.role.code = com.res.hms.iam.domain.RoleCode.DOCTOR "
+          + "AND u.active = true AND a.active = true")
   Page<DoctorProfile> findAllByHospitalId(@Param("hospitalId") UUID hospitalId, Pageable pageable);
 
   @Query(
       "SELECT d FROM DoctorProfile d JOIN d.user u JOIN u.assignments a "
           + "WHERE a.hospitalId = :hospitalId AND a.role.code = com.res.hms.iam.domain.RoleCode.DOCTOR "
+          + "AND u.active = true AND a.active = true "
           + "AND (LOWER(u.fullName) LIKE :query OR "
           + "LOWER(d.specialization) LIKE :query)")
   Page<DoctorProfile> search(
@@ -38,7 +40,8 @@ public interface DoctorProfileRepository extends JpaRepository<DoctorProfile, UU
 
   @Query(
       "SELECT d FROM DoctorProfile d JOIN d.user u JOIN u.assignments a "
-          + "WHERE d.id = :id AND a.hospitalId = :hospitalId AND a.role.code = com.res.hms.iam.domain.RoleCode.DOCTOR")
+          + "WHERE d.id = :id AND a.hospitalId = :hospitalId AND a.role.code = com.res.hms.iam.domain.RoleCode.DOCTOR "
+          + "AND u.active = true AND a.active = true")
   Optional<DoctorProfile> findByIdAndHospitalId(
       @Param("id") UUID id, @Param("hospitalId") UUID hospitalId);
 }

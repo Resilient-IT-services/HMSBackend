@@ -18,6 +18,7 @@ import com.res.hms.iam.domain.UserAccount;
 import com.res.hms.iam.domain.UserRoleAssignment;
 import com.res.hms.iam.infrastructure.repository.RoleRepository;
 import com.res.hms.iam.infrastructure.repository.UserAccountRepository;
+import java.time.DayOfWeek;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.LocalTime;
@@ -160,8 +161,11 @@ class DoctorControllerIntegrationTest {
   }
 
   @Test
-  void testGetAvailabilityWithModifiedException() throws Exception {
-    LocalDate tuesday = LocalDate.of(2026, 5, 12); // Tuesday
+    void testGetAvailabilityWithModifiedException() throws Exception {
+      LocalDate tuesday = LocalDate.now().plusDays(7); // Use a future date
+      while (tuesday.getDayOfWeek() != DayOfWeek.TUESDAY) {
+          tuesday = tuesday.plusDays(1);
+      }
     UserAccount drUser = userAccountRepository.findByUsername("avail_dr").get();
 
     // 1. Create a MODIFIED exception for Tuesday: 2-4 PM
