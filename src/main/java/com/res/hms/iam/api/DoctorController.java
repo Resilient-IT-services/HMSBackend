@@ -32,7 +32,7 @@ public class DoctorController {
       @RequestParam(defaultValue = "20") int size,
       @RequestParam(required = false) String search) {
     return ApiResponse.success(
-        userService.listUsers(page, Math.min(size, 100), search, "DoctorProfile", null, false));
+        userService.listUsers(page, Math.min(size, 100), search, "DOCTOR", true, false));
   }
 
   @GetMapping("/{doctorId}/availability")

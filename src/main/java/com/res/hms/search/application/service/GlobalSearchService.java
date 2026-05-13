@@ -66,7 +66,7 @@ public class GlobalSearchService {
     userRepository
         .searchUsers(
             isSuperAdmin ? null : currentHospitalId,
-            null,
+            true,
             false,
             null,
             searchPattern,

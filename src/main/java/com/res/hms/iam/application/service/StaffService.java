@@ -81,6 +81,7 @@ public class StaffService {
           predicates.add(cb.equal(root.get("hospitalId"), hospitalId));
           predicates.add(cb.equal(root.get("role").get("code"), RoleCode.DOCTOR));
           predicates.add(cb.equal(root.get("active"), true));
+          predicates.add(cb.equal(root.get("user").get("active"), true));
 
           if (name != null && !name.isBlank()) {
             predicates.add(
@@ -134,6 +135,7 @@ public class StaffService {
           predicates.add(cb.equal(root.get("hospitalId"), hospitalId));
           predicates.add(cb.equal(root.get("role").get("code"), RoleCode.NURSE));
           predicates.add(cb.equal(root.get("active"), true));
+          predicates.add(cb.equal(root.get("user").get("active"), true));
 
           if (name != null && !name.isBlank()) {
             predicates.add(

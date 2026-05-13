@@ -75,6 +75,11 @@ public class DoctorProfileService {
                         "DoctorProfile not found",
                         org.springframework.http.HttpStatus.NOT_FOUND));
 
+    if (!doctorProfile.getUser().isActive()) {
+      throw new com.res.hms.core.exception.ApiException(
+          "BUSINESS_RULE_VIOLATION", "Doctor is inactive", org.springframework.http.HttpStatus.BAD_REQUEST);
+    }
+
     UserAccount user = doctorProfile.getUser();
     UUID actualDoctorId = doctorProfile.getId();
     // 2. Find the relevant assignment for this hospital
@@ -179,6 +184,11 @@ public class DoctorProfileService {
                         "NOT_FOUND",
                         "DoctorProfile not found",
                         org.springframework.http.HttpStatus.NOT_FOUND));
+
+    if (!doctorProfile.getUser().isActive()) {
+      throw new com.res.hms.core.exception.ApiException(
+          "BUSINESS_RULE_VIOLATION", "Doctor is inactive", org.springframework.http.HttpStatus.BAD_REQUEST);
+    }
 
     UUID actualDoctorId = doctorProfile.getId();
     UserAccount user = doctorProfile.getUser();
