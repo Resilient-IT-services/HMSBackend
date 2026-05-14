@@ -1,12 +1,15 @@
 package com.res.hms.clinical.application.patient.service;
 
 import com.res.hms.clinical.application.patient.dto.PatientDTO;
+import com.res.hms.clinical.application.patient.dto.PatientDashboardStatsDTO;
 import com.res.hms.clinical.application.patient.dto.PatientSummaryDTO;
 import com.res.hms.clinical.domain.Patient;
 import com.res.hms.clinical.infrastructure.repository.PatientRepository;
 import com.res.hms.core.api.PageResponse;
 import com.res.hms.core.tenant.HospitalContext;
 import com.res.hms.core.util.ResourceLookup;
+
+import java.time.LocalDate;
 import java.util.UUID;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.PageRequest;
@@ -92,4 +95,23 @@ public class PatientService {
         .phone(patient.getPhone())
         .build();
   }
+    public PatientDashboardStatsDTO getDashboardStats() {
+
+        long totalRecords = patientRepository.count();
+
+        LocalDate today = LocalDate.now();
+
+        long newToday = patientRepository.countByCreatedAtBetween(
+            today.atStartOfDay(),
+            today.plusDays(1).atStartOfDay()
+        );
+
+        long inPatient = 0;
+
+        return new PatientDashboardStatsDTO(
+            totalRecords,
+            newToday,
+            inPatient
+        );
+    }
 }

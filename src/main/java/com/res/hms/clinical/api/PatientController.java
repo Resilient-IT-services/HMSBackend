@@ -19,6 +19,7 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
+import com.res.hms.clinical.application.patient.dto.PatientDashboardStatsDTO;
 
 @Tag(name = "Patients")
 @RestController
@@ -98,4 +99,12 @@ public class PatientController {
     request.setId(patientId);
     return ApiResponse.success(patientAggregateService.savePatientAggregate(request));
   }
+    @GetMapping("/dashboard-stats")
+    @PreAuthorize("hasAnyRole('ADMIN','RECEPTIONIST','DOCTOR','NURSE','SUPER_ADMIN')")
+    public ApiResponse<PatientDashboardStatsDTO> getDashboardStats() {
+
+        return ApiResponse.success(
+            patientService.getDashboardStats()
+        );
+    }
 }

@@ -2,6 +2,8 @@ package com.res.hms.clinical.infrastructure.repository;
 
 import com.res.hms.clinical.domain.Patient;
 import com.res.hms.core.repository.BaseRepository;
+
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
@@ -14,6 +16,11 @@ public interface PatientRepository extends BaseRepository<Patient> {
   boolean existsByPatientCode(String patientCode);
 
   boolean existsByPatientCodeAndIdNot(String patientCode, UUID id);
+
+    long countByCreatedAtBetween(
+        LocalDateTime start,
+        LocalDateTime end
+    );
 
   List<Patient> findAllByPatientCodeIsNullOrderByCreatedAtAsc();
 
