@@ -121,4 +121,56 @@ class PatientControllerIntegrationTest {
         .andExpect(status().isOk())
         .andExpect(jsonPath("$.data.content[0].fullName").value("Asha Nair"));
   }
+
+  @Test
+  void duplicatePatientRegistrationFails() throws Exception {
+    MockHttpSession session =
+        (MockHttpSession)
+            mockMvc
+                .perform(
+                    post("/api/v1/auth/login")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(
+                            """
+                                {
+                                  "username": "hospital_admin",
+                                  "password": "admin123"
+                                }
+                                """))
+                .andExpect(status().isOk())
+                .andReturn()
+                .getRequest()
+                .getSession(false);
+
+    String patientJson =
+        """
+            {
+              "fullName": "Duplicate Patient",
+              "phone": "1234567890",
+              "gender": "MALE",
+              "dob": "1990-01-01"
+            }
+            """;
+
+    // Register first time
+    mockMvc
+        .perform(
+            post("/api/v1/patients")
+                .session(session)
+                .header("X-Hospital-Id", testHospitalId.toString())
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(patientJson))
+        .andExpect(status().isOk());
+
+    // Register second time with same name and phone
+    mockMvc
+        .perform(
+            post("/api/v1/patients")
+                .session(session)
+                .header("X-Hospital-Id", testHospitalId.toString())
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(patientJson))
+        .andExpect(status().isConflict())
+        .andExpect(jsonPath("$.error.code").value("ALREADY_EXISTS"));
+  }
 }
