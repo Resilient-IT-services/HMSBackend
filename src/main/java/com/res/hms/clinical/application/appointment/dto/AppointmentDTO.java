@@ -3,7 +3,7 @@ package com.res.hms.clinical.application.appointment.dto;
 import com.res.hms.clinical.domain.AppointmentStatus;
 import com.res.hms.clinical.domain.SessionPeriod;
 import com.res.hms.core.validation.OnCreate;
-import jakarta.validation.constraints.Future;
+import jakarta.validation.constraints.FutureOrPresent;
 import jakarta.validation.constraints.NotNull;
 import java.time.LocalDateTime;
 import java.util.List;
@@ -31,7 +31,7 @@ public class AppointmentDTO {
   private String doctorName;
 
   @NotNull(message = "appointmentTime is required")
-  @Future(message = "appointmentTime must be in the future", groups = OnCreate.class)
+  @FutureOrPresent(message = "appointmentTime must be current or future time", groups = OnCreate.class)
   private LocalDateTime appointmentTime;
 
   private AppointmentStatus status;
