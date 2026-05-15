@@ -37,14 +37,21 @@ public class AppointmentAggregateService {
   public AppointmentDTO saveAppointmentAggregate(AppointmentDTO dto) {
     log.info("Starting aggregate save for appointment");
     UUID hospitalId = hospitalContext.requireHospitalId();
-      boolean alreadyBooked = appointmentRepository
-          .existsByDoctorIdAndAppointmentTimeAndStatusNot(dto.getDoctorId(),
-              dto.getAppointmentTime(), AppointmentStatus.CANCELLED);
+    
+    boolean alreadyBooked;
+    if (dto.getId() == null) {
+      alreadyBooked = appointmentRepository.existsByPatientIdAndDoctorIdAndAppointmentTimeAndStatusNot(
+          dto.getPatientId(), dto.getDoctorId(), dto.getAppointmentTime(), AppointmentStatus.CANCELLED);
+    } else {
+      alreadyBooked = appointmentRepository.existsByPatientIdAndDoctorIdAndAppointmentTimeAndIdNotAndStatusNot(
+          dto.getPatientId(), dto.getDoctorId(), dto.getAppointmentTime(), dto.getId(), AppointmentStatus.CANCELLED);
+    }
 
-      if (alreadyBooked) {
-
-          throw new ApiException("APPOINTMENT_ALREADY_EXISTS", "Doctor already has an appointment at this time", HttpStatus.CONFLICT);
-      }
+    if (alreadyBooked) {
+      throw new ApiException("APPOINTMENT_ALREADY_EXISTS", 
+          "Appointment already exists for this patient with the same doctor at the selected time", 
+          HttpStatus.CONFLICT);
+    }
 
     if (dto.getVitals() != null) {
       vitalValidationService.validate(dto.getVitals());
@@ -212,3 +219,4 @@ public class AppointmentAggregateService {
     }
   }
 }
+

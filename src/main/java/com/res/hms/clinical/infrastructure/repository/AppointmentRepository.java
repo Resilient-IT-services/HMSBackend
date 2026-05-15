@@ -64,12 +64,23 @@ public interface AppointmentRepository extends BaseRepository<Appointment> {
   Integer findMaxTokenByDoctorAndDate(
       @Param("doctorId") UUID doctorId, @Param("date") java.time.LocalDate date);
 
-    boolean existsByDoctorIdAndAppointmentTimeAndStatusNot(
+    boolean existsByPatientIdAndDoctorIdAndAppointmentTimeAndStatusNot(
+        UUID patientId,
         UUID doctorId,
         java.time.LocalDateTime appointmentTime,
         com.res.hms.clinical.domain.AppointmentStatus status
     );
 
+    boolean existsByPatientIdAndDoctorIdAndAppointmentTimeAndIdNotAndStatusNot(
+        UUID patientId,
+        UUID doctorId,
+        java.time.LocalDateTime appointmentTime,
+        UUID id,
+        com.res.hms.clinical.domain.AppointmentStatus status
+    );
+
+
   java.util.List<Appointment> findByPatientIdAndHospitalIdOrderByAppointmentTimeDesc(
       UUID patientId, UUID hospitalId);
 }
+
