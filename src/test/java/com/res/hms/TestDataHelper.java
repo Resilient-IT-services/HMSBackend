@@ -12,6 +12,15 @@ import com.res.hms.iam.domain.UserAccount;
 import com.res.hms.iam.domain.UserRoleAssignment;
 import com.res.hms.iam.infrastructure.repository.RoleRepository;
 import com.res.hms.iam.infrastructure.repository.UserAccountRepository;
+import com.res.hms.clinical.domain.PatientVisit;
+import com.res.hms.clinical.domain.VisitStatus;
+import com.res.hms.clinical.domain.VisitType;
+import com.res.hms.clinical.infrastructure.repository.PatientVisitRepository;
+import com.res.hms.finance.domain.Invoice;
+import com.res.hms.finance.domain.InvoiceStatus;
+import com.res.hms.finance.infrastructure.repository.InvoiceRepository;
+import java.math.BigDecimal;
+import java.time.LocalDateTime;
 import java.util.UUID;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.crypto.password.PasswordEncoder;
@@ -25,6 +34,35 @@ public class TestDataHelper {
   @Autowired private HospitalRepository hospitalRepository;
 
   @Autowired private PatientRepository patientRepository;
+
+  @Autowired private PatientVisitRepository patientVisitRepository;
+
+  @Autowired private InvoiceRepository invoiceRepository;
+
+  @Transactional(propagation = Propagation.REQUIRES_NEW)
+  public PatientVisit createTestVisit(UUID hospitalId, UUID patientId) {
+    PatientVisit v = new PatientVisit();
+    v.setHospitalId(hospitalId);
+    v.setPatientId(patientId);
+    v.setVisitNumber("VST-" + UUID.randomUUID().toString().substring(0, 8));
+    v.setVisitType(VisitType.OPD);
+    v.setStatus(VisitStatus.ACTIVE);
+    v.setStartedAt(LocalDateTime.now());
+    return patientVisitRepository.save(v);
+  }
+
+  @Transactional(propagation = Propagation.REQUIRES_NEW)
+  public Invoice createTestInvoice(UUID hospitalId, UUID patientId, UUID visitId) {
+    Invoice i = new Invoice();
+    i.setHospitalId(hospitalId);
+    i.setPatientId(patientId);
+    i.setVisitId(visitId);
+    i.setInvoiceNumber("INV-" + UUID.randomUUID().toString().substring(0, 8));
+    i.setStatus(InvoiceStatus.UNPAID);
+    i.setTotalAmount(BigDecimal.valueOf(1000.00));
+    i.setAmountPaid(BigDecimal.ZERO);
+    return invoiceRepository.save(i);
+  }
 
   @Transactional(propagation = Propagation.REQUIRES_NEW)
   public Patient createTestPatient(UUID hospitalId) {

@@ -20,6 +20,13 @@ public class Appointment extends HospitalScopedEntity {
   @Column(name = "patient_id", nullable = false)
   private java.util.UUID patientId;
 
+  @Column(name = "visit_id")
+  private java.util.UUID visitId;
+
+  @jakarta.persistence.ManyToOne(fetch = jakarta.persistence.FetchType.LAZY)
+  @JoinColumn(name = "visit_id", insertable = false, updatable = false)
+  private PatientVisit visit;
+
   @jakarta.persistence.ManyToOne(fetch = jakarta.persistence.FetchType.LAZY)
   @JoinColumn(name = "patient_id", insertable = false, updatable = false)
   private Patient patient;

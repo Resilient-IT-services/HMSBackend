@@ -23,6 +23,13 @@ public class PharmacySale extends HospitalScopedEntity {
   @Column(name = "patient_id")
   private UUID patientId;
 
+  @Column(name = "visit_id")
+  private UUID visitId;
+
+  @jakarta.persistence.ManyToOne(fetch = jakarta.persistence.FetchType.LAZY)
+  @jakarta.persistence.JoinColumn(name = "visit_id", insertable = false, updatable = false)
+  private com.res.hms.clinical.domain.PatientVisit visit;
+
   @Column(name = "prescription_id")
   private UUID prescriptionId;
 

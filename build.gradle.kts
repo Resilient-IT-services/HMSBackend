@@ -127,8 +127,8 @@ tasks.jacocoTestReport {
             fileTree(it) {
                 include(
                     "com/res/hms/**/service/**",
-                    "com/res/hms/common/tenant/**",
-                    "com/res/hms/common/exception/GlobalExceptionHandler.class"
+                    "com/res/hms/core/tenant/**",
+                    "com/res/hms/core/exception/GlobalExceptionHandler.class"
                 )
             }
         })
