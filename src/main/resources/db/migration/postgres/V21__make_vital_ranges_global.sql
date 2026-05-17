@@ -2,10 +2,14 @@
 
 -- 1. Deduplicate existing configs (keep only one per vital type)
 DELETE FROM public.vital_range_configs
-WHERE id NOT IN (
-    SELECT MIN(id)
-    FROM public.vital_range_configs
-    GROUP BY vital_type
+WHERE id IN (
+    SELECT id
+    FROM (
+        SELECT id,
+               ROW_NUMBER() OVER (PARTITION BY vital_type ORDER BY created_at ASC) as r_num
+        FROM public.vital_range_configs
+    ) t
+    WHERE r_num > 1
 );
 
 -- 2. Drop constraints and hospital_id column
