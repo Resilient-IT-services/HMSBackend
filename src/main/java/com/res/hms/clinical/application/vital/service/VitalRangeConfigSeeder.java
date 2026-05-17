@@ -24,7 +24,7 @@ public class VitalRangeConfigSeeder implements CommandLineRunner {
 
   @Transactional
   public void seedDefaults() {
-    ensureDefault(VitalType.BODY_TEMPERATURE, 35, 42);
+    ensureDefault(VitalType.BODY_TEMPERATURE, 95, 108);
     ensureDefault(VitalType.SYSTOLIC_BP, 70, 220);
     ensureDefault(VitalType.DIASTOLIC_BP, 40, 140);
     ensureDefault(VitalType.OXYGEN_LEVEL, 50, 100);
