@@ -147,7 +147,8 @@ public class AppointmentService {
             .clinicalNotes(appointment.getClinicalNotes())
             .icdCodes(appointment.getIcdCodes())
             .notes(appointment.getNotes())
-            .vitals(toVitalsDto(appointment.getVitals()));
+            .vitals(toVitalsDto(appointment.getVitals()))
+            .visitId(appointment.getVisitId());
 
     // Fetch prescription via appointmentId instead of direct entity link or shared ID
     prescriptionRepository

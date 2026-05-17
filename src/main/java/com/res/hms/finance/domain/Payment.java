@@ -30,6 +30,13 @@ public class Payment extends HospitalScopedEntity {
     @JoinColumn(name = "patient_id", insertable = false, updatable = false)
     private Patient patient;
 
+    @Column(name = "visit_id")
+    private UUID visitId;
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "visit_id", insertable = false, updatable = false)
+    private com.res.hms.clinical.domain.PatientVisit visit;
+
     @Column(name = "receipt_number", nullable = false)
     private String receiptNumber;
 

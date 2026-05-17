@@ -32,12 +32,20 @@ import org.springframework.web.bind.annotation.RestController;
 public class AppointmentController {
   private final AppointmentService appointmentService;
   private final AppointmentAggregateService appointmentAggregateService;
+  private final com.res.hms.clinical.application.appointment.service.OPDEncounterOrchestrator opdEncounterOrchestrator;
+  private final com.res.hms.iam.application.service.AuthService authService;
 
   @PostMapping
-  @PreAuthorize("hasAnyRole('ADMIN','RECEPTIONIST','DOCTOR','SUPER_ADMIN')")
-  public ApiResponse<AppointmentDTO> create(
-      @Validated(OnCreate.class) @RequestBody AppointmentDTO request) {
+  @PreAuthorize("hasAnyRole('ADMIN','RECEPTIONIST','SUPER_ADMIN')")
+  public ApiResponse<AppointmentDTO> create(@Valid @RequestBody AppointmentDTO request) {
     return ApiResponse.success(appointmentAggregateService.saveAppointmentAggregate(request));
+  }
+
+  @PostMapping("/book-consultation")
+  @PreAuthorize("hasAnyRole('ADMIN','RECEPTIONIST','SUPER_ADMIN')")
+  public ApiResponse<AppointmentDTO> bookConsultation(@Valid @RequestBody com.res.hms.clinical.application.appointment.dto.OPDEncounterRequest request) {
+    java.util.UUID currentUserId = authService.getAuthenticatedPrincipal().userId();
+    return ApiResponse.success(opdEncounterOrchestrator.bookConsultationWithPayment(request, currentUserId));
   }
 
   @GetMapping

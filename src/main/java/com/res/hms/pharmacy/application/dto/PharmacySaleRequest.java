@@ -12,6 +12,7 @@ import lombok.Data;
 public class PharmacySaleRequest {
   private UUID patientId;
   private UUID prescriptionId;
+  private UUID visitId;
 
   @Valid @NotEmpty private List<Item> items;
 

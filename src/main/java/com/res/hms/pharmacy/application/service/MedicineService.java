@@ -53,6 +53,7 @@ public class MedicineService {
   private final PharmacySaleItemRepository pharmacySaleItemRepository;
   private final PharmacyReturnRepository pharmacyReturnRepository;
   private final HospitalContext hospitalContext;
+  private final com.res.hms.clinical.application.service.PatientVisitService patientVisitService;
   private final com.res.hms.core.service.DomainEventPublisher eventPublisher;
   private final PharmacyExcelService pharmacyExcelService;
 
@@ -249,6 +250,9 @@ public class MedicineService {
         .build();
   }
 
+  private final com.res.hms.clinical.application.prescription.repository.PrescriptionRepository prescriptionRepository;
+  private final com.res.hms.clinical.infrastructure.repository.AppointmentRepository appointmentRepository;
+
   @Transactional
   public PharmacySaleResponse createSale(PharmacySaleRequest request) {
     UUID hospitalId = hospitalContext.requireHospitalId();
@@ -256,6 +260,27 @@ public class MedicineService {
     sale.setHospitalId(hospitalId);
     sale.setPatientId(request.getPatientId());
     sale.setPrescriptionId(request.getPrescriptionId());
+
+    UUID resolvedVisitId = request.getVisitId();
+    
+    // 1. Try to resolve Visit ID from Prescription
+    if (resolvedVisitId == null && request.getPrescriptionId() != null) {
+      resolvedVisitId = prescriptionRepository.findById(request.getPrescriptionId())
+          .filter(p -> p.getAppointmentId() != null)
+          .flatMap(p -> appointmentRepository.findById(p.getAppointmentId()))
+          .map(com.res.hms.clinical.domain.Appointment::getVisitId)
+          .orElse(null);
+    }
+
+    // 2. If still null (Walk-in), create a new quick encounter
+    if (resolvedVisitId == null) {
+      com.res.hms.clinical.domain.PatientVisit visit = patientVisitService.createVisit(
+          hospitalId, request.getPatientId(), com.res.hms.clinical.domain.VisitType.WALKIN);
+      resolvedVisitId = visit.getId();
+    }
+    
+    sale.setVisitId(resolvedVisitId);
+
 
     BigDecimal total = BigDecimal.ZERO;
     LocalDate today = LocalDate.now();

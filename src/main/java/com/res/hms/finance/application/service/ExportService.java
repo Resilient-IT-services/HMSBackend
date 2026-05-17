@@ -45,9 +45,9 @@ public class ExportService {
 
       Row headerRow = sheet.createRow(0);
       String[] headers =
-          type == ReportType.DOCTOR_REVENUE
-              ? new String[] {"Doctor Name", "Total Appointments", "Total Revenue"}
-              : new String[] {"Payment Method", "Transaction Count", "Total Amount"};
+          (type == ReportType.DOCTOR_REVENUE || type == ReportType.PHARMACY_REVENUE)
+              ? new String[] {type == ReportType.PHARMACY_REVENUE ? "Category" : "Doctor Name", "Total Items/Appointments", "Total Revenue"}
+              : new String[] {type == ReportType.PAYMENT_COLLECTOR_SUMMARY ? "Collector Name" : "Payment Method", "Transaction Count", "Total Amount"};
 
       for (int i = 0; i < headers.length; i++) {
         Cell cell = headerRow.createCell(i);
@@ -56,7 +56,7 @@ public class ExportService {
       }
 
       int rowIdx = 1;
-      if (type == ReportType.DOCTOR_REVENUE) {
+      if (type == ReportType.DOCTOR_REVENUE || type == ReportType.PHARMACY_REVENUE) {
         for (Object obj : data) {
           RevenueReportDTO dto = (RevenueReportDTO) obj;
           Row row = sheet.createRow(rowIdx++);
@@ -111,16 +111,16 @@ public class ExportService {
 
     Font headFont = FontFactory.getFont(FontFactory.HELVETICA_BOLD);
     String[] headers =
-        type == ReportType.DOCTOR_REVENUE
-            ? new String[] {"Doctor Name", "Total Appointments", "Total Revenue"}
-            : new String[] {"Payment Method", "Transaction Count", "Total Amount"};
+        (type == ReportType.DOCTOR_REVENUE || type == ReportType.PHARMACY_REVENUE)
+            ? new String[] {type == ReportType.PHARMACY_REVENUE ? "Category" : "Doctor Name", "Total Items/Appointments", "Total Revenue"}
+            : new String[] {type == ReportType.PAYMENT_COLLECTOR_SUMMARY ? "Collector Name" : "Payment Method", "Transaction Count", "Total Amount"};
 
     for (String header : headers) {
       headerCell.setPhrase(new Phrase(header, headFont));
       table.addCell(headerCell);
     }
 
-    if (type == ReportType.DOCTOR_REVENUE) {
+    if (type == ReportType.DOCTOR_REVENUE || type == ReportType.PHARMACY_REVENUE) {
       for (Object obj : data) {
         RevenueReportDTO dto = (RevenueReportDTO) obj;
         table.addCell(dto.getDoctorName());

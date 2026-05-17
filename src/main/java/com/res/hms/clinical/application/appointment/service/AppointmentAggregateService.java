@@ -30,6 +30,7 @@ public class AppointmentAggregateService {
   private final HospitalContext hospitalContext;
   private final com.res.hms.clinical.application.vital.service.VitalValidationService
       vitalValidationService;
+  private final com.res.hms.clinical.application.service.PatientVisitService patientVisitService;
 
   private final com.res.hms.core.service.DomainEventPublisher eventPublisher;
 
@@ -151,6 +152,15 @@ public class AppointmentAggregateService {
     appointment.setDoctorName(profile.getFullName());
     appointment.setStatus(dto.getStatus() != null ? dto.getStatus() : AppointmentStatus.SCHEDULED);
     appointment.setTokenNumber(generateNextToken(profile.getId(), dto.getAppointmentTime()));
+    
+    if (dto.getVisitId() != null) {
+      appointment.setVisitId(dto.getVisitId());
+    } else {
+      com.res.hms.clinical.domain.PatientVisit visit = patientVisitService.createVisit(
+          hospitalId, patient.getId(), com.res.hms.clinical.domain.VisitType.OPD);
+      appointment.setVisitId(visit.getId());
+    }
+
     updateAppointmentFields(appointment, dto, hospitalId);
     return appointment;
   }

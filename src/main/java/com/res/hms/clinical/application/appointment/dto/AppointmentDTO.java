@@ -45,5 +45,7 @@ public class AppointmentDTO {
 
   @jakarta.validation.Valid private VitalsDTO vitals;
 
+  private UUID visitId;
+
   private com.res.hms.clinical.application.prescription.dto.PrescriptionDTO prescription;
 }

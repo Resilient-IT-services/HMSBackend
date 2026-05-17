@@ -1,7 +1,6 @@
 package com.res.hms.finance.application.service;
 
 import com.res.hms.core.tenant.HospitalContext;
-import com.res.hms.finance.infrastructure.repository.BillingRepository;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.LocalTime;
@@ -17,7 +16,8 @@ import org.springframework.transaction.annotation.Transactional;
 @Transactional(readOnly = true)
 public class ReportService {
 
-  private final BillingRepository billingRepository;
+  private final com.res.hms.finance.infrastructure.repository.InvoiceItemRepository invoiceItemRepository;
+  private final com.res.hms.finance.infrastructure.repository.PaymentRepository paymentRepository;
   private final HospitalContext hospitalContext;
 
   public List<?> getReportData(
@@ -26,22 +26,15 @@ public class ReportService {
     LocalDateTime start = startDate.atStartOfDay();
     LocalDateTime end = endDate.atTime(LocalTime.MAX);
 
-    System.out.println(
-        "DEBUG: Report Request - Type: "
-            + type
-            + ", Start: "
-            + start
-            + ", End: "
-            + end
-            + ", Doctor: "
-            + doctorId
-            + ", Hospital: "
-            + hospitalId);
-
     return switch (type) {
       case DOCTOR_REVENUE ->
-          billingRepository.getDoctorRevenueReport(hospitalId, doctorId, start, end);
-      case PAYMENT_SUMMARY -> billingRepository.getPaymentSummaryReport(hospitalId, start, end);
+          invoiceItemRepository.getDoctorRevenueReport(hospitalId, doctorId, start, end);
+      case PHARMACY_REVENUE ->
+          invoiceItemRepository.getPharmacyRevenueReport(hospitalId, start, end);
+      case PAYMENT_SUMMARY -> 
+          paymentRepository.getPaymentSummaryReport(hospitalId, start, end);
+      case PAYMENT_COLLECTOR_SUMMARY -> 
+          paymentRepository.getPaymentCollectorReport(hospitalId, start, end);
       default -> Collections.emptyList();
     };
   }

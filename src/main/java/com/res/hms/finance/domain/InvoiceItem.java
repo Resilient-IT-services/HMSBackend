@@ -60,4 +60,10 @@ public class InvoiceItem extends HospitalScopedEntity {
 
     @Column(name = "source_id", nullable = false)
     private UUID sourceId;
+
+    @Column(name = "doctor_id")
+    private UUID doctorId;
+
+    @Column(name = "doctor_name")
+    private String doctorName;
 }
