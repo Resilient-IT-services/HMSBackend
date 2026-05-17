@@ -30,10 +30,10 @@ public class VitalValidationService {
                   c, vitals.getHeartRate() != null ? new BigDecimal(vitals.getHeartRate()) : null);
               break;
             case BODY_TEMPERATURE:
-              validateTemperature(c, vitals.getTemperature(), vitals.getTemperatureUnit());
+              validateRange(c, vitals.getTemperature());
               break;
             case WEIGHT:
-              validateWeight(c, vitals.getWeight(), vitals.getWeightUnit());
+              validateRange(c, vitals.getWeight());
               break;
             case OXYGEN_LEVEL:
               validateRange(c, vitals.getOxygenLevel());
@@ -50,87 +50,6 @@ public class VitalValidationService {
               break;
           }
         });
-  }
-
-  private void validateTemperature(
-      VitalRangeConfig c, BigDecimal value, com.res.hms.core.domain.TemperatureUnit unit) {
-    if (value == null) {
-      return;
-    }
-    BigDecimal valueToValidate = value;
-    if (c.getUnit() != null && unit != null) {
-      try {
-        com.res.hms.core.domain.TemperatureUnit settingUnit =
-            com.res.hms.core.domain.TemperatureUnit.valueOf(
-                c.getUnit().toUpperCase(java.util.Locale.ROOT));
-        valueToValidate = convertTemperature(value, unit, settingUnit);
-      } catch (IllegalArgumentException e) {
-        // If unit in config is not valid, skip conversion and use raw value
-      }
-    }
-    validateRange(c, valueToValidate);
-  }
-
-  private BigDecimal convertTemperature(
-      BigDecimal value,
-      com.res.hms.core.domain.TemperatureUnit from,
-      com.res.hms.core.domain.TemperatureUnit to) {
-    if (from == to) {
-      return value;
-    }
-    if (from == com.res.hms.core.domain.TemperatureUnit.FAHRENHEIT
-        && to == com.res.hms.core.domain.TemperatureUnit.CELSIUS) {
-      return value
-          .subtract(new BigDecimal("32"))
-          .multiply(new BigDecimal("5"))
-          .divide(new BigDecimal("9"), 2, java.math.RoundingMode.HALF_UP);
-    }
-    if (from == com.res.hms.core.domain.TemperatureUnit.CELSIUS
-        && to == com.res.hms.core.domain.TemperatureUnit.FAHRENHEIT) {
-      return value
-          .multiply(new BigDecimal("9"))
-          .divide(new BigDecimal("5"), 2, java.math.RoundingMode.HALF_UP)
-          .add(new BigDecimal("32"));
-    }
-    return value;
-  }
-
-  private void validateWeight(
-      VitalRangeConfig c, BigDecimal value, com.res.hms.core.domain.WeightUnit unit) {
-    if (value == null) {
-      return;
-    }
-    BigDecimal valueToValidate = value;
-    if (c.getUnit() != null && unit != null) {
-      try {
-        com.res.hms.core.domain.WeightUnit settingUnit =
-            com.res.hms.core.domain.WeightUnit.valueOf(
-                c.getUnit().toUpperCase(java.util.Locale.ROOT));
-        valueToValidate = convertWeight(value, unit, settingUnit);
-      } catch (IllegalArgumentException e) {
-        // Skip conversion
-      }
-    }
-    validateRange(c, valueToValidate);
-  }
-
-  private BigDecimal convertWeight(
-      BigDecimal value,
-      com.res.hms.core.domain.WeightUnit from,
-      com.res.hms.core.domain.WeightUnit to) {
-    if (from == to) {
-      return value;
-    }
-    BigDecimal rate = new BigDecimal("2.20462");
-    if (from == com.res.hms.core.domain.WeightUnit.KG
-        && to == com.res.hms.core.domain.WeightUnit.LB) {
-      return value.multiply(rate).setScale(2, java.math.RoundingMode.HALF_UP);
-    }
-    if (from == com.res.hms.core.domain.WeightUnit.LB
-        && to == com.res.hms.core.domain.WeightUnit.KG) {
-      return value.divide(rate, 2, java.math.RoundingMode.HALF_UP);
-    }
-    return value;
   }
 
   private void validateRange(VitalRangeConfig c, BigDecimal value) {

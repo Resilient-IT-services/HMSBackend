@@ -17,5 +17,4 @@ public class VitalRangeConfigDTO {
   private VitalType vitalType;
   private BigDecimal minValue;
   private BigDecimal maxValue;
-  private String unit;
 }

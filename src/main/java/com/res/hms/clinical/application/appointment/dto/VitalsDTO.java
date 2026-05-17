@@ -1,7 +1,5 @@
 package com.res.hms.clinical.application.appointment.dto;
 
-import com.res.hms.core.domain.TemperatureUnit;
-import com.res.hms.core.domain.WeightUnit;
 import jakarta.validation.constraints.Pattern;
 import jakarta.validation.constraints.Positive;
 import java.math.BigDecimal;
@@ -27,11 +25,7 @@ public class VitalsDTO {
 
   private BigDecimal oxygenLevel;
 
-  private TemperatureUnit temperatureUnit;
-
   private BigDecimal temperature;
-
-  private WeightUnit weightUnit;
 
   @Positive(message = "Weight must be a positive value")
   private BigDecimal weight;

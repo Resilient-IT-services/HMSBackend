@@ -25,6 +25,4 @@ public class VitalRangeConfig extends com.res.hms.core.domain.BaseEntity {
 
   @Column(name = "max_value")
   private BigDecimal maxValue;
-
-  private String unit;
 }

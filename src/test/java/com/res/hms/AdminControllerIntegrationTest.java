@@ -67,7 +67,7 @@ class AdminControllerIntegrationTest {
                 .session(session))
         .andExpect(status().isOk());
 
-    String request = "{\"vitalType\": \"HEART_RATE\", \"minValue\": 70, \"maxValue\": 110, \"unit\": \"bpm\"}";
+    String request = "{\"vitalType\": \"HEART_RATE\", \"minValue\": 70, \"maxValue\": 110}";
     mockMvc
         .perform(
             put("/api/v1/admin/vital-ranges/HEART_RATE")

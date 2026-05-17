@@ -1,8 +1,6 @@
 package com.res.hms.clinical.domain;
 
 import com.res.hms.core.domain.HospitalScopedEntity;
-import com.res.hms.core.domain.TemperatureUnit;
-import com.res.hms.core.domain.WeightUnit;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.FetchType;
@@ -39,15 +37,7 @@ public class Vitals extends HospitalScopedEntity {
   @Column(name = "oxygen_level")
   private java.math.BigDecimal oxygenLevel;
 
-  @jakarta.persistence.Enumerated(jakarta.persistence.EnumType.STRING)
-  @Column(name = "temperature_unit")
-  private TemperatureUnit temperatureUnit = TemperatureUnit.CELSIUS;
-
   private java.math.BigDecimal temperature;
-
-  @jakarta.persistence.Enumerated(jakarta.persistence.EnumType.STRING)
-  @Column(name = "weight_unit")
-  private WeightUnit weightUnit = WeightUnit.KG;
 
   private java.math.BigDecimal weight;
 }

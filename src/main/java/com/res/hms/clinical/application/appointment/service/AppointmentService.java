@@ -196,9 +196,7 @@ public class AppointmentService {
         .diastolic(vitals.getDiastolic())
         .heartRate(vitals.getHeartRate())
         .oxygenLevel(vitals.getOxygenLevel())
-        .temperatureUnit(vitals.getTemperatureUnit())
         .temperature(vitals.getTemperature())
-        .weightUnit(vitals.getWeightUnit())
         .weight(vitals.getWeight())
         .build();
   }

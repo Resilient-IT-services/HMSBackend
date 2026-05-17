@@ -37,7 +37,6 @@ public class VitalRangeConfigService {
 
     config.setMinValue(dto.getMinValue());
     config.setMaxValue(dto.getMaxValue());
-    config.setUnit(dto.getUnit());
 
     return toDto(repository.save(config));
   }
@@ -48,7 +47,6 @@ public class VitalRangeConfigService {
         .vitalType(config.getVitalType())
         .minValue(config.getMinValue())
         .maxValue(config.getMaxValue())
-        .unit(config.getUnit())
         .build();
   }
 }

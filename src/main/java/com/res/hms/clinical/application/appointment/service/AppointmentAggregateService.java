@@ -134,9 +134,7 @@ public class AppointmentAggregateService {
     entity.setDiastolic(dto.getDiastolic());
     entity.setHeartRate(dto.getHeartRate());
     entity.setOxygenLevel(dto.getOxygenLevel());
-    entity.setTemperatureUnit(dto.getTemperatureUnit());
     entity.setTemperature(dto.getTemperature());
-    entity.setWeightUnit(dto.getWeightUnit());
     entity.setWeight(dto.getWeight());
   }
 
@@ -224,8 +222,6 @@ public class AppointmentAggregateService {
       vitals.setTemperature(dto.getVitals().getTemperature());
       vitals.setWeight(dto.getVitals().getWeight());
       vitals.setOxygenLevel(dto.getVitals().getOxygenLevel());
-      vitals.setTemperatureUnit(dto.getVitals().getTemperatureUnit());
-      vitals.setWeightUnit(dto.getVitals().getWeightUnit());
     }
   }
 }

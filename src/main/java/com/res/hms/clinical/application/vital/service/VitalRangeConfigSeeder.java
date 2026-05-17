@@ -24,21 +24,20 @@ public class VitalRangeConfigSeeder implements CommandLineRunner {
 
   @Transactional
   public void seedDefaults() {
-    ensureDefault(VitalType.BODY_TEMPERATURE, 95, 108, "F");
-    ensureDefault(VitalType.SYSTOLIC_BP, 70, 220, "mmHg");
-    ensureDefault(VitalType.DIASTOLIC_BP, 40, 140, "mmHg");
-    ensureDefault(VitalType.OXYGEN_LEVEL, 50, 100, "%");
-    ensureDefault(VitalType.WEIGHT, 1, 300, "kg");
-    ensureDefault(VitalType.HEART_RATE, 30, 250, "bpm");
+    ensureDefault(VitalType.BODY_TEMPERATURE, 35, 42);
+    ensureDefault(VitalType.SYSTOLIC_BP, 70, 220);
+    ensureDefault(VitalType.DIASTOLIC_BP, 40, 140);
+    ensureDefault(VitalType.OXYGEN_LEVEL, 50, 100);
+    ensureDefault(VitalType.WEIGHT, 1, 300);
+    ensureDefault(VitalType.HEART_RATE, 30, 250);
   }
 
-  private void ensureDefault(VitalType type, double min, double max, String unit) {
+  private void ensureDefault(VitalType type, double min, double max) {
     if (configRepository.findByVitalType(type).isEmpty()) {
       VitalRangeConfig config = new VitalRangeConfig();
       config.setVitalType(type);
       config.setMinValue(BigDecimal.valueOf(min));
       config.setMaxValue(BigDecimal.valueOf(max));
-      config.setUnit(unit);
       configRepository.save(config);
       log.info("Seeded default global vital range: {}", type);
     }
