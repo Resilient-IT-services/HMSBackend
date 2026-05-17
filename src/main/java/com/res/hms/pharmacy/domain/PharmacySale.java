@@ -20,6 +20,12 @@ import lombok.Setter;
 @Table(name = "pharmacy_sale")
 public class PharmacySale extends HospitalScopedEntity {
 
+  @Column(name = "sale_number")
+  private String saleNumber;
+
+  @Column(name = "sale_type")
+  private String saleType; // VISIT, WALKIN
+
   @Column(name = "patient_id")
   private UUID patientId;
 
@@ -32,6 +38,27 @@ public class PharmacySale extends HospitalScopedEntity {
 
   @Column(name = "prescription_id")
   private UUID prescriptionId;
+
+  @Column(name = "doctor_id")
+  private UUID doctorId;
+
+  @Column(name = "external_doctor_name")
+  private String externalDoctorName;
+
+  @Column(name = "customer_name")
+  private String customerName;
+
+  @Column(name = "customer_phone")
+  private String customerPhone;
+
+  @Column(name = "invoice_id")
+  private UUID invoiceId;
+
+  @Column(name = "status")
+  private String status;
+
+  @Column(name = "notes")
+  private String notes;
 
   @Column(name = "total_amount", nullable = false, precision = 12, scale = 2)
   private BigDecimal totalAmount = BigDecimal.ZERO;

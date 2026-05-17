@@ -27,7 +27,7 @@ import lombok.Setter;
 @Table(name = "invoice")
 public class Invoice extends HospitalScopedEntity {
 
-    @Column(name = "patient_id", nullable = false)
+    @Column(name = "patient_id")
     private UUID patientId;
 
     @ManyToOne(fetch = FetchType.LAZY)

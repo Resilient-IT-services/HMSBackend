@@ -1,0 +1,181 @@
+package com.res.hms.pharmacy.application.service;
+
+import com.res.hms.core.exception.ApiException;
+import com.res.hms.core.tenant.HospitalContext;
+import com.res.hms.finance.application.dto.RecordPaymentRequest;
+import com.res.hms.finance.application.service.InvoiceService;
+import com.res.hms.finance.application.service.PaymentService;
+import com.res.hms.finance.domain.Invoice;
+import com.res.hms.finance.domain.InvoiceItemCategory;
+import com.res.hms.clinical.application.prescription.repository.PrescriptionRepository;
+import com.res.hms.pharmacy.application.dto.QuickPharmacySaleRequest;
+import com.res.hms.pharmacy.application.dto.QuickPharmacySaleResponse;
+import com.res.hms.pharmacy.domain.PharmacySale;
+import com.res.hms.pharmacy.domain.PharmacySaleItem;
+import com.res.hms.pharmacy.domain.PharmacyStock;
+import com.res.hms.pharmacy.infrastructure.repository.MedicineRepository;
+import com.res.hms.pharmacy.infrastructure.repository.PharmacySaleRepository;
+import com.res.hms.pharmacy.infrastructure.repository.PharmacyStockRepository;
+import java.math.BigDecimal;
+import java.util.List;
+import java.util.UUID;
+import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.http.HttpStatus;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+
+@Slf4j
+@Service
+@RequiredArgsConstructor
+public class QuickPharmacySaleService {
+
+  private final PharmacySaleRepository pharmacySaleRepository;
+  private final PharmacyStockRepository pharmacyStockRepository;
+  private final MedicineRepository medicineRepository;
+  private final PrescriptionRepository prescriptionRepository;
+  private final InvoiceService invoiceService;
+  private final PaymentService paymentService;
+  private final HospitalContext hospitalContext;
+
+  @Transactional
+  public QuickPharmacySaleResponse createQuickSale(QuickPharmacySaleRequest request) {
+    UUID hospitalId = hospitalContext.requireHospitalId();
+    UUID userId = hospitalContext.currentUserIdOrNull();
+    
+    if (userId == null) {
+        throw new ApiException("AUTH_ERROR", "User must be logged in to record sales", HttpStatus.UNAUTHORIZED);
+    }
+
+    // 1. Create Pharmacy Sale
+    PharmacySale sale = new PharmacySale();
+    sale.setHospitalId(hospitalId);
+    sale.setSaleType(request.getSaleType());
+    sale.setPatientId(request.getPatientId());
+    sale.setVisitId(request.getVisitId());
+    sale.setPrescriptionId(request.getPrescriptionId());
+    sale.setDoctorId(request.getDoctorId());
+    sale.setExternalDoctorName(request.getExternalDoctorName());
+    sale.setCustomerName(request.getCustomerName());
+    sale.setCustomerPhone(request.getCustomerPhone());
+    sale.setNotes(request.getNotes());
+    sale.setStatus("COMPLETED");
+    sale.setSaleNumber("SALE-" + System.currentTimeMillis());
+
+    BigDecimal totalAmount = BigDecimal.ZERO;
+
+    // 2. Process Items and Validate Stock
+    for (QuickPharmacySaleRequest.Item itemDto : request.getItems()) {
+      PharmacyStock stock = pharmacyStockRepository.findByIdAndHospitalId(itemDto.getMedicineBatchId(), hospitalId)
+          .orElseThrow(() -> new ApiException("NOT_FOUND", "Stock batch not found", HttpStatus.NOT_FOUND));
+
+      if (stock.getQuantity() < itemDto.getQuantity()) {
+        throw new ApiException("INSUFFICIENT_STOCK", "Insufficient stock for " + stock.getMedicine().getName(), HttpStatus.CONFLICT);
+      }
+
+      // Update stock
+      stock.setQuantity(stock.getQuantity() - itemDto.getQuantity());
+      pharmacyStockRepository.save(stock);
+
+      // Create Sale Item
+      PharmacySaleItem saleItem = new PharmacySaleItem();
+      saleItem.setSale(sale);
+      saleItem.setMedicine(stock.getMedicine());
+      saleItem.setStock(stock);
+      saleItem.setQuantity(itemDto.getQuantity());
+      saleItem.setUnitPrice(itemDto.getUnitPrice());
+      saleItem.setDiscountAmount(itemDto.getDiscountAmount() != null ? itemDto.getDiscountAmount() : BigDecimal.ZERO);
+      saleItem.setTaxAmount(itemDto.getTaxAmount() != null ? itemDto.getTaxAmount() : BigDecimal.ZERO);
+      
+      BigDecimal itemSubtotal = itemDto.getUnitPrice().multiply(BigDecimal.valueOf(itemDto.getQuantity()));
+      saleItem.setSubtotal(itemSubtotal);
+      
+      BigDecimal itemNet = itemSubtotal.add(saleItem.getTaxAmount()).subtract(saleItem.getDiscountAmount());
+      saleItem.setNetAmount(itemNet);
+      
+      sale.getItems().add(saleItem);
+      totalAmount = totalAmount.add(itemNet);
+    }
+
+    sale.setTotalAmount(totalAmount);
+    PharmacySale savedSale = pharmacySaleRepository.save(sale);
+
+    // 3. Create Invoice
+    Invoice invoice = invoiceService.createInvoice(hospitalId, request.getPatientId(), request.getVisitId());
+    savedSale.setInvoiceId(invoice.getId());
+    savedSale.setSaleNumber(invoice.getInvoiceNumber()); 
+
+    // 4. Create Invoice Items
+    for (PharmacySaleItem saleItem : savedSale.getItems()) {
+        invoiceService.addItem(
+            invoice.getId(),
+            saleItem.getMedicine().getName() + " (" + saleItem.getStock().getBatchNumber() + ")",
+            InvoiceItemCategory.PHARMACY,
+            BigDecimal.valueOf(saleItem.getQuantity()),
+            saleItem.getUnitPrice(),
+            "PHARMACY_SALE",
+            saleItem.getId(),
+            savedSale.getDoctorId(),
+            savedSale.getExternalDoctorName()
+        );
+    }
+    
+    // 5. Update Prescription Status if applicable
+    if (request.getPrescriptionId() != null) {
+        prescriptionRepository.findByIdAndHospitalId(request.getPrescriptionId(), hospitalId)
+            .ifPresent(p -> {
+                p.setStatus("DISPENSED");
+                prescriptionRepository.save(p);
+            });
+    }
+
+    // 6. Record Payment
+    String receiptNumber = null;
+    UUID paymentId = null;
+    if (request.getPayment() != null && request.getPayment().getAmount().compareTo(BigDecimal.ZERO) > 0) {
+        RecordPaymentRequest paymentReq = new RecordPaymentRequest();
+        paymentReq.setInvoiceId(invoice.getId());
+        paymentReq.setPatientId(request.getPatientId());
+        paymentReq.setVisitId(request.getVisitId());
+        paymentReq.setAmount(request.getPayment().getAmount());
+        paymentReq.setPaymentMode(request.getPayment().getMode());
+        paymentReq.setReferenceNumber(request.getPayment().getReferenceNumber());
+        
+        var paymentDto = paymentService.recordPayment(hospitalId, paymentReq, userId);
+        receiptNumber = paymentDto.getReceiptNumber();
+        paymentId = paymentDto.getId();
+    }
+
+    return QuickPharmacySaleResponse.builder()
+        .saleId(savedSale.getId())
+        .saleNumber(savedSale.getSaleNumber())
+        .invoiceId(invoice.getId())
+        .invoiceNumber(invoice.getInvoiceNumber())
+        .totalAmount(savedSale.getTotalAmount())
+        .status(savedSale.getStatus())
+        .paymentId(paymentId)
+        .receiptNumber(receiptNumber)
+        .build();
+  }
+
+  @Transactional(readOnly = true)
+  public QuickPharmacySaleResponse getSale(UUID id) {
+    UUID hospitalId = hospitalContext.requireHospitalId();
+    PharmacySale sale = pharmacySaleRepository.findByIdAndHospitalId(id, hospitalId)
+        .orElseThrow(() -> new ApiException("NOT_FOUND", "Sale not found", HttpStatus.NOT_FOUND));
+
+    return QuickPharmacySaleResponse.builder()
+        .saleId(sale.getId())
+        .saleNumber(sale.getSaleNumber())
+        .invoiceId(sale.getInvoiceId())
+        .totalAmount(sale.getTotalAmount())
+        .status(sale.getStatus())
+        .build();
+  }
+
+  @Transactional(readOnly = true)
+  public List<Object[]> searchRecentCustomers(String search) {
+    UUID hospitalId = hospitalContext.requireHospitalId();
+    return pharmacySaleRepository.searchRecentWalkinCustomers(hospitalId, search);
+  }
+}

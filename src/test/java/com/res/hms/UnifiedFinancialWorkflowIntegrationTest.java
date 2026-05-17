@@ -23,6 +23,7 @@ import com.res.hms.iam.infrastructure.repository.DoctorHospitalDetailsRepository
 import com.res.hms.iam.infrastructure.repository.RoleRepository;
 import com.res.hms.iam.infrastructure.repository.UserAccountRepository;
 import com.res.hms.pharmacy.application.dto.PharmacySaleRequest;
+import com.res.hms.pharmacy.application.dto.QuickPharmacySaleRequest;
 import com.res.hms.pharmacy.domain.Medicine;
 import com.res.hms.pharmacy.domain.PharmacyStock;
 import com.res.hms.pharmacy.infrastructure.repository.MedicineRepository;
@@ -215,5 +216,60 @@ class UnifiedFinancialWorkflowIntegrationTest {
         List<Invoice> invoices = invoiceRepository.findAllByHospitalId(hospitalId);
         assertThat(invoices).hasSize(1);
         assertThat(invoices.get(0).getTotalAmount()).isEqualByComparingTo("200.00");
+    }
+
+    @Test
+    void testQuickPharmacyWalkinSale() throws Exception {
+        // 1. Setup Medicine & Stock
+        Medicine med = new Medicine();
+        med.setName("Quick Med");
+        med = medicineRepository.save(med);
+        
+        PharmacyStock stock = new PharmacyStock();
+        stock.setHospitalId(hospitalId);
+        stock.setMedicine(med);
+        stock.setBatchNumber("Q-001");
+        stock.setQuantity(100);
+        stock.setSellingPrice(new BigDecimal("150.00"));
+        stock = pharmacyStockRepository.save(stock);
+
+        // 2. Prepare Quick Sale Request
+        QuickPharmacySaleRequest request = new QuickPharmacySaleRequest();
+        request.setSaleType("WALKIN");
+        request.setCustomerName("Quick Customer");
+        request.setCustomerPhone("1234567890");
+        request.setExternalDoctorName("Dr. External");
+
+        QuickPharmacySaleRequest.Item item = new QuickPharmacySaleRequest.Item();
+        item.setMedicineId(med.getId());
+        item.setMedicineBatchId(stock.getId());
+        item.setQuantity(2);
+        item.setUnitPrice(new BigDecimal("150.00"));
+        request.setItems(List.of(item));
+
+        QuickPharmacySaleRequest.PaymentInfo payment = new QuickPharmacySaleRequest.PaymentInfo();
+        payment.setAmount(new BigDecimal("300.00"));
+        payment.setMode(PaymentMode.CASH);
+        request.setPayment(payment);
+
+        // 3. Perform Request
+        mockMvc.perform(post("/api/pharmacy/quick-sale")
+                .session(session)
+                .header("X-Hospital-Id", hospitalId.toString())
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(request)))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.saleNumber").exists())
+                .andExpect(jsonPath("$.invoiceNumber").exists())
+                .andExpect(jsonPath("$.totalAmount").value(300.00));
+
+        // 4. Verify Financials
+        List<Invoice> invoices = invoiceRepository.findAllByHospitalId(hospitalId);
+        // We might have invoices from other tests if not cleaned properly, but @Transactional should handle it.
+        // Actually, we expect 1 here if it's the only test running in this tx.
+        assertThat(invoices).anyMatch(inv -> inv.getTotalAmount().compareTo(new BigDecimal("300.00")) == 0);
+        
+        List<Payment> payments = paymentRepository.findAllByHospitalId(hospitalId);
+        assertThat(payments).anyMatch(p -> p.getAmount().compareTo(new BigDecimal("300.00")) == 0);
     }
 }

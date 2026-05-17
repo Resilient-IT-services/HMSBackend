@@ -23,7 +23,7 @@ import lombok.Setter;
 @Table(name = "payment")
 public class Payment extends HospitalScopedEntity {
 
-    @Column(name = "patient_id", nullable = false)
+    @Column(name = "patient_id")
     private UUID patientId;
 
     @ManyToOne(fetch = FetchType.LAZY)
