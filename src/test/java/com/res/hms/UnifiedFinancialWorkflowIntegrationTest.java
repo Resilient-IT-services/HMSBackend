@@ -253,15 +253,15 @@ class UnifiedFinancialWorkflowIntegrationTest {
         request.setPayment(payment);
 
         // 3. Perform Request
-        mockMvc.perform(post("/api/pharmacy/quick-sale")
+        mockMvc.perform(post("/api/v1/pharmacy/quick-sale")
                 .session(session)
                 .header("X-Hospital-Id", hospitalId.toString())
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(objectMapper.writeValueAsString(request)))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.saleNumber").exists())
-                .andExpect(jsonPath("$.invoiceNumber").exists())
-                .andExpect(jsonPath("$.totalAmount").value(300.00));
+                .andExpect(jsonPath("$.success").value(true))
+                .andExpect(jsonPath("$.data.saleNumber").exists())
+                .andExpect(jsonPath("$.data.totalAmount").value(300.00));
 
         // 4. Verify Financials
         List<Invoice> invoices = invoiceRepository.findAllByHospitalId(hospitalId);

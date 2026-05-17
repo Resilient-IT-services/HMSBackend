@@ -26,6 +26,11 @@ import org.springframework.transaction.annotation.Transactional;
 @RequiredArgsConstructor
 public class PrescriptionService {
 
+  private final PrescriptionRepository prescriptionRepository;
+  private final MedicineRepository medicineRepository;
+  private final AppointmentRepository appointmentRepository;
+  private final HospitalContext hospitalContext;
+
   @Transactional(readOnly = true)
   public PageResponse<PrescriptionSummaryDTO> listSummary(int page, int size, String search) {
     UUID hospitalId = hospitalContext.requireHospitalId();
@@ -46,6 +51,10 @@ public class PrescriptionService {
       return null;
     }
 
+    UUID visitId = appointmentRepository.findById(prescription.getAppointmentId())
+            .map(Appointment::getVisitId)
+            .orElse(null);
+
     return PrescriptionSummaryDTO.builder()
         .id(prescription.getId())
         .patientId(prescription.getPatientId())
@@ -54,6 +63,7 @@ public class PrescriptionService {
         .doctorId(prescription.getDoctorId())
         .doctorName(prescription.getDoctorName())
         .appointmentId(prescription.getAppointmentId())
+        .visitId(visitId)
         .status(prescription.getStatus())
         .createdAt(prescription.getCreatedAt())
         .itemCount(prescription.getItems() != null ? prescription.getItems().size() : 0)
@@ -73,11 +83,6 @@ public class PrescriptionService {
     return PageResponse.from(
         prescriptionRepository.findAllByHospitalId(hospitalId, pageRequest).map(this::toDto));
   }
-
-  private final PrescriptionRepository prescriptionRepository;
-  private final MedicineRepository medicineRepository;
-  private final AppointmentRepository appointmentRepository;
-  private final HospitalContext hospitalContext;
 
   @Transactional
   public PrescriptionDTO createPrescription(PrescriptionDTO dto) {
@@ -154,6 +159,10 @@ public class PrescriptionService {
       return null;
     }
 
+    UUID visitId = appointmentRepository.findById(prescription.getAppointmentId())
+            .map(Appointment::getVisitId)
+            .orElse(null);
+
     PrescriptionDTO.PrescriptionDTOBuilder builder =
         PrescriptionDTO.builder()
             .id(prescription.getId())
@@ -162,6 +171,7 @@ public class PrescriptionService {
             .doctorId(prescription.getDoctorId())
             .doctorName(prescription.getDoctorName())
             .appointmentId(prescription.getAppointmentId())
+            .visitId(visitId)
             .createdAt(prescription.getCreatedAt());
 
     if (prescription.getItems() != null) {

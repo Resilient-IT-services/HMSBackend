@@ -164,16 +164,6 @@ public class MedicineService {
   }
 
   @Transactional(readOnly = true)
-  public PageResponse<MedicineDTO> searchAvailable(int page, int size, String search) {
-    UUID hospitalId = hospitalContext.requireHospitalId();
-    PageRequest pageRequest = PageRequest.of(page, size);
-    return PageResponse.from(
-        medicineRepository
-            .searchAvailableForHospital(hospitalId, search != null ? search.trim() : "", pageRequest)
-            .map(this::toDto));
-  }
-
-  @Transactional(readOnly = true)
   public PageResponse<MedicineSummaryDTO> listSummary(int page, int size, String search) {
     PageRequest pageRequest = PageRequest.of(page, size);
     org.springframework.data.domain.Page<Medicine> medicinesPage;
@@ -256,6 +246,17 @@ public class MedicineService {
   @Transactional
   public PharmacySaleResponse createSale(PharmacySaleRequest request) {
     UUID hospitalId = hospitalContext.requireHospitalId();
+    
+    // Idempotency check: Ensure prescription isn't already processed
+    if (request.getPrescriptionId() != null) {
+      pharmacySaleRepository.findByPrescriptionIdAndHospitalId(request.getPrescriptionId(), hospitalId)
+          .ifPresent(s -> {
+              throw new ApiException("ALREADY_DISPENSED", 
+                  "Prescription already dispensed in Sale #" + s.getSaleNumber(), 
+                  HttpStatus.CONFLICT);
+          });
+    }
+
     PharmacySale sale = new PharmacySale();
     sale.setHospitalId(hospitalId);
     sale.setPatientId(request.getPatientId());

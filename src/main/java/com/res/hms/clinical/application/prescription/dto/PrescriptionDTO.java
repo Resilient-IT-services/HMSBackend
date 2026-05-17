@@ -19,6 +19,7 @@ public class PrescriptionDTO {
   private UUID doctorId;
   private String doctorName;
   private UUID appointmentId;
+  private UUID visitId;
   private LocalDateTime createdAt;
   private List<PrescriptionItemDTO> items;
 }

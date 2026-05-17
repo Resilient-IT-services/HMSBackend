@@ -68,15 +68,6 @@ public class MedicineController {
     return ApiResponse.success(medicineService.listSummary(page, Math.min(size, 100), search));
   }
 
-  @GetMapping("/medicines/available")
-  @PreAuthorize("hasAnyRole('ADMIN','PHARMACIST','DOCTOR','NURSE','SUPER_ADMIN')")
-  public ApiResponse<PageResponse<MedicineDTO>> searchAvailable(
-      @RequestParam(defaultValue = "0") int page,
-      @RequestParam(defaultValue = "20") int size,
-      @RequestParam(required = false, defaultValue = "") String search) {
-    return ApiResponse.success(medicineService.searchAvailable(page, Math.min(size, 100), search));
-  }
-
   @GetMapping("/medicines/{id}")
   @PreAuthorize("hasAnyRole('ADMIN','PHARMACIST','DOCTOR','NURSE','SUPER_ADMIN')")
   public ApiResponse<MedicineDTO> get(@PathVariable UUID id) {

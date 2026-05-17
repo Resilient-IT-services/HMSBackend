@@ -1,5 +1,6 @@
 package com.res.hms.pharmacy.api;
 
+import com.res.hms.core.api.ApiResponse;
 import com.res.hms.pharmacy.application.dto.QuickPharmacySaleRequest;
 import com.res.hms.pharmacy.application.dto.QuickPharmacySaleResponse;
 import com.res.hms.pharmacy.application.service.QuickPharmacySaleService;
@@ -15,24 +16,30 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 @RestController
-@RequestMapping("/api/pharmacy/quick-sale")
+@RequestMapping("/api/v1/pharmacy/quick-sale")
 @RequiredArgsConstructor
+@org.springframework.security.access.prepost.PreAuthorize("hasAnyRole('ADMIN','PHARMACIST','SUPER_ADMIN')")
 public class PharmacyQuickSaleController {
 
   private final QuickPharmacySaleService quickPharmacySaleService;
 
   @PostMapping
-  public QuickPharmacySaleResponse createQuickSale(@RequestBody QuickPharmacySaleRequest request) {
-    return quickPharmacySaleService.createQuickSale(request);
+  public ApiResponse<QuickPharmacySaleResponse> createQuickSale(@RequestBody QuickPharmacySaleRequest request) {
+    return ApiResponse.success(quickPharmacySaleService.createQuickSale(request));
   }
 
   @GetMapping("/{id}")
-  public QuickPharmacySaleResponse getSale(@PathVariable UUID id) {
-    return quickPharmacySaleService.getSale(id);
+  public ApiResponse<QuickPharmacySaleResponse> getSale(@PathVariable UUID id) {
+    return ApiResponse.success(quickPharmacySaleService.getSale(id));
+  }
+
+  @GetMapping("/prescription/{prescriptionId}")
+  public ApiResponse<QuickPharmacySaleResponse> getSaleByPrescription(@PathVariable UUID prescriptionId) {
+    return ApiResponse.success(quickPharmacySaleService.getSaleByPrescription(prescriptionId));
   }
 
   @GetMapping("/recent-customers")
-  public List<Object[]> searchRecentCustomers(@RequestParam String search) {
-    return quickPharmacySaleService.searchRecentCustomers(search);
+  public ApiResponse<List<Object[]>> searchRecentCustomers(@RequestParam String search) {
+    return ApiResponse.success(quickPharmacySaleService.searchRecentCustomers(search));
   }
 }

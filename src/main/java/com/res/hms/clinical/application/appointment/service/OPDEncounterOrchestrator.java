@@ -52,8 +52,8 @@ public class OPDEncounterOrchestrator {
         AppointmentDTO savedAppointment = appointmentAggregateService.saveAppointmentAggregate(appointmentDto);
         log.info("Created appointment: {}", savedAppointment.getId());
 
-        // 3. Create Invoice (Finance Service)
-        Invoice invoice = invoiceService.createInvoice(hospitalId, request.getPatientId(), visit.getId());
+        // 3. Create or Get Invoice (Finance Service)
+        Invoice invoice = invoiceService.getOrCreateInvoice(hospitalId, request.getPatientId(), visit.getId());
         
         // Fetch consultation fee
         BigDecimal fee = doctorHospitalDetailsRepository

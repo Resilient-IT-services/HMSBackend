@@ -8,6 +8,7 @@ import com.res.hms.finance.application.service.PaymentService;
 import com.res.hms.finance.domain.Invoice;
 import com.res.hms.finance.domain.InvoiceItemCategory;
 import com.res.hms.clinical.application.prescription.repository.PrescriptionRepository;
+import com.res.hms.clinical.infrastructure.repository.AppointmentRepository;
 import com.res.hms.pharmacy.application.dto.QuickPharmacySaleRequest;
 import com.res.hms.pharmacy.application.dto.QuickPharmacySaleResponse;
 import com.res.hms.pharmacy.domain.PharmacySale;
@@ -34,6 +35,7 @@ public class QuickPharmacySaleService {
   private final PharmacyStockRepository pharmacyStockRepository;
   private final MedicineRepository medicineRepository;
   private final PrescriptionRepository prescriptionRepository;
+  private final AppointmentRepository appointmentRepository;
   private final InvoiceService invoiceService;
   private final PaymentService paymentService;
   private final HospitalContext hospitalContext;
@@ -52,7 +54,30 @@ public class QuickPharmacySaleService {
     sale.setHospitalId(hospitalId);
     sale.setSaleType(request.getSaleType());
     sale.setPatientId(request.getPatientId());
-    sale.setVisitId(request.getVisitId());
+    
+    // Check if already dispensed
+    if (request.getPrescriptionId() != null) {
+        var existingRx = prescriptionRepository.findByIdAndHospitalId(request.getPrescriptionId(), hospitalId)
+            .orElseThrow(() -> new ApiException("NOT_FOUND", "Prescription not found", HttpStatus.NOT_FOUND));
+        
+        if ("DISPENSED".equals(existingRx.getStatus())) {
+            throw new ApiException("ALREADY_DISPENSED", "This prescription has already been dispensed.", HttpStatus.CONFLICT);
+        }
+    }
+
+    // Resolve visitId from prescription/appointment
+    UUID resolvedVisitId = request.getVisitId();
+    if (request.getPrescriptionId() != null) {
+        appointmentRepository.findById(request.getPrescriptionId())
+            .ifPresent(app -> {
+                if (app.getVisitId() != null) {
+                    sale.setVisitId(app.getVisitId());
+                }
+            });
+    } else {
+        sale.setVisitId(resolvedVisitId);
+    }
+    
     sale.setPrescriptionId(request.getPrescriptionId());
     sale.setDoctorId(request.getDoctorId());
     sale.setExternalDoctorName(request.getExternalDoctorName());
@@ -100,8 +125,8 @@ public class QuickPharmacySaleService {
     sale.setTotalAmount(totalAmount);
     PharmacySale savedSale = pharmacySaleRepository.save(sale);
 
-    // 3. Create Invoice
-    Invoice invoice = invoiceService.createInvoice(hospitalId, request.getPatientId(), request.getVisitId());
+    // 3. Create or Get Invoice
+    Invoice invoice = invoiceService.getOrCreateInvoice(hospitalId, request.getPatientId(), sale.getVisitId());
     savedSale.setInvoiceId(invoice.getId());
     savedSale.setSaleNumber(invoice.getInvoiceNumber()); 
 
@@ -146,16 +171,11 @@ public class QuickPharmacySaleService {
         paymentId = paymentDto.getId();
     }
 
-    return QuickPharmacySaleResponse.builder()
-        .saleId(savedSale.getId())
-        .saleNumber(savedSale.getSaleNumber())
-        .invoiceId(invoice.getId())
-        .invoiceNumber(invoice.getInvoiceNumber())
-        .totalAmount(savedSale.getTotalAmount())
-        .status(savedSale.getStatus())
-        .paymentId(paymentId)
-        .receiptNumber(receiptNumber)
-        .build();
+    var response = toQuickSaleResponse(savedSale);
+    response.setInvoiceNumber(invoice.getInvoiceNumber());
+    response.setPaymentId(paymentId);
+    response.setReceiptNumber(receiptNumber);
+    return response;
   }
 
   @Transactional(readOnly = true)
@@ -164,12 +184,43 @@ public class QuickPharmacySaleService {
     PharmacySale sale = pharmacySaleRepository.findByIdAndHospitalId(id, hospitalId)
         .orElseThrow(() -> new ApiException("NOT_FOUND", "Sale not found", HttpStatus.NOT_FOUND));
 
+    return toQuickSaleResponse(sale);
+  }
+
+  @Transactional(readOnly = true)
+  public QuickPharmacySaleResponse getSaleByPrescription(UUID prescriptionId) {
+    UUID hospitalId = hospitalContext.requireHospitalId();
+    PharmacySale sale = pharmacySaleRepository.findByPrescriptionIdAndHospitalId(prescriptionId, hospitalId)
+        .orElseThrow(() -> new ApiException("NOT_FOUND", "No dispensing record found for this prescription", HttpStatus.NOT_FOUND));
+
+    return toQuickSaleResponse(sale);
+  }
+
+  private QuickPharmacySaleResponse toQuickSaleResponse(PharmacySale sale) {
+    List<QuickPharmacySaleResponse.Item> items = sale.getItems().stream()
+        .map(item -> QuickPharmacySaleResponse.Item.builder()
+            .id(item.getId())
+            .medicineName(item.getMedicine().getName())
+            .batchNumber(item.getStock().getBatchNumber())
+            .quantity(item.getQuantity())
+            .unitPrice(item.getUnitPrice())
+            .subtotal(item.getSubtotal())
+            .discountAmount(item.getDiscountAmount())
+            .netAmount(item.getNetAmount())
+            .build())
+        .toList();
+
     return QuickPharmacySaleResponse.builder()
         .saleId(sale.getId())
         .saleNumber(sale.getSaleNumber())
         .invoiceId(sale.getInvoiceId())
         .totalAmount(sale.getTotalAmount())
         .status(sale.getStatus())
+        .customerName(sale.getCustomerName())
+        .customerPhone(sale.getCustomerPhone())
+        .externalDoctorName(sale.getExternalDoctorName())
+        .createdAt(sale.getCreatedAt())
+        .items(items)
         .build();
   }
 

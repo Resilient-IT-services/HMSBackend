@@ -1,6 +1,8 @@
 package com.res.hms.pharmacy.application.dto;
 
 import java.math.BigDecimal;
+import java.time.LocalDateTime;
+import java.util.List;
 import java.util.UUID;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -20,4 +22,24 @@ public class QuickPharmacySaleResponse {
   private String status;
   private UUID paymentId;
   private String receiptNumber;
+  private String customerName;
+  private String customerPhone;
+  private String externalDoctorName;
+  private LocalDateTime createdAt;
+  private List<Item> items;
+
+  @Data
+  @Builder
+  @NoArgsConstructor
+  @AllArgsConstructor
+  public static class Item {
+    private UUID id;
+    private String medicineName;
+    private String batchNumber;
+    private Integer quantity;
+    private BigDecimal unitPrice;
+    private BigDecimal subtotal;
+    private BigDecimal discountAmount;
+    private BigDecimal netAmount;
+  }
 }
