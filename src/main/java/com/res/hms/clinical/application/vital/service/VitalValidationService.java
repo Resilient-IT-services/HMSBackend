@@ -2,12 +2,10 @@ package com.res.hms.clinical.application.vital.service;
 
 import com.res.hms.clinical.application.appointment.dto.VitalsDTO;
 import com.res.hms.core.exception.ApiException;
-import com.res.hms.core.tenant.HospitalContext;
 import com.res.hms.hospital.domain.VitalRangeConfig;
 import com.res.hms.hospital.infrastructure.repository.VitalRangeConfigRepository;
 import java.math.BigDecimal;
 import java.util.List;
-import java.util.UUID;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
@@ -17,14 +15,12 @@ import org.springframework.stereotype.Service;
 public class VitalValidationService {
 
   private final VitalRangeConfigRepository repository;
-  private final HospitalContext hospitalContext;
 
   public void validate(VitalsDTO vitals) {
     if (vitals == null) {
       return;
     }
-    UUID hospitalId = hospitalContext.requireHospitalId();
-    List<VitalRangeConfig> configs = repository.findAllByHospitalId(hospitalId);
+    List<VitalRangeConfig> configs = repository.findAll();
 
     configs.forEach(
         c -> {

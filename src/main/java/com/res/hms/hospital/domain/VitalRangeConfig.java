@@ -1,6 +1,6 @@
 package com.res.hms.hospital.domain;
 
-import com.res.hms.core.domain.HospitalScopedEntity;
+import com.res.hms.core.domain.BaseEntity;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.EnumType;
@@ -14,7 +14,7 @@ import lombok.Setter;
 @Setter
 @Entity
 @Table(name = "vital_range_configs")
-public class VitalRangeConfig extends HospitalScopedEntity {
+public class VitalRangeConfig extends com.res.hms.core.domain.BaseEntity {
 
   @Enumerated(EnumType.STRING)
   @Column(name = "vital_type", nullable = false)

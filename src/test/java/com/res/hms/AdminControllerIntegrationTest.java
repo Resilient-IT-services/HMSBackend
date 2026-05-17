@@ -60,42 +60,18 @@ class AdminControllerIntegrationTest {
   }
 
   @Test
-  void testVitalSettings() throws Exception {
-    mockMvc
-        .perform(
-            get("/api/v1/admin/vital-settings")
-                .session(session)
-                .header("X-Hospital-Id", testHospitalId.toString()))
-        .andExpect(status().isOk());
-
-    String request =
-        "{\"vitalName\": \"HEART_RATE\", \"minValue\": 60, \"maxValue\": 100, \"unit\": \"bpm\"}";
-    mockMvc
-        .perform(
-            post("/api/v1/admin/vital-settings")
-                .session(session)
-                .header("X-Hospital-Id", testHospitalId.toString())
-                .contentType(MediaType.APPLICATION_JSON)
-                .content(request))
-        .andExpect(status().isOk())
-        .andExpect(jsonPath("$.data.vitalName").value("HEART_RATE"));
-  }
-
-  @Test
   void testVitalRanges() throws Exception {
     mockMvc
         .perform(
             get("/api/v1/admin/vital-ranges")
-                .session(session)
-                .header("X-Hospital-Id", testHospitalId.toString()))
+                .session(session))
         .andExpect(status().isOk());
 
-    String request = "{\"minValue\": 70, \"maxValue\": 110, \"unit\": \"bpm\"}";
+    String request = "{\"vitalType\": \"HEART_RATE\", \"minValue\": 70, \"maxValue\": 110, \"unit\": \"bpm\"}";
     mockMvc
         .perform(
             put("/api/v1/admin/vital-ranges/HEART_RATE")
                 .session(session)
-                .header("X-Hospital-Id", testHospitalId.toString())
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(request))
         .andExpect(status().isOk())

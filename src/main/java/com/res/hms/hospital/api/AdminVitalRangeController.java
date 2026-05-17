@@ -25,7 +25,7 @@ public class AdminVitalRangeController {
   private final VitalRangeConfigService service;
 
   @GetMapping
-  @PreAuthorize("hasRole('SUPER_ADMIN')")
+  @PreAuthorize("isAuthenticated()")
   public ApiResponse<List<VitalRangeConfigDTO>> list() {
     return ApiResponse.success(service.listConfigs());
   }
