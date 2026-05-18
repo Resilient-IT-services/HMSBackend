@@ -15,8 +15,9 @@ import com.res.hms.iam.domain.DoctorHospitalDetails;
 import com.res.hms.iam.domain.DoctorProfile;
 import com.res.hms.iam.domain.RoleCode;
 import com.res.hms.iam.domain.UserAccount;
-import com.res.hms.iam.domain.UserRoleAssignment;
+import com.res.hms.iam.domain.UserContract;
 import com.res.hms.iam.infrastructure.repository.DoctorHospitalDetailsRepository;
+import com.res.hms.iam.infrastructure.repository.UserContractRepository;
 import java.time.LocalTime;
 import java.util.List;
 import java.util.Objects;
@@ -36,8 +37,7 @@ public class DoctorProfileService {
   private final HospitalContext hospitalContext;
   private final ResourceLookup resourceLookup;
 
-  private final com.res.hms.iam.infrastructure.repository.UserRoleAssignmentRepository
-      assignmentRepository;
+  private final UserContractRepository assignmentRepository;
   private final com.res.hms.clinical.infrastructure.repository.DoctorScheduleRepository
       scheduleRepository;
   private final com.res.hms.clinical.infrastructure.repository.DoctorAvailabilityExceptionRepository
@@ -83,8 +83,8 @@ public class DoctorProfileService {
     UserAccount user = doctorProfile.getUser();
     UUID actualDoctorId = doctorProfile.getId();
     // 2. Find the relevant assignment for this hospital
-    UserRoleAssignment assignment =
-        user.getAssignments().stream()
+    UserContract assignment =
+        user.getContracts().stream()
             .filter(
                 a ->
                     hospitalId.equals(a.getHospitalId())
@@ -192,8 +192,8 @@ public class DoctorProfileService {
 
     UUID actualDoctorId = doctorProfile.getId();
     UserAccount user = doctorProfile.getUser();
-    UserRoleAssignment assignment =
-        user.getAssignments().stream()
+    UserContract assignment =
+        user.getContracts().stream()
             .filter(
                 a ->
                     hospitalId.equals(a.getHospitalId())
@@ -322,6 +322,8 @@ public class DoctorProfileService {
     return sessionStart.plusMinutes((long) currentBookings * durationMinutes);
   }
 
+  private final com.res.hms.iam.infrastructure.repository.SpecializationRepository specializationRepository;
+
   @Transactional
   public void updateProfile(UserAccount user, UserDetailsDTO.DoctorInfo info) {
     if (info == null) {
@@ -336,14 +338,42 @@ public class DoctorProfileService {
                   d.setUser(user);
                   return d;
                 });
-    if (info.getSpecialization() != null) {
-      doctorProfile.setSpecialization(info.getSpecialization());
+    if (info.getSpecializations() != null) {
+      doctorProfile.setSpecializations(info.getSpecializations().stream()
+          .map(name -> specializationRepository.findByName(name)
+              .orElseThrow(() -> new com.res.hms.core.exception.ApiException(
+                  "NOT_FOUND", "Specialization " + name + " not found in catalog", org.springframework.http.HttpStatus.BAD_REQUEST)))
+          .collect(java.util.stream.Collectors.toSet()));
     }
     if (info.getBio() != null) {
       doctorProfile.setBio(info.getBio());
     }
     if (info.getLicenseNumber() != null) {
       doctorProfile.setLicenseNumber(normalizeLicenseNumber(info.getLicenseNumber()));
+    }
+    if (info.getRegistrationNumber() != null) {
+      doctorProfile.setRegistrationNumber(info.getRegistrationNumber());
+    }
+    if (info.getExperienceYears() != null) {
+      doctorProfile.setExperienceYears(info.getExperienceYears());
+    }
+    if (info.getEducation() != null) {
+      doctorProfile.setEducation(info.getEducation());
+    }
+    if (info.getAwards() != null) {
+      doctorProfile.setAwards(info.getAwards());
+    }
+    if (info.getLanguages() != null) {
+      doctorProfile.setLanguages(info.getLanguages());
+    }
+    if (info.getSignature() != null) {
+      doctorProfile.setSignature(info.getSignature());
+    }
+    if (info.getConsultationFee() != null) {
+      doctorProfile.setConsultationFee(info.getConsultationFee());
+    }
+    if (info.getMetadata() != null) {
+      doctorProfile.setMetadata(info.getMetadata());
     }
 
     doctorProfileRepository.save(doctorProfile);
@@ -357,7 +387,7 @@ public class DoctorProfileService {
 
   @Transactional
   public void updateHospitalDetails(
-      UserRoleAssignment assignment,
+      UserContract assignment,
       DoctorHospitalDetailsDTO d,
       List<ScheduleDTO> schedules,
       List<AvailabilityExceptionDTO> exceptions) {

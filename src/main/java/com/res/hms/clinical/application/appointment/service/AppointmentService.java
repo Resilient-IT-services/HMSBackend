@@ -178,7 +178,7 @@ public class AppointmentService {
         .patientCode(appointment.getPatient() != null ? appointment.getPatient().getPatientCode() : null)
         .doctorId(appointment.getDoctorId())
         .doctorName(appointment.getDoctorName())
-        .doctorSpecialization(appointment.getDoctor() != null ? appointment.getDoctor().getSpecialization() : null)
+        .doctorSpecialization(appointment.getDoctor() != null && appointment.getDoctor().getSpecializations() != null && !appointment.getDoctor().getSpecializations().isEmpty() ? appointment.getDoctor().getSpecializations().stream().map(com.res.hms.iam.domain.Specialization::getName).collect(java.util.stream.Collectors.joining(", ")) : null)
         .appointmentTime(appointment.getAppointmentTime())
         .status(appointment.getStatus())
         .tokenNumber(appointment.getTokenNumber())

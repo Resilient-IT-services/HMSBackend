@@ -8,7 +8,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import com.res.hms.hospital.infrastructure.repository.HospitalRepository;
 import com.res.hms.iam.domain.RoleCode;
 import com.res.hms.iam.domain.UserAccount;
-import com.res.hms.iam.domain.UserRoleAssignment;
+import com.res.hms.iam.domain.UserContract;
 import com.res.hms.iam.infrastructure.repository.RoleRepository;
 import com.res.hms.iam.infrastructure.repository.UserAccountRepository;
 import java.util.UUID;
@@ -48,11 +48,11 @@ class GlobalSearchIntegrationTest {
       admin.setActive(true);
       admin.setFullName("Global Admin");
 
-      UserRoleAssignment assignment = new UserRoleAssignment();
+        UserContract assignment = new UserContract();
       assignment.setUser(admin);
       assignment.setHospitalId(testHospitalId);
       assignment.setRole(roleRepository.findByCode(RoleCode.ADMIN).orElseThrow());
-      admin.getAssignments().add(assignment);
+      admin.getContracts().add(assignment);
 
       userAccountRepository.save(admin);
     }

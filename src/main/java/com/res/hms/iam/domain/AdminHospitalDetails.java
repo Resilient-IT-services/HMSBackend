@@ -26,7 +26,7 @@ public class AdminHospitalDetails extends AuditableEntity {
   @OneToOne(fetch = FetchType.LAZY)
   @MapsId
   @JoinColumn(name = "id")
-  private UserRoleAssignment assignment;
+  private UserContract assignment;
 
   @Column(name = "office_location")
   private String officeLocation;

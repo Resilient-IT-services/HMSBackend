@@ -1,13 +1,19 @@
 package com.res.hms.iam.domain;
 
 import com.res.hms.core.domain.BaseEntity;
+import com.res.hms.hospital.domain.Department;
+import jakarta.persistence.CascadeType;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.FetchType;
 import jakarta.persistence.JoinColumn;
+import jakarta.persistence.JoinTable;
+import jakarta.persistence.ManyToMany;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.OneToOne;
 import jakarta.persistence.Table;
+import java.util.HashSet;
+import java.util.Set;
 import java.util.UUID;
 import lombok.Getter;
 import lombok.Setter;
@@ -15,8 +21,8 @@ import lombok.Setter;
 @Getter
 @Setter
 @Entity
-@Table(name = "user_role_assignment")
-public class UserRoleAssignment extends BaseEntity {
+@Table(name = "user_contract")
+public class UserContract extends BaseEntity {
 
   @ManyToOne(fetch = FetchType.LAZY, optional = false)
   @JoinColumn(name = "user_id", nullable = false)
@@ -29,8 +35,12 @@ public class UserRoleAssignment extends BaseEntity {
   @JoinColumn(name = "hospital_id", insertable = false, updatable = false)
   private com.res.hms.hospital.domain.Hospital hospital;
 
-  @Column(name = "department_name")
-  private String departmentName;
+  @ManyToMany(fetch = FetchType.EAGER, cascade = {CascadeType.PERSIST, CascadeType.MERGE})
+  @JoinTable(
+      name = "user_contract_department",
+      joinColumns = @JoinColumn(name = "user_contract_id"),
+      inverseJoinColumns = @JoinColumn(name = "department_id"))
+  private Set<Department> departments = new HashSet<>();
 
   @Column(name = "is_active", nullable = false)
   private boolean active = true;

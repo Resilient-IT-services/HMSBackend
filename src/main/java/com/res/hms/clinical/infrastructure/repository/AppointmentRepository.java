@@ -79,6 +79,19 @@ public interface AppointmentRepository extends BaseRepository<Appointment> {
         com.res.hms.clinical.domain.AppointmentStatus status
     );
 
+    boolean existsByPatientIdAndAppointmentTimeAndStatusNot(
+        UUID patientId,
+        java.time.LocalDateTime appointmentTime,
+        com.res.hms.clinical.domain.AppointmentStatus status
+    );
+
+    boolean existsByPatientIdAndAppointmentTimeAndIdNotAndStatusNot(
+        UUID patientId,
+        java.time.LocalDateTime appointmentTime,
+        UUID id,
+        com.res.hms.clinical.domain.AppointmentStatus status
+    );
+
 
   java.util.List<Appointment> findByPatientIdAndHospitalIdOrderByAppointmentTimeDesc(
       UUID patientId, UUID hospitalId);

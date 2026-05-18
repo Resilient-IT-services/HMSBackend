@@ -13,7 +13,7 @@ import com.res.hms.iam.domain.NurseHospitalDetails;
 import com.res.hms.iam.domain.NurseProfile;
 import com.res.hms.iam.domain.RoleCode;
 import com.res.hms.iam.domain.UserAccount;
-import com.res.hms.iam.domain.UserRoleAssignment;
+import com.res.hms.iam.domain.UserContract;
 import com.res.hms.iam.infrastructure.repository.DoctorHospitalDetailsRepository;
 import com.res.hms.iam.infrastructure.repository.NurseHospitalDetailsRepository;
 import com.res.hms.iam.infrastructure.repository.RoleRepository;
@@ -45,24 +45,52 @@ class StaffControllerIntegrationTest {
   @Autowired private NurseHospitalDetailsRepository nurseHospitalDetailsRepository;
   @Autowired private PasswordEncoder passwordEncoder;
   @Autowired private TestDataHelper testDataHelper;
+  @Autowired private com.res.hms.hospital.infrastructure.repository.HospitalRepository hospitalRepository;
+  @Autowired private com.res.hms.hospital.infrastructure.repository.DepartmentRepository departmentRepository;
 
   private UUID testHospitalId;
   private MockHttpSession session;
+  private com.res.hms.hospital.domain.Department opdDepartment;
+  private com.res.hms.hospital.domain.Department icuDepartment;
 
   @BeforeEach
   void setUp() throws Exception {
     testHospitalId = testDataHelper.createHospitalIfMissing("STAFF_TEST", "Staff Test Hospital");
+    com.res.hms.hospital.domain.Hospital h = hospitalRepository.findById(testHospitalId).get();
+    opdDepartment =
+        departmentRepository
+            .findByName("OPD")
+            .orElseGet(
+                () -> {
+                  com.res.hms.hospital.domain.Department d =
+                      new com.res.hms.hospital.domain.Department();
+                  d.setName("OPD");
+                  return departmentRepository.save(d);
+                });
+    h.getDepartments().add(opdDepartment);
+    icuDepartment =
+        departmentRepository
+            .findByName("ICU")
+            .orElseGet(
+                () -> {
+                  com.res.hms.hospital.domain.Department d =
+                      new com.res.hms.hospital.domain.Department();
+                  d.setName("ICU");
+                  return departmentRepository.save(d);
+                });
+    h.getDepartments().add(icuDepartment);
+    hospitalRepository.save(h);
 
     // Create Admin for session
     UserAccount admin = new UserAccount();
     admin.setUsername("staff_admin");
     admin.setPasswordHash(passwordEncoder.encode("admin123"));
     admin.setActive(true);
-    UserRoleAssignment adminAssign = new UserRoleAssignment();
+    UserContract adminAssign = new UserContract();
     adminAssign.setUser(admin);
     adminAssign.setHospitalId(testHospitalId);
     adminAssign.setRole(roleRepository.findByCode(RoleCode.ADMIN).orElseThrow());
-    admin.getAssignments().add(adminAssign);
+    admin.getContracts().add(adminAssign);
     userAccountRepository.save(admin);
 
     session =
@@ -86,16 +114,18 @@ class StaffControllerIntegrationTest {
 
     DoctorProfile drProfile = new DoctorProfile();
     drProfile.setUser(drUser);
-    drProfile.setSpecialization("Archaeology");
+    com.res.hms.iam.domain.Specialization spec = new com.res.hms.iam.domain.Specialization();
+    spec.setName("Archaeology");
+    drProfile.getSpecializations().add(spec);
     drProfile.setLicenseNumber("LICENSE-123");
     drUser.setDoctorProfile(drProfile);
 
-    UserRoleAssignment drAssign = new UserRoleAssignment();
+    UserContract drAssign = new UserContract();
     drAssign.setUser(drUser);
     drAssign.setHospitalId(testHospitalId);
-    drAssign.setDepartmentName("OPD");
+    drAssign.getDepartments().add(opdDepartment);
     drAssign.setRole(roleRepository.findByCode(RoleCode.DOCTOR).orElseThrow());
-    drUser.getAssignments().add(drAssign);
+    drUser.getContracts().add(drAssign);
     userAccountRepository.save(drUser);
 
     DoctorHospitalDetails drDetails = new DoctorHospitalDetails();
@@ -117,12 +147,12 @@ class StaffControllerIntegrationTest {
     nurseProfile.setNursingLicenseNo("NURSE-999");
     nurseUser.setNurseProfile(nurseProfile);
 
-    UserRoleAssignment nurseAssign = new UserRoleAssignment();
+    UserContract nurseAssign = new UserContract();
     nurseAssign.setUser(nurseUser);
     nurseAssign.setHospitalId(testHospitalId);
-    nurseAssign.setDepartmentName("ICU");
+    nurseAssign.getDepartments().add(icuDepartment);
     nurseAssign.setRole(roleRepository.findByCode(RoleCode.NURSE).orElseThrow());
-    nurseUser.getAssignments().add(nurseAssign);
+    nurseUser.getContracts().add(nurseAssign);
     userAccountRepository.save(nurseUser);
 
     NurseHospitalDetails nurseDetails = new NurseHospitalDetails();
@@ -142,7 +172,7 @@ class StaffControllerIntegrationTest {
                 .header("X-Hospital-Id", testHospitalId.toString()))
         .andExpect(status().isOk())
         .andExpect(jsonPath("$.data.content[0].fullName").value("Dr. Indiana Jones"))
-        .andExpect(jsonPath("$.data.content[0].departmentName").value("OPD"))
+        .andExpect(jsonPath("$.data.content[0].departments[0]").value("OPD"))
         .andExpect(jsonPath("$.data.content[0].consultationFee").value(500.0));
 
     // Filter by department
@@ -196,7 +226,7 @@ class StaffControllerIntegrationTest {
                 .header("X-Hospital-Id", testHospitalId.toString()))
         .andExpect(status().isOk())
         .andExpect(jsonPath("$.data.content[0].fullName").value("Nurse Ratched"))
-        .andExpect(jsonPath("$.data.content[0].departmentName").value("ICU"))
+        .andExpect(jsonPath("$.data.content[0].departments[0]").value("ICU"))
         .andExpect(jsonPath("$.data.content[0].shiftType").value("NIGHT"));
 
     mockMvc

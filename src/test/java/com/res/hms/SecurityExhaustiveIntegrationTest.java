@@ -5,6 +5,8 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
 import com.res.hms.core.exception.ApiException;
 import com.res.hms.iam.application.dto.UserDetailsDTO;
 import com.res.hms.iam.application.service.UserAggregateService;
+import com.res.hms.iam.domain.Specialization;
+import com.res.hms.iam.infrastructure.repository.SpecializationRepository;
 import java.util.List;
 import java.util.UUID;
 import org.junit.jupiter.api.BeforeEach;
@@ -22,6 +24,7 @@ class SecurityExhaustiveIntegrationTest {
 
   @Autowired private UserAggregateService userAggregateService;
   @Autowired private TestDataHelper testDataHelper;
+  @Autowired private SpecializationRepository specializationRepository;
 
   private UUID hospitalA;
   private UUID hospitalB;
@@ -30,6 +33,14 @@ class SecurityExhaustiveIntegrationTest {
   void setup() {
     hospitalA = testDataHelper.createHospitalIfMissing("H-A", "Hospital A");
     hospitalB = testDataHelper.createHospitalIfMissing("H-B", "Hospital B");
+    specializationRepository
+        .findByName("General")
+        .orElseGet(
+            () -> {
+              Specialization specialization = new Specialization();
+              specialization.setName("General");
+              return specializationRepository.save(specialization);
+            });
   }
 
   @Test
@@ -62,7 +73,7 @@ class SecurityExhaustiveIntegrationTest {
             .dob(java.time.LocalDate.of(1990, 1, 1))
             .doctorInfo(
                 UserDetailsDTO.DoctorInfo.builder()
-                    .specialization("General")
+                    .specializations(java.util.List.of("General"))
                     .licenseNumber("SEC-DOC-001")
                     .build())
             .memberships(

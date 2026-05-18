@@ -48,7 +48,7 @@ public class UserAccount extends BaseEntity {
       cascade = CascadeType.ALL,
       orphanRemoval = true,
       fetch = FetchType.EAGER)
-  private Set<UserRoleAssignment> assignments = new HashSet<>();
+  private Set<UserContract> contracts = new HashSet<>();
 
   @Column(name = "is_superuser", nullable = false)
   private boolean superuser = false;
@@ -75,6 +75,6 @@ public class UserAccount extends BaseEntity {
   private ReceptionistProfile receptionistProfile;
 
   public Set<RoleCode> getRoleCodes() {
-    return assignments.stream().map(a -> a.getRole().getCode()).collect(Collectors.toSet());
+    return contracts.stream().map(a -> a.getRole().getCode()).collect(Collectors.toSet());
   }
 }

@@ -10,8 +10,8 @@ import com.res.hms.iam.domain.DoctorHospitalDetails;
 import com.res.hms.iam.domain.DoctorProfile;
 import com.res.hms.iam.domain.RoleCode;
 import com.res.hms.iam.domain.UserAccount;
-import com.res.hms.iam.domain.UserRoleAssignment;
-import com.res.hms.iam.infrastructure.repository.UserRoleAssignmentRepository;
+import com.res.hms.iam.domain.UserContract;
+import com.res.hms.iam.infrastructure.repository.UserContractRepository;
 import jakarta.persistence.criteria.Join;
 import jakarta.persistence.criteria.JoinType;
 import jakarta.persistence.criteria.Predicate;
@@ -29,18 +29,20 @@ import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.stream.Collectors;
+
 @Service
 @RequiredArgsConstructor
 public class StaffService {
 
-  private final UserRoleAssignmentRepository assignmentRepository;
+  private final UserContractRepository assignmentRepository;
   private final HospitalContext hospitalContext;
   private final ResourceLookup resourceLookup;
 
   @Transactional(readOnly = true)
   public DoctorStaffResponse getDoctor(UUID doctorId) {
     UUID hospitalId = hospitalContext.requireHospitalId();
-    UserRoleAssignment assignment =
+    UserContract assignment =
         assignmentRepository
             .findByDoctorIdAndHospitalId(doctorId, hospitalId)
             .orElseThrow(
@@ -51,7 +53,7 @@ public class StaffService {
   @Transactional(readOnly = true)
   public NurseStaffResponse getNurse(UUID nurseId) {
     UUID hospitalId = hospitalContext.requireHospitalId();
-    UserRoleAssignment assignment =
+    UserContract assignment =
         assignmentRepository
             .findByNurseIdAndHospitalId(nurseId, hospitalId)
             .orElseThrow(
@@ -72,7 +74,7 @@ public class StaffService {
     UUID hospitalId = hospitalContext.requireHospitalId();
     Pageable pageable = PageRequest.of(page, size, Sort.by("createdAt").descending());
 
-    Specification<UserRoleAssignment> spec =
+    Specification<UserContract> spec =
         (root, query, cb) -> {
           root.fetch("user", JoinType.INNER).fetch("doctorProfile", JoinType.LEFT);
           root.fetch("doctorDetails", JoinType.LEFT);
@@ -89,25 +91,27 @@ public class StaffService {
                     cb.lower(root.get("user").get("fullName")), "%" + name.toLowerCase() + "%"));
           }
           if (department != null && !department.isBlank()) {
+            Join<UserContract, com.res.hms.hospital.domain.Department> deptJoin = root.join("departments");
             predicates.add(
                 cb.like(
-                    cb.lower(root.get("departmentName")), "%" + department.toLowerCase() + "%"));
+                    cb.lower(deptJoin.get("name")), "%" + department.toLowerCase() + "%"));
           }
           if (specialization != null && !specialization.isBlank()) {
-            Join<UserRoleAssignment, UserAccount> userJoin = root.join("user");
+            Join<UserContract, UserAccount> userJoin = root.join("user");
             Join<UserAccount, DoctorProfile> doctorJoin = userJoin.join("doctorProfile");
+            Join<DoctorProfile, com.res.hms.iam.domain.Specialization> specJoin = doctorJoin.join("specializations");
             predicates.add(
                 cb.like(
-                    cb.lower(doctorJoin.get("specialization")),
+                    cb.lower(specJoin.get("name")),
                     "%" + specialization.toLowerCase() + "%"));
           }
           if (minFee != null) {
-            Join<UserRoleAssignment, DoctorHospitalDetails> detailsJoin =
+            Join<UserContract, DoctorHospitalDetails> detailsJoin =
                 root.join("doctorDetails");
             predicates.add(cb.greaterThanOrEqualTo(detailsJoin.get("consultationFee"), minFee));
           }
           if (maxFee != null) {
-            Join<UserRoleAssignment, DoctorHospitalDetails> detailsJoin =
+            Join<UserContract, DoctorHospitalDetails> detailsJoin =
                 root.join("doctorDetails");
             predicates.add(cb.lessThanOrEqualTo(detailsJoin.get("consultationFee"), maxFee));
           }
@@ -115,7 +119,7 @@ public class StaffService {
           return cb.and(predicates.toArray(new Predicate[0]));
         };
 
-    Page<UserRoleAssignment> assignments = assignmentRepository.findAll(spec, pageable);
+    Page<UserContract> assignments = assignmentRepository.findAll(spec, pageable);
     return PageResponse.from(assignments.map(this::mapToDoctorResponse));
   }
 
@@ -126,7 +130,7 @@ public class StaffService {
     UUID hospitalId = hospitalContext.requireHospitalId();
     Pageable pageable = PageRequest.of(page, size, Sort.by("createdAt").descending());
 
-    Specification<UserRoleAssignment> spec =
+    Specification<UserContract> spec =
         (root, query, cb) -> {
           root.fetch("user", JoinType.INNER).fetch("nurseProfile", JoinType.LEFT);
           root.fetch("nurseDetails", JoinType.LEFT);
@@ -143,19 +147,20 @@ public class StaffService {
                     cb.lower(root.get("user").get("fullName")), "%" + name.toLowerCase() + "%"));
           }
           if (department != null && !department.isBlank()) {
-            predicates.add(
+             Join<UserContract, com.res.hms.hospital.domain.Department> deptJoin = root.join("departments");
+             predicates.add(
                 cb.like(
-                    cb.lower(root.get("departmentName")), "%" + department.toLowerCase() + "%"));
+                    cb.lower(deptJoin.get("name")), "%" + department.toLowerCase() + "%"));
           }
 
           return cb.and(predicates.toArray(new Predicate[0]));
         };
 
-    Page<UserRoleAssignment> assignments = assignmentRepository.findAll(spec, pageable);
+    Page<UserContract> assignments = assignmentRepository.findAll(spec, pageable);
     return PageResponse.from(assignments.map(this::mapToNurseResponse));
   }
 
-  private DoctorStaffResponse mapToDoctorResponse(UserRoleAssignment a) {
+  private DoctorStaffResponse mapToDoctorResponse(UserContract a) {
     UserAccount u = a.getUser();
     DoctorProfile d = u.getDoctorProfile();
     DoctorHospitalDetails det = a.getDoctorDetails();
@@ -167,13 +172,17 @@ public class StaffService {
         .fullName(u.getFullName())
         .phone(u.getPhone())
         .gender(u.getGender())
-        .departmentName(a.getDepartmentName())
-        .specialization(d != null ? d.getSpecialization() : null)
+        .departments(a.getDepartments().stream()
+            .map(com.res.hms.hospital.domain.Department::getName)
+            .collect(Collectors.toList()))
+        .specializations(d != null ? d.getSpecializations().stream()
+            .map(com.res.hms.iam.domain.Specialization::getName)
+            .collect(Collectors.toList()) : null)
         .consultationFee(det != null ? det.getConsultationFee() : null)
         .build();
   }
 
-  private NurseStaffResponse mapToNurseResponse(UserRoleAssignment a) {
+  private NurseStaffResponse mapToNurseResponse(UserContract a) {
     UserAccount u = a.getUser();
     var n = u.getNurseProfile();
     var det = a.getNurseDetails();
@@ -185,7 +194,9 @@ public class StaffService {
         .fullName(u.getFullName())
         .phone(u.getPhone())
         .gender(u.getGender())
-        .departmentName(a.getDepartmentName())
+        .departments(a.getDepartments().stream()
+            .map(com.res.hms.hospital.domain.Department::getName)
+            .collect(Collectors.toList()))
         .certificationLevel(n != null ? n.getCertificationLevel() : null)
         .shiftType(det != null ? det.getShiftType() : null)
         .build();

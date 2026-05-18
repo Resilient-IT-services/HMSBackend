@@ -15,7 +15,7 @@ import com.res.hms.hospital.infrastructure.repository.HospitalRepository;
 import com.res.hms.iam.domain.DoctorProfile;
 import com.res.hms.iam.domain.RoleCode;
 import com.res.hms.iam.domain.UserAccount;
-import com.res.hms.iam.domain.UserRoleAssignment;
+import com.res.hms.iam.domain.UserContract;
 import com.res.hms.iam.infrastructure.repository.RoleRepository;
 import com.res.hms.iam.infrastructure.repository.UserAccountRepository;
 import java.time.DayOfWeek;
@@ -78,18 +78,20 @@ class DoctorControllerIntegrationTest {
 
     DoctorProfile drProfile = new DoctorProfile();
     drProfile.setUser(drUser);
-    drProfile.setSpecialization("General");
+    com.res.hms.iam.domain.Specialization spec = new com.res.hms.iam.domain.Specialization();
+    spec.setName("General");
+    drProfile.getSpecializations().add(spec);
     drUser.setDoctorProfile(drProfile);
 
-    UserRoleAssignment drAssign = new UserRoleAssignment();
+    UserContract drAssign = new UserContract();
     drAssign.setUser(drUser);
     drAssign.setHospitalId(hospitalId);
     drAssign.setRole(roleRepository.findByCode(RoleCode.DOCTOR).orElseThrow());
 
-    drUser.getAssignments().add(drAssign);
+    drUser.getContracts().add(drAssign);
     UserAccount saved = userAccountRepository.save(drUser);
     doctorId = saved.getDoctorProfile().getId();
-    UUID assignmentId = saved.getAssignments().iterator().next().getId();
+    UUID assignmentId = saved.getContracts().iterator().next().getId();
 
     // Add Schedule: Monday 9-11 AM, 1 hour slots
     DoctorSchedule schedule = new DoctorSchedule();

@@ -40,7 +40,7 @@ public class UserSummaryDTO {
     private UUID hospitalId;
     private String hospitalName;
     private List<String> roles;
-    private String specialization;
-    private String departmentName;
+    private List<String> specializations;
+    private List<String> departments;
   }
 }

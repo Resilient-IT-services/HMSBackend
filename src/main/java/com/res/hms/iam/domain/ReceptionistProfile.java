@@ -30,12 +30,8 @@ public class ReceptionistProfile extends AuditableEntity {
   private UserAccount user;
 
   @org.hibernate.annotations.JdbcTypeCode(org.hibernate.type.SqlTypes.JSON)
-  @Column(name = "languages_spoken", columnDefinition = "jsonb")
+  @Column(name = "languages_spoken_json", columnDefinition = "jsonb")
   private ReceptionistFluency languagesSpoken;
-
-  @org.hibernate.annotations.JdbcTypeCode(org.hibernate.type.SqlTypes.JSON)
-  @Column(name = "skills_json", columnDefinition = "jsonb")
-  private Object skills;
 
   @Column(name = "is_insurance_specialist")
   private boolean insuranceSpecialist = false;

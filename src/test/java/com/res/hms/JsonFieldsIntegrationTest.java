@@ -71,7 +71,9 @@ class JsonFieldsIntegrationTest {
 
     DoctorProfile doctor = new DoctorProfile();
     doctor.setUser(user);
-    doctor.setSpecialization("General");
+    com.res.hms.iam.domain.Specialization spec = new com.res.hms.iam.domain.Specialization();
+    spec.setName("General");
+    doctor.getSpecializations().add(spec);
 
     DoctorEducation edu =
         DoctorEducation.builder()

@@ -1,10 +1,15 @@
 package com.res.hms.hospital.application.service;
 
 import com.res.hms.core.exception.ApiException;
+import com.res.hms.core.service.DomainEventPublisher;
 import com.res.hms.hospital.application.dto.HospitalDTO;
+import com.res.hms.hospital.domain.Department;
 import com.res.hms.hospital.domain.Hospital;
 import com.res.hms.hospital.domain.HospitalStatus;
+import com.res.hms.hospital.domain.event.HospitalStatusChangedEvent;
+import com.res.hms.hospital.infrastructure.repository.DepartmentRepository;
 import com.res.hms.hospital.infrastructure.repository.HospitalRepository;
+import java.util.stream.Collectors;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
@@ -18,6 +23,8 @@ public class HospitalAggregateService {
 
   private final HospitalRepository hospitalRepository;
   private final HospitalService hospitalService;
+  private final DomainEventPublisher domainEventPublisher;
+  private final DepartmentRepository departmentRepository;
 
   @Transactional
   public HospitalDTO saveHospitalAggregate(HospitalDTO dto) {
@@ -83,8 +90,11 @@ public class HospitalAggregateService {
           "BUSINESS_RULE_VIOLATION", "GSTIN already exists", HttpStatus.CONFLICT);
     }
 
-    if (dto.getStatus() != null) {
+    if (dto.getStatus() != null && dto.getStatus() != hospital.getStatus()) {
+      HospitalStatus oldStatus = hospital.getStatus();
       hospital.setStatus(dto.getStatus());
+      domainEventPublisher.publish(
+          "Hospital", hospital.getId(), new HospitalStatusChangedEvent(hospital.getId(), oldStatus, dto.getStatus()));
     }
     updateHospitalFields(hospital, dto);
   }
@@ -99,6 +109,14 @@ public class HospitalAggregateService {
     hospital.setRegistrationNo(dto.getRegistrationNo());
     if (dto.getSettings() != null) {
       hospital.setSettings(dto.getSettings());
+    }
+    if (dto.getDepartments() != null) {
+      hospital.setDepartments(dto.getDepartments().stream()
+          .map(name -> departmentRepository.findByName(name)
+              .orElseThrow(() -> new ApiException("NOT_FOUND", "Department " + name + " not found in catalog", HttpStatus.BAD_REQUEST)))
+          .collect(Collectors.toSet()));
+    } else {
+      hospital.getDepartments().clear();
     }
   }
 }

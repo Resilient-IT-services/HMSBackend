@@ -117,6 +117,12 @@ public class AppointmentController {
         appointmentAggregateService.updateConsultation(appointmentId, request));
   }
 
+  @PostMapping("/{appointmentId}/reset-prescription")
+  @PreAuthorize("hasAnyRole('ADMIN','SUPER_ADMIN')")
+  public ApiResponse<AppointmentDTO> resetPrescription(@PathVariable UUID appointmentId) {
+    return ApiResponse.success(appointmentAggregateService.resetPrescription(appointmentId));
+  }
+
   @PostMapping("/{appointmentId}/status")
   @PreAuthorize("hasAnyRole('ADMIN','RECEPTIONIST','DOCTOR','SUPER_ADMIN')")
   public ApiResponse<AppointmentDTO> updateStatus(

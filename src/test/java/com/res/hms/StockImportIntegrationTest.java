@@ -6,7 +6,8 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 
 import com.res.hms.iam.domain.RoleCode;
 import com.res.hms.iam.domain.UserAccount;
-import com.res.hms.iam.domain.UserRoleAssignment;
+import com.res.hms.iam.domain.UserContract;
+import com.res.hms.iam.domain.UserContract;
 import com.res.hms.iam.infrastructure.repository.RoleRepository;
 import com.res.hms.iam.infrastructure.repository.UserAccountRepository;
 import java.io.ByteArrayOutputStream;
@@ -51,11 +52,11 @@ class StockImportIntegrationTest {
     hospitalAdmin.setActive(true);
     hospitalAdmin.setSuperuser(true); // Superuser to allow medicine creation
 
-    UserRoleAssignment assignment = new UserRoleAssignment();
+      UserContract assignment = new UserContract();
     assignment.setUser(hospitalAdmin);
     assignment.setHospitalId(testHospitalId);
     assignment.setRole(roleRepository.findByCode(RoleCode.ADMIN).orElseThrow());
-    hospitalAdmin.getAssignments().add(assignment);
+    hospitalAdmin.getContracts().add(assignment);
 
     userAccountRepository.save(hospitalAdmin);
 

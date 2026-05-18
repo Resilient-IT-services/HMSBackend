@@ -2,6 +2,7 @@ package com.res.hms.hospital.application.dto;
 
 import com.res.hms.hospital.domain.HospitalStatus;
 import jakarta.validation.constraints.NotBlank;
+import java.util.List;
 import java.util.UUID;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -29,4 +30,5 @@ public class HospitalDTO {
   private String registrationNo;
   private HospitalStatus status;
   private HospitalSettings settings;
+  private List<String> departments;
 }

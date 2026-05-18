@@ -30,7 +30,7 @@ public class DoctorHospitalDetails extends AuditableEntity {
   @OneToOne(fetch = FetchType.LAZY)
   @MapsId
   @JoinColumn(name = "id")
-  private UserRoleAssignment assignment;
+  private UserContract assignment;
 
   @Column(name = "consultation_fee", nullable = false)
   private BigDecimal consultationFee = BigDecimal.ZERO;

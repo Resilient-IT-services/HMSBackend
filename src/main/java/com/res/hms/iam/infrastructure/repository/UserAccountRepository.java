@@ -16,8 +16,9 @@ public interface UserAccountRepository
     extends JpaRepository<UserAccount, UUID>, JpaSpecificationExecutor<UserAccount> {
   @Query(
       "SELECT DISTINCT u FROM UserAccount u "
-          + "LEFT JOIN FETCH u.assignments a "
+          + "LEFT JOIN FETCH u.contracts a "
           + "LEFT JOIN FETCH a.role r "
+          + "LEFT JOIN FETCH a.hospital h "
           + "LEFT JOIN FETCH u.doctorProfile d "
           + "WHERE u.username = :username AND u.deleted = false")
   Optional<UserAccount> findByUsername(@Param("username") String username);
@@ -32,7 +33,7 @@ public interface UserAccountRepository
 
   @Query(
       "SELECT DISTINCT u FROM UserAccount u "
-          + "LEFT JOIN FETCH u.assignments a "
+          + "LEFT JOIN FETCH u.contracts a "
           + "LEFT JOIN FETCH a.role r "
           + "LEFT JOIN FETCH a.hospital h "
           + "LEFT JOIN FETCH u.doctorProfile d "
@@ -53,11 +54,16 @@ public interface UserAccountRepository
       Pageable pageable);
 
   @Query(
-      "SELECT DISTINCT u FROM UserAccount u JOIN u.assignments a WHERE a.hospitalId = :hospitalId AND u.deleted = false ORDER BY u.createdAt DESC")
+      "SELECT DISTINCT u FROM UserAccount u "
+          + "LEFT JOIN FETCH u.contracts a "
+          + "LEFT JOIN FETCH a.hospital h "
+          + "WHERE EXISTS (SELECT 1 FROM UserContract ura WHERE ura.user = u AND ura.hospitalId = :hospitalId) "
+          + "AND u.deleted = false "
+          + "ORDER BY u.createdAt DESC")
   List<UserAccount> findAllByHospitalId(@Param("hospitalId") UUID hospitalId);
 
   @Query(
-      "SELECT u FROM UserAccount u JOIN u.assignments a WHERE u.id = :id AND a.hospitalId = :hospitalId AND u.deleted = false")
+      "SELECT u FROM UserAccount u JOIN u.contracts a WHERE u.id = :id AND a.hospitalId = :hospitalId AND u.deleted = false")
   Optional<UserAccount> findByIdAndHospitalId(
       @Param("id") UUID id, @Param("hospitalId") UUID hospitalId);
 }

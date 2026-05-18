@@ -18,7 +18,7 @@ import com.res.hms.iam.domain.DoctorHospitalDetails;
 import com.res.hms.iam.domain.DoctorProfile;
 import com.res.hms.iam.domain.RoleCode;
 import com.res.hms.iam.domain.UserAccount;
-import com.res.hms.iam.domain.UserRoleAssignment;
+import com.res.hms.iam.domain.UserContract;
 import com.res.hms.iam.infrastructure.repository.DoctorHospitalDetailsRepository;
 import com.res.hms.iam.infrastructure.repository.RoleRepository;
 import com.res.hms.iam.infrastructure.repository.UserAccountRepository;
@@ -95,18 +95,18 @@ class UnifiedFinancialWorkflowIntegrationTest {
         user.setPasswordHash(passwordEncoder.encode("password"));
         user.setActive(true);
 
-        UserRoleAssignment assignRec = new UserRoleAssignment();
+        UserContract assignRec = new UserContract();
         assignRec.setUser(user);
         assignRec.setHospitalId(hospitalId);
         assignRec.setRole(roleRepository.findByCode(RoleCode.RECEPTIONIST).orElseThrow());
-        user.getAssignments().add(assignRec);
+        user.getContracts().add(assignRec);
 
-        UserRoleAssignment assignPharm = new UserRoleAssignment();
+        UserContract assignPharm = new UserContract();
         assignPharm.setUser(user);
         assignPharm.setHospitalId(hospitalId);
         assignPharm.setRole(roleRepository.findByCode(RoleCode.PHARMACIST).orElseThrow());
-        user.getAssignments().add(assignPharm);
-        
+        user.getContracts().add(assignPharm);
+
         user = userAccountRepository.save(user);
         userId = user.getId();
 
@@ -116,23 +116,25 @@ class UnifiedFinancialWorkflowIntegrationTest {
         drAccount.setFullName("Doctor Test");
         drAccount.setPasswordHash(passwordEncoder.encode("password"));
         drAccount.setActive(true);
-        
+
         DoctorProfile drProfile = new DoctorProfile();
         drProfile.setUser(drAccount);
-        drProfile.setSpecialization("General");
+        com.res.hms.iam.domain.Specialization spec = new com.res.hms.iam.domain.Specialization();
+        spec.setName("General");
+        drProfile.getSpecializations().add(spec);
         drAccount.setDoctorProfile(drProfile);
-        
-        UserRoleAssignment drAssign = new UserRoleAssignment();
+
+        UserContract drAssign = new UserContract();
         drAssign.setUser(drAccount);
         drAssign.setHospitalId(hospitalId);
         drAssign.setRole(roleRepository.findByCode(RoleCode.DOCTOR).orElseThrow());
-        drAccount.getAssignments().add(drAssign);
+        drAccount.getContracts().add(drAssign);
 
         drAccount = userAccountRepository.save(drAccount);
         doctorId = drAccount.getDoctorProfile().getId();
 
         DoctorHospitalDetails drDetails = new DoctorHospitalDetails();
-        drDetails.setAssignment(drAccount.getAssignments().iterator().next());
+        drDetails.setAssignment(drAccount.getContracts().iterator().next());
         drDetails.setConsultationFee(new BigDecimal("500.00"));
         doctorHospitalDetailsRepository.save(drDetails);
 
@@ -152,7 +154,7 @@ class UnifiedFinancialWorkflowIntegrationTest {
         request.setPatientId(patientId);
         request.setDoctorId(doctorId);
         request.setAppointmentTime(LocalDateTime.now().plusDays(1));
-        
+
         OPDEncounterRequest.PaymentInfo paymentInfo = new OPDEncounterRequest.PaymentInfo();
         paymentInfo.setAmount(new BigDecimal("500.00"));
         paymentInfo.setMode(PaymentMode.CASH);
@@ -189,7 +191,7 @@ class UnifiedFinancialWorkflowIntegrationTest {
         Medicine med = new Medicine();
         med.setName("Walkin Med");
         med = medicineRepository.save(med);
-        
+
         PharmacyStock stock = new PharmacyStock();
         stock.setHospitalId(hospitalId);
         stock.setMedicine(med);
@@ -224,7 +226,7 @@ class UnifiedFinancialWorkflowIntegrationTest {
         Medicine med = new Medicine();
         med.setName("Quick Med");
         med = medicineRepository.save(med);
-        
+
         PharmacyStock stock = new PharmacyStock();
         stock.setHospitalId(hospitalId);
         stock.setMedicine(med);
@@ -268,7 +270,7 @@ class UnifiedFinancialWorkflowIntegrationTest {
         // We might have invoices from other tests if not cleaned properly, but @Transactional should handle it.
         // Actually, we expect 1 here if it's the only test running in this tx.
         assertThat(invoices).anyMatch(inv -> inv.getTotalAmount().compareTo(new BigDecimal("300.00")) == 0);
-        
+
         List<Payment> payments = paymentRepository.findAllByHospitalId(hospitalId);
         assertThat(payments).anyMatch(p -> p.getAmount().compareTo(new BigDecimal("300.00")) == 0);
     }

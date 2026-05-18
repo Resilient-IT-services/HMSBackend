@@ -49,6 +49,18 @@ public class OPDEncounterOrchestrator {
 
         // 2. Create Appointment
         AppointmentDTO appointmentDto = request.toAppointmentDTO(visit.getId());
+        
+        // Set initial status based on payment and vitals
+        if (request.getPayment() == null) {
+            appointmentDto.setStatus(com.res.hms.clinical.domain.AppointmentStatus.PAYMENT_PENDING);
+        } else {
+            if (request.getVitals() != null) {
+                appointmentDto.setStatus(com.res.hms.clinical.domain.AppointmentStatus.VITALS_RECORDED);
+            } else {
+                appointmentDto.setStatus(com.res.hms.clinical.domain.AppointmentStatus.PAID);
+            }
+        }
+
         AppointmentDTO savedAppointment = appointmentAggregateService.saveAppointmentAggregate(appointmentDto);
         log.info("Created appointment: {}", savedAppointment.getId());
 

@@ -6,7 +6,7 @@ import com.res.hms.iam.domain.PharmacistHospitalDetails;
 import com.res.hms.iam.domain.PharmacistProfile;
 import com.res.hms.iam.domain.RoleCode;
 import com.res.hms.iam.domain.UserAccount;
-import com.res.hms.iam.domain.UserRoleAssignment;
+import com.res.hms.iam.domain.UserContract;
 import com.res.hms.iam.infrastructure.repository.PharmacistHospitalDetailsRepository;
 import com.res.hms.iam.infrastructure.repository.PharmacistProfileRepository;
 import java.util.Set;
@@ -46,7 +46,7 @@ public class PharmacistProfileService {
   }
 
   @Transactional
-  public void updateHospitalDetails(UserRoleAssignment a, PharmacistHospitalDetailsDTO p) {
+  public void updateHospitalDetails(UserContract a, PharmacistHospitalDetailsDTO p) {
     if (p == null) {
       return;
     }

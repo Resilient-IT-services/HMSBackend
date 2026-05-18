@@ -22,12 +22,12 @@ public interface NurseProfileRepository extends JpaRepository<NurseProfile, UUID
       @Param("nursingLicenseNo") String nursingLicenseNo, @Param("userId") UUID userId);
 
   @Query(
-      "SELECT n FROM NurseProfile n JOIN n.user u JOIN u.assignments a "
+      "SELECT n FROM NurseProfile n JOIN n.user u JOIN u.contracts a "
           + "WHERE a.hospitalId = :hospitalId AND a.role.code = com.res.hms.iam.domain.RoleCode.NURSE")
   Page<NurseProfile> findAllByHospitalId(@Param("hospitalId") UUID hospitalId, Pageable pageable);
 
   @Query(
-      "SELECT n FROM NurseProfile n JOIN n.user u JOIN u.assignments a "
+      "SELECT n FROM NurseProfile n JOIN n.user u JOIN u.contracts a "
           + "WHERE n.id = :id AND a.hospitalId = :hospitalId AND a.role.code = com.res.hms.iam.domain.RoleCode.NURSE")
   Optional<NurseProfile> findByIdAndHospitalId(
       @Param("id") UUID id, @Param("hospitalId") UUID hospitalId);

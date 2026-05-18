@@ -3,7 +3,7 @@ package com.res.hms.iam.application.service;
 import com.res.hms.iam.application.dto.UserDetailsDTO;
 import com.res.hms.iam.domain.RoleCode;
 import com.res.hms.iam.domain.UserAccount;
-import com.res.hms.iam.domain.UserRoleAssignment;
+import com.res.hms.iam.domain.UserContract;
 import java.util.Set;
 import java.util.UUID;
 import lombok.RequiredArgsConstructor;
@@ -74,9 +74,9 @@ public class UserRoleUpdateService {
             });
   }
 
-  private java.util.Optional<UserRoleAssignment> findAssignment(
+  private java.util.Optional<UserContract> findAssignment(
       UserAccount user, UUID hospitalId, RoleCode code) {
-    return user.getAssignments().stream()
+    return user.getContracts().stream()
         .filter(
             a ->
                 (hospitalId == null

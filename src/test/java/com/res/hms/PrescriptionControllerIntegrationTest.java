@@ -13,7 +13,7 @@ import com.res.hms.clinical.domain.AppointmentStatus;
 import com.res.hms.iam.domain.DoctorProfile;
 import com.res.hms.iam.domain.RoleCode;
 import com.res.hms.iam.domain.UserAccount;
-import com.res.hms.iam.domain.UserRoleAssignment;
+import com.res.hms.iam.domain.UserContract;
 import com.res.hms.iam.infrastructure.repository.RoleRepository;
 import com.res.hms.iam.infrastructure.repository.UserAccountRepository;
 import com.res.hms.pharmacy.domain.Medicine;
@@ -72,15 +72,17 @@ class PrescriptionControllerIntegrationTest {
 
     DoctorProfile drProfile = new DoctorProfile();
     drProfile.setUser(drUser);
-    drProfile.setSpecialization("General");
+    com.res.hms.iam.domain.Specialization spec = new com.res.hms.iam.domain.Specialization();
+    spec.setName("General");
+    drProfile.getSpecializations().add(spec);
     drUser.setDoctorProfile(drProfile);
 
-    UserRoleAssignment drAssign = new UserRoleAssignment();
+    UserContract drAssign = new UserContract();
     drAssign.setUser(drUser);
     drAssign.setHospitalId(hospitalId);
     drAssign.setRole(roleRepository.findByCode(RoleCode.DOCTOR).orElseThrow());
 
-    drUser.getAssignments().add(drAssign);
+    drUser.getContracts().add(drAssign);
     UserAccount saved = userAccountRepository.save(drUser);
     com.res.hms.clinical.domain.Patient patient = testDataHelper.createTestPatient(hospitalId);
 

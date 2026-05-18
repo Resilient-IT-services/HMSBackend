@@ -71,7 +71,7 @@ public class UserDetailsDTO {
     private UUID assignmentId;
     private UUID hospitalId;
     private String roleCode;
-    private String departmentName;
+    private List<String> departments;
     private Boolean active;
     private List<ScheduleDTO> schedules;
     private List<AvailabilityExceptionDTO> availabilityExceptions;
@@ -90,10 +90,17 @@ public class UserDetailsDTO {
   @AllArgsConstructor
   public static class DoctorInfo {
     private UUID id;
-    private String specialization;
+    private List<String> specializations;
     private DoctorEducation education;
     private String bio;
     private String licenseNumber;
+    private String registrationNumber;
+    private Integer experienceYears;
+    private List<String> awards;
+    private List<String> languages;
+    private String signature;
+    private java.math.BigDecimal consultationFee;
+    private java.util.Map<String, Object> metadata;
   }
 
   @Data

@@ -9,7 +9,7 @@ import com.res.hms.hospital.infrastructure.repository.HospitalRepository;
 import com.res.hms.iam.domain.Role;
 import com.res.hms.iam.domain.RoleCode;
 import com.res.hms.iam.domain.UserAccount;
-import com.res.hms.iam.domain.UserRoleAssignment;
+import com.res.hms.iam.domain.UserContract;
 import com.res.hms.iam.infrastructure.repository.RoleRepository;
 import com.res.hms.iam.infrastructure.repository.UserAccountRepository;
 import com.res.hms.clinical.domain.PatientVisit;
@@ -114,11 +114,11 @@ public class TestDataHelper {
             .findByCode(roleCode)
             .orElseThrow(() -> new RuntimeException("Role not found: " + roleCode));
 
-    UserRoleAssignment assignment = new UserRoleAssignment();
+    UserContract assignment = new UserContract();
     assignment.setUser(user);
     assignment.setHospitalId(hospitalId);
     assignment.setRole(role);
-    user.getAssignments().add(assignment);
+    user.getContracts().add(assignment);
 
     userRepo.save(user);
   }

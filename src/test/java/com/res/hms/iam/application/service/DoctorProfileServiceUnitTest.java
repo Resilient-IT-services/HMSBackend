@@ -18,8 +18,8 @@ import com.res.hms.iam.domain.DoctorProfile;
 import com.res.hms.iam.domain.Role;
 import com.res.hms.iam.domain.RoleCode;
 import com.res.hms.iam.domain.UserAccount;
-import com.res.hms.iam.domain.UserRoleAssignment;
-import com.res.hms.iam.infrastructure.repository.UserRoleAssignmentRepository;
+import com.res.hms.iam.domain.UserContract;
+import com.res.hms.iam.infrastructure.repository.UserContractRepository;
 import java.time.LocalDate;
 import java.time.LocalTime;
 import java.util.List;
@@ -37,7 +37,7 @@ class DoctorProfileServiceUnitTest {
 
   @Mock private DoctorProfileRepository doctorProfileRepository;
   @Mock private HospitalContext hospitalContext;
-  @Mock private UserRoleAssignmentRepository assignmentRepository;
+  @Mock private UserContractRepository assignmentRepository;
   @Mock private DoctorAvailabilityExceptionRepository availabilityExceptionRepository;
   @Mock private DoctorScheduleRepository scheduleRepository;
   @Mock private AppointmentRepository appointmentRepository;
@@ -63,11 +63,11 @@ class DoctorProfileServiceUnitTest {
     Role drRole = new Role();
     drRole.setCode(RoleCode.DOCTOR);
 
-    UserRoleAssignment assignment = new UserRoleAssignment();
+    UserContract assignment = new UserContract();
     assignment.setHospitalId(hospitalId);
     assignment.setRole(drRole);
     assignment.setUser(user);
-    user.getAssignments().add(assignment);
+    user.getContracts().add(assignment);
   }
 
   @Test

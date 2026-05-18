@@ -21,7 +21,7 @@ import com.res.hms.iam.domain.ReceptionistHospitalDetails;
 import com.res.hms.iam.domain.ReceptionistProfile;
 import com.res.hms.iam.domain.RoleCode;
 import com.res.hms.iam.domain.UserAccount;
-import com.res.hms.iam.domain.UserRoleAssignment;
+import com.res.hms.iam.domain.UserContract;
 import java.util.Collections;
 import java.util.List;
 import java.util.Set;
@@ -53,18 +53,22 @@ public abstract class UserMapper {
   public abstract UserDetailsDTO toDetailsDTO(UserAccount user);
 
   protected List<HospitalMembershipResponse> mapHospitalMemberships(UserAccount user) {
-    if (user.getAssignments() == null) {
+    if (user.getContracts() == null) {
       return Collections.emptyList();
     }
 
-    return user.getAssignments().stream()
-        .collect(Collectors.groupingBy(UserRoleAssignment::getHospitalId))
+    return user.getContracts().stream()
+        .filter(a -> a.isActive() && 
+                    (a.getHospital() == null || 
+                     a.getHospital().getStatus() == com.res.hms.hospital.domain.HospitalStatus.ACTIVE ||
+                     a.getHospital().getStatus() == com.res.hms.hospital.domain.HospitalStatus.ONBOARDING))
+        .collect(Collectors.groupingBy(UserContract::getHospitalId))
         .entrySet()
         .stream()
         .map(
             entry -> {
               UUID hospitalId = entry.getKey();
-              UserRoleAssignment first = entry.getValue().getFirst();
+              UserContract first = entry.getValue().getFirst();
               var hospital = first.getHospital();
 
               Set<RoleCode> roles =
@@ -72,21 +76,38 @@ public abstract class UserMapper {
                       .map(a -> a.getRole().getCode())
                       .collect(Collectors.toSet());
 
-              String specialization =
+              List<String> specializations =
                   user.getDoctorProfile() != null
-                      ? user.getDoctorProfile().getSpecialization()
-                      : null;
-              String department = first.getDepartmentName();
+                      ? user.getDoctorProfile().getSpecializations().stream()
+                          .map(com.res.hms.iam.domain.Specialization::getName)
+                          .collect(Collectors.toList())
+                      : Collections.emptyList();
+              
+              List<String> departments = entry.getValue().stream()
+                      .flatMap(a -> a.getDepartments().stream())
+                      .map(com.res.hms.hospital.domain.Department::getName)
+                      .distinct()
+                      .collect(Collectors.toList());
 
               return new HospitalMembershipResponse(
                   hospitalId,
                   hospital != null ? hospital.getName() : "Global Access",
                   hospital != null ? hospital.getCode() : "GLOBAL",
                   roles,
-                  specialization,
-                  department);
+                  specializations,
+                  departments);
             })
         .collect(Collectors.toList());
+  }
+
+  protected List<String> mapDepartments(Set<com.res.hms.hospital.domain.Department> departments) {
+      if (departments == null) return java.util.Collections.emptyList();
+      return departments.stream().map(com.res.hms.hospital.domain.Department::getName).collect(Collectors.toList());
+  }
+
+  protected List<String> mapSpecializations(Set<com.res.hms.iam.domain.Specialization> specializations) {
+      if (specializations == null) return java.util.Collections.emptyList();
+      return specializations.stream().map(com.res.hms.iam.domain.Specialization::getName).collect(Collectors.toList());
   }
 
   @Mapping(target = "assignmentId", source = "id")
@@ -97,7 +118,7 @@ public abstract class UserMapper {
   @Mapping(target = "pharmacistDetails", source = "pharmacistDetails")
   @Mapping(target = "receptionistDetails", source = "receptionistDetails")
   public abstract UserDetailsDTO.RoleAssignmentDTO toRoleAssignmentDTO(
-      UserRoleAssignment assignment);
+      UserContract assignment);
 
   @Mapping(target = "id", source = "id")
   public abstract UserDetailsDTO.DoctorInfo toDoctorInfo(DoctorProfile profile);
@@ -132,27 +153,33 @@ public abstract class UserMapper {
       ReceptionistHospitalDetails details);
 
   protected List<UserSummaryDTO.HospitalMembershipDTO> mapSummaryMemberships(UserAccount user) {
-    if (user.getAssignments() == null) {
+    if (user.getContracts() == null) {
       return Collections.emptyList();
     }
 
-    return user.getAssignments().stream()
-        .collect(Collectors.groupingBy(UserRoleAssignment::getHospitalId))
+    return user.getContracts().stream()
+        .filter(a -> a.isActive() && 
+                    (a.getHospital() == null || 
+                     a.getHospital().getStatus() == com.res.hms.hospital.domain.HospitalStatus.ACTIVE ||
+                     a.getHospital().getStatus() == com.res.hms.hospital.domain.HospitalStatus.ONBOARDING))
+        .collect(Collectors.groupingBy(UserContract::getHospitalId))
         .entrySet()
         .stream()
         .map(
             e -> {
               UUID hospitalId = e.getKey();
-              List<UserRoleAssignment> hospitalAssignments = e.getValue();
-              UserRoleAssignment first = hospitalAssignments.getFirst();
+              List<UserContract> hospitalAssignments = e.getValue();
+              UserContract first = hospitalAssignments.getFirst();
 
               List<String> roles =
                   hospitalAssignments.stream().map(a -> a.getRole().getCode().name()).toList();
 
-              String specialization =
+              List<String> specializations =
                   user.getDoctorProfile() != null
-                      ? user.getDoctorProfile().getSpecialization()
-                      : null;
+                      ? user.getDoctorProfile().getSpecializations().stream()
+                          .map(com.res.hms.iam.domain.Specialization::getName)
+                          .collect(Collectors.toList())
+                      : Collections.emptyList();
 
               String hospitalName = "Global Access";
               if (hospitalId != null) {
@@ -162,27 +189,35 @@ public abstract class UserMapper {
                         : "Global Access";
               }
 
-              String departmentName = first.getDepartmentName();
+              List<String> departments = hospitalAssignments.stream()
+                      .flatMap(a -> a.getDepartments().stream())
+                      .map(com.res.hms.hospital.domain.Department::getName)
+                      .distinct()
+                      .collect(Collectors.toList());
 
               return new UserSummaryDTO.HospitalMembershipDTO(
-                  hospitalId, hospitalName, roles, specialization, departmentName);
+                  hospitalId, hospitalName, roles, specializations, departments);
             })
         .collect(Collectors.toList());
   }
 
   protected List<UserDetailsDTO.HospitalMembershipDTO> mapMemberships(UserAccount user) {
-    if (user.getAssignments() == null) {
+    if (user.getContracts() == null) {
       return Collections.emptyList();
     }
 
-    return user.getAssignments().stream()
-        .collect(Collectors.groupingBy(UserRoleAssignment::getHospitalId))
+    return user.getContracts().stream()
+        .filter(a -> a.isActive() && 
+                    (a.getHospital() == null || 
+                     a.getHospital().getStatus() == com.res.hms.hospital.domain.HospitalStatus.ACTIVE ||
+                     a.getHospital().getStatus() == com.res.hms.hospital.domain.HospitalStatus.ONBOARDING))
+        .collect(Collectors.groupingBy(UserContract::getHospitalId))
         .entrySet()
         .stream()
         .map(
             entry -> {
               UUID hospitalId = entry.getKey();
-              UserRoleAssignment first = entry.getValue().getFirst();
+              UserContract first = entry.getValue().getFirst();
               var hospital = first.getHospital();
 
               String hospitalName = hospital != null ? hospital.getName() : "Global Access";

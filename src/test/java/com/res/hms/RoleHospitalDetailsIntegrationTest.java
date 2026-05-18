@@ -33,11 +33,20 @@ class RoleHospitalDetailsIntegrationTest {
   @Autowired private TestDataHelper testDataHelper;
   @MockBean private HospitalContext hospitalContext;
 
+  @Autowired private com.res.hms.hospital.infrastructure.repository.HospitalRepository hospitalRepository;
+  @Autowired private com.res.hms.hospital.infrastructure.repository.DepartmentRepository departmentRepository;
+
   private UUID hospitalId;
 
   @BeforeEach
   void setup() {
     hospitalId = testDataHelper.createHospitalIfMissing("H1", "Hospital One");
+    com.res.hms.hospital.domain.Hospital h = hospitalRepository.findById(hospitalId).get();
+    com.res.hms.hospital.domain.Department d = new com.res.hms.hospital.domain.Department();
+    d.setName("Pediatrics");
+    departmentRepository.save(d);
+    h.getDepartments().add(d);
+    hospitalRepository.save(h);
     when(hospitalContext.isSuperAdmin()).thenReturn(true);
   }
 
@@ -59,7 +68,7 @@ class RoleHospitalDetailsIntegrationTest {
                             List.of(
                                 UserDetailsDTO.RoleAssignmentDTO.builder()
                                     .roleCode("NURSE")
-                                    .departmentName("Pediatrics")
+                                    .departments(java.util.List.of("Pediatrics"))
                                     .nurseDetails(
                                         NurseHospitalDetailsDTO.builder()
                                             .floorLocation("2nd Floor")
@@ -86,7 +95,7 @@ class RoleHospitalDetailsIntegrationTest {
             .findFirst()
             .orElseThrow();
 
-    assertEquals("Pediatrics", assignment.getDepartmentName());
+    assertEquals("Pediatrics", assignment.getDepartments().get(0));
 
     assertNotNull(assignment.getNurseDetails());
     assertEquals("2nd Floor", assignment.getNurseDetails().getFloorLocation());

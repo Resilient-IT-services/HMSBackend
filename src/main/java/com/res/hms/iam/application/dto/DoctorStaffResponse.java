@@ -8,6 +8,8 @@ import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
+import java.util.List;
+
 @Data
 @Builder
 @NoArgsConstructor
@@ -19,7 +21,7 @@ public class DoctorStaffResponse {
   private String fullName;
   private String phone;
   private Gender gender;
-  private String departmentName;
-  private String specialization;
+  private List<String> departments;
+  private List<String> specializations;
   private BigDecimal consultationFee;
 }

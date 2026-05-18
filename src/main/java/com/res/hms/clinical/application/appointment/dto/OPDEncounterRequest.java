@@ -14,6 +14,9 @@ public class OPDEncounterRequest {
     @NotNull private LocalDateTime appointmentTime;
     private String notes;
     
+    // Optional Vitals
+    private VitalsDTO vitals;
+
     // Immediate Payment Info
     private PaymentInfo payment;
 
@@ -31,6 +34,7 @@ public class OPDEncounterRequest {
         dto.setAppointmentTime(appointmentTime);
         dto.setNotes(notes);
         dto.setVisitId(visitId);
+        dto.setVitals(vitals);
         return dto;
     }
 }

@@ -7,7 +7,7 @@ import com.res.hms.iam.application.dto.UserDetailsDTO;
 import com.res.hms.iam.domain.NurseHospitalDetails;
 import com.res.hms.iam.domain.NurseProfile;
 import com.res.hms.iam.domain.UserAccount;
-import com.res.hms.iam.domain.UserRoleAssignment;
+import com.res.hms.iam.domain.UserContract;
 import com.res.hms.iam.infrastructure.repository.NurseHospitalDetailsRepository;
 import com.res.hms.iam.infrastructure.repository.NurseProfileRepository;
 import com.res.hms.iam.infrastructure.repository.UserAccountRepository;
@@ -50,7 +50,7 @@ public class NurseProfileService {
   }
 
   @Transactional
-  public void updateHospitalDetails(UserRoleAssignment assignment, NurseHospitalDetailsDTO n) {
+  public void updateHospitalDetails(UserContract assignment, NurseHospitalDetailsDTO n) {
     if (n == null) {
       return;
     }

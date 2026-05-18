@@ -48,7 +48,7 @@ class DoctorOverlapIntegrationTest {
             .fullName("Overlap Dr")
             .gender(Gender.MALE)
             .dob(LocalDate.of(1980, 1, 1))
-            .doctorInfo(UserDetailsDTO.DoctorInfo.builder().specialization("General").build())
+            .doctorInfo(UserDetailsDTO.DoctorInfo.builder().specializations(java.util.List.of("General")).build())
             .memberships(
                 List.of(
                     UserDetailsDTO.HospitalMembershipDTO.builder()

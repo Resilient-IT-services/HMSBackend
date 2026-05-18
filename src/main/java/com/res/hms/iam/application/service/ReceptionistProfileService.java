@@ -6,7 +6,7 @@ import com.res.hms.iam.domain.ReceptionistHospitalDetails;
 import com.res.hms.iam.domain.ReceptionistProfile;
 import com.res.hms.iam.domain.RoleCode;
 import com.res.hms.iam.domain.UserAccount;
-import com.res.hms.iam.domain.UserRoleAssignment;
+import com.res.hms.iam.domain.UserContract;
 import com.res.hms.iam.infrastructure.repository.ReceptionistHospitalDetailsRepository;
 import com.res.hms.iam.infrastructure.repository.ReceptionistProfileRepository;
 import java.util.Set;
@@ -44,7 +44,7 @@ public class ReceptionistProfileService {
   }
 
   @Transactional
-  public void updateHospitalDetails(UserRoleAssignment a, ReceptionistHospitalDetailsDTO r) {
+  public void updateHospitalDetails(UserContract a, ReceptionistHospitalDetailsDTO r) {
     if (r == null) {
       return;
     }

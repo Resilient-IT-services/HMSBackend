@@ -7,6 +7,7 @@ import com.res.hms.hospital.domain.Hospital;
 import com.res.hms.hospital.domain.HospitalStatus;
 import com.res.hms.hospital.infrastructure.repository.HospitalRepository;
 import java.util.UUID;
+import java.util.stream.Collectors;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.jpa.domain.Specification;
@@ -72,6 +73,9 @@ public class HospitalService {
         .gstin(hospital.getGstin())
         .registrationNo(hospital.getRegistrationNo())
         .settings(hospital.getSettings())
+        .departments(hospital.getDepartments().stream()
+            .map(com.res.hms.hospital.domain.Department::getName)
+            .collect(Collectors.toList()))
         .build();
   }
 }

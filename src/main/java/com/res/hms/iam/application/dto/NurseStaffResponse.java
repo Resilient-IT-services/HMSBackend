@@ -9,6 +9,8 @@ import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
+import java.util.List;
+
 @Data
 @Builder
 @NoArgsConstructor
@@ -20,7 +22,7 @@ public class NurseStaffResponse {
   private String fullName;
   private String phone;
   private Gender gender;
-  private String departmentName;
+  private List<String> departments;
   private CertificationLevel certificationLevel;
   private ShiftType shiftType;
 }

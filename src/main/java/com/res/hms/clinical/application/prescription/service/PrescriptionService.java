@@ -5,6 +5,7 @@ import com.res.hms.clinical.application.prescription.dto.PrescriptionItemDTO;
 import com.res.hms.clinical.application.prescription.dto.PrescriptionSummaryDTO;
 import com.res.hms.clinical.application.prescription.repository.PrescriptionRepository;
 import com.res.hms.clinical.domain.Appointment;
+import com.res.hms.clinical.domain.AppointmentStatus;
 import com.res.hms.clinical.domain.Prescription;
 import com.res.hms.clinical.domain.PrescriptionItem;
 import com.res.hms.clinical.infrastructure.repository.AppointmentRepository;
@@ -99,10 +100,18 @@ public class PrescriptionService {
             .orElseThrow(
                 () -> new ApiException("NOT_FOUND", "Appointment not found", HttpStatus.NOT_FOUND));
 
-    // Check if prescription already exists for this appointment
+    // Preserve conflict semantics for duplicate creation attempts on the same appointment.
     if (prescriptionRepository.existsByAppointmentId(appointment.getId())) {
       throw new ApiException(
           "CONFLICT", "Prescription already exists for this appointment", HttpStatus.CONFLICT);
+    }
+
+    if (appointment.getStatus() == AppointmentStatus.PRESCRIPTION_FINALIZED
+        || appointment.getStatus() == AppointmentStatus.COMPLETED) {
+      throw new ApiException(
+          "BUSINESS_RULE_VIOLATION",
+          "Prescription is finalized and cannot be modified.",
+          HttpStatus.BAD_REQUEST);
     }
 
     Prescription prescription = new Prescription();
@@ -132,6 +141,9 @@ public class PrescriptionService {
         prescription.getItems().add(item);
       }
     }
+
+    appointment.setStatus(AppointmentStatus.PRESCRIPTION_FINALIZED);
+    appointmentRepository.save(appointment);
 
     return toDto(prescriptionRepository.save(prescription));
   }

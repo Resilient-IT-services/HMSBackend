@@ -6,7 +6,7 @@ import com.res.hms.hospital.infrastructure.repository.HospitalRepository;
 import com.res.hms.iam.domain.Role;
 import com.res.hms.iam.domain.RoleCode;
 import com.res.hms.iam.domain.UserAccount;
-import com.res.hms.iam.domain.UserRoleAssignment;
+import com.res.hms.iam.domain.UserContract;
 import java.util.UUID;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -39,12 +39,12 @@ class UserMapperTest {
     Role doctorRole = new Role();
     doctorRole.setCode(RoleCode.DOCTOR);
 
-    UserRoleAssignment assignment = new UserRoleAssignment();
+    UserContract assignment = new UserContract();
     assignment.setId(UUID.randomUUID());
     assignment.setUser(user);
     assignment.setHospitalId(hospitalId);
     assignment.setRole(doctorRole);
-    user.getAssignments().add(assignment);
+    user.getContracts().add(assignment);
 
     var response = userMapper.toSummaryDTO(user);
 

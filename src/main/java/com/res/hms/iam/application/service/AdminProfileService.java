@@ -2,7 +2,7 @@ package com.res.hms.iam.application.service;
 
 import com.res.hms.iam.application.dto.AdminHospitalDetailsDTO;
 import com.res.hms.iam.domain.AdminHospitalDetails;
-import com.res.hms.iam.domain.UserRoleAssignment;
+import com.res.hms.iam.domain.UserContract;
 import com.res.hms.iam.infrastructure.repository.AdminHospitalDetailsRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
@@ -15,7 +15,7 @@ public class AdminProfileService {
   private final AdminHospitalDetailsRepository adminHospitalDetailsRepository;
 
   @Transactional
-  public void updateHospitalDetails(UserRoleAssignment a, AdminHospitalDetailsDTO ad) {
+  public void updateHospitalDetails(UserContract a, AdminHospitalDetailsDTO ad) {
     if (ad == null) {
       return;
     }

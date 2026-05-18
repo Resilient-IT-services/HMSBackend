@@ -2,10 +2,11 @@ package com.res.hms.clinical.domain;
 
 public enum AppointmentStatus {
   SCHEDULED,
-  COMPLETED,
   PAYMENT_PENDING,
-  WAITING_FOR_VITALS,
-  WALK_IN,
-  CANCELLED,
-  ADD_VITALS,
+  PAID,
+  VITALS_RECORDED,
+  CONSULTATION_STARTED,
+  PRESCRIPTION_FINALIZED,
+  COMPLETED,
+  CANCELLED
 }

@@ -4,14 +4,21 @@ import com.res.hms.core.exception.ApiException;
 import com.res.hms.core.tenant.HospitalContext;
 import com.res.hms.core.util.CollectionMergeUtil;
 import com.res.hms.core.util.ResourceLookup;
+import com.res.hms.hospital.domain.Department;
+import com.res.hms.hospital.domain.Hospital;
+import com.res.hms.hospital.infrastructure.repository.DepartmentRepository;
+import com.res.hms.hospital.infrastructure.repository.HospitalRepository;
 import com.res.hms.iam.application.dto.UserDetailsDTO;
 import com.res.hms.iam.domain.Role;
 import com.res.hms.iam.domain.UserAccount;
-import com.res.hms.iam.domain.UserRoleAssignment;
+import com.res.hms.iam.domain.UserContract;
 import com.res.hms.iam.infrastructure.repository.RoleRepository;
 import com.res.hms.iam.infrastructure.repository.UserAccountRepository;
+import java.util.HashSet;
 import java.util.Objects;
+import java.util.Set;
 import java.util.UUID;
+import java.util.stream.Collectors;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
@@ -33,6 +40,8 @@ public class UserAggregateService {
   private final com.res.hms.iam.application.service.DoctorScheduleValidator doctorScheduleValidator;
   private final UserMapper userMapper;
   private final HospitalContext hospitalContext;
+  private final DepartmentRepository departmentRepository;
+  private final HospitalRepository hospitalRepository;
 
   @Transactional
   public UserDetailsDTO saveUserAggregate(UserDetailsDTO dto) {
@@ -137,20 +146,20 @@ public class UserAggregateService {
             .toList();
 
     CollectionMergeUtil.merge(
-        user.getAssignments(),
+        user.getContracts(),
         incoming,
-        UserRoleAssignment::getId,
+        UserContract::getId,
         UserDetailsDTO.RoleAssignmentDTO::getAssignmentId,
         raDto -> createRoleAssignment(user, raDto),
         this::updateRoleAssignment,
         ra -> {
           if (isSuper || Objects.equals(activeId, ra.getHospitalId())) {
-            user.getAssignments().remove(ra);
+            user.getContracts().remove(ra);
           }
         });
   }
 
-  private UserRoleAssignment createRoleAssignment(
+  private UserContract createRoleAssignment(
       UserAccount user, UserDetailsDTO.RoleAssignmentDTO dto) {
     Role role =
         resourceLookup.findRequired(
@@ -158,19 +167,67 @@ public class UserAggregateService {
             roleRepository::findByCode,
             "Role");
 
-    UserRoleAssignment ra = new UserRoleAssignment();
+    UserContract ra = new UserContract();
     ra.setUser(user);
     ra.setHospitalId(dto.getHospitalId());
     ra.setRole(role);
-    ra.setDepartmentName(dto.getDepartmentName());
+    
+    if (dto.getHospitalId() != null) {
+        Hospital hospital = hospitalRepository.findById(dto.getHospitalId())
+            .orElseThrow(() -> new ApiException("NOT_FOUND", "Hospital not found", HttpStatus.NOT_FOUND));
+            
+        if (dto.getDepartments() != null && !dto.getDepartments().isEmpty()) {
+            Set<String> hospitalDeptNames = hospital.getDepartments().stream()
+                .map(Department::getName)
+                .collect(Collectors.toSet());
+                
+            for (String deptName : dto.getDepartments()) {
+                if (!hospitalDeptNames.contains(deptName)) {
+                    throw new ApiException("VALIDATION_ERROR", 
+                        "Department " + deptName + " is not linked to hospital " + hospital.getName(), 
+                        HttpStatus.BAD_REQUEST);
+                }
+            }
+        }
+    }
+
+    if (dto.getDepartments() != null) {
+      ra.setDepartments(dto.getDepartments().stream()
+          .map(name -> departmentRepository.findByName(name)
+              .orElseThrow(() -> new ApiException("NOT_FOUND", "Department " + name + " not found in catalog", HttpStatus.BAD_REQUEST)))
+          .collect(Collectors.toSet()));
+    }
     ra.setActive(dto.getActive() != null ? dto.getActive() : true);
     return ra;
   }
 
   private void updateRoleAssignment(
-      UserRoleAssignment existing, UserDetailsDTO.RoleAssignmentDTO dto) {
-    if (dto.getDepartmentName() != null) {
-      existing.setDepartmentName(dto.getDepartmentName());
+      UserContract existing, UserDetailsDTO.RoleAssignmentDTO dto) {
+      
+    if (existing.getHospitalId() != null) {
+        Hospital hospital = hospitalRepository.findById(existing.getHospitalId())
+            .orElseThrow(() -> new ApiException("NOT_FOUND", "Hospital not found", HttpStatus.NOT_FOUND));
+            
+        if (dto.getDepartments() != null && !dto.getDepartments().isEmpty()) {
+            Set<String> hospitalDeptNames = hospital.getDepartments().stream()
+                .map(Department::getName)
+                .collect(Collectors.toSet());
+                
+            for (String deptName : dto.getDepartments()) {
+                if (!hospitalDeptNames.contains(deptName)) {
+                    throw new ApiException("VALIDATION_ERROR", 
+                        "Department " + deptName + " is not linked to hospital " + hospital.getName(), 
+                        HttpStatus.BAD_REQUEST);
+                }
+            }
+        }
+    }
+
+    if (dto.getDepartments() != null) {
+      existing.setDepartments(dto.getDepartments().stream()
+          .map(name -> departmentRepository.findByName(name)
+              .orElseThrow(() -> new ApiException("NOT_FOUND", "Department " + name + " not found in catalog", HttpStatus.BAD_REQUEST)))
+          .collect(Collectors.toSet()));
     }
     if (dto.getActive() != null) {
       existing.setActive(dto.getActive());
