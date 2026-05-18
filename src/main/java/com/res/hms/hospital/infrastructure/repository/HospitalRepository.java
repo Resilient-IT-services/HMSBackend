@@ -10,6 +10,10 @@ public interface HospitalRepository
     extends JpaRepository<Hospital, UUID>, JpaSpecificationExecutor<Hospital> {
   Optional<Hospital> findByCode(String code);
 
+    boolean existsByNameIgnoreCase(String name);
+
+    boolean existsByNameIgnoreCaseAndIdNot(String name, UUID id);
+
   boolean existsByCode(String code);
 
   boolean existsByCodeAndIdNot(String code, UUID id);

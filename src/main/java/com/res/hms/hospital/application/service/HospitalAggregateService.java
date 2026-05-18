@@ -40,6 +40,11 @@ public class HospitalAggregateService {
   }
 
   private Hospital createHospital(HospitalDTO dto) {
+
+      if (hospitalRepository.existsByNameIgnoreCase(dto.getName())) {
+          throw new ApiException(
+              "BUSINESS_RULE_VIOLATION", "Hospital name already exists", HttpStatus.CONFLICT);
+      }
     if (hospitalRepository.existsByCode(dto.getCode())) {
       throw new ApiException(
           "BUSINESS_RULE_VIOLATION", "Hospital code already exists", HttpStatus.CONFLICT);
@@ -57,6 +62,15 @@ public class HospitalAggregateService {
   }
 
   private void updateHospital(Hospital hospital, HospitalDTO dto) {
+      if (!hospital.getName().equalsIgnoreCase(dto.getName())
+          && hospitalRepository.existsByNameIgnoreCaseAndIdNot(
+          dto.getName(), hospital.getId())) {
+
+          throw new ApiException(
+              "BUSINESS_RULE_VIOLATION",
+              "Hospital name already exists",
+              HttpStatus.CONFLICT);
+      }
     if (!hospital.getCode().equals(dto.getCode())
         && hospitalRepository.existsByCodeAndIdNot(dto.getCode(), hospital.getId())) {
       throw new ApiException(

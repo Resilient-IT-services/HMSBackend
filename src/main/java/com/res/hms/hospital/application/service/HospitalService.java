@@ -32,12 +32,19 @@ public class HospitalService {
   @Transactional(readOnly = true)
   public PageResponse<HospitalDTO> list(int page, int size, String name, String status) {
     Specification<Hospital> spec = Specification.where(null);
-    if (name != null && !name.isBlank()) {
-      spec =
-          spec.and(
-              (root, query, cb) ->
-                  cb.like(cb.lower(root.get("name")), "%" + name.toLowerCase() + "%"));
-    }
+      if (name != null && !name.isBlank()) {
+          spec =
+              spec.and(
+                  (root, query, cb) ->
+                      cb.or(
+                          cb.like(
+                              cb.lower(root.get("name")),
+                              "%" + name.toLowerCase() + "%"),
+                          cb.like(
+                              cb.lower(root.get("code")),
+                              "%" + name.toLowerCase() + "%")
+                      ));
+      }
     if (status != null && !status.isBlank()) {
       try {
         HospitalStatus hospitalStatus = HospitalStatus.valueOf(status.toUpperCase());
