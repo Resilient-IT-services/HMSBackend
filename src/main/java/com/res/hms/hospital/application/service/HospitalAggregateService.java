@@ -113,7 +113,11 @@ public class HospitalAggregateService {
     if (dto.getDepartments() != null) {
       hospital.setDepartments(dto.getDepartments().stream()
           .map(name -> departmentRepository.findByName(name)
-              .orElseThrow(() -> new ApiException("NOT_FOUND", "Department " + name + " not found in catalog", HttpStatus.BAD_REQUEST)))
+              .orElseGet(() -> {
+                Department d = new Department();
+                d.setName(name);
+                return departmentRepository.save(d);
+              }))
           .collect(Collectors.toSet()));
     } else {
       hospital.getDepartments().clear();
