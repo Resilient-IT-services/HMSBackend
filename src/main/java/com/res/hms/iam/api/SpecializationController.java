@@ -28,6 +28,12 @@ public class SpecializationController {
             .collect(Collectors.toList()));
   }
 
+  @GetMapping("/all")
+  @PreAuthorize("hasRole('SUPER_ADMIN')")
+  public ApiResponse<List<Specialization>> listManagement() {
+    return ApiResponse.success(specializationRepository.findAll());
+  }
+
   @PostMapping
   @PreAuthorize("hasRole('SUPER_ADMIN')")
   public ApiResponse<Specialization> create(@RequestBody Specialization specialization) {

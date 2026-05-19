@@ -28,6 +28,12 @@ public class DepartmentController {
             .collect(Collectors.toList()));
   }
 
+  @GetMapping("/all")
+  @PreAuthorize("hasRole('SUPER_ADMIN')")
+  public ApiResponse<List<Department>> listManagement() {
+    return ApiResponse.success(departmentRepository.findAll());
+  }
+
   @PostMapping
   @PreAuthorize("hasRole('SUPER_ADMIN')")
   public ApiResponse<Department> create(@RequestBody Department department) {

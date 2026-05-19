@@ -140,9 +140,7 @@ public class UserAggregateService {
     java.util.List<UserDetailsDTO.RoleAssignmentDTO> incoming =
         dto.getMemberships().stream()
             .filter(m -> isSuper || Objects.equals(activeId, m.getHospitalId()))
-            .flatMap(
-                m ->
-                    m.getRoleAssignments().stream().peek(ra -> ra.setHospitalId(m.getHospitalId())))
+            .flatMap(m -> m.getRoleAssignments().stream().map(ra -> normalizeRoleAssignment(user, m, ra)))
             .toList();
 
     CollectionMergeUtil.merge(
@@ -157,6 +155,33 @@ public class UserAggregateService {
             user.getContracts().remove(ra);
           }
         });
+  }
+
+  private UserDetailsDTO.RoleAssignmentDTO normalizeRoleAssignment(
+      UserAccount user,
+      UserDetailsDTO.HospitalMembershipDTO membership,
+      UserDetailsDTO.RoleAssignmentDTO roleAssignment) {
+    roleAssignment.setHospitalId(membership.getHospitalId());
+    if (roleAssignment.getAssignmentId() == null) {
+      findExistingAssignmentId(user, membership.getHospitalId(), roleAssignment.getRoleCode())
+          .ifPresent(roleAssignment::setAssignmentId);
+    }
+    return roleAssignment;
+  }
+
+  private java.util.Optional<UUID> findExistingAssignmentId(
+      UserAccount user, UUID hospitalId, String roleCode) {
+    if (roleCode == null) {
+      return java.util.Optional.empty();
+    }
+    return user.getContracts().stream()
+        .filter(
+            contract ->
+                Objects.equals(contract.getHospitalId(), hospitalId)
+                    && contract.getRole() != null
+                    && roleCode.equals(contract.getRole().getCode().name()))
+        .map(UserContract::getId)
+        .findFirst();
   }
 
   private UserContract createRoleAssignment(
