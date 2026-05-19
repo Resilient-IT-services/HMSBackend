@@ -29,7 +29,7 @@ import org.springframework.stereotype.Service;
 @Service
 public class ExportService {
 
-  public byte[] generateExcel(ReportType type, List<?> data, LocalDate start, LocalDate end)
+  public byte[] generateExcel(ReportType type, List<?> data, java.time.Instant start, java.time.Instant end)
       throws IOException {
     try (Workbook workbook = new XSSFWorkbook();
         ByteArrayOutputStream out = new ByteArrayOutputStream()) {
@@ -83,7 +83,7 @@ public class ExportService {
     }
   }
 
-  public byte[] generatePdf(ReportType type, List<?> data, LocalDate start, LocalDate end) {
+  public byte[] generatePdf(ReportType type, List<?> data, java.time.Instant start, java.time.Instant end) {
     ByteArrayOutputStream out = new ByteArrayOutputStream();
     Document document = new Document(PageSize.A4);
     PdfWriter.getInstance(document, out);

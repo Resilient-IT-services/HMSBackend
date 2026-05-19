@@ -111,8 +111,13 @@ public class DoctorProfileService {
         appointmentRepository.findByDoctorIdAndDate(actualDoctorId, date);
 
     // 5. Determine sessions
-    java.time.LocalDate today = java.time.LocalDate.now();
-    java.time.LocalTime now = java.time.LocalTime.now();
+    String tz = hospitalRepository.findById(hospitalId)
+        .map(com.res.hms.hospital.domain.Hospital::getTimezone)
+        .orElse("Asia/Kolkata");
+    java.time.ZoneId zoneId = java.time.ZoneId.of(tz);
+    java.time.ZonedDateTime nowHospital = java.time.ZonedDateTime.now(zoneId);
+    java.time.LocalDate today = nowHospital.toLocalDate();
+    java.time.LocalTime now = nowHospital.toLocalTime();
 
     if (date.isBefore(today)) {
       return new DoctorAvailabilityResponse(java.util.Collections.emptyList());
@@ -130,7 +135,7 @@ public class DoctorProfileService {
     if (override.isPresent()) {
       var o = override.get();
       if (date.isAfter(today) || (o.getEndTime() != null && o.getEndTime().isAfter(now))) {
-        int count = countBookingsInRange(appointments, o.getStartTime(), o.getEndTime());
+        int count = countBookingsInRange(appointments, o.getStartTime(), o.getEndTime(), zoneId);
         int duration = o.getSlotDurationMinutes() != null ? o.getSlotDurationMinutes() : 15;
 
         sessions.add(
@@ -151,7 +156,7 @@ public class DoctorProfileService {
 
       for (DoctorSchedule s : baseSchedules) {
         if (date.isAfter(today) || (s.getEndTime() != null && s.getEndTime().isAfter(now))) {
-          int count = countBookingsInRange(appointments, s.getStartTime(), s.getEndTime());
+          int count = countBookingsInRange(appointments, s.getStartTime(), s.getEndTime(), zoneId);
           int max = s.getMaxPatients() != null ? s.getMaxPatients() : Integer.MAX_VALUE;
           int duration = s.getSlotDurationMinutes() != null ? s.getSlotDurationMinutes() : 15;
 
@@ -219,13 +224,20 @@ public class DoctorProfileService {
 
     java.util.List<com.res.hms.clinical.domain.Appointment> appointments =
         appointmentRepository.findByDoctorIdAndDate(actualDoctorId, date);
+    
+    String tz = hospitalRepository.findById(hospitalId)
+        .map(com.res.hms.hospital.domain.Hospital::getTimezone)
+        .orElse("Asia/Kolkata");
+    java.time.ZoneId zoneId = java.time.ZoneId.of(tz);
+
     java.util.Set<LocalTime> bookedTimes =
         appointments.stream()
-            .map(a -> a.getAppointmentTime().atZone(java.time.ZoneOffset.UTC).toLocalTime())
+            .map(a -> a.getAppointmentTime().atZone(zoneId).toLocalTime())
             .collect(java.util.stream.Collectors.toSet());
 
-    java.time.LocalDate today = java.time.LocalDate.now();
-    java.time.LocalTime now = java.time.LocalTime.now();
+    java.time.ZonedDateTime nowHospital = java.time.ZonedDateTime.now(zoneId);
+    java.time.LocalDate today = nowHospital.toLocalDate();
+    java.time.LocalTime now = nowHospital.toLocalTime();
 
     List<com.res.hms.iam.application.dto.DoctorSlotDTO> allSlots = new java.util.ArrayList<>();
     Optional<DoctorAvailabilityException> override =
@@ -315,10 +327,11 @@ public class DoctorProfileService {
   private int countBookingsInRange(
       java.util.List<com.res.hms.clinical.domain.Appointment> appointments,
       LocalTime start,
-      LocalTime end) {
+      LocalTime end,
+      java.time.ZoneId zoneId) {
     return (int)
         appointments.stream()
-            .map(a -> a.getAppointmentTime().atZone(java.time.ZoneOffset.UTC).toLocalTime())
+            .map(a -> a.getAppointmentTime().atZone(zoneId).toLocalTime())
             .filter(t -> (t.equals(start) || t.isAfter(start)) && t.isBefore(end))
             .count();
   }

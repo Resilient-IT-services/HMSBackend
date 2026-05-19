@@ -29,6 +29,7 @@ public class AppointmentService {
   private final PrescriptionService prescriptionService;
   private final HospitalContext hospitalContext;
   private final ResourceLookup resourceLookup;
+  private final com.res.hms.hospital.infrastructure.repository.HospitalRepository hospitalRepository;
 
   @Transactional(readOnly = true)
   public AppointmentDTO getById(UUID id) {
@@ -42,7 +43,7 @@ public class AppointmentService {
 
   @Transactional(readOnly = true)
   public PageResponse<AppointmentDTO> list(
-      int page, int size, String search, java.time.LocalDate date) {
+      int page, int size, String search, java.time.Instant from, java.time.Instant to) {
     UUID hospitalId = hospitalContext.requireHospitalId();
     PageRequest pageRequest = PageRequest.of(page, size);
 
@@ -52,10 +53,10 @@ public class AppointmentService {
           appointmentRepository.search(hospitalId, searchPattern, pageRequest).map(this::toDto));
     }
 
-    if (date != null) {
+    if (from != null && to != null) {
       return PageResponse.from(
           appointmentRepository
-              .findAllByHospitalIdAndDate(hospitalId, date, pageRequest)
+              .findAllByHospitalIdAndRange(hospitalId, from, to, pageRequest)
               .map(this::toDto));
     }
 
@@ -67,10 +68,14 @@ public class AppointmentService {
 
   @Transactional(readOnly = true)
   public com.res.hms.clinical.application.appointment.dto.AppointmentStatsDTO getStats(
-      java.time.LocalDate date) {
+      java.time.Instant from, java.time.Instant to) {
     UUID hospitalId = hospitalContext.requireHospitalId();
-    java.time.LocalDate localDate = date != null ? date : java.time.LocalDate.now();
-    java.util.List<Object[]> results = appointmentRepository.getStatsByDate(hospitalId, localDate);
+    
+    if (from == null || to == null) {
+        throw new ApiException("VALIDATION_ERROR", "Range (from and to) is required for stats", HttpStatus.BAD_REQUEST);
+    }
+
+    java.util.List<Object[]> results = appointmentRepository.getStatsByRange(hospitalId, from, to);
 
     java.util.Map<com.res.hms.clinical.domain.AppointmentStatus, Long> byStatus =
         new java.util.EnumMap<>(com.res.hms.clinical.domain.AppointmentStatus.class);
@@ -84,13 +89,40 @@ public class AppointmentService {
       total += count;
     }
 
-    long upcoming = appointmentRepository.countUpcoming(hospitalId, localDate);
+    long upcoming = appointmentRepository.countUpcomingAfter(hospitalId, to);
 
     return com.res.hms.clinical.application.appointment.dto.AppointmentStatsDTO.builder()
         .total(total)
         .upcoming(upcoming)
         .byStatus(byStatus)
         .build();
+  }
+
+  @Transactional(readOnly = true)
+  public PageResponse<AppointmentSummaryDTO> listSummary(
+      int page, int size, String search, java.time.Instant from, java.time.Instant to) {
+    UUID hospitalId = hospitalContext.requireHospitalId();
+    PageRequest pageRequest = PageRequest.of(page, size);
+
+    if (search != null && !search.trim().isEmpty()) {
+      String searchPattern = "%" + search.trim().toLowerCase() + "%";
+      return PageResponse.from(
+          appointmentRepository
+              .search(hospitalId, searchPattern, pageRequest)
+              .map(this::toSummaryDto));
+    }
+
+    if (from != null && to != null) {
+      return PageResponse.from(
+          appointmentRepository
+              .findAllByHospitalIdAndRange(hospitalId, from, to, pageRequest)
+              .map(this::toSummaryDto));
+    }
+
+    return PageResponse.from(
+        appointmentRepository
+            .findAllByHospitalIdOrderByAppointmentTimeDesc(hospitalId, pageRequest)
+            .map(this::toSummaryDto));
   }
 
   @Transactional
@@ -113,33 +145,6 @@ public class AppointmentService {
 
     appointment.setStatus(request.status());
     return toDto(appointmentRepository.save(appointment));
-  }
-
-  @Transactional(readOnly = true)
-  public PageResponse<AppointmentSummaryDTO> listSummary(
-      int page, int size, String search, java.time.LocalDate date) {
-    UUID hospitalId = hospitalContext.requireHospitalId();
-    PageRequest pageRequest = PageRequest.of(page, size);
-
-    if (search != null && !search.trim().isEmpty()) {
-      String searchPattern = "%" + search.trim().toLowerCase() + "%";
-      return PageResponse.from(
-          appointmentRepository
-              .search(hospitalId, searchPattern, pageRequest)
-              .map(this::toSummaryDto));
-    }
-
-    if (date != null) {
-      return PageResponse.from(
-          appointmentRepository
-              .findAllByHospitalIdAndDate(hospitalId, date, pageRequest)
-              .map(this::toSummaryDto));
-    }
-
-    return PageResponse.from(
-        appointmentRepository
-            .findAllByHospitalIdOrderByAppointmentTimeDesc(hospitalId, pageRequest)
-            .map(this::toSummaryDto));
   }
 
   public AppointmentDTO toDto(Appointment appointment) {

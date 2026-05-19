@@ -4,7 +4,6 @@ import com.res.hms.clinical.domain.PatientVisit;
 import com.res.hms.clinical.domain.VisitStatus;
 import com.res.hms.clinical.domain.VisitType;
 import com.res.hms.clinical.infrastructure.repository.PatientVisitRepository;
-import java.time.LocalDateTime;
 import java.util.UUID;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
@@ -23,7 +22,7 @@ public class PatientVisitService {
         visit.setPatientId(patientId);
         visit.setVisitType(type);
         visit.setStatus(VisitStatus.ACTIVE);
-        visit.setStartedAt(LocalDateTime.now());
+        visit.setStartedAt(java.time.Instant.now());
         visit.setVisitNumber("VST-" + System.currentTimeMillis());
         return patientVisitRepository.save(visit);
     }
@@ -32,7 +31,7 @@ public class PatientVisitService {
     public void closeVisit(UUID visitId) {
         patientVisitRepository.findById(visitId).ifPresent(visit -> {
             visit.setStatus(VisitStatus.DISCHARGED);
-            visit.setEndedAt(LocalDateTime.now());
+            visit.setEndedAt(java.time.Instant.now());
             patientVisitRepository.save(visit);
         });
     }

@@ -32,7 +32,7 @@ public class RefundService {
     public void completeRefund(UUID refundId) {
         refundRepository.findById(refundId).ifPresent(refund -> {
             refund.setStatus(RefundStatus.COMPLETED);
-            refund.setProcessedAt(LocalDateTime.now());
+            refund.setProcessedAt(java.time.Instant.now());
             refundRepository.save(refund);
         });
     }

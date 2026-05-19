@@ -39,8 +39,8 @@ public class PatientVisit extends HospitalScopedEntity {
     private VisitStatus status;
 
     @Column(name = "started_at", nullable = false)
-    private LocalDateTime startedAt;
+    private java.time.Instant startedAt;
 
     @Column(name = "ended_at")
-    private LocalDateTime endedAt;
+    private java.time.Instant endedAt;
 }

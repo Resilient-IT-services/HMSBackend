@@ -33,7 +33,7 @@ public class PaymentService {
         payment.setPaymentMode(request.getPaymentMode());
         payment.setReferenceNumber(request.getReferenceNumber());
         payment.setStatus(PaymentStatus.SUCCESS);
-        payment.setPaymentDate(LocalDateTime.now());
+        payment.setPaymentDate(java.time.Instant.now());
         payment.setCollectedBy(collectedBy);
         payment.setReceiptNumber("RCP-" + System.currentTimeMillis());
         

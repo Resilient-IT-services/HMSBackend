@@ -53,5 +53,5 @@ public class Refund extends HospitalScopedEntity {
     private UUID sourceId;
 
     @Column(name = "processed_at")
-    private LocalDateTime processedAt;
+    private java.time.Instant processedAt;
 }

@@ -34,22 +34,22 @@ public class ReportController {
   @PreAuthorize("hasAnyRole('ADMIN', 'SUPER_ADMIN')")
   public ApiResponse<List<?>> getReportPreview(
       @RequestParam ReportType type,
-      @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate startDate,
-      @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate endDate,
+      @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) java.time.Instant from,
+      @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) java.time.Instant to,
       @RequestParam(required = false) java.util.UUID doctorId) {
-    return ApiResponse.success(reportService.getReportData(type, startDate, endDate, doctorId));
+    return ApiResponse.success(reportService.getReportData(type, from, to, doctorId));
   }
 
   @GetMapping("/export/excel")
   @PreAuthorize("hasAnyRole('ADMIN', 'SUPER_ADMIN')")
   public ResponseEntity<Resource> exportExcel(
       @RequestParam ReportType type,
-      @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate startDate,
-      @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate endDate,
+      @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) java.time.Instant from,
+      @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) java.time.Instant to,
       @RequestParam(required = false) java.util.UUID doctorId)
       throws IOException {
-    List<?> data = reportService.getReportData(type, startDate, endDate, doctorId);
-    byte[] content = exportService.generateExcel(type, data, startDate, endDate);
+    List<?> data = reportService.getReportData(type, from, to, doctorId);
+    byte[] content = exportService.generateExcel(type, data, from, to);
 
     return ResponseEntity.ok()
         .header(
@@ -65,11 +65,11 @@ public class ReportController {
   @PreAuthorize("hasAnyRole('ADMIN', 'SUPER_ADMIN')")
   public ResponseEntity<Resource> exportPdf(
       @RequestParam ReportType type,
-      @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate startDate,
-      @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate endDate,
+      @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) java.time.Instant from,
+      @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) java.time.Instant to,
       @RequestParam(required = false) java.util.UUID doctorId) {
-    List<?> data = reportService.getReportData(type, startDate, endDate, doctorId);
-    byte[] content = exportService.generatePdf(type, data, startDate, endDate);
+    List<?> data = reportService.getReportData(type, from, to, doctorId);
+    byte[] content = exportService.generatePdf(type, data, from, to);
 
     return ResponseEntity.ok()
         .header(

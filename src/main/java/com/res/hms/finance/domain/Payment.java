@@ -55,7 +55,7 @@ public class Payment extends HospitalScopedEntity {
     private PaymentStatus status;
 
     @Column(name = "payment_date", nullable = false)
-    private LocalDateTime paymentDate;
+    private java.time.Instant paymentDate;
 
     @Column(name = "collected_by", nullable = false)
     private UUID collectedBy;
