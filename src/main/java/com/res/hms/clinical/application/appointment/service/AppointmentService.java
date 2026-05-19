@@ -1,5 +1,6 @@
 package com.res.hms.clinical.application.appointment.service;
 
+import com.res.hms.audit.domain.DomainEntity;
 import com.res.hms.clinical.application.appointment.dto.AppointmentDTO;
 import com.res.hms.clinical.application.appointment.dto.AppointmentSummaryDTO;
 import com.res.hms.clinical.application.appointment.dto.UpdateAppointmentStatusRequest;
@@ -92,7 +93,7 @@ public class AppointmentService {
   }
 
   @Transactional
-  @Auditable(entity = "appointment", action = "UPDATE_STATUS")
+  @Auditable(entity = DomainEntity.APPOINTMENT, action = "UPDATE_STATUS")
   public AppointmentDTO updateStatus(UUID id, UpdateAppointmentStatusRequest request) {
     UUID hospitalId = hospitalContext.requireHospitalId();
     Appointment appointment =
