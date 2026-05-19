@@ -57,6 +57,16 @@ public class HospitalContext {
     return getPrincipal().map(HospitalUserPrincipal::userId).orElse(null);
   }
 
+  public boolean hasRole(com.res.hms.iam.domain.RoleCode roleCode) {
+    return getPrincipal()
+        .map(p -> p.roleCodes() != null && p.roleCodes().contains(roleCode))
+        .orElse(false);
+  }
+
+  public boolean isReceptionist() {
+    return hasRole(com.res.hms.iam.domain.RoleCode.RECEPTIONIST) && !isSuperAdmin() && !hasRole(com.res.hms.iam.domain.RoleCode.ADMIN);
+  }
+
   private Optional<HospitalUserPrincipal> getPrincipal() {
     Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
     if (authentication == null

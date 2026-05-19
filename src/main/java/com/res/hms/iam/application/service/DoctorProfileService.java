@@ -46,7 +46,7 @@ public class DoctorProfileService {
       appointmentRepository;
 
   @Transactional(readOnly = true)
-  public DoctorAvailabilityResponse getAvailableSlots(UUID doctorId, java.time.LocalDate date) {
+  public DoctorAvailabilityResponse getAvailableSlots(UUID doctorId, java.time.LocalDateTime date) {
     UUID hospitalId = hospitalContext.requireHospitalId();
     java.time.DayOfWeek dbDay = date.getDayOfWeek();
 

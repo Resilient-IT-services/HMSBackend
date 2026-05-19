@@ -42,7 +42,7 @@ public class AppointmentService {
 
   @Transactional(readOnly = true)
   public PageResponse<AppointmentDTO> list(
-      int page, int size, String search, java.time.LocalDate date) {
+      int page, int size, String search, java.time.LocalDateTime date) {
     UUID hospitalId = hospitalContext.requireHospitalId();
     PageRequest pageRequest = PageRequest.of(page, size);
 
@@ -55,7 +55,7 @@ public class AppointmentService {
     if (date != null) {
       return PageResponse.from(
           appointmentRepository
-              .findAllByHospitalIdAndDate(hospitalId, date, pageRequest)
+              .findAllByHospitalIdAndDate(hospitalId, date.toLocalDate(), pageRequest)
               .map(this::toDto));
     }
 
@@ -67,9 +67,10 @@ public class AppointmentService {
 
   @Transactional(readOnly = true)
   public com.res.hms.clinical.application.appointment.dto.AppointmentStatsDTO getStats(
-      java.time.LocalDate date) {
+      java.time.LocalDateTime date) {
     UUID hospitalId = hospitalContext.requireHospitalId();
-    java.util.List<Object[]> results = appointmentRepository.getStatsByDate(hospitalId, date);
+    java.time.LocalDate localDate = date != null ? date.toLocalDate() : java.time.LocalDate.now();
+    java.util.List<Object[]> results = appointmentRepository.getStatsByDate(hospitalId, localDate);
 
     java.util.Map<com.res.hms.clinical.domain.AppointmentStatus, Long> byStatus =
         new java.util.EnumMap<>(com.res.hms.clinical.domain.AppointmentStatus.class);
@@ -83,7 +84,7 @@ public class AppointmentService {
       total += count;
     }
 
-    long upcoming = appointmentRepository.countUpcoming(hospitalId, date);
+    long upcoming = appointmentRepository.countUpcoming(hospitalId, localDate);
 
     return com.res.hms.clinical.application.appointment.dto.AppointmentStatsDTO.builder()
         .total(total)
@@ -100,13 +101,23 @@ public class AppointmentService {
         resourceLookup.findRequired(
             id, hospitalId, appointmentRepository::findByIdAndHospitalId, "Appointment");
 
+    if (hospitalContext.isReceptionist()) {
+        if (appointment.getStatus() == com.res.hms.clinical.domain.AppointmentStatus.CONSULTATION_STARTED
+            || appointment.getStatus() == com.res.hms.clinical.domain.AppointmentStatus.PRESCRIPTION_FINALIZED
+            || appointment.getStatus() == com.res.hms.clinical.domain.AppointmentStatus.COMPLETED) {
+            throw new ApiException("BUSINESS_RULE_VIOLATION",
+                "Receptionists cannot change appointment status once consultation has started.",
+                HttpStatus.BAD_REQUEST);
+        }
+    }
+
     appointment.setStatus(request.status());
     return toDto(appointmentRepository.save(appointment));
   }
 
   @Transactional(readOnly = true)
   public PageResponse<AppointmentSummaryDTO> listSummary(
-      int page, int size, String search, java.time.LocalDate date) {
+      int page, int size, String search, java.time.LocalDateTime date) {
     UUID hospitalId = hospitalContext.requireHospitalId();
     PageRequest pageRequest = PageRequest.of(page, size);
 

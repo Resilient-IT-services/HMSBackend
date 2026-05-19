@@ -53,6 +53,16 @@ public class AppointmentAggregateService {
         }
     }
 
+    if (existing != null && hospitalContext.isReceptionist()) {
+        if (existing.getStatus() == AppointmentStatus.CONSULTATION_STARTED 
+            || existing.getStatus() == AppointmentStatus.PRESCRIPTION_FINALIZED 
+            || existing.getStatus() == AppointmentStatus.COMPLETED) {
+            throw new ApiException("BUSINESS_RULE_VIOLATION", 
+                "Receptionists cannot modify an appointment once consultation has started.", 
+                HttpStatus.BAD_REQUEST);
+        }
+    }
+
     boolean alreadyBooked;
     if (dto.getId() == null) {
       alreadyBooked = appointmentRepository.existsByPatientIdAndAppointmentTimeAndStatusNot(

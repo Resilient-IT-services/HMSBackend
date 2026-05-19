@@ -18,11 +18,11 @@ public interface AppointmentRepository extends BaseRepository<Appointment> {
   @Query(
       "SELECT a FROM Appointment a LEFT JOIN FETCH a.patient LEFT JOIN FETCH a.doctor "
           + "WHERE a.hospitalId = :hospitalId AND "
-          + "CAST(a.appointmentTime AS date) = :date "
+          + "CAST(a.appointmentTime AS date) > :date "
           + "ORDER BY a.appointmentTime DESC")
   Page<Appointment> findAllByHospitalIdAndDate(
       @Param("hospitalId") UUID hospitalId,
-      @Param("date") java.time.LocalDate date,
+      @Param("date") java.time.LocalDateTime date,
       Pageable pageable);
 
   @Query(
@@ -52,10 +52,10 @@ public interface AppointmentRepository extends BaseRepository<Appointment> {
   @Query(
       "SELECT a FROM Appointment a "
           + "WHERE a.doctorId = :doctorId "
-          + "AND CAST(a.appointmentTime AS date) = :date "
+          + "AND CAST(a.appointmentTime AS date) > :date "
           + "AND a.status NOT IN (com.res.hms.clinical.domain.AppointmentStatus.CANCELLED)")
   java.util.List<Appointment> findByDoctorIdAndDate(
-      @Param("doctorId") UUID doctorId, @Param("date") java.time.LocalDate date);
+      @Param("doctorId") UUID doctorId, @Param("date") java.time.LocalDateTime date);
 
   @Query(
       "SELECT MAX(a.tokenNumber) FROM Appointment a "
