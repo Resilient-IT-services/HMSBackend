@@ -28,6 +28,10 @@ public class HospitalDTO {
   private String pincode;
   private String gstin;
   private String registrationNo;
+
+  @NotBlank(message = "timezone is required")
+  private String timezone;
+
   private HospitalStatus status;
   private HospitalSettings settings;
   private List<String> departments;

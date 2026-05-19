@@ -6,7 +6,6 @@ import com.res.hms.clinical.infrastructure.repository.PatientRepository;
 import com.res.hms.core.exception.ApiException;
 import com.res.hms.core.tenant.HospitalContext;
 import jakarta.annotation.PostConstruct;
-import java.time.LocalDateTime;
 import java.util.List;
 import java.util.UUID;
 import lombok.RequiredArgsConstructor;
@@ -93,12 +92,13 @@ public class PatientAggregateService {
     Patient patient = new Patient();
     patient.setHospitalId(hospitalId);
     updatePatientFields(patient, dto);
-    patient.setPatientCode(generatePatientCode(hospitalId, LocalDateTime.now()));
+    patient.setPatientCode(generatePatientCode(hospitalId, java.time.Instant.now()));
     return patient;
   }
 
-  private String generatePatientCode(UUID hospitalId, LocalDateTime date) {
-    String yearSuffix = String.valueOf(date.getYear()).substring(2);
+  private String generatePatientCode(UUID hospitalId, java.time.Instant date) {
+    java.time.ZonedDateTime zdt = date.atZone(java.time.ZoneOffset.UTC);
+    String yearSuffix = String.valueOf(zdt.getYear()).substring(2);
     String prefix = yearSuffix + "-%";
 
     return patientRepository

@@ -66,10 +66,10 @@ public class AppointmentAggregateService {
     boolean alreadyBooked;
     if (dto.getId() == null) {
       alreadyBooked = appointmentRepository.existsByPatientIdAndAppointmentTimeAndStatusNot(
-          dto.getPatientId(), dto.getAppointmentTime(), AppointmentStatus.CANCELLED);
+          dto.getPatientId(), dto.getAppointmentTime().toInstant(), AppointmentStatus.CANCELLED);
     } else {
       alreadyBooked = appointmentRepository.existsByPatientIdAndAppointmentTimeAndIdNotAndStatusNot(
-          dto.getPatientId(), dto.getAppointmentTime(), dto.getId(), AppointmentStatus.CANCELLED);
+          dto.getPatientId(), dto.getAppointmentTime().toInstant(), dto.getId(), AppointmentStatus.CANCELLED);
     }
 
     if (alreadyBooked) {
@@ -218,7 +218,7 @@ public class AppointmentAggregateService {
     appointment.setDoctorId(profile.getId());
     appointment.setDoctorName(profile.getFullName());
     appointment.setStatus(dto.getStatus() != null ? dto.getStatus() : AppointmentStatus.SCHEDULED);
-    appointment.setTokenNumber(generateNextToken(profile.getId(), dto.getAppointmentTime()));
+    appointment.setTokenNumber(generateNextToken(profile.getId(), dto.getAppointmentTime().toInstant()));
     
     if (dto.getVisitId() != null) {
       appointment.setVisitId(dto.getVisitId());
@@ -237,6 +237,7 @@ public class AppointmentAggregateService {
     boolean dateChanged =
         !appointment
             .getAppointmentTime()
+            .atZone(java.time.ZoneOffset.UTC)
             .toLocalDate()
             .equals(dto.getAppointmentTime().toLocalDate());
 
@@ -256,14 +257,14 @@ public class AppointmentAggregateService {
 
     if (doctorChanged || dateChanged) {
       appointment.setTokenNumber(
-          generateNextToken(appointment.getDoctorId(), dto.getAppointmentTime()));
+          generateNextToken(appointment.getDoctorId(), dto.getAppointmentTime().toInstant()));
     }
 
     updateAppointmentFields(appointment, dto, hospitalId);
   }
 
-  private Integer generateNextToken(UUID doctorId, java.time.LocalDateTime appointmentTime) {
-    java.time.LocalDate date = appointmentTime.toLocalDate();
+  private Integer generateNextToken(UUID doctorId, java.time.Instant appointmentTime) {
+    java.time.LocalDate date = appointmentTime.atZone(java.time.ZoneOffset.UTC).toLocalDate();
     Integer lastToken = appointmentRepository.findMaxTokenByDoctorAndDate(doctorId, date);
 
     if (lastToken == null) {
@@ -275,7 +276,7 @@ public class AppointmentAggregateService {
 
   private void updateAppointmentFields(
       Appointment appointment, AppointmentDTO dto, UUID hospitalId) {
-    appointment.setAppointmentTime(dto.getAppointmentTime());
+    appointment.setAppointmentTime(dto.getAppointmentTime().toInstant());
     appointment.setNotes(dto.getNotes());
 
     if (dto.getVitals() != null) {

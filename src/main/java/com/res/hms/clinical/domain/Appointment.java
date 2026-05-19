@@ -45,7 +45,7 @@ public class Appointment extends HospitalScopedEntity {
   private String doctorName;
 
   @Column(name = "appointment_time", nullable = false)
-  private LocalDateTime appointmentTime;
+  private java.time.Instant appointmentTime;
 
   @Enumerated(EnumType.STRING)
   @Column(nullable = false)

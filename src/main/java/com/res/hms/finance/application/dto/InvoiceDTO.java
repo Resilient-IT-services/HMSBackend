@@ -27,7 +27,7 @@ public class InvoiceDTO {
     private BigDecimal totalAmount;
     private BigDecimal amountPaid;
     private BigDecimal amountDue;
-    private LocalDateTime dueDate;
-    private LocalDateTime createdAt;
+    private java.time.LocalDateTime dueDate;
+    private java.time.Instant createdAt;
     private List<InvoiceItemDTO> items;
 }

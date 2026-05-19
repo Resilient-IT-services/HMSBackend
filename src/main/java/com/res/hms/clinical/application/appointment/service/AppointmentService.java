@@ -42,7 +42,7 @@ public class AppointmentService {
 
   @Transactional(readOnly = true)
   public PageResponse<AppointmentDTO> list(
-      int page, int size, String search, java.time.LocalDateTime date) {
+      int page, int size, String search, java.time.LocalDate date) {
     UUID hospitalId = hospitalContext.requireHospitalId();
     PageRequest pageRequest = PageRequest.of(page, size);
 
@@ -55,7 +55,7 @@ public class AppointmentService {
     if (date != null) {
       return PageResponse.from(
           appointmentRepository
-              .findAllByHospitalIdAndDate(hospitalId, date.toLocalDate(), pageRequest)
+              .findAllByHospitalIdAndDate(hospitalId, date, pageRequest)
               .map(this::toDto));
     }
 
@@ -67,9 +67,9 @@ public class AppointmentService {
 
   @Transactional(readOnly = true)
   public com.res.hms.clinical.application.appointment.dto.AppointmentStatsDTO getStats(
-      java.time.LocalDateTime date) {
+      java.time.LocalDate date) {
     UUID hospitalId = hospitalContext.requireHospitalId();
-    java.time.LocalDate localDate = date != null ? date.toLocalDate() : java.time.LocalDate.now();
+    java.time.LocalDate localDate = date != null ? date : java.time.LocalDate.now();
     java.util.List<Object[]> results = appointmentRepository.getStatsByDate(hospitalId, localDate);
 
     java.util.Map<com.res.hms.clinical.domain.AppointmentStatus, Long> byStatus =
@@ -117,7 +117,7 @@ public class AppointmentService {
 
   @Transactional(readOnly = true)
   public PageResponse<AppointmentSummaryDTO> listSummary(
-      int page, int size, String search, java.time.LocalDateTime date) {
+      int page, int size, String search, java.time.LocalDate date) {
     UUID hospitalId = hospitalContext.requireHospitalId();
     PageRequest pageRequest = PageRequest.of(page, size);
 
@@ -150,7 +150,7 @@ public class AppointmentService {
     AppointmentDTO.AppointmentDTOBuilder builder =
         AppointmentDTO.builder()
             .id(appointment.getId())
-            .appointmentTime(appointment.getAppointmentTime())
+            .appointmentTime(appointment.getAppointmentTime().atOffset(java.time.ZoneOffset.UTC))
             .status(appointment.getStatus())
             .tokenNumber(appointment.getTokenNumber())
             .sessionPeriod(appointment.getSessionPeriod())
@@ -191,7 +191,7 @@ public class AppointmentService {
         .doctorId(appointment.getDoctorId())
         .doctorName(appointment.getDoctorName())
         .doctorSpecialization(appointment.getDoctor() != null && appointment.getDoctor().getSpecializations() != null && !appointment.getDoctor().getSpecializations().isEmpty() ? appointment.getDoctor().getSpecializations().stream().map(com.res.hms.iam.domain.Specialization::getName).collect(java.util.stream.Collectors.joining(", ")) : null)
-        .appointmentTime(appointment.getAppointmentTime())
+        .appointmentTime(appointment.getAppointmentTime().atOffset(java.time.ZoneOffset.UTC))
         .status(appointment.getStatus())
         .tokenNumber(appointment.getTokenNumber())
         .build();

@@ -154,7 +154,7 @@ class UnifiedFinancialWorkflowIntegrationTest {
         OPDEncounterRequest request = new OPDEncounterRequest();
         request.setPatientId(patientId);
         request.setDoctorId(doctorId);
-        request.setAppointmentTime(LocalDateTime.now().plusDays(1));
+        request.setAppointmentTime(java.time.OffsetDateTime.now().plusDays(1));
 
         OPDEncounterRequest.PaymentInfo paymentInfo = new OPDEncounterRequest.PaymentInfo();
         paymentInfo.setAmount(new BigDecimal("500.00"));

@@ -3,7 +3,7 @@ package com.res.hms.clinical.application.appointment.dto;
 import com.res.hms.finance.domain.PaymentMode;
 import jakarta.validation.constraints.NotNull;
 import java.math.BigDecimal;
-import java.time.LocalDateTime;
+import java.time.OffsetDateTime;
 import java.util.UUID;
 import lombok.Data;
 
@@ -11,7 +11,7 @@ import lombok.Data;
 public class OPDEncounterRequest {
     @NotNull private UUID patientId;
     @NotNull private UUID doctorId;
-    @NotNull private LocalDateTime appointmentTime;
+    @NotNull private OffsetDateTime appointmentTime;
     private String notes;
     
     // Optional Vitals

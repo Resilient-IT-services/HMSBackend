@@ -21,7 +21,7 @@ import com.res.hms.iam.domain.ReceptionistProfile;
 import com.res.hms.iam.domain.UserAccount;
 import com.res.hms.iam.infrastructure.repository.ReceptionistProfileRepository;
 import com.res.hms.iam.infrastructure.repository.UserAccountRepository;
-import java.time.LocalDateTime;
+import java.time.Instant;
 import java.util.List;
 import java.util.Map;
 import org.junit.jupiter.api.Test;
@@ -46,8 +46,8 @@ class JsonFieldsIntegrationTest {
     AuditLog log = new AuditLog();
     log.setEntityName(DomainEntity.HOSPITAL);
     log.setAction(AuditAction.CREATE);
-    log.setCreatedAt(LocalDateTime.now());
-    log.setUpdatedAt(LocalDateTime.now());
+    log.setCreatedAt(Instant.now());
+    log.setUpdatedAt(Instant.now());
 
     AuditDetail detail =
         AuditDetail.builder().before(Map.of("key", "old")).after(Map.of("key", "new")).build();
@@ -66,8 +66,8 @@ class JsonFieldsIntegrationTest {
     UserAccount user = new UserAccount();
     user.setUsername("doc_json_test");
     user.setPasswordHash("hash");
-    user.setCreatedAt(LocalDateTime.now());
-    user.setUpdatedAt(LocalDateTime.now());
+    user.setCreatedAt(Instant.now());
+    user.setUpdatedAt(Instant.now());
     userAccountRepository.save(user);
 
     DoctorProfile doctor = new DoctorProfile();
@@ -101,8 +101,8 @@ class JsonFieldsIntegrationTest {
     hospital.setName("JSON Hospital");
     hospital.setCode("JHOSP");
     hospital.setStatus(HospitalStatus.ACTIVE);
-    hospital.setCreatedAt(LocalDateTime.now());
-    hospital.setUpdatedAt(LocalDateTime.now());
+    hospital.setCreatedAt(Instant.now());
+    hospital.setUpdatedAt(Instant.now());
 
     HospitalSettings settings =
         HospitalSettings.builder()
@@ -125,8 +125,8 @@ class JsonFieldsIntegrationTest {
     UserAccount user = new UserAccount();
     user.setUsername("recep_json_test");
     user.setPasswordHash("hash");
-    user.setCreatedAt(LocalDateTime.now());
-    user.setUpdatedAt(LocalDateTime.now());
+    user.setCreatedAt(Instant.now());
+    user.setUpdatedAt(Instant.now());
     userAccountRepository.save(user);
 
     ReceptionistProfile profile = new ReceptionistProfile();

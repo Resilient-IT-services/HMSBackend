@@ -72,6 +72,7 @@ public class HospitalService {
         .status(hospital.getStatus())
         .gstin(hospital.getGstin())
         .registrationNo(hospital.getRegistrationNo())
+        .timezone(hospital.getTimezone())
         .settings(hospital.getSettings())
         .departments(hospital.getDepartments().stream()
             .map(com.res.hms.hospital.domain.Department::getName)

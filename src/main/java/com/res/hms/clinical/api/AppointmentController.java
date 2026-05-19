@@ -59,8 +59,8 @@ public class AppointmentController {
       @RequestParam(required = false) String search,
       @RequestParam(required = false)
           @org.springframework.format.annotation.DateTimeFormat(
-              iso = DATE_TIME)
-          java.time.LocalDateTime date) {
+              iso = org.springframework.format.annotation.DateTimeFormat.ISO.DATE)
+          java.time.LocalDate date) {
     return ApiResponse.success(appointmentService.list(page, Math.min(size, 100), search, date));
   }
 
@@ -72,8 +72,8 @@ public class AppointmentController {
       @RequestParam(required = false) String search,
       @RequestParam(required = false)
           @org.springframework.format.annotation.DateTimeFormat(
-              iso = DATE_TIME)
-          java.time.LocalDateTime date) {
+              iso = org.springframework.format.annotation.DateTimeFormat.ISO.DATE)
+          java.time.LocalDate date) {
     return ApiResponse.success(
         appointmentService.listSummary(page, Math.min(size, 100), search, date));
   }
@@ -83,10 +83,10 @@ public class AppointmentController {
   public ApiResponse<com.res.hms.clinical.application.appointment.dto.AppointmentStatsDTO> getStats(
       @RequestParam(required = false)
           @org.springframework.format.annotation.DateTimeFormat(
-              iso = DATE_TIME)
-          java.time.LocalDateTime date) {
+              iso = org.springframework.format.annotation.DateTimeFormat.ISO.DATE)
+          java.time.LocalDate date) {
     return ApiResponse.success(
-        appointmentService.getStats(date != null ? date : java.time.LocalDateTime.now()));
+        appointmentService.getStats(date != null ? date : java.time.LocalDate.now()));
   }
 
   @GetMapping("/{appointmentId}")

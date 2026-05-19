@@ -46,7 +46,7 @@ public class DoctorProfileService {
       appointmentRepository;
 
   @Transactional(readOnly = true)
-  public DoctorAvailabilityResponse getAvailableSlots(UUID doctorId, java.time.LocalDateTime date) {
+  public DoctorAvailabilityResponse getAvailableSlots(UUID doctorId, java.time.LocalDate date) {
     UUID hospitalId = hospitalContext.requireHospitalId();
     java.time.DayOfWeek dbDay = date.getDayOfWeek();
 
@@ -129,7 +129,7 @@ public class DoctorProfileService {
 
     if (override.isPresent()) {
       var o = override.get();
-      if (date.isAfter(today) || o.getEndTime().isAfter(now)) {
+      if (date.isAfter(today) || (o.getEndTime() != null && o.getEndTime().isAfter(now))) {
         int count = countBookingsInRange(appointments, o.getStartTime(), o.getEndTime());
         int duration = o.getSlotDurationMinutes() != null ? o.getSlotDurationMinutes() : 15;
 
@@ -150,7 +150,7 @@ public class DoctorProfileService {
               .toList();
 
       for (DoctorSchedule s : baseSchedules) {
-        if (date.isAfter(today) || s.getEndTime().isAfter(now)) {
+        if (date.isAfter(today) || (s.getEndTime() != null && s.getEndTime().isAfter(now))) {
           int count = countBookingsInRange(appointments, s.getStartTime(), s.getEndTime());
           int max = s.getMaxPatients() != null ? s.getMaxPatients() : Integer.MAX_VALUE;
           int duration = s.getSlotDurationMinutes() != null ? s.getSlotDurationMinutes() : 15;
@@ -221,7 +221,7 @@ public class DoctorProfileService {
         appointmentRepository.findByDoctorIdAndDate(actualDoctorId, date);
     java.util.Set<LocalTime> bookedTimes =
         appointments.stream()
-            .map(a -> a.getAppointmentTime().toLocalTime())
+            .map(a -> a.getAppointmentTime().atZone(java.time.ZoneOffset.UTC).toLocalTime())
             .collect(java.util.stream.Collectors.toSet());
 
     java.time.LocalDate today = java.time.LocalDate.now();
@@ -318,7 +318,7 @@ public class DoctorProfileService {
       LocalTime end) {
     return (int)
         appointments.stream()
-            .map(a -> a.getAppointmentTime().toLocalTime())
+            .map(a -> a.getAppointmentTime().atZone(java.time.ZoneOffset.UTC).toLocalTime())
             .filter(t -> (t.equals(start) || t.isAfter(start)) && t.isBefore(end))
             .count();
   }

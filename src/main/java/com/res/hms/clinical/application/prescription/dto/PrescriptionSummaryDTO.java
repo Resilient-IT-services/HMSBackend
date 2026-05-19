@@ -1,6 +1,5 @@
 package com.res.hms.clinical.application.prescription.dto;
 
-import java.time.LocalDateTime;
 import java.util.UUID;
 
 import com.res.hms.clinical.domain.PrescriptionStatus;
@@ -23,6 +22,6 @@ public class PrescriptionSummaryDTO {
   private UUID appointmentId;
   private UUID visitId;
   private PrescriptionStatus status;
-  private LocalDateTime createdAt;
+  private java.time.Instant createdAt;
   private Integer itemCount;
 }

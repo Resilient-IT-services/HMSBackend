@@ -98,7 +98,7 @@ class ReceptionistRestrictionIntegrationTest {
     appointment.setPatientName(patient.getFullName());
     appointment.setDoctorId(doctor.getId()); // Use doctor.getId() directly since MapsId is used
     appointment.setDoctorName(doctor.getFullName());
-    appointment.setAppointmentTime(LocalDateTime.now().plusDays(1));
+    appointment.setAppointmentTime(java.time.Instant.now().plus(1, java.time.temporal.ChronoUnit.DAYS));
     appointment.setStatus(AppointmentStatus.CONSULTATION_STARTED);
     appointment.setTokenNumber(1);
     appointment.setVisitId(visit.getId());
