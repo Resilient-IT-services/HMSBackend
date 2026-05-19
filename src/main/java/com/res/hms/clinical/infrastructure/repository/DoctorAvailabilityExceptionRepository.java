@@ -15,6 +15,8 @@ public interface DoctorAvailabilityExceptionRepository
 
   List<DoctorAvailabilityException> findByDoctorIdAndHospitalId(UUID doctorId, UUID hospitalId);
 
+  void deleteByDoctorIdAndHospitalId(UUID doctorId, UUID hospitalId);
+
   @Query(
       "SELECT e FROM DoctorAvailabilityException e WHERE e.doctorId = :doctorId AND e.hospitalId = :hospitalId AND e.date = :date")
   List<DoctorAvailabilityException> findByDoctorIdAndHospitalIdAndDate(

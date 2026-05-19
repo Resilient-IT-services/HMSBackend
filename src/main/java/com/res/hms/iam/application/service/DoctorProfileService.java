@@ -507,6 +507,15 @@ public class DoctorProfileService {
     assignment.setDoctorDetails(det);
   }
 
+  @Transactional
+  public void deleteHospitalSpecificData(UserContract assignment) {
+    scheduleRepository.deleteByAssignmentId(assignment.getId());
+    if (assignment.getUser().getDoctorProfile() != null) {
+      availabilityExceptionRepository.deleteByDoctorIdAndHospitalId(
+          assignment.getUser().getDoctorProfile().getId(), assignment.getHospitalId());
+    }
+  }
+
   public DoctorProfile requireDoctor(UUID id, UUID hospitalId) {
     return resourceLookup.findRequired(
         id, hospitalId, doctorProfileRepository::findByIdAndHospitalId, "DoctorProfile");

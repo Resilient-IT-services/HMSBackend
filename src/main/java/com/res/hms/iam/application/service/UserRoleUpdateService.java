@@ -47,6 +47,13 @@ public class UserRoleUpdateService {
     }
   }
 
+  @Transactional
+  public void handleAssignmentDeletion(UserContract contract) {
+    if (contract.getRole().getCode() == RoleCode.DOCTOR) {
+      doctorProfileService.deleteHospitalSpecificData(contract);
+    }
+  }
+
   private void updateRoleSpecificHospitalDetails(
       UserAccount user, UUID hospitalId, UserDetailsDTO.RoleAssignmentDTO raDto) {
     RoleCode code = RoleCode.valueOf(raDto.getRoleCode());
