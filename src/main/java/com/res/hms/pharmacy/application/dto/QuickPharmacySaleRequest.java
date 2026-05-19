@@ -14,7 +14,7 @@ import lombok.NoArgsConstructor;
 @NoArgsConstructor
 @AllArgsConstructor
 public class QuickPharmacySaleRequest {
-  private String saleType; // WALKIN, VISIT
+  private com.res.hms.pharmacy.domain.SaleType saleType; // WALKIN, VISIT
   private UUID patientId;
   private UUID visitId;
   private UUID prescriptionId;

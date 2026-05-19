@@ -28,6 +28,7 @@ import com.res.hms.pharmacy.domain.Medicine;
 import com.res.hms.pharmacy.domain.PharmacyStock;
 import com.res.hms.pharmacy.infrastructure.repository.MedicineRepository;
 import com.res.hms.pharmacy.infrastructure.repository.PharmacyStockRepository;
+import com.res.hms.pharmacy.domain.SaleType;
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.List;
@@ -237,8 +238,8 @@ class UnifiedFinancialWorkflowIntegrationTest {
 
         // 2. Prepare Quick Sale Request
         QuickPharmacySaleRequest request = new QuickPharmacySaleRequest();
-        request.setSaleType("WALKIN");
-        request.setCustomerName("Quick Customer");
+        request.setSaleType(SaleType.WALKIN);
+        request.setCustomerName("Walkin Customer");
         request.setCustomerPhone("1234567890");
         request.setExternalDoctorName("Dr. External");
 

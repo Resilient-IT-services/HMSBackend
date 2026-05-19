@@ -15,7 +15,7 @@ import lombok.NoArgsConstructor;
 @AllArgsConstructor
 public class ScheduleDTO {
   private UUID id;
-  private Short dayOfWeek; // 0-6
+  private java.time.DayOfWeek dayOfWeek;
 
   @JsonFormat(pattern = "HH:mm")
   @Schema(type = "string", pattern = "HH:mm", example = "09:00")

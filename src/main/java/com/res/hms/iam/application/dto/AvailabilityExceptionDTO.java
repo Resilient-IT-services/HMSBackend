@@ -21,7 +21,7 @@ public class AvailabilityExceptionDTO {
   @Schema(type = "string", example = "2026-05-01")
   private LocalDate date;
 
-  private String type; // FULL_DAY_OFF, MODIFIED, ADDED
+  private com.res.hms.clinical.domain.ExceptionType type; // FULL_DAY_OFF, MODIFIED, ADDED
 
   @JsonFormat(pattern = "HH:mm")
   @Schema(type = "string", example = "14:00")

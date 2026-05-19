@@ -29,7 +29,8 @@ public class Patient extends HospitalScopedEntity {
   private String medicalHistory;
 
   @Column(name = "blood_group")
-  private String bloodGroup;
+  @Enumerated(EnumType.STRING)
+  private BloodGroup bloodGroup;
 
   @Enumerated(EnumType.STRING)
   private Gender gender;

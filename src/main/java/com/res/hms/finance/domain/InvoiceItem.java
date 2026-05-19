@@ -56,7 +56,8 @@ public class InvoiceItem extends HospitalScopedEntity {
     private BigDecimal netTotal;
 
     @Column(name = "source_type", nullable = false)
-    private String sourceType;
+    @Enumerated(jakarta.persistence.EnumType.STRING)
+    private FinanceSourceType sourceType;
 
     @Column(name = "source_id", nullable = false)
     private UUID sourceId;

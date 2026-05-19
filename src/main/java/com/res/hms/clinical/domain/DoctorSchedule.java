@@ -2,6 +2,7 @@ package com.res.hms.clinical.domain;
 
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
+import jakarta.persistence.Enumerated;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
@@ -25,7 +26,8 @@ public class DoctorSchedule {
   private java.util.UUID assignmentId;
 
   @Column(name = "day_of_week", nullable = false)
-  private Short dayOfWeek; // 1-7 (Monday-Sunday) to match DB check constraint
+  @Enumerated(jakarta.persistence.EnumType.STRING)
+  private java.time.DayOfWeek dayOfWeek;
 
   @Column(name = "start_time", nullable = false)
   private LocalTime startTime;

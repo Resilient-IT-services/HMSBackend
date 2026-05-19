@@ -46,7 +46,8 @@ public class Refund extends HospitalScopedEntity {
     private RefundStatus status;
 
     @Column(name = "source_type")
-    private String sourceType;
+    @Enumerated(jakarta.persistence.EnumType.STRING)
+    private FinanceSourceType sourceType;
 
     @Column(name = "source_id")
     private UUID sourceId;

@@ -3,6 +3,7 @@ package com.res.hms.inventory.domain;
 import com.res.hms.core.domain.HospitalScopedEntity;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
+import jakarta.persistence.Enumerated;
 import jakarta.persistence.Table;
 import lombok.Getter;
 import lombok.Setter;
@@ -18,7 +19,8 @@ public class Item extends HospitalScopedEntity {
 
   private String category;
 
-  private String unit;
+  @Enumerated(jakarta.persistence.EnumType.STRING)
+  private UnitOfMeasure unit;
 
   @Column(nullable = false)
   private boolean deleted = false;

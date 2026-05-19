@@ -22,6 +22,6 @@ public class InvoiceItemDTO {
     private BigDecimal taxAmount;
     private BigDecimal discountAmount;
     private BigDecimal netTotal;
-    private String sourceType;
+    private com.res.hms.finance.domain.FinanceSourceType sourceType;
     private UUID sourceId;
 }

@@ -2,6 +2,7 @@ package com.res.hms.audit.application.service;
 
 import com.res.hms.audit.application.dto.AuditDetail;
 import com.res.hms.audit.application.dto.AuditLogResponse;
+import com.res.hms.audit.domain.DomainEntity;
 import com.res.hms.audit.domain.AuditAction;
 import com.res.hms.audit.domain.AuditLog;
 import com.res.hms.audit.infrastructure.repository.AuditLogRepository;
@@ -23,7 +24,7 @@ public class AuditLogService {
   private final HospitalContext hospitalContext;
 
   public void record(
-      UUID hospitalId, String entityName, UUID entityId, AuditAction action, AuditDetail details) {
+      UUID hospitalId, DomainEntity entityName, UUID entityId, AuditAction action, AuditDetail details) {
     AuditLog auditLog = new AuditLog();
     auditLog.setHospitalId(hospitalId);
     auditLog.setEntityName(entityName);
@@ -55,7 +56,7 @@ public class AuditLogService {
   private AuditLogResponse toResponse(AuditLog auditLog) {
     return new AuditLogResponse(
         auditLog.getId(),
-        auditLog.getEntityName(),
+        auditLog.getEntityName() != null ? auditLog.getEntityName().name() : null,
         auditLog.getEntityId(),
         auditLog.getAction(),
         auditLog.getPerformedBy(),

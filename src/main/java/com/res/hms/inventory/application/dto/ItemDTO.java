@@ -18,5 +18,5 @@ public class ItemDTO {
   private String name;
 
   private String category;
-  private String unit;
+  private com.res.hms.inventory.domain.UnitOfMeasure unit;
 }

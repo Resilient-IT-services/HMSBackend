@@ -16,6 +16,7 @@ import com.res.hms.finance.domain.Invoice;
 import com.res.hms.finance.domain.InvoiceItemCategory;
 import com.res.hms.iam.domain.DoctorHospitalDetails;
 import com.res.hms.iam.infrastructure.repository.DoctorHospitalDetailsRepository;
+import com.res.hms.finance.domain.FinanceSourceType;
 import java.math.BigDecimal;
 import java.util.UUID;
 import lombok.RequiredArgsConstructor;
@@ -49,7 +50,7 @@ public class OPDEncounterOrchestrator {
 
         // 2. Create Appointment
         AppointmentDTO appointmentDto = request.toAppointmentDTO(visit.getId());
-        
+
         // Set initial status based on payment and vitals
         if (request.getPayment() == null) {
             appointmentDto.setStatus(com.res.hms.clinical.domain.AppointmentStatus.PAYMENT_PENDING);
@@ -66,7 +67,7 @@ public class OPDEncounterOrchestrator {
 
         // 3. Create or Get Invoice (Finance Service)
         Invoice invoice = invoiceService.getOrCreateInvoice(hospitalId, request.getPatientId(), visit.getId());
-        
+
         // Fetch consultation fee
         BigDecimal fee = doctorHospitalDetailsRepository
                 .findByUserIdAndHospitalId(request.getDoctorId(), hospitalId)
@@ -79,7 +80,7 @@ public class OPDEncounterOrchestrator {
                 InvoiceItemCategory.CONSULTATION, 
                 BigDecimal.ONE, 
                 fee, 
-                "APPOINTMENT", 
+                FinanceSourceType.APPOINTMENT, 
                 savedAppointment.getId(),
                 request.getDoctorId(),
                 savedAppointment.getDoctorName()

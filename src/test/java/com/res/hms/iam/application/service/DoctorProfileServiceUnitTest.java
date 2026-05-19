@@ -20,6 +20,8 @@ import com.res.hms.iam.domain.RoleCode;
 import com.res.hms.iam.domain.UserAccount;
 import com.res.hms.iam.domain.UserContract;
 import com.res.hms.iam.infrastructure.repository.UserContractRepository;
+import com.res.hms.clinical.domain.ExceptionType;
+import java.time.DayOfWeek;
 import java.time.LocalDate;
 import java.time.LocalTime;
 import java.util.List;
@@ -76,7 +78,7 @@ class DoctorProfileServiceUnitTest {
     when(doctorProfileRepository.findById(doctorId)).thenReturn(Optional.of(doctorProfile));
 
     DoctorAvailabilityException ex = new DoctorAvailabilityException();
-    ex.setType("FULL_DAY_OFF");
+    ex.setType(ExceptionType.FULL_DAY_OFF);
     when(availabilityExceptionRepository.findByDoctorIdAndHospitalIdAndDate(
             any(), eq(hospitalId), any()))
         .thenReturn(List.of(ex));
@@ -100,7 +102,7 @@ class DoctorProfileServiceUnitTest {
     when(appointmentRepository.findByDoctorIdAndDate(any(), any())).thenReturn(List.of());
 
     DoctorSchedule schedule = new DoctorSchedule();
-    schedule.setDayOfWeek((short) 1);
+    schedule.setDayOfWeek(DayOfWeek.MONDAY);
     schedule.setStartTime(LocalTime.of(9, 0));
     schedule.setEndTime(LocalTime.of(12, 0));
     schedule.setMaxPatients(10);

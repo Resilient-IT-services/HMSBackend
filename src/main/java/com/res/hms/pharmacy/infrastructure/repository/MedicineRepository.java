@@ -1,6 +1,7 @@
 package com.res.hms.pharmacy.infrastructure.repository;
 
 import com.res.hms.pharmacy.domain.Medicine;
+import com.res.hms.pharmacy.domain.MedicineForm;
 import java.util.Optional;
 import java.util.UUID;
 import org.springframework.data.domain.Page;
@@ -46,8 +47,8 @@ public interface MedicineRepository extends JpaRepository<Medicine, UUID> {
   java.util.List<Medicine> findByExactName(@Param("name") String name);
 
   Optional<Medicine>
-      findByNameIgnoreCaseAndGenericNameIgnoreCaseAndStrengthIgnoreCaseAndFormIgnoreCase(
-          String name, String genericName, String strength, String form);
+      findByNameIgnoreCaseAndGenericNameIgnoreCaseAndStrengthIgnoreCaseAndForm(
+          String name, String genericName, String strength, MedicineForm form);
 
   @Query(
       """
@@ -55,11 +56,11 @@ public interface MedicineRepository extends JpaRepository<Medicine, UUID> {
       WHERE LOWER(m.name) = LOWER(:name)
         AND (:genericName IS NULL AND m.genericName IS NULL OR LOWER(m.genericName) = LOWER(:genericName))
         AND (:strength IS NULL AND m.strength IS NULL OR LOWER(m.strength) = LOWER(:strength))
-        AND (:form IS NULL AND m.form IS NULL OR LOWER(m.form) = LOWER(:form))
+        AND (:form IS NULL AND m.form IS NULL OR m.form = :form)
       """)
   boolean existsDuplicate(
       @Param("name") String name,
       @Param("genericName") String genericName,
       @Param("strength") String strength,
-      @Param("form") String form);
+      @Param("form") MedicineForm form);
 }

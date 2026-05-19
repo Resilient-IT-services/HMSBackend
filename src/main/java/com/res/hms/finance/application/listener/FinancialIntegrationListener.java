@@ -4,6 +4,7 @@ import com.res.hms.clinical.application.event.AppointmentBookedEvent;
 import com.res.hms.clinical.domain.Appointment;
 import com.res.hms.clinical.infrastructure.repository.AppointmentRepository;
 import com.res.hms.finance.application.service.InvoiceService;
+import com.res.hms.finance.domain.FinanceSourceType;
 import com.res.hms.finance.domain.Invoice;
 import com.res.hms.finance.domain.InvoiceItemCategory;
 import com.res.hms.iam.domain.DoctorHospitalDetails;
@@ -51,8 +52,8 @@ public class FinancialIntegrationListener {
 
             // 1. Get or Create Invoice
             Invoice invoice = invoiceService.getOrCreateInvoice(
-                    event.hospitalId(), 
-                    event.patientId(), 
+                    event.hospitalId(),
+                    event.patientId(),
                     appointment.getVisitId()
             );
 
@@ -64,12 +65,12 @@ public class FinancialIntegrationListener {
 
             // 3. Add Consultation Item
             invoiceService.addItem(
-                    invoice.getId(), 
-                    "Consultation - " + appointment.getDoctorName(), 
-                    InvoiceItemCategory.CONSULTATION, 
-                    BigDecimal.ONE, 
-                    fee, 
-                    "APPOINTMENT", 
+                    invoice.getId(),
+                    "Consultation - " + appointment.getDoctorName(),
+                    InvoiceItemCategory.CONSULTATION,
+                    BigDecimal.ONE,
+                    fee,
+                    FinanceSourceType.APPOINTMENT,
                     event.appointmentId(),
                     appointment.getDoctorId(),
                     appointment.getDoctorName()
@@ -92,20 +93,20 @@ public class FinancialIntegrationListener {
 
             // 1. Get or Create Invoice
             Invoice invoice = invoiceService.getOrCreateInvoice(
-                    event.hospitalId(), 
-                    event.patientId(), 
+                    event.hospitalId(),
+                    event.patientId(),
                     sale.getVisitId()
             );
 
             // 2. Add Pharmacy Items
             sale.getItems().forEach(item -> {
                 invoiceService.addItem(
-                        invoice.getId(), 
-                        "Medicine - " + item.getMedicine().getName(), 
-                        InvoiceItemCategory.PHARMACY, 
-                        new BigDecimal(item.getQuantity()), 
-                        item.getUnitPrice(), 
-                        "PHARMACY_SALE_ITEM", 
+                        invoice.getId(),
+                        "Medicine - " + item.getMedicine().getName(),
+                        InvoiceItemCategory.PHARMACY,
+                        BigDecimal.valueOf(item.getQuantity()),
+                        item.getUnitPrice(),
+                        FinanceSourceType.PHARMACY_SALE_ITEM,
                         item.getId(),
                         null,
                         null

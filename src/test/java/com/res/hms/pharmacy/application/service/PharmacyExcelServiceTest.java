@@ -50,6 +50,8 @@ class PharmacyExcelServiceTest {
     var row = sheet.createRow(1);
     row.createCell(0).setCellValue("New Med");
     row.createCell(3).setCellValue("500mg");
+    row.createCell(4).setCellValue("TABLET");
+    row.createCell(6).setCellValue("OTC");
 
     var out = new ByteArrayOutputStream();
     workbook.write(out);

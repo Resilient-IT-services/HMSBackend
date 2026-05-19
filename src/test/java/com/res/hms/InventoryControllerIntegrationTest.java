@@ -78,7 +78,7 @@ class InventoryControllerIntegrationTest {
                     .header("X-Hospital-Id", testHospitalId.toString())
                     .contentType(MediaType.APPLICATION_JSON)
                     .content(
-                        "{\"name\": \"Syringe\", \"category\": \"Consumables\", \"unit\": \"pcs\"}"))
+                        "{\"name\": \"Syringe\", \"category\": \"Consumables\", \"unit\": \"PIECE\"}"))
             .andExpect(status().isOk())
             .andExpect(jsonPath("$.data.name").value("Syringe"))
             .andReturn()

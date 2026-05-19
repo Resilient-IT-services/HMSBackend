@@ -48,7 +48,7 @@ public class DoctorProfileService {
   @Transactional(readOnly = true)
   public DoctorAvailabilityResponse getAvailableSlots(UUID doctorId, java.time.LocalDate date) {
     UUID hospitalId = hospitalContext.requireHospitalId();
-    short dbDay = (short) date.getDayOfWeek().getValue();
+    java.time.DayOfWeek dbDay = date.getDayOfWeek();
 
     org.slf4j.LoggerFactory.getLogger(DoctorProfileService.class)
         .info(
@@ -102,7 +102,7 @@ public class DoctorProfileService {
         availabilityExceptionRepository.findByDoctorIdAndHospitalIdAndDate(
             actualDoctorId, hospitalId, date);
 
-    if (exceptions.stream().anyMatch(e -> "FULL_DAY_OFF".equals(e.getType()))) {
+    if (exceptions.stream().anyMatch(e -> com.res.hms.clinical.domain.ExceptionType.FULL_DAY_OFF.equals(e.getType()))) {
       return new DoctorAvailabilityResponse(java.util.Collections.emptyList());
     }
 
@@ -121,7 +121,10 @@ public class DoctorProfileService {
     List<DoctorAvailabilityResponse.SessionInfo> sessions = new java.util.ArrayList<>();
     Optional<DoctorAvailabilityException> override =
         exceptions.stream()
-            .filter(e -> "MODIFIED".equals(e.getType()) || "ADDED".equals(e.getType()))
+            .filter(
+                e ->
+                    com.res.hms.clinical.domain.ExceptionType.MODIFIED.equals(e.getType())
+                        || com.res.hms.clinical.domain.ExceptionType.ADDED.equals(e.getType()))
             .findFirst();
 
     if (override.isPresent()) {
@@ -172,7 +175,7 @@ public class DoctorProfileService {
   public List<com.res.hms.iam.application.dto.DoctorSlotDTO> getSlots(
       UUID doctorId, java.time.LocalDate date) {
     UUID hospitalId = hospitalContext.requireHospitalId();
-    short dbDay = (short) date.getDayOfWeek().getValue();
+    java.time.DayOfWeek dbDay = date.getDayOfWeek();
 
     DoctorProfile doctorProfile =
         doctorProfileRepository
@@ -210,7 +213,7 @@ public class DoctorProfileService {
         availabilityExceptionRepository.findByDoctorIdAndHospitalIdAndDate(
             actualDoctorId, hospitalId, date);
 
-    if (exceptions.stream().anyMatch(e -> "FULL_DAY_OFF".equals(e.getType()))) {
+    if (exceptions.stream().anyMatch(e -> com.res.hms.clinical.domain.ExceptionType.FULL_DAY_OFF.equals(e.getType()))) {
       return java.util.Collections.emptyList();
     }
 
@@ -227,7 +230,10 @@ public class DoctorProfileService {
     List<com.res.hms.iam.application.dto.DoctorSlotDTO> allSlots = new java.util.ArrayList<>();
     Optional<DoctorAvailabilityException> override =
         exceptions.stream()
-            .filter(e -> "MODIFIED".equals(e.getType()) || "ADDED".equals(e.getType()))
+            .filter(
+                e ->
+                    com.res.hms.clinical.domain.ExceptionType.MODIFIED.equals(e.getType())
+                        || com.res.hms.clinical.domain.ExceptionType.ADDED.equals(e.getType()))
             .findFirst();
 
     if (override.isPresent()) {
@@ -269,7 +275,7 @@ public class DoctorProfileService {
     return availabilityExceptionRepository
         .findByDoctorIdAndHospitalIdAndDate(doctorId, hospitalId, date)
         .stream()
-        .anyMatch(e -> "FULL_DAY_OFF".equals(e.getType()));
+        .anyMatch(e -> com.res.hms.clinical.domain.ExceptionType.FULL_DAY_OFF.equals(e.getType()));
   }
 
   private void generateSlots(
@@ -513,7 +519,7 @@ public class DoctorProfileService {
             s ->
                 ScheduleDTO.builder()
                     .id(s.getId())
-                    .dayOfWeek(s.getDayOfWeek().shortValue())
+                    .dayOfWeek(s.getDayOfWeek())
                     .startTime(s.getStartTime())
                     .endTime(s.getEndTime())
                     .slotDurationMinutes(s.getSlotDurationMinutes())

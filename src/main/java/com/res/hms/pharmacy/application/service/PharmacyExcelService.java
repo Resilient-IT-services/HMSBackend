@@ -9,6 +9,8 @@ import com.res.hms.pharmacy.domain.Medicine;
 import com.res.hms.pharmacy.domain.PharmacyStock;
 import com.res.hms.pharmacy.infrastructure.repository.MedicineRepository;
 import com.res.hms.pharmacy.infrastructure.repository.PharmacyStockRepository;
+import com.res.hms.pharmacy.domain.MedicineForm;
+import com.res.hms.pharmacy.domain.MedicineSchedule;
 import java.io.IOException;
 import java.math.BigDecimal;
 import java.time.LocalDate;
@@ -53,8 +55,9 @@ public class PharmacyExcelService {
         String form = text(row, 4);
         String manufacturer = text(row, 5);
         String scheduleType = text(row, 6);
+        MedicineForm medicineForm = MedicineForm.valueOf(form);
 
-        if (medicineRepository.existsDuplicate(name, genericName, strength, form)) {
+        if (medicineRepository.existsDuplicate(name, genericName, strength, medicineForm)) {
           log.info("Skipping duplicate medicine: {} {} {}", name, strength, form);
           skipped++;
           continue;
@@ -65,9 +68,9 @@ public class PharmacyExcelService {
         medicine.setGenericName(genericName);
         medicine.setComposition(composition);
         medicine.setStrength(strength);
-        medicine.setForm(form);
+        medicine.setForm(medicineForm);
         medicine.setManufacturer(manufacturer);
-        medicine.setScheduleType(scheduleType);
+        medicine.setScheduleType(MedicineSchedule.valueOf(scheduleType));
         medicineRepository.save(medicine);
         imported++;
       }

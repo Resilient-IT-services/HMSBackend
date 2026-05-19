@@ -2,6 +2,7 @@ package com.res.hms.finance.domain;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+import com.res.hms.finance.domain.FinanceSourceType;
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.UUID;
@@ -49,7 +50,7 @@ class FinanceEntityTest {
         item.setDiscountAmount(BigDecimal.ZERO);
         item.setSubtotal(BigDecimal.TEN);
         item.setNetTotal(BigDecimal.TEN);
-        item.setSourceType("TEST");
+        item.setSourceType(FinanceSourceType.APPOINTMENT);
         item.setSourceId(UUID.randomUUID());
 
         assertThat(item.getInvoiceId()).isNotNull();
@@ -62,7 +63,7 @@ class FinanceEntityTest {
         assertThat(item.getDiscountAmount()).isEqualTo(BigDecimal.ZERO);
         assertThat(item.getSubtotal()).isEqualTo(BigDecimal.TEN);
         assertThat(item.getNetTotal()).isEqualTo(BigDecimal.TEN);
-        assertThat(item.getSourceType()).isEqualTo("TEST");
+        assertThat(item.getSourceType()).isEqualTo(FinanceSourceType.APPOINTMENT);
         assertThat(item.getSourceId()).isNotNull();
     }
 
@@ -96,7 +97,7 @@ class FinanceEntityTest {
         r.setRefundAmount(BigDecimal.TEN);
         r.setReason("Reason");
         r.setStatus(RefundStatus.INITIATED);
-        r.setSourceType("SRC");
+        r.setSourceType(FinanceSourceType.APPOINTMENT);
         r.setSourceId(UUID.randomUUID());
         r.setProcessedAt(LocalDateTime.now());
 
@@ -105,7 +106,7 @@ class FinanceEntityTest {
         assertThat(r.getRefundAmount()).isEqualTo(BigDecimal.TEN);
         assertThat(r.getReason()).isEqualTo("Reason");
         assertThat(r.getStatus()).isEqualTo(RefundStatus.INITIATED);
-        assertThat(r.getSourceType()).isEqualTo("SRC");
+        assertThat(r.getSourceType()).isEqualTo(FinanceSourceType.APPOINTMENT);
         assertThat(r.getSourceId()).isNotNull();
         assertThat(r.getProcessedAt()).isNotNull();
     }

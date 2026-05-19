@@ -6,6 +6,8 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 import com.res.hms.audit.application.dto.AuditDetail;
+import com.res.hms.audit.application.dto.AuditLogResponse;
+import com.res.hms.audit.domain.DomainEntity;
 import com.res.hms.audit.domain.AuditAction;
 import com.res.hms.audit.domain.AuditLog;
 import com.res.hms.audit.infrastructure.repository.AuditLogRepository;
@@ -36,7 +38,7 @@ class AuditLogServiceTest {
   @Test
   void recordSavesAuditLog() {
     AuditDetail detail = AuditDetail.builder().after(Map.of("msg", "created")).build();
-    auditLogService.record(hospitalUuid, "patient", patientUuid, AuditAction.CREATE, detail);
+    auditLogService.record(hospitalUuid, DomainEntity.PATIENT, patientUuid, AuditAction.CREATE, detail);
 
     verify(auditLogRepository).save(any(AuditLog.class));
   }

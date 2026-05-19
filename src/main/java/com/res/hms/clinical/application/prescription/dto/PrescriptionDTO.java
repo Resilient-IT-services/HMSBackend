@@ -1,5 +1,6 @@
 package com.res.hms.clinical.application.prescription.dto;
 
+import com.res.hms.clinical.domain.PrescriptionStatus;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.UUID;

@@ -3,6 +3,8 @@ package com.res.hms.iam.application.service;
 import com.res.hms.core.exception.ApiException;
 import com.res.hms.iam.application.dto.ScheduleDTO;
 import com.res.hms.iam.application.dto.UserDetailsDTO;
+
+import java.time.DayOfWeek;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -34,10 +36,10 @@ public class DoctorScheduleValidator {
       return;
     }
 
-    Map<Short, List<ScheduleDTO>> schedulesByDay =
+    Map<DayOfWeek, List<ScheduleDTO>> schedulesByDay =
         allSchedules.stream().collect(Collectors.groupingBy(ScheduleDTO::getDayOfWeek));
 
-    for (Map.Entry<Short, List<ScheduleDTO>> entry : schedulesByDay.entrySet()) {
+    for (Map.Entry<DayOfWeek, List<ScheduleDTO>> entry : schedulesByDay.entrySet()) {
       List<ScheduleDTO> dailySchedules = entry.getValue();
       for (int i = 0; i < dailySchedules.size(); i++) {
         for (int j = i + 1; j < dailySchedules.size(); j++) {

@@ -4,6 +4,8 @@ import com.res.hms.core.domain.HospitalScopedEntity;
 import jakarta.persistence.CascadeType;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
+import jakarta.persistence.EnumType;
+import jakarta.persistence.Enumerated;
 import jakarta.persistence.FetchType;
 import jakarta.persistence.OneToMany;
 import jakarta.persistence.Table;
@@ -24,7 +26,8 @@ public class PharmacySale extends HospitalScopedEntity {
   private String saleNumber;
 
   @Column(name = "sale_type")
-  private String saleType; // VISIT, WALKIN
+  @Enumerated(EnumType.STRING)
+  private SaleType saleType; // VISIT, WALKIN
 
   @Column(name = "patient_id")
   private UUID patientId;
@@ -55,7 +58,8 @@ public class PharmacySale extends HospitalScopedEntity {
   private UUID invoiceId;
 
   @Column(name = "status")
-  private String status;
+  @Enumerated(EnumType.STRING)
+  private PharmacySaleStatus status;
 
   @Column(name = "notes")
   private String notes;

@@ -170,7 +170,7 @@ public class AppointmentAggregateService {
 
     com.res.hms.audit.domain.AuditLog logEvent = new com.res.hms.audit.domain.AuditLog();
     logEvent.setHospitalId(hospitalId);
-    logEvent.setEntityName("APPOINTMENT");
+    logEvent.setEntityName(com.res.hms.audit.domain.DomainEntity.APPOINTMENT);
     logEvent.setEntityId(id);
     logEvent.setAction(com.res.hms.audit.domain.AuditAction.UPDATE);
     com.res.hms.audit.application.dto.AuditDetail details = new com.res.hms.audit.application.dto.AuditDetail();

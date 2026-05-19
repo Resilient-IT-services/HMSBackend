@@ -3,6 +3,7 @@ package com.res.hms.clinical.application.patient.service;
 import com.res.hms.clinical.application.patient.dto.PatientDTO;
 import com.res.hms.clinical.application.patient.dto.PatientDashboardStatsDTO;
 import com.res.hms.clinical.application.patient.dto.PatientSummaryDTO;
+import com.res.hms.clinical.domain.BloodGroup;
 import com.res.hms.clinical.domain.Patient;
 import com.res.hms.clinical.infrastructure.repository.PatientRepository;
 import com.res.hms.core.api.PageResponse;

@@ -3,6 +3,7 @@ package com.res.hms;
 import static org.assertj.core.api.Assertions.assertThat;
 
 import com.res.hms.clinical.domain.PatientVisit;
+import com.res.hms.finance.domain.FinanceSourceType;
 import com.res.hms.finance.domain.Invoice;
 import com.res.hms.finance.domain.InvoiceItem;
 import com.res.hms.finance.domain.InvoiceItemCategory;
@@ -95,7 +96,7 @@ class EvolvedFinanceIntegrationTest {
         item.setDiscountAmount(BigDecimal.ZERO);
         item.setSubtotal(new BigDecimal("1000.00"));
         item.setNetTotal(new BigDecimal("1050.00"));
-        item.setSourceType("APPOINTMENT");
+        item.setSourceType(FinanceSourceType.APPOINTMENT);
         item.setSourceId(UUID.randomUUID());
         invoiceItemRepository.save(item);
 
@@ -128,14 +129,14 @@ class EvolvedFinanceIntegrationTest {
         refund.setReason("Overcharged");
         refund.setStatus(RefundStatus.COMPLETED);
         refund.setProcessedAt(LocalDateTime.now());
-        refund.setSourceType("CORRECTION");
+        refund.setSourceType(FinanceSourceType.LAB_ORDER);
         refund.setSourceId(UUID.randomUUID());
         refund = refundRepository.save(refund);
 
         assertThat(refund.getId()).isNotNull();
         assertThat(refund.getRefundAmount()).isEqualByComparingTo("100.00");
         assertThat(refund.getReason()).isEqualTo("Overcharged");
-        assertThat(refund.getSourceType()).isEqualTo("CORRECTION");
+        assertThat(refund.getSourceType()).isEqualTo(FinanceSourceType.LAB_ORDER);
 
         // Verify entities are correctly linked
         Invoice savedInvoice = invoiceRepository.findById(invoice.getId()).orElseThrow();

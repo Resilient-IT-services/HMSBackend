@@ -16,7 +16,7 @@ public class MedicineSummaryDTO {
   private String genericName;
   private String composition;
   private String strength;
-  private String form;
+  private com.res.hms.pharmacy.domain.MedicineForm form;
   private String category;
   private String manufacturer;
   private Integer currentStock;

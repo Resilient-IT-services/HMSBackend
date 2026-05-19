@@ -10,6 +10,7 @@ import com.res.hms.iam.application.dto.ScheduleDTO;
 import com.res.hms.iam.application.dto.UserDetailsDTO;
 import com.res.hms.iam.application.service.UserAggregateService;
 import java.time.LocalDate;
+import java.time.DayOfWeek;
 import java.time.LocalTime;
 import java.util.List;
 import java.util.UUID;
@@ -60,7 +61,7 @@ class DoctorOverlapIntegrationTest {
                                     .schedules(
                                         List.of(
                                             ScheduleDTO.builder()
-                                                .dayOfWeek((short) 1) // Monday
+                                                .dayOfWeek(DayOfWeek.MONDAY) // Monday
                                                 .startTime(LocalTime.of(16, 0)) // 4 PM
                                                 .endTime(LocalTime.of(18, 0)) // 6 PM
                                                 .build()))
@@ -75,7 +76,7 @@ class DoctorOverlapIntegrationTest {
                                     .schedules(
                                         List.of(
                                             ScheduleDTO.builder()
-                                                .dayOfWeek((short) 1) // Monday
+                                                .dayOfWeek(DayOfWeek.MONDAY) // Monday
                                                 .startTime(LocalTime.of(15, 0)) // 3 PM
                                                 .endTime(LocalTime.of(17, 0)) // 5 PM
                                                 .build()))

@@ -5,6 +5,7 @@ import com.res.hms.core.tenant.HospitalContext;
 import com.res.hms.finance.application.dto.RecordPaymentRequest;
 import com.res.hms.finance.application.service.InvoiceService;
 import com.res.hms.finance.application.service.PaymentService;
+import com.res.hms.finance.domain.FinanceSourceType;
 import com.res.hms.finance.domain.Invoice;
 import com.res.hms.finance.domain.InvoiceItemCategory;
 import com.res.hms.clinical.application.prescription.repository.PrescriptionRepository;
@@ -12,7 +13,9 @@ import com.res.hms.clinical.infrastructure.repository.AppointmentRepository;
 import com.res.hms.pharmacy.application.dto.QuickPharmacySaleRequest;
 import com.res.hms.pharmacy.application.dto.QuickPharmacySaleResponse;
 import com.res.hms.pharmacy.domain.PharmacySale;
+import com.res.hms.pharmacy.domain.PharmacySale;
 import com.res.hms.pharmacy.domain.PharmacySaleItem;
+import com.res.hms.pharmacy.domain.PharmacySaleStatus;
 import com.res.hms.pharmacy.domain.PharmacyStock;
 import com.res.hms.pharmacy.infrastructure.repository.MedicineRepository;
 import com.res.hms.pharmacy.infrastructure.repository.PharmacySaleRepository;
@@ -44,7 +47,7 @@ public class QuickPharmacySaleService {
   public QuickPharmacySaleResponse createQuickSale(QuickPharmacySaleRequest request) {
     UUID hospitalId = hospitalContext.requireHospitalId();
     UUID userId = hospitalContext.currentUserIdOrNull();
-    
+
     if (userId == null) {
         throw new ApiException("AUTH_ERROR", "User must be logged in to record sales", HttpStatus.UNAUTHORIZED);
     }
@@ -54,12 +57,12 @@ public class QuickPharmacySaleService {
     sale.setHospitalId(hospitalId);
     sale.setSaleType(request.getSaleType());
     sale.setPatientId(request.getPatientId());
-    
+
     // Check if already dispensed
     if (request.getPrescriptionId() != null) {
         var existingRx = prescriptionRepository.findByIdAndHospitalId(request.getPrescriptionId(), hospitalId)
             .orElseThrow(() -> new ApiException("NOT_FOUND", "Prescription not found", HttpStatus.NOT_FOUND));
-        
+
         if ("DISPENSED".equals(existingRx.getStatus())) {
             throw new ApiException("ALREADY_DISPENSED", "This prescription has already been dispensed.", HttpStatus.CONFLICT);
         }
@@ -77,14 +80,14 @@ public class QuickPharmacySaleService {
     } else {
         sale.setVisitId(resolvedVisitId);
     }
-    
+
     sale.setPrescriptionId(request.getPrescriptionId());
     sale.setDoctorId(request.getDoctorId());
     sale.setExternalDoctorName(request.getExternalDoctorName());
     sale.setCustomerName(request.getCustomerName());
     sale.setCustomerPhone(request.getCustomerPhone());
     sale.setNotes(request.getNotes());
-    sale.setStatus("COMPLETED");
+    sale.setStatus(PharmacySaleStatus.COMPLETED);
     sale.setSaleNumber("SALE-" + System.currentTimeMillis());
 
     BigDecimal totalAmount = BigDecimal.ZERO;
@@ -111,13 +114,13 @@ public class QuickPharmacySaleService {
       saleItem.setUnitPrice(itemDto.getUnitPrice());
       saleItem.setDiscountAmount(itemDto.getDiscountAmount() != null ? itemDto.getDiscountAmount() : BigDecimal.ZERO);
       saleItem.setTaxAmount(itemDto.getTaxAmount() != null ? itemDto.getTaxAmount() : BigDecimal.ZERO);
-      
+
       BigDecimal itemSubtotal = itemDto.getUnitPrice().multiply(BigDecimal.valueOf(itemDto.getQuantity()));
       saleItem.setSubtotal(itemSubtotal);
-      
+
       BigDecimal itemNet = itemSubtotal.add(saleItem.getTaxAmount()).subtract(saleItem.getDiscountAmount());
       saleItem.setNetAmount(itemNet);
-      
+
       sale.getItems().add(saleItem);
       totalAmount = totalAmount.add(itemNet);
     }
@@ -128,7 +131,7 @@ public class QuickPharmacySaleService {
     // 3. Create or Get Invoice
     Invoice invoice = invoiceService.getOrCreateInvoice(hospitalId, request.getPatientId(), sale.getVisitId());
     savedSale.setInvoiceId(invoice.getId());
-    savedSale.setSaleNumber(invoice.getInvoiceNumber()); 
+    savedSale.setSaleNumber(invoice.getInvoiceNumber());
 
     // 4. Create Invoice Items
     for (PharmacySaleItem saleItem : savedSale.getItems()) {
@@ -138,22 +141,21 @@ public class QuickPharmacySaleService {
             InvoiceItemCategory.PHARMACY,
             BigDecimal.valueOf(saleItem.getQuantity()),
             saleItem.getUnitPrice(),
-            "PHARMACY_SALE",
+            FinanceSourceType.PHARMACY_SALE_ITEM,
             saleItem.getId(),
             savedSale.getDoctorId(),
             savedSale.getExternalDoctorName()
-        );
-    }
-    
-    // 5. Update Prescription Status if applicable
-    if (request.getPrescriptionId() != null) {
-        prescriptionRepository.findByIdAndHospitalId(request.getPrescriptionId(), hospitalId)
+            );
+            }
+
+            // 5. Update Prescription Status if applicable
+            if (request.getPrescriptionId() != null) {
+            prescriptionRepository.findByIdAndHospitalId(request.getPrescriptionId(), hospitalId)
             .ifPresent(p -> {
-                p.setStatus("DISPENSED");
+                p.setStatus(com.res.hms.clinical.domain.PrescriptionStatus.DISPENSED);
                 prescriptionRepository.save(p);
             });
-    }
-
+            }
     // 6. Record Payment
     String receiptNumber = null;
     UUID paymentId = null;
@@ -165,7 +167,7 @@ public class QuickPharmacySaleService {
         paymentReq.setAmount(request.getPayment().getAmount());
         paymentReq.setPaymentMode(request.getPayment().getMode());
         paymentReq.setReferenceNumber(request.getPayment().getReferenceNumber());
-        
+
         var paymentDto = paymentService.recordPayment(hospitalId, paymentReq, userId);
         receiptNumber = paymentDto.getReceiptNumber();
         paymentId = paymentDto.getId();
@@ -215,7 +217,7 @@ public class QuickPharmacySaleService {
         .saleNumber(sale.getSaleNumber())
         .invoiceId(sale.getInvoiceId())
         .totalAmount(sale.getTotalAmount())
-        .status(sale.getStatus())
+        .status(sale.getStatus().name())
         .customerName(sale.getCustomerName())
         .customerPhone(sale.getCustomerPhone())
         .externalDoctorName(sale.getExternalDoctorName())

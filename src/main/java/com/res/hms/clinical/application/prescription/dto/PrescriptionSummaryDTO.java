@@ -2,6 +2,8 @@ package com.res.hms.clinical.application.prescription.dto;
 
 import java.time.LocalDateTime;
 import java.util.UUID;
+
+import com.res.hms.clinical.domain.PrescriptionStatus;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
@@ -20,7 +22,7 @@ public class PrescriptionSummaryDTO {
   private String doctorName;
   private UUID appointmentId;
   private UUID visitId;
-  private String status;
+  private PrescriptionStatus status;
   private LocalDateTime createdAt;
   private Integer itemCount;
 }

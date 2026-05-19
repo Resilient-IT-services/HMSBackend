@@ -1,5 +1,6 @@
 package com.res.hms.clinical.application.patient.dto;
 
+import com.res.hms.clinical.domain.BloodGroup;
 import com.res.hms.core.domain.Gender;
 import jakarta.validation.constraints.NotBlank;
 import java.time.LocalDate;
@@ -25,6 +26,6 @@ public class PatientDTO {
   private Gender gender;
   private LocalDate dob;
   private String phone;
-  private String bloodGroup;
+  private BloodGroup bloodGroup;
   private String address;
 }

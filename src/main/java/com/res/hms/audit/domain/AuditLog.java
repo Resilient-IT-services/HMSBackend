@@ -23,7 +23,8 @@ public class AuditLog extends BaseEntity {
   private UUID hospitalId;
 
   @Column(name = "entity_name", nullable = false)
-  private String entityName;
+  @Enumerated(EnumType.STRING)
+  private DomainEntity entityName;
 
   @Column(name = "entity_id")
   private UUID entityId;

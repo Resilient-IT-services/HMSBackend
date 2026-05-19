@@ -3,6 +3,8 @@ package com.res.hms.clinical.domain;
 import com.res.hms.core.domain.BaseEntity;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
+import jakarta.persistence.EnumType;
+import jakarta.persistence.Enumerated;
 import jakarta.persistence.Table;
 import java.time.LocalDate;
 import java.time.LocalTime;
@@ -25,7 +27,8 @@ public class DoctorAvailabilityException extends BaseEntity {
   private LocalDate date;
 
   @Column(name = "type", nullable = false)
-  private String type; // FULL_DAY_OFF, MODIFIED, ADDED
+  @Enumerated(EnumType.STRING)
+  private ExceptionType type; // FULL_DAY_OFF, MODIFIED, ADDED
 
   @Column(name = "start_time")
   private LocalTime startTime;

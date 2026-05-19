@@ -3,6 +3,7 @@ package com.res.hms.pharmacy.domain;
 import com.res.hms.core.domain.BaseEntity;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
+import jakarta.persistence.Enumerated;
 import jakarta.persistence.Index;
 import jakarta.persistence.Table;
 import jakarta.persistence.UniqueConstraint;
@@ -36,10 +37,12 @@ public class Medicine extends BaseEntity {
 
   private String strength;
 
-  private String form;
+  @Enumerated(jakarta.persistence.EnumType.STRING)
+  private MedicineForm form;
 
   @Column(name = "schedule_type")
-  private String scheduleType;
+  @Enumerated(jakarta.persistence.EnumType.STRING)
+  private MedicineSchedule scheduleType;
 
   private String category;
 

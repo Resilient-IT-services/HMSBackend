@@ -116,7 +116,7 @@ public class InvoiceService {
 
     @Transactional
     public void addItem(UUID invoiceId, String description, InvoiceItemCategory category,
-                        BigDecimal quantity, BigDecimal unitPrice, String sourceType, UUID sourceId,
+                        BigDecimal quantity, BigDecimal unitPrice, com.res.hms.finance.domain.FinanceSourceType sourceType, UUID sourceId,
                         UUID doctorId, String doctorName) {
         Invoice invoice = invoiceRepository.findById(invoiceId)
             .orElseThrow(() -> new RuntimeException("Invoice not found"));

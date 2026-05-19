@@ -19,6 +19,8 @@ import com.res.hms.iam.domain.UserContract;
 import com.res.hms.iam.infrastructure.repository.RoleRepository;
 import com.res.hms.iam.infrastructure.repository.UserAccountRepository;
 import java.time.DayOfWeek;
+import java.time.DayOfWeek;
+import com.res.hms.clinical.domain.ExceptionType;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.LocalTime;
@@ -96,7 +98,7 @@ class DoctorControllerIntegrationTest {
     // Add Schedule: Monday 9-11 AM, 1 hour slots
     DoctorSchedule schedule = new DoctorSchedule();
     schedule.setAssignmentId(assignmentId);
-    schedule.setDayOfWeek((short) 1); // Monday
+    schedule.setDayOfWeek(DayOfWeek.MONDAY); // Monday
     schedule.setStartTime(LocalTime.of(9, 0));
     schedule.setEndTime(LocalTime.of(11, 0));
     schedule.setSlotDurationMinutes(60);
@@ -170,13 +172,13 @@ class DoctorControllerIntegrationTest {
       }
     UserAccount drUser = userAccountRepository.findByUsername("avail_dr").get();
 
-    // 1. Create a MODIFIED exception for Tuesday: 2-4 PM
+    // 1. Create an ADDED exception for Tuesday: 10 AM-4 PM
     DoctorAvailabilityException ex = new DoctorAvailabilityException();
     ex.setDoctorId(drUser.getDoctorProfile().getId());
     ex.setHospitalId(hospitalId);
     ex.setDate(tuesday);
-    ex.setType("MODIFIED");
-    ex.setStartTime(LocalTime.of(14, 0));
+    ex.setType(ExceptionType.ADDED);
+    ex.setStartTime(LocalTime.of(10, 0));
     ex.setEndTime(LocalTime.of(16, 0));
     ex.setSlotDurationMinutes(30);
     ex.setNote("Afternoon shift");
@@ -191,8 +193,8 @@ class DoctorControllerIntegrationTest {
                 .param("date", tuesday.toString()))
         .andExpect(status().isOk())
         .andExpect(jsonPath("$.data.sessions.length()").value(1))
-        .andExpect(jsonPath("$.data.sessions[0].startTime").value("14:00"))
+        .andExpect(jsonPath("$.data.sessions[0].startTime").value("10:00"))
         .andExpect(jsonPath("$.data.sessions[0].endTime").value("16:00"))
-        .andExpect(jsonPath("$.data.sessions[0].nextSuggestedTime").value("14:00"));
+        .andExpect(jsonPath("$.data.sessions[0].nextSuggestedTime").value("10:00"));
   }
 }
