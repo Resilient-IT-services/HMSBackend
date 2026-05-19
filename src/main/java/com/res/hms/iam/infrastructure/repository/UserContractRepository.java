@@ -14,13 +14,13 @@ public interface UserContractRepository
     extends JpaRepository<UserContract, UUID>, JpaSpecificationExecutor<UserContract> {
 
   @Query(
-      "SELECT a FROM UserContract a JOIN a.user u JOIN u.doctorProfile d "
+      "SELECT a FROM UserContract a JOIN a.doctorDetails dd JOIN a.user u JOIN u.doctorProfile d "
           + "WHERE d.id = :doctorId AND a.hospitalId = :hospitalId AND a.active = true")
   Optional<UserContract> findByDoctorIdAndHospitalId(
       @Param("doctorId") UUID doctorId, @Param("hospitalId") UUID hospitalId);
 
   @Query(
-      "SELECT a FROM UserContract a JOIN a.user u JOIN u.nurseProfile n "
+      "SELECT a FROM UserContract a JOIN a.nurseDetails nd JOIN a.user u JOIN u.nurseProfile n "
           + "WHERE n.id = :nurseId AND a.hospitalId = :hospitalId AND a.active = true")
   Optional<UserContract> findByNurseIdAndHospitalId(
       @Param("nurseId") UUID nurseId, @Param("hospitalId") UUID hospitalId);

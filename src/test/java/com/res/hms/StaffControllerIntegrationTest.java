@@ -160,6 +160,59 @@ class StaffControllerIntegrationTest {
     nurseDetails.setShiftType(ShiftType.NIGHT);
     nurseAssign.setNurseDetails(nurseDetails);
     nurseHospitalDetailsRepository.save(nurseDetails);
+
+    // Create a User who is both a Doctor and a Receptionist
+    UserAccount dualUser = new UserAccount();
+    dualUser.setUsername("dual_user");
+    dualUser.setFullName("Dr. Multi Role");
+    dualUser.setPasswordHash(passwordEncoder.encode("password"));
+    dualUser.setActive(true);
+
+    DoctorProfile drProfileDual = new DoctorProfile();
+    drProfileDual.setUser(dualUser);
+    drProfileDual.setLicenseNumber("LICENSE-DUAL");
+    dualUser.setDoctorProfile(drProfileDual);
+
+    // Contract 1: Doctor
+    UserContract drContractDual = new UserContract();
+    drContractDual.setUser(dualUser);
+    drContractDual.setHospitalId(testHospitalId);
+    drContractDual.setRole(roleRepository.findByCode(RoleCode.DOCTOR).orElseThrow());
+    dualUser.getContracts().add(drContractDual);
+
+    // Contract 2: Receptionist
+    UserContract recepContractDual = new UserContract();
+    recepContractDual.setUser(dualUser);
+    recepContractDual.setHospitalId(testHospitalId);
+    recepContractDual.setRole(roleRepository.findByCode(RoleCode.RECEPTIONIST).orElseThrow());
+    dualUser.getContracts().add(recepContractDual);
+
+    dualUser = userAccountRepository.save(dualUser);
+
+    UserContract savedDrContractDual = dualUser.getContracts().stream()
+        .filter(c -> c.getRole().getCode() == RoleCode.DOCTOR)
+        .findFirst().orElseThrow();
+
+    DoctorHospitalDetails drDetailsDual = new DoctorHospitalDetails();
+    drDetailsDual.setAssignment(savedDrContractDual);
+    drDetailsDual.setConsultationFee(new BigDecimal("1000.00"));
+    savedDrContractDual.setDoctorDetails(drDetailsDual);
+    doctorHospitalDetailsRepository.save(drDetailsDual);
+  }
+
+  @Test
+  void testGetDoctor_WhenUserHasMultipleRoles_ShouldReturnUniqueResult() throws Exception {
+    UserAccount dualUser = userAccountRepository.findByUsername("dual_user").orElseThrow();
+    UUID doctorProfileId = dualUser.getDoctorProfile().getId();
+
+    mockMvc
+        .perform(
+            get("/api/v1/staff/doctors/" + doctorProfileId)
+                .session(session)
+                .header("X-Hospital-Id", testHospitalId.toString()))
+        .andExpect(status().isOk())
+        .andExpect(jsonPath("$.data.fullName").value("Dr. Multi Role"))
+        .andExpect(jsonPath("$.data.consultationFee").value(1000.0));
   }
 
   @Test
@@ -171,9 +224,7 @@ class StaffControllerIntegrationTest {
                 .session(session)
                 .header("X-Hospital-Id", testHospitalId.toString()))
         .andExpect(status().isOk())
-        .andExpect(jsonPath("$.data.content[0].fullName").value("Dr. Indiana Jones"))
-        .andExpect(jsonPath("$.data.content[0].departments[0]").value("OPD"))
-        .andExpect(jsonPath("$.data.content[0].consultationFee").value(500.0));
+        .andExpect(jsonPath("$.data.totalElements").value(2));
 
     // Filter by department
     mockMvc
@@ -183,7 +234,9 @@ class StaffControllerIntegrationTest {
                 .header("X-Hospital-Id", testHospitalId.toString())
                 .param("department", "OPD"))
         .andExpect(status().isOk())
-        .andExpect(jsonPath("$.data.totalElements").value(1));
+        .andExpect(jsonPath("$.data.totalElements").value(1))
+        .andExpect(jsonPath("$.data.content[0].fullName").value("Dr. Indiana Jones"))
+        .andExpect(jsonPath("$.data.content[0].consultationFee").value(500.0));
 
     // Filter by name
     mockMvc
@@ -193,7 +246,8 @@ class StaffControllerIntegrationTest {
                 .header("X-Hospital-Id", testHospitalId.toString())
                 .param("name", "Indiana"))
         .andExpect(status().isOk())
-        .andExpect(jsonPath("$.data.totalElements").value(1));
+        .andExpect(jsonPath("$.data.totalElements").value(1))
+        .andExpect(jsonPath("$.data.content[0].fullName").value("Dr. Indiana Jones"));
 
     // Filter by fee range - match
     mockMvc
@@ -212,7 +266,7 @@ class StaffControllerIntegrationTest {
             get("/api/v1/staff/doctors")
                 .session(session)
                 .header("X-Hospital-Id", testHospitalId.toString())
-                .param("minFee", "600"))
+                .param("minFee", "1100"))
         .andExpect(status().isOk())
         .andExpect(jsonPath("$.data.totalElements").value(0));
   }
