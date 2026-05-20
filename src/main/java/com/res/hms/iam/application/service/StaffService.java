@@ -177,10 +177,15 @@ public class StaffService {
                   .map(com.res.hms.iam.domain.Specialization::getName)
                   .collect(Collectors.joining(", "))
               : "";
+          java.math.BigDecimal fee = (a.getDoctorDetails() != null && a.getDoctorDetails().getConsultationFee() != null)
+              ? a.getDoctorDetails().getConsultationFee()
+              : (d != null ? d.getConsultationFee() : null);
+
           return com.res.hms.iam.application.dto.DoctorSelectionDTO.builder()
               .id(d != null ? d.getId() : null)
               .fullName(u.getFullName())
               .specialization(spec)
+              .consultationFee(fee)
               .build();
         })
         .filter(dto -> dto.getId() != null)

@@ -14,4 +14,5 @@ public class DoctorSelectionDTO {
   private UUID id;
   private String fullName;
   private String specialization;
+  private java.math.BigDecimal consultationFee;
 }
