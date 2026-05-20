@@ -76,7 +76,7 @@ class FinanceEntityTest {
         p.setPaymentMode(PaymentMode.CASH);
         p.setReferenceNumber("REF");
         p.setStatus(PaymentStatus.SUCCESS);
-        p.setPaymentDate(LocalDateTime.now());
+        p.setPaymentDate(java.time.Instant.now());
         p.setCollectedBy(UUID.randomUUID());
 
         assertThat(p.getPatientId()).isNotNull();
@@ -99,7 +99,7 @@ class FinanceEntityTest {
         r.setStatus(RefundStatus.INITIATED);
         r.setSourceType(FinanceSourceType.APPOINTMENT);
         r.setSourceId(UUID.randomUUID());
-        r.setProcessedAt(LocalDateTime.now());
+        r.setProcessedAt(java.time.Instant.now());
 
         assertThat(r.getPaymentId()).isNotNull();
         assertThat(r.getInvoiceId()).isNotNull();

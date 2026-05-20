@@ -87,4 +87,28 @@ class HospitalControllerIntegrationTest {
         .perform(get("/api/v1/hospitals/" + UUID.randomUUID()).session(session))
         .andExpect(status().isNotFound());
   }
+
+  @Test
+  void testCreateHospitalValidation() throws Exception {
+    // 1. Missing timezone should fail
+    String hospitalJson = "{\"name\": \"Validation Hospital\", \"code\": \"VAL-HOSP\"}";
+    mockMvc
+        .perform(
+            post("/api/v1/hospitals")
+                .session(session)
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(hospitalJson))
+        .andExpect(status().isBadRequest());
+
+    // 2. Complete data should succeed
+    hospitalJson = "{\"name\": \"Validation Hospital\", \"code\": \"VAL-HOSP\", \"timezone\": \"Asia/Kolkata\"}";
+    mockMvc
+        .perform(
+            post("/api/v1/hospitals")
+                .session(session)
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(hospitalJson))
+        .andExpect(status().isOk())
+        .andExpect(jsonPath("$.data.timezone").value("Asia/Kolkata"));
+  }
 }

@@ -19,8 +19,8 @@ public interface PaymentRepository extends BaseRepository<Payment> {
             + "GROUP BY p.paymentMode")
     List<com.res.hms.finance.application.dto.PaymentSummaryDTO> getPaymentSummaryReport(
         @org.springframework.data.repository.query.Param("hospitalId") UUID hospitalId,
-        @org.springframework.data.repository.query.Param("startDate") java.time.LocalDateTime startDate,
-        @org.springframework.data.repository.query.Param("endDate") java.time.LocalDateTime endDate);
+        @org.springframework.data.repository.query.Param("startDate") java.time.Instant startDate,
+        @org.springframework.data.repository.query.Param("endDate") java.time.Instant endDate);
 
     @org.springframework.data.jpa.repository.Query(
         "SELECT new com.res.hms.finance.application.dto.PaymentSummaryDTO(p.collector.fullName, COUNT(p), SUM(p.amount)) "
@@ -30,6 +30,6 @@ public interface PaymentRepository extends BaseRepository<Payment> {
             + "GROUP BY p.collector.fullName")
     List<com.res.hms.finance.application.dto.PaymentSummaryDTO> getPaymentCollectorReport(
         @org.springframework.data.repository.query.Param("hospitalId") UUID hospitalId,
-        @org.springframework.data.repository.query.Param("startDate") java.time.LocalDateTime startDate,
-        @org.springframework.data.repository.query.Param("endDate") java.time.LocalDateTime endDate);
+        @org.springframework.data.repository.query.Param("startDate") java.time.Instant startDate,
+        @org.springframework.data.repository.query.Param("endDate") java.time.Instant endDate);
 }

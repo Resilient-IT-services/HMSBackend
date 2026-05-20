@@ -12,7 +12,7 @@ import com.res.hms.audit.domain.AuditAction;
 import com.res.hms.audit.domain.AuditLog;
 import com.res.hms.audit.infrastructure.repository.AuditLogRepository;
 import com.res.hms.core.tenant.HospitalContext;
-import java.time.LocalDateTime;
+import java.time.Instant;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
@@ -47,7 +47,7 @@ class AuditLogServiceTest {
   void listReturnsMappedResponses() {
     AuditLog auditLog = new AuditLog();
     auditLog.setDetails(AuditDetail.builder().after(Map.of("msg", "created")).build());
-    auditLog.setCreatedAt(LocalDateTime.now());
+    auditLog.setCreatedAt(Instant.now());
     auditLog.setAction(AuditAction.CREATE);
 
     when(hospitalContext.getHospitalIdOrNull()).thenReturn(hospitalUuid);
@@ -64,7 +64,7 @@ class AuditLogServiceTest {
   void listReturnsAllForSuperAdminWhenNoHospitalSelected() {
     AuditLog auditLog = new AuditLog();
     auditLog.setDetails(AuditDetail.builder().after(Map.of("msg", "created")).build());
-    auditLog.setCreatedAt(LocalDateTime.now());
+    auditLog.setCreatedAt(Instant.now());
     auditLog.setAction(AuditAction.CREATE);
 
     when(hospitalContext.getHospitalIdOrNull()).thenReturn(null);

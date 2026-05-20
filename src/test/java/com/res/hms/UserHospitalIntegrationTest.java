@@ -27,11 +27,24 @@ class UserHospitalIntegrationTest {
 
   @Autowired private MockMvc mockMvc;
   @Autowired private ObjectMapper objectMapper;
+  @Autowired private com.res.hms.iam.infrastructure.repository.SpecializationRepository specializationRepository;
 
   private MockHttpSession session;
 
   @BeforeEach
   void setUp() throws Exception {
+    // Pre-populate specializations if missing
+    if (specializationRepository.findByName("Cardiology").isEmpty()) {
+        com.res.hms.iam.domain.Specialization spec = new com.res.hms.iam.domain.Specialization();
+        spec.setName("Cardiology");
+        specializationRepository.save(spec);
+    }
+    if (specializationRepository.findByName("General Medicine").isEmpty()) {
+        com.res.hms.iam.domain.Specialization spec = new com.res.hms.iam.domain.Specialization();
+        spec.setName("General Medicine");
+        specializationRepository.save(spec);
+    }
+
     // Login as super admin
     session =
         (MockHttpSession)
@@ -50,7 +63,7 @@ class UserHospitalIntegrationTest {
   void testCreateHospitalAndUser() throws Exception {
     // 1. Create Hospital
     String hospitalJson =
-        "{\"name\":\"New Hospital\",\"code\":\"NEW_HOSP\",\"address\":\"New City\",\"status\":\"ACTIVE\"}";
+        "{\"name\":\"New Hospital\",\"code\":\"NEW_HOSP\",\"address\":\"New City\",\"status\":\"ACTIVE\",\"timezone\":\"Asia/Kolkata\"}";
 
     String hospitalResponse =
         mockMvc
@@ -71,7 +84,7 @@ class UserHospitalIntegrationTest {
     // 2. Create User for this hospital
     String userJson =
         String.format(
-            "{\"username\":\"new_staff\",\"password\":\"password123\",\"fullName\":\"New Staff\",\"gender\":\"MALE\",\"dob\":\"1995-01-01\",\"doctorInfo\":{\"specialization\":\"Heart\",\"licenseNumber\":\"NEW-STAFF-DOC-001\"},\"memberships\":[{\"hospitalId\":\"%s\",\"roleAssignments\":[{\"roleCode\":\"DOCTOR\"}]}]}",
+            "{\"username\":\"new_staff\",\"password\":\"password123\",\"fullName\":\"New Staff\",\"gender\":\"MALE\",\"dob\":\"1995-01-01\",\"doctorInfo\":{\"specializations\":[\"Cardiology\"],\"licenseNumber\":\"NEW-STAFF-DOC-001\"},\"memberships\":[{\"hospitalId\":\"%s\",\"roleAssignments\":[{\"roleCode\":\"DOCTOR\"}]}]}",
             hospitalId);
 
     String userResponse =

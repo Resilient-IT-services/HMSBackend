@@ -76,8 +76,10 @@ public class StaffService {
 
     Specification<UserContract> spec =
         (root, query, cb) -> {
-          root.fetch("user", JoinType.INNER).fetch("doctorProfile", JoinType.LEFT);
-          root.fetch("doctorDetails", JoinType.LEFT);
+          if (query.getResultType() != Long.class && query.getResultType() != long.class) {
+            root.fetch("user", JoinType.INNER).fetch("doctorProfile", JoinType.LEFT);
+            root.fetch("doctorDetails", JoinType.LEFT);
+          }
 
           List<Predicate> predicates = new ArrayList<>();
           predicates.add(cb.equal(root.get("hospitalId"), hospitalId));
@@ -132,8 +134,10 @@ public class StaffService {
 
     Specification<UserContract> spec =
         (root, query, cb) -> {
-          root.fetch("user", JoinType.INNER).fetch("nurseProfile", JoinType.LEFT);
-          root.fetch("nurseDetails", JoinType.LEFT);
+          if (query.getResultType() != Long.class && query.getResultType() != long.class) {
+            root.fetch("user", JoinType.INNER).fetch("nurseProfile", JoinType.LEFT);
+            root.fetch("nurseDetails", JoinType.LEFT);
+          }
 
           List<Predicate> predicates = new ArrayList<>();
           predicates.add(cb.equal(root.get("hospitalId"), hospitalId));
@@ -158,6 +162,29 @@ public class StaffService {
 
     Page<UserContract> assignments = assignmentRepository.findAll(spec, pageable);
     return PageResponse.from(assignments.map(this::mapToNurseResponse));
+  }
+
+  @Transactional(readOnly = true)
+  public List<com.res.hms.iam.application.dto.DoctorSelectionDTO> getDoctorSelection() {
+    UUID hospitalId = hospitalContext.requireHospitalId();
+    return assignmentRepository.findByHospitalIdAndRoleCodeAndActive(hospitalId, RoleCode.DOCTOR, true)
+        .stream()
+        .map(a -> {
+          UserAccount u = a.getUser();
+          DoctorProfile d = u.getDoctorProfile();
+          String spec = (d != null && d.getSpecializations() != null) 
+              ? d.getSpecializations().stream()
+                  .map(com.res.hms.iam.domain.Specialization::getName)
+                  .collect(Collectors.joining(", "))
+              : "";
+          return com.res.hms.iam.application.dto.DoctorSelectionDTO.builder()
+              .id(d != null ? d.getId() : null)
+              .fullName(u.getFullName())
+              .specialization(spec)
+              .build();
+        })
+        .filter(dto -> dto.getId() != null)
+        .collect(Collectors.toList());
   }
 
   private DoctorStaffResponse mapToDoctorResponse(UserContract a) {

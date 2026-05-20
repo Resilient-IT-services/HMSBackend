@@ -49,18 +49,18 @@ public class UserContract extends BaseEntity {
   @JoinColumn(name = "role_id", nullable = false)
   private Role role;
 
-  @OneToOne(mappedBy = "assignment", fetch = FetchType.LAZY)
+  @OneToOne(mappedBy = "assignment", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.LAZY)
   private DoctorHospitalDetails doctorDetails;
 
-  @OneToOne(mappedBy = "assignment", fetch = FetchType.LAZY)
+  @OneToOne(mappedBy = "assignment", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.LAZY)
   private NurseHospitalDetails nurseDetails;
 
-  @OneToOne(mappedBy = "assignment", fetch = FetchType.LAZY)
+  @OneToOne(mappedBy = "assignment", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.LAZY)
   private AdminHospitalDetails adminDetails;
 
-  @OneToOne(mappedBy = "assignment", fetch = FetchType.LAZY)
+  @OneToOne(mappedBy = "assignment", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.LAZY)
   private PharmacistHospitalDetails pharmacistDetails;
 
-  @OneToOne(mappedBy = "assignment", fetch = FetchType.LAZY)
+  @OneToOne(mappedBy = "assignment", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.LAZY)
   private ReceptionistHospitalDetails receptionistDetails;
 }

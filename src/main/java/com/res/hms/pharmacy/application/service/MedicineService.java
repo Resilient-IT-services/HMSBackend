@@ -204,9 +204,17 @@ public class MedicineService {
 
   @Transactional(readOnly = true)
   public PageResponse<PharmacyStockDTO> listStock(
-      int page, int size, String search, boolean lowStock) {
+      int page, int size, String search, boolean lowStock, UUID medicineId) {
     UUID hospitalId = hospitalContext.requireHospitalId();
     PageRequest pageRequest = PageRequest.of(page, size);
+
+    if (medicineId != null) {
+      return PageResponse.from(
+          pharmacyStockRepository
+              .findAllByHospitalIdAndMedicineId(hospitalId, medicineId, pageRequest)
+              .map(this::toStockDtoSimple));
+    }
+
     if (lowStock) {
       return PageResponse.from(
           pharmacyStockRepository

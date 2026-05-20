@@ -28,6 +28,12 @@ public class StaffController {
     return ApiResponse.success(staffService.getDoctor(doctorId));
   }
 
+  @GetMapping("/doctors/selection")
+  @PreAuthorize("isAuthenticated()")
+  public ApiResponse<java.util.List<com.res.hms.iam.application.dto.DoctorSelectionDTO>> getDoctorSelection() {
+    return ApiResponse.success(staffService.getDoctorSelection());
+  }
+
   @GetMapping("/nurses/{nurseId}")
   @PreAuthorize("isAuthenticated()")
   public ApiResponse<NurseStaffResponse> getNurse(@PathVariable UUID nurseId) {

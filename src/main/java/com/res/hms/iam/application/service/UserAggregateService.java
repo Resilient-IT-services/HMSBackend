@@ -152,6 +152,7 @@ public class UserAggregateService {
         this::updateRoleAssignment,
         ra -> {
           if (isSuper || Objects.equals(activeId, ra.getHospitalId())) {
+            userRoleUpdateService.handleAssignmentDeletion(ra);
             user.getContracts().remove(ra);
           }
         });

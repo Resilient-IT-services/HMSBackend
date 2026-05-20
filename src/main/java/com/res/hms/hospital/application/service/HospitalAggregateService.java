@@ -107,9 +107,15 @@ public class HospitalAggregateService {
     hospital.setPincode(dto.getPincode());
     hospital.setGstin(dto.getGstin());
     hospital.setRegistrationNo(dto.getRegistrationNo());
+    
+    if (dto.getTimezone() != null) {
+      hospital.setTimezone(dto.getTimezone());
+    }
+
     if (dto.getSettings() != null) {
       hospital.setSettings(dto.getSettings());
     }
+
     if (dto.getDepartments() != null) {
       hospital.setDepartments(dto.getDepartments().stream()
           .map(name -> departmentRepository.findByName(name)

@@ -22,7 +22,6 @@ import com.res.hms.finance.infrastructure.repository.RefundRepository;
 import com.res.hms.iam.domain.UserAccount;
 import com.res.hms.iam.infrastructure.repository.UserAccountRepository;
 import java.math.BigDecimal;
-import java.time.LocalDateTime;
 import java.util.UUID;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -108,7 +107,7 @@ class EvolvedFinanceIntegrationTest {
         payment.setAmount(new BigDecimal("600.00"));
         payment.setPaymentMode(PaymentMode.UPI);
         payment.setStatus(PaymentStatus.SUCCESS);
-        payment.setPaymentDate(LocalDateTime.now());
+        payment.setPaymentDate(java.time.Instant.now());
         payment.setCollectedBy(userId);
         payment.setReferenceNumber("REF-123");
         payment = paymentRepository.save(payment);
@@ -128,7 +127,7 @@ class EvolvedFinanceIntegrationTest {
         refund.setRefundAmount(new BigDecimal("100.00"));
         refund.setReason("Overcharged");
         refund.setStatus(RefundStatus.COMPLETED);
-        refund.setProcessedAt(LocalDateTime.now());
+        refund.setProcessedAt(java.time.Instant.now());
         refund.setSourceType(FinanceSourceType.LAB_ORDER);
         refund.setSourceId(UUID.randomUUID());
         refund = refundRepository.save(refund);

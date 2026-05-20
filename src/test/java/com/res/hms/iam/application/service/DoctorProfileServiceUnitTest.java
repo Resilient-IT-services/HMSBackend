@@ -43,6 +43,10 @@ class DoctorProfileServiceUnitTest {
   @Mock private DoctorAvailabilityExceptionRepository availabilityExceptionRepository;
   @Mock private DoctorScheduleRepository scheduleRepository;
   @Mock private AppointmentRepository appointmentRepository;
+  @Mock private com.res.hms.hospital.infrastructure.repository.HospitalRepository hospitalRepository;
+  @Mock private com.res.hms.iam.infrastructure.repository.DoctorHospitalDetailsRepository doctorHospitalDetailsRepository;
+  @Mock private com.res.hms.core.util.ResourceLookup resourceLookup;
+  @Mock private com.res.hms.finance.infrastructure.repository.InvoiceItemRepository invoiceItemRepository;
 
   @InjectMocks private DoctorProfileService doctorProfileService;
 

@@ -66,4 +66,6 @@ public interface UserAccountRepository
       "SELECT u FROM UserAccount u JOIN u.contracts a WHERE u.id = :id AND a.hospitalId = :hospitalId AND u.deleted = false")
   Optional<UserAccount> findByIdAndHospitalId(
       @Param("id") UUID id, @Param("hospitalId") UUID hospitalId);
+
+  long countByActive(boolean active);
 }

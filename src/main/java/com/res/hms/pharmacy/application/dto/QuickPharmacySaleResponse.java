@@ -1,7 +1,6 @@
 package com.res.hms.pharmacy.application.dto;
 
 import java.math.BigDecimal;
-import java.time.LocalDateTime;
 import java.util.List;
 import java.util.UUID;
 import lombok.AllArgsConstructor;
@@ -25,7 +24,7 @@ public class QuickPharmacySaleResponse {
   private String customerName;
   private String customerPhone;
   private String externalDoctorName;
-  private LocalDateTime createdAt;
+  private java.time.Instant createdAt;
   private List<Item> items;
 
   @Data

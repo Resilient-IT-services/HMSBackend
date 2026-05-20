@@ -18,8 +18,9 @@ import com.res.hms.iam.infrastructure.repository.RoleRepository;
 import com.res.hms.iam.infrastructure.repository.UserAccountRepository;
 import com.res.hms.pharmacy.domain.Medicine;
 import com.res.hms.pharmacy.infrastructure.repository.MedicineRepository;
+import java.time.Instant;
 import java.time.LocalDate;
-import java.time.LocalDateTime;
+import java.time.temporal.ChronoUnit;
 import java.util.List;
 import java.util.UUID;
 import org.junit.jupiter.api.BeforeEach;
@@ -93,7 +94,7 @@ class PrescriptionControllerIntegrationTest {
     apt.setDoctorName(saved.getFullName());
     apt.setPatientId(patient.getId());
     apt.setPatientName(patient.getFullName());
-    apt.setAppointmentTime(LocalDateTime.now().plusDays(1));
+    apt.setAppointmentTime(Instant.now().plus(1, ChronoUnit.DAYS));
     apt.setStatus(AppointmentStatus.SCHEDULED);
     appointmentId = appointmentRepository.save(apt).getId();
 

@@ -13,6 +13,8 @@ public interface DoctorScheduleRepository extends JpaRepository<DoctorSchedule, 
 
   List<DoctorSchedule> findByAssignmentId(UUID assignmentId);
 
+  void deleteByAssignmentId(UUID assignmentId);
+
   @Query(
       "SELECT s FROM DoctorSchedule s WHERE s.assignmentId = :assignmentId AND s.dayOfWeek = :dayOfWeek")
   List<DoctorSchedule> findByAssignmentAndDay(

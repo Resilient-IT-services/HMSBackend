@@ -19,11 +19,12 @@ import com.res.hms.iam.domain.UserContract;
 import com.res.hms.iam.infrastructure.repository.RoleRepository;
 import com.res.hms.iam.infrastructure.repository.UserAccountRepository;
 import java.time.DayOfWeek;
-import java.time.DayOfWeek;
 import com.res.hms.clinical.domain.ExceptionType;
+import java.time.Instant;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.LocalTime;
+import java.time.ZoneOffset;
 import java.util.UUID;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -148,7 +149,7 @@ class DoctorControllerIntegrationTest {
     apt.setDoctorName(drUser.getFullName());
     apt.setPatientId(patient.getId());
     apt.setPatientName(patient.getFullName());
-    apt.setAppointmentTime(LocalDateTime.of(nextMonday, LocalTime.of(9, 0)));
+    apt.setAppointmentTime(LocalDateTime.of(nextMonday, LocalTime.of(9, 0)).atZone(java.time.ZoneId.of("Asia/Kolkata")).toInstant());
     apt.setStatus(AppointmentStatus.SCHEDULED);
     appointmentRepository.save(apt);
 

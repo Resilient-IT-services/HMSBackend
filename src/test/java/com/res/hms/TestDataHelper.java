@@ -20,7 +20,6 @@ import com.res.hms.finance.domain.Invoice;
 import com.res.hms.finance.domain.InvoiceStatus;
 import com.res.hms.finance.infrastructure.repository.InvoiceRepository;
 import java.math.BigDecimal;
-import java.time.LocalDateTime;
 import java.util.UUID;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.crypto.password.PasswordEncoder;
@@ -47,7 +46,7 @@ public class TestDataHelper {
     v.setVisitNumber("VST-" + UUID.randomUUID().toString().substring(0, 8));
     v.setVisitType(VisitType.OPD);
     v.setStatus(VisitStatus.ACTIVE);
-    v.setStartedAt(LocalDateTime.now());
+    v.setStartedAt(java.time.Instant.now());
     return patientVisitRepository.save(v);
   }
 

@@ -29,6 +29,7 @@ public class AppointmentService {
   private final PrescriptionService prescriptionService;
   private final HospitalContext hospitalContext;
   private final ResourceLookup resourceLookup;
+  private final com.res.hms.hospital.infrastructure.repository.HospitalRepository hospitalRepository;
 
   @Transactional(readOnly = true)
   public AppointmentDTO getById(UUID id) {
@@ -42,9 +43,15 @@ public class AppointmentService {
 
   @Transactional(readOnly = true)
   public PageResponse<AppointmentDTO> list(
-      int page, int size, String search, java.time.LocalDate date) {
+      int page, int size, String search, java.time.Instant from, java.time.Instant to, UUID patientId) {
     UUID hospitalId = hospitalContext.requireHospitalId();
     PageRequest pageRequest = PageRequest.of(page, size);
+
+    if (patientId != null) {
+      return PageResponse.from(
+          appointmentRepository.findByPatientIdAndHospitalIdOrderByAppointmentTimeDesc(patientId, hospitalId, pageRequest)
+              .map(this::toDto));
+    }
 
     if (search != null && !search.trim().isEmpty()) {
       String searchPattern = "%" + search.trim().toLowerCase() + "%";
@@ -52,10 +59,10 @@ public class AppointmentService {
           appointmentRepository.search(hospitalId, searchPattern, pageRequest).map(this::toDto));
     }
 
-    if (date != null) {
+    if (from != null && to != null) {
       return PageResponse.from(
           appointmentRepository
-              .findAllByHospitalIdAndDate(hospitalId, date, pageRequest)
+              .findAllByHospitalIdAndRange(hospitalId, from, to, pageRequest)
               .map(this::toDto));
     }
 
@@ -67,9 +74,14 @@ public class AppointmentService {
 
   @Transactional(readOnly = true)
   public com.res.hms.clinical.application.appointment.dto.AppointmentStatsDTO getStats(
-      java.time.LocalDate date) {
+      java.time.Instant from, java.time.Instant to) {
     UUID hospitalId = hospitalContext.requireHospitalId();
-    java.util.List<Object[]> results = appointmentRepository.getStatsByDate(hospitalId, date);
+
+    if (from == null || to == null) {
+        throw new ApiException("VALIDATION_ERROR", "Range (from and to) is required for stats", HttpStatus.BAD_REQUEST);
+    }
+
+    java.util.List<Object[]> results = appointmentRepository.getStatsByRange(hospitalId, from, to);
 
     java.util.Map<com.res.hms.clinical.domain.AppointmentStatus, Long> byStatus =
         new java.util.EnumMap<>(com.res.hms.clinical.domain.AppointmentStatus.class);
@@ -83,7 +95,7 @@ public class AppointmentService {
       total += count;
     }
 
-    long upcoming = appointmentRepository.countUpcoming(hospitalId, date);
+    long upcoming = appointmentRepository.countUpcomingAfter(hospitalId, to);
 
     return com.res.hms.clinical.application.appointment.dto.AppointmentStatsDTO.builder()
         .total(total)
@@ -92,21 +104,9 @@ public class AppointmentService {
         .build();
   }
 
-  @Transactional
-  @Auditable(entity = DomainEntity.APPOINTMENT, action = "UPDATE_STATUS")
-  public AppointmentDTO updateStatus(UUID id, UpdateAppointmentStatusRequest request) {
-    UUID hospitalId = hospitalContext.requireHospitalId();
-    Appointment appointment =
-        resourceLookup.findRequired(
-            id, hospitalId, appointmentRepository::findByIdAndHospitalId, "Appointment");
-
-    appointment.setStatus(request.status());
-    return toDto(appointmentRepository.save(appointment));
-  }
-
   @Transactional(readOnly = true)
   public PageResponse<AppointmentSummaryDTO> listSummary(
-      int page, int size, String search, java.time.LocalDate date) {
+      int page, int size, String search, java.time.Instant from, java.time.Instant to) {
     UUID hospitalId = hospitalContext.requireHospitalId();
     PageRequest pageRequest = PageRequest.of(page, size);
 
@@ -118,10 +118,10 @@ public class AppointmentService {
               .map(this::toSummaryDto));
     }
 
-    if (date != null) {
+    if (from != null && to != null) {
       return PageResponse.from(
           appointmentRepository
-              .findAllByHospitalIdAndDate(hospitalId, date, pageRequest)
+              .findAllByHospitalIdAndRange(hospitalId, from, to, pageRequest)
               .map(this::toSummaryDto));
     }
 
@@ -129,6 +129,28 @@ public class AppointmentService {
         appointmentRepository
             .findAllByHospitalIdOrderByAppointmentTimeDesc(hospitalId, pageRequest)
             .map(this::toSummaryDto));
+  }
+
+  @Transactional
+  @Auditable(entity = DomainEntity.APPOINTMENT, action = "UPDATE_STATUS")
+  public AppointmentDTO updateStatus(UUID id, UpdateAppointmentStatusRequest request) {
+    UUID hospitalId = hospitalContext.requireHospitalId();
+    Appointment appointment =
+        resourceLookup.findRequired(
+            id, hospitalId, appointmentRepository::findByIdAndHospitalId, "Appointment");
+
+    if (hospitalContext.isReceptionist()) {
+        if (appointment.getStatus() == com.res.hms.clinical.domain.AppointmentStatus.CONSULTATION_STARTED
+            || appointment.getStatus() == com.res.hms.clinical.domain.AppointmentStatus.PRESCRIPTION_FINALIZED
+            || appointment.getStatus() == com.res.hms.clinical.domain.AppointmentStatus.COMPLETED) {
+            throw new ApiException("BUSINESS_RULE_VIOLATION",
+                "Receptionists cannot change appointment status once consultation has started.",
+                HttpStatus.BAD_REQUEST);
+        }
+    }
+
+    appointment.setStatus(request.status());
+    return toDto(appointmentRepository.save(appointment));
   }
 
   public AppointmentDTO toDto(Appointment appointment) {
@@ -139,7 +161,7 @@ public class AppointmentService {
     AppointmentDTO.AppointmentDTOBuilder builder =
         AppointmentDTO.builder()
             .id(appointment.getId())
-            .appointmentTime(appointment.getAppointmentTime())
+            .appointmentTime(appointment.getAppointmentTime().atOffset(java.time.ZoneOffset.UTC))
             .status(appointment.getStatus())
             .tokenNumber(appointment.getTokenNumber())
             .sessionPeriod(appointment.getSessionPeriod())
@@ -180,7 +202,7 @@ public class AppointmentService {
         .doctorId(appointment.getDoctorId())
         .doctorName(appointment.getDoctorName())
         .doctorSpecialization(appointment.getDoctor() != null && appointment.getDoctor().getSpecializations() != null && !appointment.getDoctor().getSpecializations().isEmpty() ? appointment.getDoctor().getSpecializations().stream().map(com.res.hms.iam.domain.Specialization::getName).collect(java.util.stream.Collectors.joining(", ")) : null)
-        .appointmentTime(appointment.getAppointmentTime())
+        .appointmentTime(appointment.getAppointmentTime().atOffset(java.time.ZoneOffset.UTC))
         .status(appointment.getStatus())
         .tokenNumber(appointment.getTokenNumber())
         .build();

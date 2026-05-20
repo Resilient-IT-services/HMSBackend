@@ -71,7 +71,7 @@ class ReportControllerIntegrationTest {
 
   @Test
   void testReportPreview() throws Exception {
-    LocalDate today = LocalDate.now();
+    String now = java.time.Instant.now().toString();
 
     mockMvc
         .perform(
@@ -79,8 +79,8 @@ class ReportControllerIntegrationTest {
                 .session(session)
                 .header("X-Hospital-Id", testHospitalId.toString())
                 .param("type", "DOCTOR_REVENUE")
-                .param("startDate", today.toString())
-                .param("endDate", today.toString()))
+                .param("from", now)
+                .param("to", now))
         .andExpect(status().isOk())
         .andExpect(jsonPath("$.data").isArray());
 
@@ -90,15 +90,15 @@ class ReportControllerIntegrationTest {
                 .session(session)
                 .header("X-Hospital-Id", testHospitalId.toString())
                 .param("type", "PAYMENT_SUMMARY")
-                .param("startDate", today.toString())
-                .param("endDate", today.toString()))
+                .param("from", now)
+                .param("to", now))
         .andExpect(status().isOk())
         .andExpect(jsonPath("$.data").isArray());
   }
 
   @Test
   void testReportExport() throws Exception {
-    LocalDate today = LocalDate.now();
+    String now = java.time.Instant.now().toString();
 
     mockMvc
         .perform(
@@ -106,8 +106,8 @@ class ReportControllerIntegrationTest {
                 .session(session)
                 .header("X-Hospital-Id", testHospitalId.toString())
                 .param("type", "DOCTOR_REVENUE")
-                .param("startDate", today.toString())
-                .param("endDate", today.toString()))
+                .param("from", now)
+                .param("to", now))
         .andExpect(status().isOk())
         .andExpect(
             result -> {
@@ -121,8 +121,8 @@ class ReportControllerIntegrationTest {
                 .session(session)
                 .header("X-Hospital-Id", testHospitalId.toString())
                 .param("type", "PAYMENT_SUMMARY")
-                .param("startDate", today.toString())
-                .param("endDate", today.toString()))
+                .param("from", now)
+                .param("to", now))
         .andExpect(status().isOk())
         .andExpect(
             result -> {
