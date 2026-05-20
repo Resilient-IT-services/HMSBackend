@@ -92,6 +92,29 @@ public interface AppointmentRepository extends BaseRepository<Appointment> {
   Integer findMaxTokenByDoctorAndDate(
       @Param("doctorId") UUID doctorId, @Param("date") java.time.LocalDate date);
 
+    @Query(
+        "SELECT COUNT(a) > 0 FROM Appointment a "
+            + "WHERE a.patientId = :patientId AND a.doctorId = :doctorId "
+            + "AND CAST(a.appointmentTime AS date) = :date "
+            + "AND a.status <> :status")
+    boolean existsByPatientIdAndDoctorIdAndDateAndStatusNot(
+        @Param("patientId") UUID patientId,
+        @Param("doctorId") UUID doctorId,
+        @Param("date") java.time.LocalDate date,
+        @Param("status") com.res.hms.clinical.domain.AppointmentStatus status);
+
+    @Query(
+        "SELECT COUNT(a) > 0 FROM Appointment a "
+            + "WHERE a.patientId = :patientId AND a.doctorId = :doctorId "
+            + "AND CAST(a.appointmentTime AS date) = :date "
+            + "AND a.id <> :id AND a.status <> :status")
+    boolean existsByPatientIdAndDoctorIdAndDateAndIdNotAndStatusNot(
+        @Param("patientId") UUID patientId,
+        @Param("doctorId") UUID doctorId,
+        @Param("date") java.time.LocalDate date,
+        @Param("id") UUID id,
+        @Param("status") com.res.hms.clinical.domain.AppointmentStatus status);
+
     boolean existsByPatientIdAndDoctorIdAndAppointmentTimeAndStatusNot(
         UUID patientId,
         UUID doctorId,
@@ -106,21 +129,6 @@ public interface AppointmentRepository extends BaseRepository<Appointment> {
         UUID id,
         com.res.hms.clinical.domain.AppointmentStatus status
     );
-
-    boolean existsByPatientIdAndAppointmentTimeAndStatusNot(
-        UUID patientId,
-        java.time.Instant appointmentTime,
-        com.res.hms.clinical.domain.AppointmentStatus status
-    );
-
-    boolean existsByPatientIdAndAppointmentTimeAndIdNotAndStatusNot(
-        UUID patientId,
-        java.time.Instant appointmentTime,
-        UUID id,
-        com.res.hms.clinical.domain.AppointmentStatus status
-    );
-
-
   java.util.List<Appointment> findByPatientIdAndHospitalIdOrderByAppointmentTimeDesc(
       UUID patientId, UUID hospitalId);
 

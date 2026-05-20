@@ -38,7 +38,7 @@ public class AppointmentAggregateService {
   public AppointmentDTO saveAppointmentAggregate(AppointmentDTO dto) {
     log.info("Starting aggregate save for appointment");
     UUID hospitalId = hospitalContext.requireHospitalId();
-    
+
     Appointment existing = null;
     if (dto.getId() != null) {
       existing = appointmentRepository.findById(dto.getId()).orElse(null);
@@ -47,35 +47,38 @@ public class AppointmentAggregateService {
     if (existing != null && (existing.getStatus() == AppointmentStatus.PRESCRIPTION_FINALIZED || existing.getStatus() == AppointmentStatus.COMPLETED)) {
         if (dto.getStatus() == existing.getStatus() || dto.getStatus() == null) {
             log.warn("Attempt to update clinical data of a finalized appointment: {}", dto.getId());
-            throw new ApiException("BUSINESS_RULE_VIOLATION", 
-                "Finalized consultations are read-only. Reset prescription to make changes.", 
+            throw new ApiException("BUSINESS_RULE_VIOLATION",
+                "Finalized consultations are read-only. Reset prescription to make changes.",
                 HttpStatus.BAD_REQUEST);
         }
     }
 
     if (existing != null && hospitalContext.isReceptionist()) {
-        if (existing.getStatus() == AppointmentStatus.CONSULTATION_STARTED 
-            || existing.getStatus() == AppointmentStatus.PRESCRIPTION_FINALIZED 
+        if (existing.getStatus() == AppointmentStatus.CONSULTATION_STARTED
+            || existing.getStatus() == AppointmentStatus.PRESCRIPTION_FINALIZED
             || existing.getStatus() == AppointmentStatus.COMPLETED) {
-            throw new ApiException("BUSINESS_RULE_VIOLATION", 
-                "Receptionists cannot modify an appointment once consultation has started.", 
+            throw new ApiException("BUSINESS_RULE_VIOLATION",
+                "Receptionists cannot modify an appointment once consultation has started.",
                 HttpStatus.BAD_REQUEST);
         }
     }
+    // New Constraint: Prevent multiple appointments with same doctor on same day
+    java.time.LocalDate appointmentDate = dto.getAppointmentTime()
+        .atZoneSameInstant(java.time.ZoneId.systemDefault()).toLocalDate();
 
-    boolean alreadyBooked;
+    boolean doctorOverlap;
     if (dto.getId() == null) {
-      alreadyBooked = appointmentRepository.existsByPatientIdAndAppointmentTimeAndStatusNot(
-          dto.getPatientId(), dto.getAppointmentTime().toInstant(), AppointmentStatus.CANCELLED);
+        doctorOverlap = appointmentRepository.existsByPatientIdAndDoctorIdAndDateAndStatusNot(
+            dto.getPatientId(), dto.getDoctorId(), appointmentDate, AppointmentStatus.CANCELLED);
     } else {
-      alreadyBooked = appointmentRepository.existsByPatientIdAndAppointmentTimeAndIdNotAndStatusNot(
-          dto.getPatientId(), dto.getAppointmentTime().toInstant(), dto.getId(), AppointmentStatus.CANCELLED);
+        doctorOverlap = appointmentRepository.existsByPatientIdAndDoctorIdAndDateAndIdNotAndStatusNot(
+            dto.getPatientId(), dto.getDoctorId(), appointmentDate, dto.getId(), AppointmentStatus.CANCELLED);
     }
 
-    if (alreadyBooked) {
-      throw new ApiException("APPOINTMENT_ALREADY_EXISTS", 
-          "Patient already has an appointment scheduled at this time", 
-          HttpStatus.CONFLICT);
+    if (doctorOverlap) {
+        throw new ApiException("DOCTOR_ALREADY_BOOKED_FOR_DAY",
+            "Patient already has an appointment with this doctor on the selected date",
+            HttpStatus.BAD_REQUEST);
     }
 
     if (dto.getVitals() != null) {
@@ -219,7 +222,7 @@ public class AppointmentAggregateService {
     appointment.setDoctorName(profile.getFullName());
     appointment.setStatus(dto.getStatus() != null ? dto.getStatus() : AppointmentStatus.SCHEDULED);
     appointment.setTokenNumber(generateNextToken(profile.getId(), dto.getAppointmentTime().toInstant()));
-    
+
     if (dto.getVisitId() != null) {
       appointment.setVisitId(dto.getVisitId());
     } else {
