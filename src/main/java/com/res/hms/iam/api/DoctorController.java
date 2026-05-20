@@ -40,7 +40,7 @@ public class DoctorController {
   @PreAuthorize("isAuthenticated()")
   public ApiResponse<DoctorAvailabilityResponse> getAvailability(
       @PathVariable UUID doctorId,
-      @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate date) {
+      @RequestParam LocalDate date) {
     return ApiResponse.success(doctorProfileService.getAvailableSlots(doctorId, date));
   }
 
@@ -48,7 +48,7 @@ public class DoctorController {
   @PreAuthorize("isAuthenticated()")
   public ApiResponse<java.util.List<com.res.hms.iam.application.dto.DoctorSlotDTO>> getSlots(
       @PathVariable UUID doctorId,
-      @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate date) {
+      @RequestParam LocalDate date) {
     return ApiResponse.success(doctorProfileService.getSlots(doctorId, date));
   }
 

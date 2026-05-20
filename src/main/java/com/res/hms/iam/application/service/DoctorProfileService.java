@@ -67,13 +67,13 @@ public class DoctorProfileService {
     UUID hospitalId = hospitalContext.requireHospitalId();
     java.time.DayOfWeek dbDay = date.getDayOfWeek();
 
-    org.slf4j.LoggerFactory.getLogger(DoctorProfileService.class)
-        .info(
-            "Checking availability for DoctorProfile: {}, Hospital: {}, Date: {}, Day: {}",
-            doctorId,
-            hospitalId,
-            date,
-            dbDay);
+    org.slf4j.Logger log = org.slf4j.LoggerFactory.getLogger(DoctorProfileService.class);
+    log.info(
+        "Checking availability for DoctorProfile: {}, Hospital: {}, Date: {}, Day: {}",
+        doctorId,
+        hospitalId,
+        date,
+        dbDay);
 
     // 1. Find the DoctorProfile (try by doctorId, userId, or assignmentId)
     DoctorProfile doctorProfile =
@@ -86,19 +86,24 @@ public class DoctorProfileService {
                         .findById(doctorId)
                         .map(a -> a.getUser().getDoctorProfile()))
             .orElseThrow(
-                () ->
-                    new com.res.hms.core.exception.ApiException(
-                        "NOT_FOUND",
-                        "DoctorProfile not found",
-                        org.springframework.http.HttpStatus.NOT_FOUND));
+                () -> {
+                  log.warn("DoctorProfile not found for ID: {}", doctorId);
+                  return new com.res.hms.core.exception.ApiException(
+                      "NOT_FOUND",
+                      "DoctorProfile not found",
+                      org.springframework.http.HttpStatus.NOT_FOUND);
+                });
 
     if (!doctorProfile.getUser().isActive()) {
+      log.warn("Doctor user {} is inactive", doctorProfile.getUser().getUsername());
       throw new com.res.hms.core.exception.ApiException(
           "BUSINESS_RULE_VIOLATION", "Doctor is inactive", org.springframework.http.HttpStatus.BAD_REQUEST);
     }
 
     UserAccount user = doctorProfile.getUser();
     UUID actualDoctorId = doctorProfile.getId();
+    log.info("Found actualDoctorId: {} for user: {}", actualDoctorId, user.getUsername());
+
     // 2. Find the relevant assignment for this hospital
     UserContract assignment =
         user.getContracts().stream()
@@ -108,11 +113,15 @@ public class DoctorProfileService {
                         && a.getRole().getCode() == RoleCode.DOCTOR)
             .findFirst()
             .orElseThrow(
-                () ->
-                    new com.res.hms.core.exception.ApiException(
-                        "NOT_FOUND",
-                        "DoctorProfile assignment not found for this hospital",
-                        org.springframework.http.HttpStatus.NOT_FOUND));
+                () -> {
+                  log.warn("Doctor {} has no assignment for hospital {}", user.getUsername(), hospitalId);
+                  return new com.res.hms.core.exception.ApiException(
+                      "NOT_FOUND",
+                      "DoctorProfile assignment not found for this hospital",
+                      org.springframework.http.HttpStatus.NOT_FOUND);
+                });
+
+    log.info("Found assignmentId: {}", assignment.getId());
 
     // 3. Check for exceptions
     List<DoctorAvailabilityException> exceptions =
@@ -120,12 +129,14 @@ public class DoctorProfileService {
             actualDoctorId, hospitalId, date);
 
     if (exceptions.stream().anyMatch(e -> com.res.hms.clinical.domain.ExceptionType.FULL_DAY_OFF.equals(e.getType()))) {
+      log.info("Doctor has FULL_DAY_OFF exception for date {}", date);
       return new DoctorAvailabilityResponse(java.util.Collections.emptyList());
     }
 
     // 4. Fetch existing appointments
     java.util.List<com.res.hms.clinical.domain.Appointment> appointments =
         appointmentRepository.findByDoctorIdAndDate(actualDoctorId, date);
+    log.info("Found {} existing appointments for date {}", appointments.size(), date);
 
     // 5. Determine sessions
     String tz = hospitalRepository.findById(hospitalId)
@@ -136,7 +147,10 @@ public class DoctorProfileService {
     java.time.LocalDate today = nowHospital.toLocalDate();
     java.time.LocalTime now = nowHospital.toLocalTime();
 
+    log.info("Hospital Timezone: {}, Current Hospital Time: {}, Today: {}, Now: {}", tz, nowHospital, today, now);
+
     if (date.isBefore(today)) {
+      log.info("Requested date {} is before today {}", date, today);
       return new DoctorAvailabilityResponse(java.util.Collections.emptyList());
     }
 
@@ -151,6 +165,7 @@ public class DoctorProfileService {
 
     if (override.isPresent()) {
       var o = override.get();
+      log.info("Found override exception: {} ({} - {})", o.getType(), o.getStartTime(), o.getEndTime());
       if (date.isAfter(today) || (o.getEndTime() != null && o.getEndTime().isAfter(now))) {
         int count = countBookingsInRange(appointments, o.getStartTime(), o.getEndTime(), zoneId);
         int duration = o.getSlotDurationMinutes() != null ? o.getSlotDurationMinutes() : 15;
@@ -164,6 +179,8 @@ public class DoctorProfileService {
                 count,
                 true,
                 calculateSuggestedTime(o.getStartTime(), count, duration)));
+      } else {
+        log.info("Override exception has already passed for today");
       }
     } else {
       List<DoctorSchedule> baseSchedules =
@@ -171,7 +188,10 @@ public class DoctorProfileService {
               .filter(s -> s.getDayOfWeek().equals(dbDay))
               .toList();
 
+      log.info("Found {} base schedules for day {}", baseSchedules.size(), dbDay);
+
       for (DoctorSchedule s : baseSchedules) {
+        log.info("Checking schedule session: {} - {}", s.getStartTime(), s.getEndTime());
         if (date.isAfter(today) || (s.getEndTime() != null && s.getEndTime().isAfter(now))) {
           int count = countBookingsInRange(appointments, s.getStartTime(), s.getEndTime(), zoneId);
           int max = s.getMaxPatients() != null ? s.getMaxPatients() : Integer.MAX_VALUE;
@@ -186,10 +206,13 @@ public class DoctorProfileService {
                   count,
                   count < max,
                   calculateSuggestedTime(s.getStartTime(), count, duration)));
+        } else {
+          log.info("Schedule session has already passed for today (End: {}, Now: {})", s.getEndTime(), now);
         }
       }
     }
 
+    log.info("Returning {} sessions", sessions.size());
     return new DoctorAvailabilityResponse(sessions);
   }
 
@@ -286,7 +309,7 @@ public class DoctorProfileService {
         generateSlots(
             s.getStartTime(),
             s.getEndTime(),
-            s.getSlotDurationMinutes(),
+            s.getSlotDurationMinutes() != null ? s.getSlotDurationMinutes() : 15,
             bookedTimes,
             date,
             today,
@@ -317,28 +340,61 @@ public class DoctorProfileService {
       LocalTime now,
       List<com.res.hms.iam.application.dto.DoctorSlotDTO> allSlots) {
     LocalTime current = start;
-    while (current.plusMinutes(duration).isBefore(end)
-        || current.plusMinutes(duration).equals(end)) {
+    if (end.equals(LocalTime.MIDNIGHT) && !start.equals(LocalTime.MIDNIGHT)) {
+        // Handle slots ending at midnight correctly
+    }
+    
+    while (true) {
       LocalTime slotEnd = current.plusMinutes(duration);
-      boolean isPast = date.isBefore(today) || (date.equals(today) && current.isBefore(now));
-      boolean isBooked = bookedTimes.contains(current);
-
-      String status = "AVAILABLE";
-      if (isPast) {
-        status = "SESSION_EXPIRED";
-      } else if (isBooked) {
-        status = "BOOKED";
+      
+      // Stop if we reached or exceeded the end time
+      // Special case: if end is 00:00, it means end of day
+      if (!end.equals(LocalTime.MIDNIGHT)) {
+          if (slotEnd.isAfter(end)) break;
+      } else {
+          // If end is midnight, and we just wrapped to midnight, we are done
+          if (slotEnd.equals(LocalTime.MIDNIGHT)) {
+              // Add this last slot and break
+              addSlot(current, slotEnd, bookedTimes, date, today, now, allSlots);
+              break;
+          }
+          // If we wrapped past midnight without hitting it exactly (e.g. 23:50 + 15 = 00:05)
+          if (slotEnd.isBefore(current)) break;
       }
 
-      allSlots.add(
-          com.res.hms.iam.application.dto.DoctorSlotDTO.builder()
-              .startTime(current)
-              .endTime(slotEnd)
-              .available(!isPast && !isBooked)
-              .status(status)
-              .build());
+      addSlot(current, slotEnd, bookedTimes, date, today, now, allSlots);
+      
+      if (slotEnd.equals(end)) break;
+      
       current = slotEnd;
     }
+  }
+
+  private void addSlot(
+      LocalTime current,
+      LocalTime slotEnd,
+      java.util.Set<LocalTime> bookedTimes,
+      java.time.LocalDate date,
+      java.time.LocalDate today,
+      LocalTime now,
+      List<com.res.hms.iam.application.dto.DoctorSlotDTO> allSlots) {
+    boolean isPast = date.isBefore(today) || (date.equals(today) && current.isBefore(now));
+    boolean isBooked = bookedTimes.contains(current);
+
+    String status = "AVAILABLE";
+    if (isPast) {
+      status = "SESSION_EXPIRED";
+    } else if (isBooked) {
+      status = "BOOKED";
+    }
+
+    allSlots.add(
+        com.res.hms.iam.application.dto.DoctorSlotDTO.builder()
+            .startTime(current)
+            .endTime(slotEnd)
+            .available(!isPast && !isBooked)
+            .status(status)
+            .build());
   }
 
   private int countBookingsInRange(
