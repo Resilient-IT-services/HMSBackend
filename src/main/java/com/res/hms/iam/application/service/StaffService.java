@@ -141,6 +141,8 @@ public class StaffService {
           predicates.add(cb.equal(root.get("active"), true));
           predicates.add(cb.equal(root.get("user").get("active"), true));
 
+
+
           if (name != null && !name.isBlank()) {
             predicates.add(
                 cb.like(
