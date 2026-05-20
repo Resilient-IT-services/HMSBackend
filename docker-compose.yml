@@ -20,18 +20,16 @@ services:
             - "3000:3000"
 
     nginx:
-        image: nginx:latest
+        build:
+            context: .
+            dockerfile: Dockerfile.nginx
         container_name: hms-nginx
         ports:
             - "80:80"
             - "443:443"
-        volumes:
-            - ./nginx.conf:/etc/nginx/conf.d/default.conf
-            - ./certs:/etc/nginx/certs
         depends_on:
             - frontend
             - backend
-
     postgres:
         image: postgres:15
         container_name: hms-postgres
