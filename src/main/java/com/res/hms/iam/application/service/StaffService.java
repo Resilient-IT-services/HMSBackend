@@ -76,8 +76,10 @@ public class StaffService {
 
     Specification<UserContract> spec =
         (root, query, cb) -> {
-          root.fetch("user", JoinType.INNER).fetch("doctorProfile", JoinType.LEFT);
-          root.fetch("doctorDetails", JoinType.LEFT);
+          if (query.getResultType() != Long.class && query.getResultType() != long.class) {
+            root.fetch("user", JoinType.INNER).fetch("doctorProfile", JoinType.LEFT);
+            root.fetch("doctorDetails", JoinType.LEFT);
+          }
 
           List<Predicate> predicates = new ArrayList<>();
           predicates.add(cb.equal(root.get("hospitalId"), hospitalId));
@@ -132,8 +134,10 @@ public class StaffService {
 
     Specification<UserContract> spec =
         (root, query, cb) -> {
-          root.fetch("user", JoinType.INNER).fetch("nurseProfile", JoinType.LEFT);
-          root.fetch("nurseDetails", JoinType.LEFT);
+          if (query.getResultType() != Long.class && query.getResultType() != long.class) {
+            root.fetch("user", JoinType.INNER).fetch("nurseProfile", JoinType.LEFT);
+            root.fetch("nurseDetails", JoinType.LEFT);
+          }
 
           List<Predicate> predicates = new ArrayList<>();
           predicates.add(cb.equal(root.get("hospitalId"), hospitalId));
