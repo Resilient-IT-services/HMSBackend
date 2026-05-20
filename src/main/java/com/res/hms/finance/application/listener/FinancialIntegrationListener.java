@@ -38,7 +38,7 @@ public class FinancialIntegrationListener {
         try {
             // Deduplication: If an invoice item already exists for this appointment, skip.
             // This happens when the OPDOrchestrator already created the invoice synchronously.
-            if (invoiceItemRepository.existsBySourceTypeAndSourceId("APPOINTMENT", event.appointmentId())) {
+            if (invoiceItemRepository.existsBySourceTypeAndSourceId(FinanceSourceType.APPOINTMENT, event.appointmentId())) {
                 log.info("DEDUPLICATION: Invoice already exists for appointment {}, skipping auto-generation.", event.appointmentId());
                 return;
             }
