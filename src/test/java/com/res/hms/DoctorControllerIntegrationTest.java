@@ -149,7 +149,7 @@ class DoctorControllerIntegrationTest {
     apt.setDoctorName(drUser.getFullName());
     apt.setPatientId(patient.getId());
     apt.setPatientName(patient.getFullName());
-    apt.setAppointmentTime(LocalDateTime.of(nextMonday, LocalTime.of(9, 0)).toInstant(java.time.ZoneOffset.UTC));
+    apt.setAppointmentTime(LocalDateTime.of(nextMonday, LocalTime.of(9, 0)).atZone(java.time.ZoneId.of("Asia/Kolkata")).toInstant());
     apt.setStatus(AppointmentStatus.SCHEDULED);
     appointmentRepository.save(apt);
 

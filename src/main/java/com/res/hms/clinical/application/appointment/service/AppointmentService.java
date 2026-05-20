@@ -76,7 +76,7 @@ public class AppointmentService {
   public com.res.hms.clinical.application.appointment.dto.AppointmentStatsDTO getStats(
       java.time.Instant from, java.time.Instant to) {
     UUID hospitalId = hospitalContext.requireHospitalId();
-    
+
     if (from == null || to == null) {
         throw new ApiException("VALIDATION_ERROR", "Range (from and to) is required for stats", HttpStatus.BAD_REQUEST);
     }

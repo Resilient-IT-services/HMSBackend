@@ -119,7 +119,7 @@ class ActiveStatusIntegrationTest {
 
     // 2. Try to book appointment
     String appointmentJson = String.format(
-        "{\"patientId\":\"%s\", \"doctorId\":\"%s\", \"appointmentTime\":\"2026-05-20T10:00:00\", \"status\":\"SCHEDULED\"}",
+        "{\"patientId\":\"%s\", \"doctorId\":\"%s\", \"appointmentTime\":\"2026-05-20T10:00:00Z\", \"status\":\"SCHEDULED\"}",
         patient.getId(), doctor.getDoctorProfile().getId());
 
     mockMvc
