@@ -45,7 +45,7 @@ public class HospitalController {
   }
 
   @GetMapping("/{hospitalId}")
-  @PreAuthorize("hasAnyRole('SUPER_ADMIN','ADMIN','DOCTOR','RECEPTIONIST')")
+  @PreAuthorize("hasAnyRole('SUPER_ADMIN','ADMIN','DOCTOR','RECEPTIONIST','PHARMACIST')")
   public ApiResponse<HospitalDTO> get(@PathVariable UUID hospitalId) {
     return ApiResponse.success(hospitalService.getById(hospitalId));
   }
