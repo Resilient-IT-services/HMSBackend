@@ -24,4 +24,10 @@ public interface UserContractRepository
           + "WHERE n.id = :nurseId AND a.hospitalId = :hospitalId AND a.active = true")
   Optional<UserContract> findByNurseIdAndHospitalId(
       @Param("nurseId") UUID nurseId, @Param("hospitalId") UUID hospitalId);
+
+  @Query("SELECT COUNT(a) FROM UserContract a WHERE a.role.code = :roleCode AND a.active = :active AND a.user.active = true")
+  long countByRoleCodeAndActive(@Param("roleCode") com.res.hms.iam.domain.RoleCode roleCode, @Param("active") boolean active);
+
+  java.util.List<UserContract> findByHospitalIdAndRoleCodeAndActive(
+      UUID hospitalId, com.res.hms.iam.domain.RoleCode roleCode, boolean active);
 }

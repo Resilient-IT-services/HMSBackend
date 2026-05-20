@@ -160,6 +160,29 @@ public class StaffService {
     return PageResponse.from(assignments.map(this::mapToNurseResponse));
   }
 
+  @Transactional(readOnly = true)
+  public List<com.res.hms.iam.application.dto.DoctorSelectionDTO> getDoctorSelection() {
+    UUID hospitalId = hospitalContext.requireHospitalId();
+    return assignmentRepository.findByHospitalIdAndRoleCodeAndActive(hospitalId, RoleCode.DOCTOR, true)
+        .stream()
+        .map(a -> {
+          UserAccount u = a.getUser();
+          DoctorProfile d = u.getDoctorProfile();
+          String spec = (d != null && d.getSpecializations() != null) 
+              ? d.getSpecializations().stream()
+                  .map(com.res.hms.iam.domain.Specialization::getName)
+                  .collect(Collectors.joining(", "))
+              : "";
+          return com.res.hms.iam.application.dto.DoctorSelectionDTO.builder()
+              .id(d != null ? d.getId() : null)
+              .fullName(u.getFullName())
+              .specialization(spec)
+              .build();
+        })
+        .filter(dto -> dto.getId() != null)
+        .collect(Collectors.toList());
+  }
+
   private DoctorStaffResponse mapToDoctorResponse(UserContract a) {
     UserAccount u = a.getUser();
     DoctorProfile d = u.getDoctorProfile();

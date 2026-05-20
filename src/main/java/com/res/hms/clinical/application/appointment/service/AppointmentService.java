@@ -43,9 +43,15 @@ public class AppointmentService {
 
   @Transactional(readOnly = true)
   public PageResponse<AppointmentDTO> list(
-      int page, int size, String search, java.time.Instant from, java.time.Instant to) {
+      int page, int size, String search, java.time.Instant from, java.time.Instant to, UUID patientId) {
     UUID hospitalId = hospitalContext.requireHospitalId();
     PageRequest pageRequest = PageRequest.of(page, size);
+
+    if (patientId != null) {
+      return PageResponse.from(
+          appointmentRepository.findByPatientIdAndHospitalIdOrderByAppointmentTimeDesc(patientId, hospitalId, pageRequest)
+              .map(this::toDto));
+    }
 
     if (search != null && !search.trim().isEmpty()) {
       String searchPattern = "%" + search.trim().toLowerCase() + "%";

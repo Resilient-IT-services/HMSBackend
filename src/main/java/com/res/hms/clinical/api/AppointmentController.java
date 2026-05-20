@@ -64,8 +64,9 @@ public class AppointmentController {
       @RequestParam(required = false)
           @org.springframework.format.annotation.DateTimeFormat(
               iso = org.springframework.format.annotation.DateTimeFormat.ISO.DATE_TIME)
-          java.time.Instant to) {
-    return ApiResponse.success(appointmentService.list(page, Math.min(size, 100), search, from, to));
+          java.time.Instant to,
+      @RequestParam(required = false) UUID patientId) {
+    return ApiResponse.success(appointmentService.list(page, Math.min(size, 100), search, from, to, patientId));
   }
 
   @GetMapping("/summary")

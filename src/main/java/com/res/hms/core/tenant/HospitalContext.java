@@ -57,6 +57,18 @@ public class HospitalContext {
     return getPrincipal().map(HospitalUserPrincipal::userId).orElse(null);
   }
 
+  public UUID requireUserId() {
+    UUID userId = currentUserIdOrNull();
+    if (userId == null) {
+      throw new ApiException("AUTH_ERROR", "Authentication is required", HttpStatus.UNAUTHORIZED);
+    }
+    return userId;
+  }
+
+  public boolean isAdmin() {
+    return hasRole(com.res.hms.iam.domain.RoleCode.ADMIN);
+  }
+
   public boolean hasRole(com.res.hms.iam.domain.RoleCode roleCode) {
     return getPrincipal()
         .map(p -> p.roleCodes() != null && p.roleCodes().contains(roleCode))

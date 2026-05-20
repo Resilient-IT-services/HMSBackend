@@ -123,5 +123,8 @@ public interface AppointmentRepository extends BaseRepository<Appointment> {
 
   java.util.List<Appointment> findByPatientIdAndHospitalIdOrderByAppointmentTimeDesc(
       UUID patientId, UUID hospitalId);
+
+  Page<Appointment> findByPatientIdAndHospitalIdOrderByAppointmentTimeDesc(
+      UUID patientId, UUID hospitalId, Pageable pageable);
 }
 

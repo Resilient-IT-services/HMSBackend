@@ -60,6 +60,17 @@ public class HospitalService {
         hospitalRepository.findAll(spec, PageRequest.of(page, size)).map(this::toDto));
   }
 
+  @Transactional(readOnly = true)
+  public java.util.List<com.res.hms.hospital.application.dto.HospitalSelectionDTO> getHospitalSelection() {
+    return hospitalRepository.findAll().stream()
+        .filter(h -> !h.isDeleted())
+        .map(h -> com.res.hms.hospital.application.dto.HospitalSelectionDTO.builder()
+            .id(h.getId())
+            .name(h.getName())
+            .build())
+        .collect(Collectors.toList());
+  }
+
   public HospitalDTO toDto(Hospital hospital) {
     return HospitalDTO.builder()
         .id(hospital.getId())

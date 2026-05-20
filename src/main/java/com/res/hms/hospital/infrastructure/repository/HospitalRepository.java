@@ -21,4 +21,6 @@ public interface HospitalRepository
   boolean existsByGstin(String gstin);
 
   boolean existsByGstinAndIdNot(String gstin, UUID id);
+
+  long countByDeleted(boolean deleted);
 }

@@ -19,8 +19,8 @@ public class ReportService {
   private final HospitalContext hospitalContext;
 
   public List<?> getReportData(
-      ReportType type, java.time.Instant from, java.time.Instant to, UUID doctorId) {
-    UUID hospitalId = hospitalContext.requireHospitalId();
+      ReportType type, java.time.Instant from, java.time.Instant to, UUID doctorId, boolean allHospitals) {
+    UUID hospitalId = allHospitals && hospitalContext.isSuperAdmin() ? null : hospitalContext.requireHospitalId();
     
     if (from == null || to == null) {
         throw new com.res.hms.core.exception.ApiException(

@@ -36,8 +36,9 @@ public class ReportController {
       @RequestParam ReportType type,
       @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) java.time.Instant from,
       @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) java.time.Instant to,
-      @RequestParam(required = false) java.util.UUID doctorId) {
-    return ApiResponse.success(reportService.getReportData(type, from, to, doctorId));
+      @RequestParam(required = false) java.util.UUID doctorId,
+      @RequestParam(defaultValue = "false") boolean allHospitals) {
+    return ApiResponse.success(reportService.getReportData(type, from, to, doctorId, allHospitals));
   }
 
   @GetMapping("/export/excel")
@@ -46,9 +47,10 @@ public class ReportController {
       @RequestParam ReportType type,
       @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) java.time.Instant from,
       @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) java.time.Instant to,
-      @RequestParam(required = false) java.util.UUID doctorId)
+      @RequestParam(required = false) java.util.UUID doctorId,
+      @RequestParam(defaultValue = "false") boolean allHospitals)
       throws IOException {
-    List<?> data = reportService.getReportData(type, from, to, doctorId);
+    List<?> data = reportService.getReportData(type, from, to, doctorId, allHospitals);
     byte[] content = exportService.generateExcel(type, data, from, to);
 
     return ResponseEntity.ok()
@@ -67,8 +69,9 @@ public class ReportController {
       @RequestParam ReportType type,
       @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) java.time.Instant from,
       @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) java.time.Instant to,
-      @RequestParam(required = false) java.util.UUID doctorId) {
-    List<?> data = reportService.getReportData(type, from, to, doctorId);
+      @RequestParam(required = false) java.util.UUID doctorId,
+      @RequestParam(defaultValue = "false") boolean allHospitals) {
+    List<?> data = reportService.getReportData(type, from, to, doctorId, allHospitals);
     byte[] content = exportService.generatePdf(type, data, from, to);
 
     return ResponseEntity.ok()

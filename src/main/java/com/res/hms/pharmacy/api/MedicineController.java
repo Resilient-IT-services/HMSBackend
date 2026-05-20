@@ -106,8 +106,9 @@ public class MedicineController {
       @RequestParam(defaultValue = "0") int page,
       @RequestParam(defaultValue = "20") int size,
       @RequestParam(required = false) String search,
-      @RequestParam(defaultValue = "false") boolean lowStock) {
-    return ApiResponse.success(medicineService.listStock(page, Math.min(size, 100), search, lowStock));
+      @RequestParam(defaultValue = "false") boolean lowStock,
+      @RequestParam(required = false) UUID medicineId) {
+    return ApiResponse.success(medicineService.listStock(page, Math.min(size, 100), search, lowStock, medicineId));
   }
 
   @PostMapping("/sales")

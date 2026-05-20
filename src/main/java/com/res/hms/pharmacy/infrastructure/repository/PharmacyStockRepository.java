@@ -22,6 +22,9 @@ public interface PharmacyStockRepository extends BaseRepository<PharmacyStock> {
   Optional<PharmacyStock> findByHospitalIdAndMedicineIdAndBatchNumber(
       UUID hospitalId, UUID medicineId, String batchNumber);
 
+  Page<PharmacyStock> findAllByHospitalIdAndMedicineId(
+      UUID hospitalId, UUID medicineId, Pageable pageable);
+
   @Query(
       """
       SELECT s FROM PharmacyStock s

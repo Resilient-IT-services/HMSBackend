@@ -33,5 +33,14 @@ public interface InvoiceItemRepository extends BaseRepository<InvoiceItem> {
         @org.springframework.data.repository.query.Param("startDate") java.time.Instant startDate,
         @org.springframework.data.repository.query.Param("endDate") java.time.Instant endDate);
 
+    @org.springframework.data.jpa.repository.Query(
+        "SELECT COUNT(i), SUM(i.netTotal) FROM InvoiceItem i "
+            + "WHERE i.doctorId = :doctorId AND i.category = 'CONSULTATION' "
+            + "AND i.createdAt >= :startDate AND i.createdAt <= :endDate")
+    Object[] getDoctorRevenueSummary(
+        @org.springframework.data.repository.query.Param("doctorId") UUID doctorId,
+        @org.springframework.data.repository.query.Param("startDate") java.time.Instant startDate,
+        @org.springframework.data.repository.query.Param("endDate") java.time.Instant endDate);
+
     boolean existsBySourceTypeAndSourceId(String sourceType, UUID sourceId);
 }

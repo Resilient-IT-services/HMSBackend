@@ -44,6 +44,12 @@ public class HospitalController {
     return ApiResponse.success(hospitalService.list(page, Math.min(size, 100), name, status));
   }
 
+  @GetMapping("/selection")
+  @PreAuthorize("isAuthenticated()")
+  public ApiResponse<java.util.List<com.res.hms.hospital.application.dto.HospitalSelectionDTO>> getSelection() {
+    return ApiResponse.success(hospitalService.getHospitalSelection());
+  }
+
   @GetMapping("/{hospitalId}")
   @PreAuthorize("hasAnyRole('SUPER_ADMIN','ADMIN','DOCTOR','RECEPTIONIST')")
   public ApiResponse<HospitalDTO> get(@PathVariable UUID hospitalId) {

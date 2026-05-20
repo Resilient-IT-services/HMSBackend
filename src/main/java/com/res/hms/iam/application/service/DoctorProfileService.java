@@ -44,6 +44,23 @@ public class DoctorProfileService {
       availabilityExceptionRepository;
   private final com.res.hms.clinical.infrastructure.repository.AppointmentRepository
       appointmentRepository;
+  private final com.res.hms.finance.infrastructure.repository.InvoiceItemRepository invoiceItemRepository;
+
+  @Transactional(readOnly = true)
+  public com.res.hms.iam.application.dto.DoctorRevenueSummaryDTO getRevenueSummary(
+      UUID doctorId, java.time.Instant from, java.time.Instant to) {
+    Object[] result = (Object[]) invoiceItemRepository.getDoctorRevenueSummary(doctorId, from, to);
+    
+    long count = result != null && result[0] != null ? (long) result[0] : 0;
+    java.math.BigDecimal total = result != null && result[1] != null ? (java.math.BigDecimal) result[1] : java.math.BigDecimal.ZERO;
+    java.math.BigDecimal average = count > 0 ? total.divide(java.math.BigDecimal.valueOf(count), 2, java.math.RoundingMode.HALF_UP) : java.math.BigDecimal.ZERO;
+
+    return com.res.hms.iam.application.dto.DoctorRevenueSummaryDTO.builder()
+        .totalAppointments(count)
+        .totalRevenue(total)
+        .averageFee(average)
+        .build();
+  }
 
   @Transactional(readOnly = true)
   public DoctorAvailabilityResponse getAvailableSlots(UUID doctorId, java.time.LocalDate date) {
