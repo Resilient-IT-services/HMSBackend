@@ -18,7 +18,12 @@ class WebConfigTest {
   @Test
   void testConvertDateTimeWithZ() {
     LocalDate result = converter.convert("2026-05-20T18:30:00.000Z");
-    assertEquals(LocalDate.of(2026, 5, 20), result);
+    // If the system default is IST (+05:30), 18:30Z becomes 00:00 on the 21st.
+    // We expect the converter to shift the date accordingly.
+    LocalDate expected = java.time.ZonedDateTime.parse("2026-05-20T18:30:00.000Z")
+        .withZoneSameInstant(java.time.ZoneId.systemDefault())
+        .toLocalDate();
+    assertEquals(expected, result);
   }
 
   @Test

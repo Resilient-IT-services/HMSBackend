@@ -6,7 +6,6 @@ import com.res.hms.finance.application.service.ReportService;
 import com.res.hms.finance.application.service.ReportType;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import java.io.IOException;
-import java.time.LocalDate;
 import java.util.List;
 import lombok.RequiredArgsConstructor;
 import org.springframework.core.io.ByteArrayResource;

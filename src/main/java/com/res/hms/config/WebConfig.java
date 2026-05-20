@@ -34,8 +34,12 @@ public class WebConfig implements WebMvcConfigurer {
         return LocalDate.parse(source, DateTimeFormatter.ISO_LOCAL_DATE);
       } catch (Exception e) {
         try {
-          // 2. Try parsing as ISO Date Time (with offset/zone) and extracting the date part
-          return ZonedDateTime.parse(source).toLocalDate();
+          // 2. Try parsing as ISO Date Time (with offset/zone) 
+          // and convert to system default timezone before extracting the date part.
+          // This ensures that "2026-05-19T18:30:00Z" becomes "2026-05-20" in IST (+05:30).
+          return ZonedDateTime.parse(source)
+              .withZoneSameInstant(java.time.ZoneId.systemDefault())
+              .toLocalDate();
         } catch (Exception ex1) {
           try {
             // 3. Try parsing as ISO Local Date Time (no offset) and extracting the date part
