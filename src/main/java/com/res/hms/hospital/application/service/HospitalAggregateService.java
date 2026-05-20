@@ -48,10 +48,10 @@ public class HospitalAggregateService {
 
   private Hospital createHospital(HospitalDTO dto) {
 
-      if (hospitalRepository.existsByNameIgnoreCase(dto.getName())) {
-          throw new ApiException(
-              "BUSINESS_RULE_VIOLATION", "Hospital name already exists", HttpStatus.CONFLICT);
-      }
+    if (hospitalRepository.existsByNameIgnoreCase(dto.getName())) {
+      throw new ApiException(
+          "BUSINESS_RULE_VIOLATION", "Hospital name already exists", HttpStatus.CONFLICT);
+    }
     if (hospitalRepository.existsByCode(dto.getCode())) {
       throw new ApiException(
           "BUSINESS_RULE_VIOLATION", "Hospital code already exists", HttpStatus.CONFLICT);
@@ -69,15 +69,12 @@ public class HospitalAggregateService {
   }
 
   private void updateHospital(Hospital hospital, HospitalDTO dto) {
-      if (!hospital.getName().equalsIgnoreCase(dto.getName())
-          && hospitalRepository.existsByNameIgnoreCaseAndIdNot(
-          dto.getName(), hospital.getId())) {
+    if (!hospital.getName().equalsIgnoreCase(dto.getName())
+        && hospitalRepository.existsByNameIgnoreCaseAndIdNot(dto.getName(), hospital.getId())) {
 
-          throw new ApiException(
-              "BUSINESS_RULE_VIOLATION",
-              "Hospital name already exists",
-              HttpStatus.CONFLICT);
-      }
+      throw new ApiException(
+          "BUSINESS_RULE_VIOLATION", "Hospital name already exists", HttpStatus.CONFLICT);
+    }
     if (!hospital.getCode().equals(dto.getCode())
         && hospitalRepository.existsByCodeAndIdNot(dto.getCode(), hospital.getId())) {
       throw new ApiException(
@@ -94,7 +91,9 @@ public class HospitalAggregateService {
       HospitalStatus oldStatus = hospital.getStatus();
       hospital.setStatus(dto.getStatus());
       domainEventPublisher.publish(
-          "Hospital", hospital.getId(), new HospitalStatusChangedEvent(hospital.getId(), oldStatus, dto.getStatus()));
+          "Hospital",
+          hospital.getId(),
+          new HospitalStatusChangedEvent(hospital.getId(), oldStatus, dto.getStatus()));
     }
     updateHospitalFields(hospital, dto);
   }
@@ -107,7 +106,7 @@ public class HospitalAggregateService {
     hospital.setPincode(dto.getPincode());
     hospital.setGstin(dto.getGstin());
     hospital.setRegistrationNo(dto.getRegistrationNo());
-    
+
     if (dto.getTimezone() != null) {
       hospital.setTimezone(dto.getTimezone());
     }
@@ -117,14 +116,19 @@ public class HospitalAggregateService {
     }
 
     if (dto.getDepartments() != null) {
-      hospital.setDepartments(dto.getDepartments().stream()
-          .map(name -> departmentRepository.findByName(name)
-              .orElseGet(() -> {
-                Department d = new Department();
-                d.setName(name);
-                return departmentRepository.save(d);
-              }))
-          .collect(Collectors.toSet()));
+      hospital.setDepartments(
+          dto.getDepartments().stream()
+              .map(
+                  name ->
+                      departmentRepository
+                          .findByName(name)
+                          .orElseGet(
+                              () -> {
+                                Department d = new Department();
+                                d.setName(name);
+                                return departmentRepository.save(d);
+                              }))
+              .collect(Collectors.toSet()));
     } else {
       hospital.getDepartments().clear();
     }

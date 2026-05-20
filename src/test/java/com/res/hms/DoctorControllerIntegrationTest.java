@@ -9,6 +9,7 @@ import com.res.hms.clinical.domain.Appointment;
 import com.res.hms.clinical.domain.AppointmentStatus;
 import com.res.hms.clinical.domain.DoctorAvailabilityException;
 import com.res.hms.clinical.domain.DoctorSchedule;
+import com.res.hms.clinical.domain.ExceptionType;
 import com.res.hms.clinical.infrastructure.repository.DoctorAvailabilityExceptionRepository;
 import com.res.hms.core.domain.Gender;
 import com.res.hms.hospital.infrastructure.repository.HospitalRepository;
@@ -19,12 +20,9 @@ import com.res.hms.iam.domain.UserContract;
 import com.res.hms.iam.infrastructure.repository.RoleRepository;
 import com.res.hms.iam.infrastructure.repository.UserAccountRepository;
 import java.time.DayOfWeek;
-import com.res.hms.clinical.domain.ExceptionType;
-import java.time.Instant;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.LocalTime;
-import java.time.ZoneOffset;
 import java.util.UUID;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -149,7 +147,10 @@ class DoctorControllerIntegrationTest {
     apt.setDoctorName(drUser.getFullName());
     apt.setPatientId(patient.getId());
     apt.setPatientName(patient.getFullName());
-    apt.setAppointmentTime(LocalDateTime.of(nextMonday, LocalTime.of(9, 0)).atZone(java.time.ZoneId.of("Asia/Kolkata")).toInstant());
+    apt.setAppointmentTime(
+        LocalDateTime.of(nextMonday, LocalTime.of(9, 0))
+            .atZone(java.time.ZoneId.of("Asia/Kolkata"))
+            .toInstant());
     apt.setStatus(AppointmentStatus.SCHEDULED);
     appointmentRepository.save(apt);
 
@@ -166,11 +167,11 @@ class DoctorControllerIntegrationTest {
   }
 
   @Test
-    void testGetAvailabilityWithModifiedException() throws Exception {
-      LocalDate tuesday = LocalDate.now().plusDays(7); // Use a future date
-      while (tuesday.getDayOfWeek() != DayOfWeek.TUESDAY) {
-          tuesday = tuesday.plusDays(1);
-      }
+  void testGetAvailabilityWithModifiedException() throws Exception {
+    LocalDate tuesday = LocalDate.now().plusDays(7); // Use a future date
+    while (tuesday.getDayOfWeek() != DayOfWeek.TUESDAY) {
+      tuesday = tuesday.plusDays(1);
+    }
     UserAccount drUser = userAccountRepository.findByUsername("avail_dr").get();
 
     // 1. Create an ADDED exception for Tuesday: 10 AM-4 PM

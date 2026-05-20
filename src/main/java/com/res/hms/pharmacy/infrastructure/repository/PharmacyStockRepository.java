@@ -44,9 +44,7 @@ public interface PharmacyStockRepository extends BaseRepository<PharmacyStock> {
       ORDER BY s.medicine.name, s.expiryDate ASC
       """)
   Page<PharmacyStock> searchDetailedStock(
-      @Param("hospitalId") UUID hospitalId,
-      @Param("search") String search,
-      Pageable pageable);
+      @Param("hospitalId") UUID hospitalId, @Param("search") String search, Pageable pageable);
 
   @Query(
       """

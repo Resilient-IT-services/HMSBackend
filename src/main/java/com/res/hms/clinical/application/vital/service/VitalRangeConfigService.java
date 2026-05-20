@@ -18,9 +18,7 @@ public class VitalRangeConfigService {
 
   @Transactional(readOnly = true)
   public List<VitalRangeConfigDTO> listConfigs() {
-    return repository.findAll().stream()
-        .map(this::toDto)
-        .collect(Collectors.toList());
+    return repository.findAll().stream().map(this::toDto).collect(Collectors.toList());
   }
 
   @Transactional

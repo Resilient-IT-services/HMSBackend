@@ -3,7 +3,6 @@ package com.res.hms.iam.application.service;
 import com.res.hms.core.exception.ApiException;
 import com.res.hms.iam.application.dto.ScheduleDTO;
 import com.res.hms.iam.application.dto.UserDetailsDTO;
-
 import java.time.DayOfWeek;
 import java.util.ArrayList;
 import java.util.List;

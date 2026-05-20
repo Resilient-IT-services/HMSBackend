@@ -4,9 +4,9 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 
 import com.res.hms.audit.application.dto.AuditDetail;
-import com.res.hms.audit.domain.DomainEntity;
 import com.res.hms.audit.domain.AuditAction;
 import com.res.hms.audit.domain.AuditLog;
+import com.res.hms.audit.domain.DomainEntity;
 import com.res.hms.audit.infrastructure.repository.AuditLogRepository;
 import com.res.hms.core.domain.ProficiencyLevel;
 import com.res.hms.hospital.application.dto.HospitalSettings;

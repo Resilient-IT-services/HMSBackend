@@ -10,7 +10,6 @@ import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.Table;
 import java.math.BigDecimal;
-import java.time.LocalDateTime;
 import java.util.UUID;
 import lombok.Getter;
 import lombok.Setter;
@@ -21,37 +20,37 @@ import lombok.Setter;
 @Table(name = "refund")
 public class Refund extends HospitalScopedEntity {
 
-    @Column(name = "payment_id", nullable = false)
-    private UUID paymentId;
+  @Column(name = "payment_id", nullable = false)
+  private UUID paymentId;
 
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "payment_id", insertable = false, updatable = false)
-    private Payment payment;
+  @ManyToOne(fetch = FetchType.LAZY)
+  @JoinColumn(name = "payment_id", insertable = false, updatable = false)
+  private Payment payment;
 
-    @Column(name = "invoice_id", nullable = false)
-    private UUID invoiceId;
+  @Column(name = "invoice_id", nullable = false)
+  private UUID invoiceId;
 
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "invoice_id", insertable = false, updatable = false)
-    private Invoice invoice;
+  @ManyToOne(fetch = FetchType.LAZY)
+  @JoinColumn(name = "invoice_id", insertable = false, updatable = false)
+  private Invoice invoice;
 
-    @Column(name = "refund_amount", nullable = false, precision = 12, scale = 2)
-    private BigDecimal refundAmount;
+  @Column(name = "refund_amount", nullable = false, precision = 12, scale = 2)
+  private BigDecimal refundAmount;
 
-    @Column(name = "reason", nullable = false)
-    private String reason;
+  @Column(name = "reason", nullable = false)
+  private String reason;
 
-    @Enumerated(EnumType.STRING)
-    @Column(name = "status", nullable = false)
-    private RefundStatus status;
+  @Enumerated(EnumType.STRING)
+  @Column(name = "status", nullable = false)
+  private RefundStatus status;
 
-    @Column(name = "source_type")
-    @Enumerated(jakarta.persistence.EnumType.STRING)
-    private FinanceSourceType sourceType;
+  @Column(name = "source_type")
+  @Enumerated(jakarta.persistence.EnumType.STRING)
+  private FinanceSourceType sourceType;
 
-    @Column(name = "source_id")
-    private UUID sourceId;
+  @Column(name = "source_id")
+  private UUID sourceId;
 
-    @Column(name = "processed_at")
-    private java.time.Instant processedAt;
+  @Column(name = "processed_at")
+  private java.time.Instant processedAt;
 }

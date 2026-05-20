@@ -14,7 +14,6 @@ import com.res.hms.finance.application.dto.RevenueReportDTO;
 import java.awt.Color;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
-import java.time.LocalDate;
 import java.util.List;
 import org.apache.poi.ss.usermodel.Cell;
 import org.apache.poi.ss.usermodel.CellStyle;
@@ -29,7 +28,8 @@ import org.springframework.stereotype.Service;
 @Service
 public class ExportService {
 
-  public byte[] generateExcel(ReportType type, List<?> data, java.time.Instant start, java.time.Instant end)
+  public byte[] generateExcel(
+      ReportType type, List<?> data, java.time.Instant start, java.time.Instant end)
       throws IOException {
     try (Workbook workbook = new XSSFWorkbook();
         ByteArrayOutputStream out = new ByteArrayOutputStream()) {
@@ -46,8 +46,16 @@ public class ExportService {
       Row headerRow = sheet.createRow(0);
       String[] headers =
           (type == ReportType.DOCTOR_REVENUE || type == ReportType.PHARMACY_REVENUE)
-              ? new String[] {type == ReportType.PHARMACY_REVENUE ? "Category" : "Doctor Name", "Total Items/Appointments", "Total Revenue"}
-              : new String[] {type == ReportType.PAYMENT_COLLECTOR_SUMMARY ? "Collector Name" : "Payment Method", "Transaction Count", "Total Amount"};
+              ? new String[] {
+                type == ReportType.PHARMACY_REVENUE ? "Category" : "Doctor Name",
+                "Total Items/Appointments",
+                "Total Revenue"
+              }
+              : new String[] {
+                type == ReportType.PAYMENT_COLLECTOR_SUMMARY ? "Collector Name" : "Payment Method",
+                "Transaction Count",
+                "Total Amount"
+              };
 
       for (int i = 0; i < headers.length; i++) {
         Cell cell = headerRow.createCell(i);
@@ -83,7 +91,8 @@ public class ExportService {
     }
   }
 
-  public byte[] generatePdf(ReportType type, List<?> data, java.time.Instant start, java.time.Instant end) {
+  public byte[] generatePdf(
+      ReportType type, List<?> data, java.time.Instant start, java.time.Instant end) {
     ByteArrayOutputStream out = new ByteArrayOutputStream();
     Document document = new Document(PageSize.A4);
     PdfWriter.getInstance(document, out);
@@ -112,8 +121,16 @@ public class ExportService {
     Font headFont = FontFactory.getFont(FontFactory.HELVETICA_BOLD);
     String[] headers =
         (type == ReportType.DOCTOR_REVENUE || type == ReportType.PHARMACY_REVENUE)
-            ? new String[] {type == ReportType.PHARMACY_REVENUE ? "Category" : "Doctor Name", "Total Items/Appointments", "Total Revenue"}
-            : new String[] {type == ReportType.PAYMENT_COLLECTOR_SUMMARY ? "Collector Name" : "Payment Method", "Transaction Count", "Total Amount"};
+            ? new String[] {
+              type == ReportType.PHARMACY_REVENUE ? "Category" : "Doctor Name",
+              "Total Items/Appointments",
+              "Total Revenue"
+            }
+            : new String[] {
+              type == ReportType.PAYMENT_COLLECTOR_SUMMARY ? "Collector Name" : "Payment Method",
+              "Transaction Count",
+              "Total Amount"
+            };
 
     for (String header : headers) {
       headerCell.setPhrase(new Phrase(header, headFont));

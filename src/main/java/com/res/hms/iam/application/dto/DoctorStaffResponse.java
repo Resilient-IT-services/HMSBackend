@@ -2,13 +2,12 @@ package com.res.hms.iam.application.dto;
 
 import com.res.hms.core.domain.Gender;
 import java.math.BigDecimal;
+import java.util.List;
 import java.util.UUID;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
-
-import java.util.List;
 
 @Data
 @Builder

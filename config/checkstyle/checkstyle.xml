@@ -23,7 +23,7 @@
 
         <!-- NCSS limits -->
         <module name="JavaNCSS">
-            <property name="classMaximum" value="450"/>
+            <property name="classMaximum" value="200"/>
             <property name="methodMaximum" value="100"/>
         </module>
 

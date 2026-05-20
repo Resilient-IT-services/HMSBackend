@@ -38,44 +38,58 @@ public class AppointmentAggregateService {
   public AppointmentDTO saveAppointmentAggregate(AppointmentDTO dto) {
     log.info("Starting aggregate save for appointment");
     UUID hospitalId = hospitalContext.requireHospitalId();
-    
+
     Appointment existing = null;
     if (dto.getId() != null) {
       existing = appointmentRepository.findById(dto.getId()).orElse(null);
     }
 
-    if (existing != null && (existing.getStatus() == AppointmentStatus.PRESCRIPTION_FINALIZED || existing.getStatus() == AppointmentStatus.COMPLETED)) {
-        if (dto.getStatus() == existing.getStatus() || dto.getStatus() == null) {
-            log.warn("Attempt to update clinical data of a finalized appointment: {}", dto.getId());
-            throw new ApiException("BUSINESS_RULE_VIOLATION", 
-                "Finalized consultations are read-only. Reset prescription to make changes.", 
-                HttpStatus.BAD_REQUEST);
-        }
+    if (existing != null
+        && (existing.getStatus() == AppointmentStatus.PRESCRIPTION_FINALIZED
+            || existing.getStatus() == AppointmentStatus.COMPLETED)) {
+      if (dto.getStatus() == existing.getStatus() || dto.getStatus() == null) {
+        log.warn("Attempt to update clinical data of a finalized appointment: {}", dto.getId());
+        throw new ApiException(
+            "BUSINESS_RULE_VIOLATION",
+            "Finalized consultations are read-only. Reset prescription to make changes.",
+            HttpStatus.BAD_REQUEST);
+      }
     }
 
     if (existing != null && hospitalContext.isReceptionist()) {
-        if (existing.getStatus() == AppointmentStatus.CONSULTATION_STARTED 
-            || existing.getStatus() == AppointmentStatus.PRESCRIPTION_FINALIZED 
-            || existing.getStatus() == AppointmentStatus.COMPLETED) {
-            throw new ApiException("BUSINESS_RULE_VIOLATION", 
-                "Receptionists cannot modify an appointment once consultation has started.", 
-                HttpStatus.BAD_REQUEST);
-        }
+      if (existing.getStatus() == AppointmentStatus.CONSULTATION_STARTED
+          || existing.getStatus() == AppointmentStatus.PRESCRIPTION_FINALIZED
+          || existing.getStatus() == AppointmentStatus.COMPLETED) {
+        throw new ApiException(
+            "BUSINESS_RULE_VIOLATION",
+            "Receptionists cannot modify an appointment once consultation has started.",
+            HttpStatus.BAD_REQUEST);
+      }
     }
+    // New Constraint: Prevent multiple appointments with same doctor on same day
+    java.time.LocalDate appointmentDate =
+        dto.getAppointmentTime().atZoneSameInstant(java.time.ZoneId.systemDefault()).toLocalDate();
 
-    boolean alreadyBooked;
+    boolean doctorOverlap;
     if (dto.getId() == null) {
-      alreadyBooked = appointmentRepository.existsByPatientIdAndAppointmentTimeAndStatusNot(
-          dto.getPatientId(), dto.getAppointmentTime().toInstant(), AppointmentStatus.CANCELLED);
+      doctorOverlap =
+          appointmentRepository.existsByPatientIdAndDoctorIdAndDateAndStatusNot(
+              dto.getPatientId(), dto.getDoctorId(), appointmentDate, AppointmentStatus.CANCELLED);
     } else {
-      alreadyBooked = appointmentRepository.existsByPatientIdAndAppointmentTimeAndIdNotAndStatusNot(
-          dto.getPatientId(), dto.getAppointmentTime().toInstant(), dto.getId(), AppointmentStatus.CANCELLED);
+      doctorOverlap =
+          appointmentRepository.existsByPatientIdAndDoctorIdAndDateAndIdNotAndStatusNot(
+              dto.getPatientId(),
+              dto.getDoctorId(),
+              appointmentDate,
+              dto.getId(),
+              AppointmentStatus.CANCELLED);
     }
 
-    if (alreadyBooked) {
-      throw new ApiException("APPOINTMENT_ALREADY_EXISTS", 
-          "Patient already has an appointment scheduled at this time", 
-          HttpStatus.CONFLICT);
+    if (doctorOverlap) {
+      throw new ApiException(
+          "DOCTOR_ALREADY_BOOKED_FOR_DAY",
+          "Patient already has an appointment with this doctor on the selected date",
+          HttpStatus.BAD_REQUEST);
     }
 
     if (dto.getVitals() != null) {
@@ -121,8 +135,12 @@ public class AppointmentAggregateService {
             .orElseThrow(
                 () -> new ApiException("NOT_FOUND", "Appointment not found", HttpStatus.NOT_FOUND));
 
-    if (appointment.getStatus() == AppointmentStatus.PRESCRIPTION_FINALIZED || appointment.getStatus() == AppointmentStatus.COMPLETED) {
-      throw new ApiException("BUSINESS_RULE_VIOLATION", "Cannot update vitals for finalized appointments.", HttpStatus.BAD_REQUEST);
+    if (appointment.getStatus() == AppointmentStatus.PRESCRIPTION_FINALIZED
+        || appointment.getStatus() == AppointmentStatus.COMPLETED) {
+      throw new ApiException(
+          "BUSINESS_RULE_VIOLATION",
+          "Cannot update vitals for finalized appointments.",
+          HttpStatus.BAD_REQUEST);
     }
 
     com.res.hms.clinical.domain.Vitals vitals = appointment.getVitals();
@@ -134,8 +152,9 @@ public class AppointmentAggregateService {
     }
     mapVitalsDtoToEntity(vitalsDto, vitals);
 
-    if (appointment.getStatus() == AppointmentStatus.PAID || appointment.getStatus() == AppointmentStatus.SCHEDULED) {
-       appointment.setStatus(AppointmentStatus.VITALS_RECORDED);
+    if (appointment.getStatus() == AppointmentStatus.PAID
+        || appointment.getStatus() == AppointmentStatus.SCHEDULED) {
+      appointment.setStatus(AppointmentStatus.VITALS_RECORDED);
     }
 
     return appointmentService.toDto(appointmentRepository.save(appointment));
@@ -151,12 +170,20 @@ public class AppointmentAggregateService {
             .orElseThrow(
                 () -> new ApiException("NOT_FOUND", "Appointment not found", HttpStatus.NOT_FOUND));
 
-    if (appointment.getStatus() == AppointmentStatus.PRESCRIPTION_FINALIZED || appointment.getStatus() == AppointmentStatus.COMPLETED) {
-      throw new ApiException("BUSINESS_RULE_VIOLATION", "Cannot update consultation for finalized appointments.", HttpStatus.BAD_REQUEST);
+    if (appointment.getStatus() == AppointmentStatus.PRESCRIPTION_FINALIZED
+        || appointment.getStatus() == AppointmentStatus.COMPLETED) {
+      throw new ApiException(
+          "BUSINESS_RULE_VIOLATION",
+          "Cannot update consultation for finalized appointments.",
+          HttpStatus.BAD_REQUEST);
     }
 
-    if (appointment.getStatus() != AppointmentStatus.VITALS_RECORDED && appointment.getStatus() != AppointmentStatus.CONSULTATION_STARTED) {
-       throw new ApiException("BUSINESS_RULE_VIOLATION", "Consultation can only be started after vitals are recorded.", HttpStatus.BAD_REQUEST);
+    if (appointment.getStatus() != AppointmentStatus.VITALS_RECORDED
+        && appointment.getStatus() != AppointmentStatus.CONSULTATION_STARTED) {
+      throw new ApiException(
+          "BUSINESS_RULE_VIOLATION",
+          "Consultation can only be started after vitals are recorded.",
+          HttpStatus.BAD_REQUEST);
     }
 
     appointment.setChiefComplaints(dto.getChiefComplaints());
@@ -183,7 +210,8 @@ public class AppointmentAggregateService {
     logEvent.setEntityName(com.res.hms.audit.domain.DomainEntity.APPOINTMENT);
     logEvent.setEntityId(id);
     logEvent.setAction(com.res.hms.audit.domain.AuditAction.UPDATE);
-    com.res.hms.audit.application.dto.AuditDetail details = new com.res.hms.audit.application.dto.AuditDetail();
+    com.res.hms.audit.application.dto.AuditDetail details =
+        new com.res.hms.audit.application.dto.AuditDetail();
     java.util.Map<String, Object> changes = new java.util.HashMap<>();
     changes.put("action", "ADMIN_RESET");
     changes.put("reason", "Appointment prescription reset by admin");
@@ -218,13 +246,15 @@ public class AppointmentAggregateService {
     appointment.setDoctorId(profile.getId());
     appointment.setDoctorName(profile.getFullName());
     appointment.setStatus(dto.getStatus() != null ? dto.getStatus() : AppointmentStatus.SCHEDULED);
-    appointment.setTokenNumber(generateNextToken(profile.getId(), dto.getAppointmentTime().toInstant()));
-    
+    appointment.setTokenNumber(
+        generateNextToken(profile.getId(), dto.getAppointmentTime().toInstant()));
+
     if (dto.getVisitId() != null) {
       appointment.setVisitId(dto.getVisitId());
     } else {
-      com.res.hms.clinical.domain.PatientVisit visit = patientVisitService.createVisit(
-          hospitalId, patient.getId(), com.res.hms.clinical.domain.VisitType.OPD);
+      com.res.hms.clinical.domain.PatientVisit visit =
+          patientVisitService.createVisit(
+              hospitalId, patient.getId(), com.res.hms.clinical.domain.VisitType.OPD);
       appointment.setVisitId(visit.getId());
     }
 
@@ -295,4 +325,3 @@ public class AppointmentAggregateService {
     }
   }
 }
-

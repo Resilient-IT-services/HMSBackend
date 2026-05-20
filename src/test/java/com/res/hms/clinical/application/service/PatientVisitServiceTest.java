@@ -18,27 +18,28 @@ import org.springframework.transaction.annotation.Transactional;
 @Transactional
 class PatientVisitServiceTest {
 
-    @Autowired private PatientVisitService patientVisitService;
-    @Autowired private TestDataHelper testDataHelper;
+  @Autowired private PatientVisitService patientVisitService;
+  @Autowired private TestDataHelper testDataHelper;
 
-    @Test
-    void testCreateAndCloseVisit() {
-        UUID hospitalId = testDataHelper.createHospitalIfMissing("SERVICE_TEST", "Service Test Hospital");
-        UUID patientId = testDataHelper.createTestPatient(hospitalId).getId();
+  @Test
+  void testCreateAndCloseVisit() {
+    UUID hospitalId =
+        testDataHelper.createHospitalIfMissing("SERVICE_TEST", "Service Test Hospital");
+    UUID patientId = testDataHelper.createTestPatient(hospitalId).getId();
 
-        PatientVisit visit = patientVisitService.createVisit(hospitalId, patientId, VisitType.OPD);
-        assertThat(visit.getId()).isNotNull();
-        assertThat(visit.getStatus()).isEqualTo(VisitStatus.ACTIVE);
+    PatientVisit visit = patientVisitService.createVisit(hospitalId, patientId, VisitType.OPD);
+    assertThat(visit.getId()).isNotNull();
+    assertThat(visit.getStatus()).isEqualTo(VisitStatus.ACTIVE);
 
-        patientVisitService.closeVisit(visit.getId());
-        
-        assertThat(visit.getStatus()).isEqualTo(VisitStatus.DISCHARGED);
-        assertThat(visit.getEndedAt()).isNotNull();
-    }
+    patientVisitService.closeVisit(visit.getId());
 
-    @Test
-    void testCloseNonExistentVisit() {
-        patientVisitService.closeVisit(UUID.randomUUID());
-        // Should not throw exception
-    }
+    assertThat(visit.getStatus()).isEqualTo(VisitStatus.DISCHARGED);
+    assertThat(visit.getEndedAt()).isNotNull();
+  }
+
+  @Test
+  void testCloseNonExistentVisit() {
+    patientVisitService.closeVisit(UUID.randomUUID());
+    // Should not throw exception
+  }
 }

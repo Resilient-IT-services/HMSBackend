@@ -14,23 +14,15 @@ import com.res.hms.pharmacy.application.dto.PharmacyStockDTO;
 import com.res.hms.pharmacy.application.dto.StockImportResponse;
 import com.res.hms.pharmacy.application.dto.StockRequest;
 import com.res.hms.pharmacy.domain.Medicine;
-import com.res.hms.pharmacy.domain.PharmacyReturn;
-import com.res.hms.pharmacy.domain.PharmacySale;
-import com.res.hms.pharmacy.domain.PharmacySaleItem;
 import com.res.hms.pharmacy.domain.PharmacyStock;
 import com.res.hms.pharmacy.infrastructure.repository.HospitalMedicineCatalogRepository;
 import com.res.hms.pharmacy.infrastructure.repository.MedicineRepository;
-import com.res.hms.pharmacy.infrastructure.repository.PharmacyReturnRepository;
-import com.res.hms.pharmacy.infrastructure.repository.PharmacySaleItemRepository;
-import com.res.hms.pharmacy.infrastructure.repository.PharmacySaleRepository;
 import com.res.hms.pharmacy.infrastructure.repository.PharmacyStockRepository;
 import java.math.BigDecimal;
 import java.time.LocalDate;
-import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
-import java.util.stream.Collectors;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.PageRequest;
@@ -49,13 +41,9 @@ public class MedicineService {
   private final MedicineRepository medicineRepository;
   private final HospitalMedicineCatalogRepository hospitalMedicineCatalogRepository;
   private final PharmacyStockRepository pharmacyStockRepository;
-  private final PharmacySaleRepository pharmacySaleRepository;
-  private final PharmacySaleItemRepository pharmacySaleItemRepository;
-  private final PharmacyReturnRepository pharmacyReturnRepository;
   private final HospitalContext hospitalContext;
-  private final com.res.hms.clinical.application.service.PatientVisitService patientVisitService;
-  private final com.res.hms.core.service.DomainEventPublisher eventPublisher;
   private final PharmacyExcelService pharmacyExcelService;
+  private final MedicineSalesService medicineSalesService;
 
   @Transactional(readOnly = true)
   public PageResponse<MedicineDTO> list(int page, int size, String search) {
@@ -76,10 +64,7 @@ public class MedicineService {
   @Transactional
   public MedicineDTO create(MedicineDTO request) {
     if (medicineRepository.existsDuplicate(
-        request.getName(),
-        request.getGenericName(),
-        request.getStrength(),
-        request.getForm())) {
+        request.getName(), request.getGenericName(), request.getStrength(), request.getForm())) {
       throw new ApiException("DUPLICATE_MEDICINE", "Medicine already exists", HttpStatus.CONFLICT);
     }
 
@@ -229,7 +214,9 @@ public class MedicineService {
               .map(this::toStockDtoSimple));
     }
     return PageResponse.from(
-        pharmacyStockRepository.findDetailedStock(hospitalId, pageRequest).map(this::toStockDtoSimple));
+        pharmacyStockRepository
+            .findDetailedStock(hospitalId, pageRequest)
+            .map(this::toStockDtoSimple));
   }
 
   private PharmacyStockDTO toStockDtoSimple(PharmacyStock stock) {
@@ -245,184 +232,6 @@ public class MedicineService {
         .purchasePrice(stock.getPurchasePrice())
         .sellingPrice(stock.getSellingPrice())
         .price(stock.getSellingPrice())
-        .build();
-  }
-
-  private final com.res.hms.clinical.application.prescription.repository.PrescriptionRepository prescriptionRepository;
-  private final com.res.hms.clinical.infrastructure.repository.AppointmentRepository appointmentRepository;
-
-  @Transactional
-  public PharmacySaleResponse createSale(PharmacySaleRequest request) {
-    UUID hospitalId = hospitalContext.requireHospitalId();
-    
-    // Idempotency check: Ensure prescription isn't already processed
-    if (request.getPrescriptionId() != null) {
-      pharmacySaleRepository.findByPrescriptionIdAndHospitalId(request.getPrescriptionId(), hospitalId)
-          .ifPresent(s -> {
-              throw new ApiException("ALREADY_DISPENSED", 
-                  "Prescription already dispensed in Sale #" + s.getSaleNumber(), 
-                  HttpStatus.CONFLICT);
-          });
-    }
-
-    PharmacySale sale = new PharmacySale();
-    sale.setHospitalId(hospitalId);
-    sale.setPatientId(request.getPatientId());
-    sale.setPrescriptionId(request.getPrescriptionId());
-
-    UUID resolvedVisitId = request.getVisitId();
-    
-    // 1. Try to resolve Visit ID from Prescription
-    if (resolvedVisitId == null && request.getPrescriptionId() != null) {
-      resolvedVisitId = prescriptionRepository.findById(request.getPrescriptionId())
-          .filter(p -> p.getAppointmentId() != null)
-          .flatMap(p -> appointmentRepository.findById(p.getAppointmentId()))
-          .map(com.res.hms.clinical.domain.Appointment::getVisitId)
-          .orElse(null);
-    }
-
-    // 2. If still null (Walk-in), create a new quick encounter
-    if (resolvedVisitId == null) {
-      com.res.hms.clinical.domain.PatientVisit visit = patientVisitService.createVisit(
-          hospitalId, request.getPatientId(), com.res.hms.clinical.domain.VisitType.WALKIN);
-      resolvedVisitId = visit.getId();
-    }
-    
-    sale.setVisitId(resolvedVisitId);
-
-
-    BigDecimal total = BigDecimal.ZERO;
-    LocalDate today = LocalDate.now();
-    for (PharmacySaleRequest.Item requestedItem : request.getItems()) {
-      Medicine medicine = requireMedicine(requestedItem.getMedicineId());
-      int remaining = requestedItem.getQuantity();
-      List<PharmacyStock> batches =
-          pharmacyStockRepository.findDispensableBatchesForUpdate(
-              hospitalId, medicine.getId(), today);
-
-      for (PharmacyStock batch : batches) {
-        if (remaining == 0) {
-          break;
-        }
-        int consumed = Math.min(remaining, batch.getQuantity());
-        batch.setQuantity(batch.getQuantity() - consumed);
-        remaining -= consumed;
-
-        PharmacySaleItem saleItem = new PharmacySaleItem();
-        saleItem.setSale(sale);
-        saleItem.setMedicine(medicine);
-        saleItem.setStock(batch);
-        saleItem.setQuantity(consumed);
-        saleItem.setUnitPrice(batch.getSellingPrice());
-        saleItem.setSubtotal(batch.getSellingPrice().multiply(BigDecimal.valueOf(consumed)));
-        sale.getItems().add(saleItem);
-        total = total.add(saleItem.getSubtotal());
-      }
-
-      if (remaining > 0) {
-        throw new ApiException(
-            "INSUFFICIENT_STOCK",
-            "Insufficient stock for " + medicine.getName(),
-            HttpStatus.CONFLICT);
-      }
-    }
-
-    sale.setTotalAmount(total);
-    PharmacySale saved = pharmacySaleRepository.save(sale);
-
-    eventPublisher.publish(
-        "pharmacy_sale",
-        saved.getId(),
-        new com.res.hms.pharmacy.application.event.PharmacySaleCompletedEvent(
-            saved.getId(), saved.getPatientId(), hospitalId));
-
-    return toSaleResponse(saved);
-  }
-
-  @Transactional
-  public PharmacyReturnResponse returnStock(PharmacyReturnRequest request) {
-    UUID hospitalId = hospitalContext.requireHospitalId();
-    PharmacySaleItem saleItem =
-        pharmacySaleItemRepository
-            .findByIdAndHospitalId(request.getSaleItemId(), hospitalId)
-            .orElseThrow(
-                () -> new ApiException("NOT_FOUND", "Sale item not found", HttpStatus.NOT_FOUND));
-
-    if (request.getQuantity() > saleItem.getQuantity()) {
-      throw new ApiException(
-          "INVALID_RETURN", "Return quantity exceeds sale quantity", HttpStatus.BAD_REQUEST);
-    }
-
-    PharmacyStock stock = saleItem.getStock();
-    stock.setQuantity(stock.getQuantity() + request.getQuantity());
-
-    PharmacyReturn pharmacyReturn = new PharmacyReturn();
-    pharmacyReturn.setHospitalId(hospitalId);
-    pharmacyReturn.setSaleItem(saleItem);
-    pharmacyReturn.setStock(stock);
-    pharmacyReturn.setQuantity(request.getQuantity());
-    pharmacyReturn.setReason(request.getReason());
-    pharmacyReturn = pharmacyReturnRepository.save(pharmacyReturn);
-
-    return PharmacyReturnResponse.builder()
-        .id(pharmacyReturn.getId())
-        .saleItemId(saleItem.getId())
-        .stockId(stock.getId())
-        .quantity(pharmacyReturn.getQuantity())
-        .reason(pharmacyReturn.getReason())
-        .build();
-  }
-
-  @Transactional(readOnly = true)
-  public List<PharmacyStockDTO> expiryAlerts(int days) {
-    UUID hospitalId = hospitalContext.requireHospitalId();
-    LocalDate today = LocalDate.now();
-    return pharmacyStockRepository
-        .findExpiringBatches(hospitalId, today, today.plusDays(days))
-        .stream()
-        .map(this::toStockDto)
-        .collect(Collectors.toList());
-  }
-
-  @Transactional(readOnly = true)
-  public PageResponse<PharmacyStockDTO> lowStockAlerts(int page, int size, int threshold) {
-    UUID hospitalId = hospitalContext.requireHospitalId();
-    return PageResponse.from(
-        pharmacyStockRepository
-            .findAllByHospitalIdAndQuantityLessThan(
-                hospitalId, threshold, PageRequest.of(page, size))
-            .map(this::toStockDto));
-  }
-
-  public Medicine requireMedicine(UUID id) {
-    return medicineRepository
-        .findById(id)
-        .orElseThrow(
-            () -> new ApiException("NOT_FOUND", "Medicine not found", HttpStatus.NOT_FOUND));
-  }
-
-  private PharmacySaleResponse toSaleResponse(PharmacySale sale) {
-    List<PharmacySaleResponse.Item> items = new ArrayList<>();
-    for (PharmacySaleItem item : sale.getItems()) {
-      items.add(
-          PharmacySaleResponse.Item.builder()
-              .id(item.getId())
-              .medicineId(item.getMedicine().getId())
-              .medicineName(item.getMedicine().getName())
-              .stockId(item.getStock().getId())
-              .batchNumber(item.getStock().getBatchNumber())
-              .expiryDate(item.getStock().getExpiryDate())
-              .quantity(item.getQuantity())
-              .unitPrice(item.getUnitPrice())
-              .subtotal(item.getSubtotal())
-              .build());
-    }
-    return PharmacySaleResponse.builder()
-        .id(sale.getId())
-        .patientId(sale.getPatientId())
-        .prescriptionId(sale.getPrescriptionId())
-        .totalAmount(sale.getTotalAmount())
-        .items(items)
         .build();
   }
 
@@ -444,6 +253,33 @@ public class MedicineService {
         .sellingPrice(stock.getSellingPrice())
         .price(stock.getSellingPrice())
         .build();
+  }
+
+  @Transactional
+  public PharmacySaleResponse createSale(PharmacySaleRequest request) {
+    return medicineSalesService.createSale(request);
+  }
+
+  @Transactional
+  public PharmacyReturnResponse returnStock(PharmacyReturnRequest request) {
+    return medicineSalesService.returnStock(request);
+  }
+
+  @Transactional(readOnly = true)
+  public List<PharmacyStockDTO> expiryAlerts(int days) {
+    return medicineSalesService.expiryAlerts(days);
+  }
+
+  @Transactional(readOnly = true)
+  public PageResponse<PharmacyStockDTO> lowStockAlerts(int page, int size, int threshold) {
+    return medicineSalesService.lowStockAlerts(page, size, threshold);
+  }
+
+  public Medicine requireMedicine(UUID id) {
+    return medicineRepository
+        .findById(id)
+        .orElseThrow(
+            () -> new ApiException("NOT_FOUND", "Medicine not found", HttpStatus.NOT_FOUND));
   }
 
   public MedicineSummaryDTO toSummaryDto(Medicine medicine) {

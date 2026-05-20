@@ -18,13 +18,15 @@ import org.springframework.web.bind.annotation.RestController;
 @RestController
 @RequestMapping("/api/v1/pharmacy/quick-sale")
 @RequiredArgsConstructor
-@org.springframework.security.access.prepost.PreAuthorize("hasAnyRole('ADMIN','PHARMACIST','SUPER_ADMIN')")
+@org.springframework.security.access.prepost.PreAuthorize(
+    "hasAnyRole('ADMIN','PHARMACIST','SUPER_ADMIN')")
 public class PharmacyQuickSaleController {
 
   private final QuickPharmacySaleService quickPharmacySaleService;
 
   @PostMapping
-  public ApiResponse<QuickPharmacySaleResponse> createQuickSale(@RequestBody QuickPharmacySaleRequest request) {
+  public ApiResponse<QuickPharmacySaleResponse> createQuickSale(
+      @RequestBody QuickPharmacySaleRequest request) {
     return ApiResponse.success(quickPharmacySaleService.createQuickSale(request));
   }
 
@@ -34,7 +36,8 @@ public class PharmacyQuickSaleController {
   }
 
   @GetMapping("/prescription/{prescriptionId}")
-  public ApiResponse<QuickPharmacySaleResponse> getSaleByPrescription(@PathVariable UUID prescriptionId) {
+  public ApiResponse<QuickPharmacySaleResponse> getSaleByPrescription(
+      @PathVariable UUID prescriptionId) {
     return ApiResponse.success(quickPharmacySaleService.getSaleByPrescription(prescriptionId));
   }
 

@@ -9,7 +9,8 @@ import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
 public interface AppointmentRepository extends BaseRepository<Appointment> {
-  @Query("SELECT a FROM Appointment a LEFT JOIN FETCH a.patient LEFT JOIN FETCH a.doctor "
+  @Query(
+      "SELECT a FROM Appointment a LEFT JOIN FETCH a.patient LEFT JOIN FETCH a.doctor "
           + "WHERE a.hospitalId = :hospitalId "
           + "ORDER BY a.appointmentTime DESC")
   Page<Appointment> findAllByHospitalIdOrderByAppointmentTimeDesc(
@@ -59,8 +60,7 @@ public interface AppointmentRepository extends BaseRepository<Appointment> {
       "SELECT COUNT(a) FROM Appointment a "
           + "WHERE a.hospitalId = :hospitalId AND "
           + "a.appointmentTime > :to")
-  long countUpcomingAfter(
-      @Param("hospitalId") UUID hospitalId, @Param("to") java.time.Instant to);
+  long countUpcomingAfter(@Param("hospitalId") UUID hospitalId, @Param("to") java.time.Instant to);
 
   @Query(
       "SELECT a.status, COUNT(a) FROM Appointment a "
@@ -74,8 +74,7 @@ public interface AppointmentRepository extends BaseRepository<Appointment> {
       "SELECT COUNT(a) FROM Appointment a "
           + "WHERE a.hospitalId = :hospitalId AND "
           + "CAST(a.appointmentTime AS date) > :date")
-  long countUpcoming(
-      @Param("hospitalId") UUID hospitalId, @Param("date") java.time.LocalDate date);
+  long countUpcoming(@Param("hospitalId") UUID hospitalId, @Param("date") java.time.LocalDate date);
 
   @Query(
       "SELECT a FROM Appointment a "
@@ -92,34 +91,41 @@ public interface AppointmentRepository extends BaseRepository<Appointment> {
   Integer findMaxTokenByDoctorAndDate(
       @Param("doctorId") UUID doctorId, @Param("date") java.time.LocalDate date);
 
-    boolean existsByPatientIdAndDoctorIdAndAppointmentTimeAndStatusNot(
-        UUID patientId,
-        UUID doctorId,
-        java.time.Instant appointmentTime,
-        com.res.hms.clinical.domain.AppointmentStatus status
-    );
+  @Query(
+      "SELECT COUNT(a) > 0 FROM Appointment a "
+          + "WHERE a.patientId = :patientId AND a.doctorId = :doctorId "
+          + "AND CAST(a.appointmentTime AS date) = :date "
+          + "AND a.status <> :status")
+  boolean existsByPatientIdAndDoctorIdAndDateAndStatusNot(
+      @Param("patientId") UUID patientId,
+      @Param("doctorId") UUID doctorId,
+      @Param("date") java.time.LocalDate date,
+      @Param("status") com.res.hms.clinical.domain.AppointmentStatus status);
 
-    boolean existsByPatientIdAndDoctorIdAndAppointmentTimeAndIdNotAndStatusNot(
-        UUID patientId,
-        UUID doctorId,
-        java.time.Instant appointmentTime,
-        UUID id,
-        com.res.hms.clinical.domain.AppointmentStatus status
-    );
+  @Query(
+      "SELECT COUNT(a) > 0 FROM Appointment a "
+          + "WHERE a.patientId = :patientId AND a.doctorId = :doctorId "
+          + "AND CAST(a.appointmentTime AS date) = :date "
+          + "AND a.id <> :id AND a.status <> :status")
+  boolean existsByPatientIdAndDoctorIdAndDateAndIdNotAndStatusNot(
+      @Param("patientId") UUID patientId,
+      @Param("doctorId") UUID doctorId,
+      @Param("date") java.time.LocalDate date,
+      @Param("id") UUID id,
+      @Param("status") com.res.hms.clinical.domain.AppointmentStatus status);
 
-    boolean existsByPatientIdAndAppointmentTimeAndStatusNot(
-        UUID patientId,
-        java.time.Instant appointmentTime,
-        com.res.hms.clinical.domain.AppointmentStatus status
-    );
+  boolean existsByPatientIdAndDoctorIdAndAppointmentTimeAndStatusNot(
+      UUID patientId,
+      UUID doctorId,
+      java.time.Instant appointmentTime,
+      com.res.hms.clinical.domain.AppointmentStatus status);
 
-    boolean existsByPatientIdAndAppointmentTimeAndIdNotAndStatusNot(
-        UUID patientId,
-        java.time.Instant appointmentTime,
-        UUID id,
-        com.res.hms.clinical.domain.AppointmentStatus status
-    );
-
+  boolean existsByPatientIdAndDoctorIdAndAppointmentTimeAndIdNotAndStatusNot(
+      UUID patientId,
+      UUID doctorId,
+      java.time.Instant appointmentTime,
+      UUID id,
+      com.res.hms.clinical.domain.AppointmentStatus status);
 
   java.util.List<Appointment> findByPatientIdAndHospitalIdOrderByAppointmentTimeDesc(
       UUID patientId, UUID hospitalId);
@@ -127,4 +133,3 @@ public interface AppointmentRepository extends BaseRepository<Appointment> {
   Page<Appointment> findByPatientIdAndHospitalIdOrderByAppointmentTimeDesc(
       UUID patientId, UUID hospitalId, Pageable pageable);
 }
-

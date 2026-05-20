@@ -12,7 +12,6 @@ import com.res.hms.iam.domain.UserAccount;
 import com.res.hms.iam.domain.UserContract;
 import com.res.hms.iam.infrastructure.repository.RoleRepository;
 import com.res.hms.iam.infrastructure.repository.UserAccountRepository;
-import java.time.LocalDateTime;
 import java.util.UUID;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -45,7 +44,8 @@ class ReceptionistRestrictionIntegrationTest {
 
   @BeforeEach
   void setUp() throws Exception {
-    testHospitalId = testDataHelper.createHospitalIfMissing("RESTRICT_TEST", "Restrict Test Hospital");
+    testHospitalId =
+        testDataHelper.createHospitalIfMissing("RESTRICT_TEST", "Restrict Test Hospital");
 
     // Create Receptionist
     UserAccount receptionist = new UserAccount();
@@ -65,7 +65,8 @@ class ReceptionistRestrictionIntegrationTest {
                 .perform(
                     post("/api/v1/auth/login")
                         .contentType(MediaType.APPLICATION_JSON)
-                        .content("{\"username\": \"test_receptionist\", \"password\": \"password\"}"))
+                        .content(
+                            "{\"username\": \"test_receptionist\", \"password\": \"password\"}"))
                 .andExpect(status().isOk())
                 .andReturn()
                 .getRequest()
@@ -73,9 +74,10 @@ class ReceptionistRestrictionIntegrationTest {
 
     // Create valid Patient and Doctor
     com.res.hms.clinical.domain.Patient patient = testDataHelper.createTestPatient(testHospitalId);
-    
+
     // Create a valid Visit
-    com.res.hms.clinical.domain.PatientVisit visit = testDataHelper.createTestVisit(testHospitalId, patient.getId());
+    com.res.hms.clinical.domain.PatientVisit visit =
+        testDataHelper.createTestVisit(testHospitalId, patient.getId());
 
     UserAccount doctor = new UserAccount();
     doctor.setUsername("test_doctor_restriction");
@@ -98,7 +100,8 @@ class ReceptionistRestrictionIntegrationTest {
     appointment.setPatientName(patient.getFullName());
     appointment.setDoctorId(doctor.getId()); // Use doctor.getId() directly since MapsId is used
     appointment.setDoctorName(doctor.getFullName());
-    appointment.setAppointmentTime(java.time.Instant.now().plus(1, java.time.temporal.ChronoUnit.DAYS));
+    appointment.setAppointmentTime(
+        java.time.Instant.now().plus(1, java.time.temporal.ChronoUnit.DAYS));
     appointment.setStatus(AppointmentStatus.CONSULTATION_STARTED);
     appointment.setTokenNumber(1);
     appointment.setVisitId(visit.getId());
@@ -122,10 +125,11 @@ class ReceptionistRestrictionIntegrationTest {
   @Test
   void testReceptionistCannotUpdateAppointmentAfterConsultationStarted() throws Exception {
     Appointment appt = appointmentRepository.findById(appointmentId).get();
-    
-    String content = String.format(
-        "{\"id\": \"%s\", \"patientId\": \"%s\", \"doctorId\": \"%s\", \"appointmentTime\": \"%s\", \"notes\": \"updated notes\"}",
-        appointmentId, appt.getPatientId(), appt.getDoctorId(), appt.getAppointmentTime());
+
+    String content =
+        String.format(
+            "{\"id\": \"%s\", \"patientId\": \"%s\", \"doctorId\": \"%s\", \"appointmentTime\": \"%s\", \"notes\": \"updated notes\"}",
+            appointmentId, appt.getPatientId(), appt.getDoctorId(), appt.getAppointmentTime());
 
     mockMvc
         .perform(

@@ -7,11 +7,14 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 
 import com.res.hms.core.domain.CertificationLevel;
 import com.res.hms.core.domain.ShiftType;
+import com.res.hms.hospital.domain.Department;
+import com.res.hms.hospital.domain.Hospital;
 import com.res.hms.iam.domain.DoctorHospitalDetails;
 import com.res.hms.iam.domain.DoctorProfile;
 import com.res.hms.iam.domain.NurseHospitalDetails;
 import com.res.hms.iam.domain.NurseProfile;
 import com.res.hms.iam.domain.RoleCode;
+import com.res.hms.iam.domain.Specialization;
 import com.res.hms.iam.domain.UserAccount;
 import com.res.hms.iam.domain.UserContract;
 import com.res.hms.iam.infrastructure.repository.DoctorHospitalDetailsRepository;
@@ -45,43 +48,54 @@ class StaffControllerIntegrationTest {
   @Autowired private NurseHospitalDetailsRepository nurseHospitalDetailsRepository;
   @Autowired private PasswordEncoder passwordEncoder;
   @Autowired private TestDataHelper testDataHelper;
-  @Autowired private com.res.hms.hospital.infrastructure.repository.HospitalRepository hospitalRepository;
-  @Autowired private com.res.hms.hospital.infrastructure.repository.DepartmentRepository departmentRepository;
+
+  @Autowired
+  private com.res.hms.hospital.infrastructure.repository.HospitalRepository hospitalRepository;
+
+  @Autowired
+  private com.res.hms.hospital.infrastructure.repository.DepartmentRepository departmentRepository;
 
   private UUID testHospitalId;
   private MockHttpSession session;
-  private com.res.hms.hospital.domain.Department opdDepartment;
-  private com.res.hms.hospital.domain.Department icuDepartment;
+  private Department opdDepartment;
+  private Department icuDepartment;
 
   @BeforeEach
   void setUp() throws Exception {
     testHospitalId = testDataHelper.createHospitalIfMissing("STAFF_TEST", "Staff Test Hospital");
-    com.res.hms.hospital.domain.Hospital h = hospitalRepository.findById(testHospitalId).get();
+    setUpDepartments();
+    createAdminSession();
+    createDoctor();
+    createNurse();
+    createDualRoleDoctor();
+  }
+
+  private void setUpDepartments() {
+    Hospital hospital = hospitalRepository.findById(testHospitalId).get();
     opdDepartment =
         departmentRepository
             .findByName("OPD")
             .orElseGet(
                 () -> {
-                  com.res.hms.hospital.domain.Department d =
-                      new com.res.hms.hospital.domain.Department();
-                  d.setName("OPD");
-                  return departmentRepository.save(d);
+                  Department department = new Department();
+                  department.setName("OPD");
+                  return departmentRepository.save(department);
                 });
-    h.getDepartments().add(opdDepartment);
+    hospital.getDepartments().add(opdDepartment);
     icuDepartment =
         departmentRepository
             .findByName("ICU")
             .orElseGet(
                 () -> {
-                  com.res.hms.hospital.domain.Department d =
-                      new com.res.hms.hospital.domain.Department();
-                  d.setName("ICU");
-                  return departmentRepository.save(d);
+                  Department department = new Department();
+                  department.setName("ICU");
+                  return departmentRepository.save(department);
                 });
-    h.getDepartments().add(icuDepartment);
-    hospitalRepository.save(h);
+    hospital.getDepartments().add(icuDepartment);
+    hospitalRepository.save(hospital);
+  }
 
-    // Create Admin for session
+  private void createAdminSession() throws Exception {
     UserAccount admin = new UserAccount();
     admin.setUsername("staff_admin");
     admin.setPasswordHash(passwordEncoder.encode("admin123"));
@@ -104,8 +118,9 @@ class StaffControllerIntegrationTest {
                 .andReturn()
                 .getRequest()
                 .getSession();
+  }
 
-    // Create a Doctor
+  private void createDoctor() {
     UserAccount drUser = new UserAccount();
     drUser.setUsername("dr_jones");
     drUser.setFullName("Dr. Indiana Jones");
@@ -114,7 +129,7 @@ class StaffControllerIntegrationTest {
 
     DoctorProfile drProfile = new DoctorProfile();
     drProfile.setUser(drUser);
-    com.res.hms.iam.domain.Specialization spec = new com.res.hms.iam.domain.Specialization();
+    Specialization spec = new Specialization();
     spec.setName("Archaeology");
     drProfile.getSpecializations().add(spec);
     drProfile.setLicenseNumber("LICENSE-123");
@@ -133,8 +148,9 @@ class StaffControllerIntegrationTest {
     drDetails.setConsultationFee(new BigDecimal("500.00"));
     drAssign.setDoctorDetails(drDetails);
     doctorHospitalDetailsRepository.save(drDetails);
+  }
 
-    // Create a Nurse
+  private void createNurse() {
     UserAccount nurseUser = new UserAccount();
     nurseUser.setUsername("nurse_ratched");
     nurseUser.setFullName("Nurse Ratched");
@@ -160,8 +176,9 @@ class StaffControllerIntegrationTest {
     nurseDetails.setShiftType(ShiftType.NIGHT);
     nurseAssign.setNurseDetails(nurseDetails);
     nurseHospitalDetailsRepository.save(nurseDetails);
+  }
 
-    // Create a User who is both a Doctor and a Receptionist
+  private void createDualRoleDoctor() {
     UserAccount dualUser = new UserAccount();
     dualUser.setUsername("dual_user");
     dualUser.setFullName("Dr. Multi Role");
@@ -189,9 +206,11 @@ class StaffControllerIntegrationTest {
 
     dualUser = userAccountRepository.save(dualUser);
 
-    UserContract savedDrContractDual = dualUser.getContracts().stream()
-        .filter(c -> c.getRole().getCode() == RoleCode.DOCTOR)
-        .findFirst().orElseThrow();
+    UserContract savedDrContractDual =
+        dualUser.getContracts().stream()
+            .filter(c -> c.getRole().getCode() == RoleCode.DOCTOR)
+            .findFirst()
+            .orElseThrow();
 
     DoctorHospitalDetails drDetailsDual = new DoctorHospitalDetails();
     drDetailsDual.setAssignment(savedDrContractDual);

@@ -14,7 +14,6 @@ import com.res.hms.iam.domain.UserAccount;
 import com.res.hms.iam.domain.UserContract;
 import com.res.hms.iam.infrastructure.repository.RoleRepository;
 import com.res.hms.iam.infrastructure.repository.UserAccountRepository;
-import java.util.HashSet;
 import java.util.Objects;
 import java.util.Set;
 import java.util.UUID;
@@ -120,15 +119,18 @@ public class UserAggregateService {
     if (dto.getPhone() != null) {
       user.setPhone(dto.getPhone());
     }
-      if (isSuper && dto.getSuperuser() != null) {
-          user.setSuperuser(dto.getSuperuser());
+    if (isSuper && dto.getSuperuser() != null) {
+      user.setSuperuser(dto.getSuperuser());
+    }
+    if (dto.getActive() != null) {
+      if (!dto.getActive() && Objects.equals(user.getId(), hospitalContext.currentUserIdOrNull())) {
+        throw new ApiException(
+            "BUSINESS_RULE_VIOLATION",
+            "Users cannot deactivate themselves",
+            HttpStatus.BAD_REQUEST);
       }
-      if (dto.getActive() != null) {
-          if (!dto.getActive() && Objects.equals(user.getId(), hospitalContext.currentUserIdOrNull())) {
-              throw new ApiException("BUSINESS_RULE_VIOLATION", "Users cannot deactivate themselves", HttpStatus.BAD_REQUEST);
-          }
-          user.setActive(dto.getActive());
-      }
+      user.setActive(dto.getActive());
+    }
   }
 
   private void mergeMemberships(
@@ -140,7 +142,9 @@ public class UserAggregateService {
     java.util.List<UserDetailsDTO.RoleAssignmentDTO> incoming =
         dto.getMemberships().stream()
             .filter(m -> isSuper || Objects.equals(activeId, m.getHospitalId()))
-            .flatMap(m -> m.getRoleAssignments().stream().map(ra -> normalizeRoleAssignment(user, m, ra)))
+            .flatMap(
+                m ->
+                    m.getRoleAssignments().stream().map(ra -> normalizeRoleAssignment(user, m, ra)))
             .toList();
 
     CollectionMergeUtil.merge(
@@ -197,63 +201,86 @@ public class UserAggregateService {
     ra.setUser(user);
     ra.setHospitalId(dto.getHospitalId());
     ra.setRole(role);
-    
+
     if (dto.getHospitalId() != null) {
-        Hospital hospital = hospitalRepository.findById(dto.getHospitalId())
-            .orElseThrow(() -> new ApiException("NOT_FOUND", "Hospital not found", HttpStatus.NOT_FOUND));
-            
-        if (dto.getDepartments() != null && !dto.getDepartments().isEmpty()) {
-            Set<String> hospitalDeptNames = hospital.getDepartments().stream()
-                .map(Department::getName)
-                .collect(Collectors.toSet());
-                
-            for (String deptName : dto.getDepartments()) {
-                if (!hospitalDeptNames.contains(deptName)) {
-                    throw new ApiException("VALIDATION_ERROR", 
-                        "Department " + deptName + " is not linked to hospital " + hospital.getName(), 
-                        HttpStatus.BAD_REQUEST);
-                }
-            }
+      Hospital hospital =
+          hospitalRepository
+              .findById(dto.getHospitalId())
+              .orElseThrow(
+                  () -> new ApiException("NOT_FOUND", "Hospital not found", HttpStatus.NOT_FOUND));
+
+      if (dto.getDepartments() != null && !dto.getDepartments().isEmpty()) {
+        Set<String> hospitalDeptNames =
+            hospital.getDepartments().stream().map(Department::getName).collect(Collectors.toSet());
+
+        for (String deptName : dto.getDepartments()) {
+          if (!hospitalDeptNames.contains(deptName)) {
+            throw new ApiException(
+                "VALIDATION_ERROR",
+                "Department " + deptName + " is not linked to hospital " + hospital.getName(),
+                HttpStatus.BAD_REQUEST);
+          }
         }
+      }
     }
 
     if (dto.getDepartments() != null) {
-      ra.setDepartments(dto.getDepartments().stream()
-          .map(name -> departmentRepository.findByName(name)
-              .orElseThrow(() -> new ApiException("NOT_FOUND", "Department " + name + " not found in catalog", HttpStatus.BAD_REQUEST)))
-          .collect(Collectors.toSet()));
+      ra.setDepartments(
+          dto.getDepartments().stream()
+              .map(
+                  name ->
+                      departmentRepository
+                          .findByName(name)
+                          .orElseThrow(
+                              () ->
+                                  new ApiException(
+                                      "NOT_FOUND",
+                                      "Department " + name + " not found in catalog",
+                                      HttpStatus.BAD_REQUEST)))
+              .collect(Collectors.toSet()));
     }
     ra.setActive(dto.getActive() != null ? dto.getActive() : true);
     return ra;
   }
 
-  private void updateRoleAssignment(
-      UserContract existing, UserDetailsDTO.RoleAssignmentDTO dto) {
-      
+  private void updateRoleAssignment(UserContract existing, UserDetailsDTO.RoleAssignmentDTO dto) {
+
     if (existing.getHospitalId() != null) {
-        Hospital hospital = hospitalRepository.findById(existing.getHospitalId())
-            .orElseThrow(() -> new ApiException("NOT_FOUND", "Hospital not found", HttpStatus.NOT_FOUND));
-            
-        if (dto.getDepartments() != null && !dto.getDepartments().isEmpty()) {
-            Set<String> hospitalDeptNames = hospital.getDepartments().stream()
-                .map(Department::getName)
-                .collect(Collectors.toSet());
-                
-            for (String deptName : dto.getDepartments()) {
-                if (!hospitalDeptNames.contains(deptName)) {
-                    throw new ApiException("VALIDATION_ERROR", 
-                        "Department " + deptName + " is not linked to hospital " + hospital.getName(), 
-                        HttpStatus.BAD_REQUEST);
-                }
-            }
+      Hospital hospital =
+          hospitalRepository
+              .findById(existing.getHospitalId())
+              .orElseThrow(
+                  () -> new ApiException("NOT_FOUND", "Hospital not found", HttpStatus.NOT_FOUND));
+
+      if (dto.getDepartments() != null && !dto.getDepartments().isEmpty()) {
+        Set<String> hospitalDeptNames =
+            hospital.getDepartments().stream().map(Department::getName).collect(Collectors.toSet());
+
+        for (String deptName : dto.getDepartments()) {
+          if (!hospitalDeptNames.contains(deptName)) {
+            throw new ApiException(
+                "VALIDATION_ERROR",
+                "Department " + deptName + " is not linked to hospital " + hospital.getName(),
+                HttpStatus.BAD_REQUEST);
+          }
         }
+      }
     }
 
     if (dto.getDepartments() != null) {
-      existing.setDepartments(dto.getDepartments().stream()
-          .map(name -> departmentRepository.findByName(name)
-              .orElseThrow(() -> new ApiException("NOT_FOUND", "Department " + name + " not found in catalog", HttpStatus.BAD_REQUEST)))
-          .collect(Collectors.toSet()));
+      existing.setDepartments(
+          dto.getDepartments().stream()
+              .map(
+                  name ->
+                      departmentRepository
+                          .findByName(name)
+                          .orElseThrow(
+                              () ->
+                                  new ApiException(
+                                      "NOT_FOUND",
+                                      "Department " + name + " not found in catalog",
+                                      HttpStatus.BAD_REQUEST)))
+              .collect(Collectors.toSet()));
     }
     if (dto.getActive() != null) {
       existing.setActive(dto.getActive());

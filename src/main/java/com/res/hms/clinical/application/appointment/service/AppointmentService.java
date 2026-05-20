@@ -29,7 +29,8 @@ public class AppointmentService {
   private final PrescriptionService prescriptionService;
   private final HospitalContext hospitalContext;
   private final ResourceLookup resourceLookup;
-  private final com.res.hms.hospital.infrastructure.repository.HospitalRepository hospitalRepository;
+  private final com.res.hms.hospital.infrastructure.repository.HospitalRepository
+      hospitalRepository;
 
   @Transactional(readOnly = true)
   public AppointmentDTO getById(UUID id) {
@@ -43,13 +44,20 @@ public class AppointmentService {
 
   @Transactional(readOnly = true)
   public PageResponse<AppointmentDTO> list(
-      int page, int size, String search, java.time.Instant from, java.time.Instant to, UUID patientId) {
+      int page,
+      int size,
+      String search,
+      java.time.Instant from,
+      java.time.Instant to,
+      UUID patientId) {
     UUID hospitalId = hospitalContext.requireHospitalId();
     PageRequest pageRequest = PageRequest.of(page, size);
 
     if (patientId != null) {
       return PageResponse.from(
-          appointmentRepository.findByPatientIdAndHospitalIdOrderByAppointmentTimeDesc(patientId, hospitalId, pageRequest)
+          appointmentRepository
+              .findByPatientIdAndHospitalIdOrderByAppointmentTimeDesc(
+                  patientId, hospitalId, pageRequest)
               .map(this::toDto));
     }
 
@@ -78,7 +86,8 @@ public class AppointmentService {
     UUID hospitalId = hospitalContext.requireHospitalId();
 
     if (from == null || to == null) {
-        throw new ApiException("VALIDATION_ERROR", "Range (from and to) is required for stats", HttpStatus.BAD_REQUEST);
+      throw new ApiException(
+          "VALIDATION_ERROR", "Range (from and to) is required for stats", HttpStatus.BAD_REQUEST);
     }
 
     java.util.List<Object[]> results = appointmentRepository.getStatsByRange(hospitalId, from, to);
@@ -140,13 +149,16 @@ public class AppointmentService {
             id, hospitalId, appointmentRepository::findByIdAndHospitalId, "Appointment");
 
     if (hospitalContext.isReceptionist()) {
-        if (appointment.getStatus() == com.res.hms.clinical.domain.AppointmentStatus.CONSULTATION_STARTED
-            || appointment.getStatus() == com.res.hms.clinical.domain.AppointmentStatus.PRESCRIPTION_FINALIZED
-            || appointment.getStatus() == com.res.hms.clinical.domain.AppointmentStatus.COMPLETED) {
-            throw new ApiException("BUSINESS_RULE_VIOLATION",
-                "Receptionists cannot change appointment status once consultation has started.",
-                HttpStatus.BAD_REQUEST);
-        }
+      if (appointment.getStatus()
+              == com.res.hms.clinical.domain.AppointmentStatus.CONSULTATION_STARTED
+          || appointment.getStatus()
+              == com.res.hms.clinical.domain.AppointmentStatus.PRESCRIPTION_FINALIZED
+          || appointment.getStatus() == com.res.hms.clinical.domain.AppointmentStatus.COMPLETED) {
+        throw new ApiException(
+            "BUSINESS_RULE_VIOLATION",
+            "Receptionists cannot change appointment status once consultation has started.",
+            HttpStatus.BAD_REQUEST);
+      }
     }
 
     appointment.setStatus(request.status());
@@ -198,10 +210,18 @@ public class AppointmentService {
         .id(appointment.getId())
         .patientId(appointment.getPatientId())
         .patientName(appointment.getPatientName())
-        .patientCode(appointment.getPatient() != null ? appointment.getPatient().getPatientCode() : null)
+        .patientCode(
+            appointment.getPatient() != null ? appointment.getPatient().getPatientCode() : null)
         .doctorId(appointment.getDoctorId())
         .doctorName(appointment.getDoctorName())
-        .doctorSpecialization(appointment.getDoctor() != null && appointment.getDoctor().getSpecializations() != null && !appointment.getDoctor().getSpecializations().isEmpty() ? appointment.getDoctor().getSpecializations().stream().map(com.res.hms.iam.domain.Specialization::getName).collect(java.util.stream.Collectors.joining(", ")) : null)
+        .doctorSpecialization(
+            appointment.getDoctor() != null
+                    && appointment.getDoctor().getSpecializations() != null
+                    && !appointment.getDoctor().getSpecializations().isEmpty()
+                ? appointment.getDoctor().getSpecializations().stream()
+                    .map(com.res.hms.iam.domain.Specialization::getName)
+                    .collect(java.util.stream.Collectors.joining(", "))
+                : null)
         .appointmentTime(appointment.getAppointmentTime().atOffset(java.time.ZoneOffset.UTC))
         .status(appointment.getStatus())
         .tokenNumber(appointment.getTokenNumber())

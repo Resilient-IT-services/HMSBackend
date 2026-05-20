@@ -61,11 +61,7 @@ class AdminControllerIntegrationTest {
 
   @Test
   void testVitalRanges() throws Exception {
-    mockMvc
-        .perform(
-            get("/api/v1/admin/vital-ranges")
-                .session(session))
-        .andExpect(status().isOk());
+    mockMvc.perform(get("/api/v1/admin/vital-ranges").session(session)).andExpect(status().isOk());
 
     String request = "{\"vitalType\": \"HEART_RATE\", \"minValue\": 70, \"maxValue\": 110}";
     mockMvc

@@ -1,8 +1,7 @@
 package com.res.hms.clinical.application.prescription.dto;
 
-import java.util.UUID;
-
 import com.res.hms.clinical.domain.PrescriptionStatus;
+import java.util.UUID;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;

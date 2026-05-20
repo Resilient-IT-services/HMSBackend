@@ -9,6 +9,7 @@ import static org.mockito.Mockito.when;
 
 import com.res.hms.clinical.domain.DoctorAvailabilityException;
 import com.res.hms.clinical.domain.DoctorSchedule;
+import com.res.hms.clinical.domain.ExceptionType;
 import com.res.hms.clinical.infrastructure.repository.AppointmentRepository;
 import com.res.hms.clinical.infrastructure.repository.DoctorAvailabilityExceptionRepository;
 import com.res.hms.clinical.infrastructure.repository.DoctorScheduleRepository;
@@ -20,7 +21,6 @@ import com.res.hms.iam.domain.RoleCode;
 import com.res.hms.iam.domain.UserAccount;
 import com.res.hms.iam.domain.UserContract;
 import com.res.hms.iam.infrastructure.repository.UserContractRepository;
-import com.res.hms.clinical.domain.ExceptionType;
 import java.time.DayOfWeek;
 import java.time.LocalDate;
 import java.time.LocalTime;
@@ -43,10 +43,18 @@ class DoctorProfileServiceUnitTest {
   @Mock private DoctorAvailabilityExceptionRepository availabilityExceptionRepository;
   @Mock private DoctorScheduleRepository scheduleRepository;
   @Mock private AppointmentRepository appointmentRepository;
-  @Mock private com.res.hms.hospital.infrastructure.repository.HospitalRepository hospitalRepository;
-  @Mock private com.res.hms.iam.infrastructure.repository.DoctorHospitalDetailsRepository doctorHospitalDetailsRepository;
+
+  @Mock
+  private com.res.hms.hospital.infrastructure.repository.HospitalRepository hospitalRepository;
+
+  @Mock
+  private com.res.hms.iam.infrastructure.repository.DoctorHospitalDetailsRepository
+      doctorHospitalDetailsRepository;
+
   @Mock private com.res.hms.core.util.ResourceLookup resourceLookup;
-  @Mock private com.res.hms.finance.infrastructure.repository.InvoiceItemRepository invoiceItemRepository;
+
+  @Mock
+  private com.res.hms.finance.infrastructure.repository.InvoiceItemRepository invoiceItemRepository;
 
   @InjectMocks private DoctorProfileService doctorProfileService;
 

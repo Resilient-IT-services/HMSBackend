@@ -3,13 +3,11 @@ package com.res.hms.clinical.application.patient.service;
 import com.res.hms.clinical.application.patient.dto.PatientDTO;
 import com.res.hms.clinical.application.patient.dto.PatientDashboardStatsDTO;
 import com.res.hms.clinical.application.patient.dto.PatientSummaryDTO;
-import com.res.hms.clinical.domain.BloodGroup;
 import com.res.hms.clinical.domain.Patient;
 import com.res.hms.clinical.infrastructure.repository.PatientRepository;
 import com.res.hms.core.api.PageResponse;
 import com.res.hms.core.tenant.HospitalContext;
 import com.res.hms.core.util.ResourceLookup;
-
 import java.time.LocalDate;
 import java.util.UUID;
 import lombok.RequiredArgsConstructor;
@@ -96,23 +94,19 @@ public class PatientService {
         .phone(patient.getPhone())
         .build();
   }
-    public PatientDashboardStatsDTO getDashboardStats() {
 
-        long totalRecords = patientRepository.count();
+  public PatientDashboardStatsDTO getDashboardStats() {
 
-        LocalDate today = LocalDate.now();
+    long totalRecords = patientRepository.count();
 
-        long newToday = patientRepository.countByCreatedAtBetween(
-            today.atStartOfDay(),
-            today.plusDays(1).atStartOfDay()
-        );
+    LocalDate today = LocalDate.now();
 
-        long inPatient = 0;
+    long newToday =
+        patientRepository.countByCreatedAtBetween(
+            today.atStartOfDay(), today.plusDays(1).atStartOfDay());
 
-        return new PatientDashboardStatsDTO(
-            totalRecords,
-            newToday,
-            inPatient
-        );
-    }
+    long inPatient = 0;
+
+    return new PatientDashboardStatsDTO(totalRecords, newToday, inPatient);
+  }
 }

@@ -31,7 +31,8 @@ import org.springframework.web.bind.annotation.RestController;
 public class AppointmentController {
   private final AppointmentService appointmentService;
   private final AppointmentAggregateService appointmentAggregateService;
-  private final com.res.hms.clinical.application.appointment.service.OPDEncounterOrchestrator opdEncounterOrchestrator;
+  private final com.res.hms.clinical.application.appointment.service.OPDEncounterOrchestrator
+      opdEncounterOrchestrator;
   private final com.res.hms.iam.application.service.AuthService authService;
 
   @PostMapping
@@ -42,9 +43,12 @@ public class AppointmentController {
 
   @PostMapping("/book-consultation")
   @PreAuthorize("hasAnyRole('ADMIN','RECEPTIONIST','SUPER_ADMIN')")
-  public ApiResponse<AppointmentDTO> bookConsultation(@Valid @RequestBody com.res.hms.clinical.application.appointment.dto.OPDEncounterRequest request) {
+  public ApiResponse<AppointmentDTO> bookConsultation(
+      @Valid @RequestBody
+          com.res.hms.clinical.application.appointment.dto.OPDEncounterRequest request) {
     java.util.UUID currentUserId = authService.getAuthenticatedPrincipal().userId();
-    return ApiResponse.success(opdEncounterOrchestrator.bookConsultationWithPayment(request, currentUserId));
+    return ApiResponse.success(
+        opdEncounterOrchestrator.bookConsultationWithPayment(request, currentUserId));
   }
 
   @GetMapping
@@ -62,7 +66,8 @@ public class AppointmentController {
               iso = org.springframework.format.annotation.DateTimeFormat.ISO.DATE_TIME)
           java.time.Instant to,
       @RequestParam(required = false) UUID patientId) {
-    return ApiResponse.success(appointmentService.list(page, Math.min(size, 100), search, from, to, patientId));
+    return ApiResponse.success(
+        appointmentService.list(page, Math.min(size, 100), search, from, to, patientId));
   }
 
   @GetMapping("/summary")
@@ -94,8 +99,7 @@ public class AppointmentController {
           @org.springframework.format.annotation.DateTimeFormat(
               iso = org.springframework.format.annotation.DateTimeFormat.ISO.DATE_TIME)
           java.time.Instant to) {
-    return ApiResponse.success(
-        appointmentService.getStats(from, to));
+    return ApiResponse.success(appointmentService.getStats(from, to));
   }
 
   @GetMapping("/{appointmentId}")

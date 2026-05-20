@@ -55,7 +55,8 @@ public class TenantFilter extends OncePerRequestFilter {
     }
   }
 
-  private boolean hasAccessToHospital(UUID hospitalId, HttpServletResponse response) throws IOException {
+  private boolean hasAccessToHospital(UUID hospitalId, HttpServletResponse response)
+      throws IOException {
     Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
     if (authentication == null
         || !authentication.isAuthenticated()
@@ -76,10 +77,11 @@ public class TenantFilter extends OncePerRequestFilter {
       var user = userOpt.get();
 
       var hospitalOpt = hospitalRepository.findById(hospitalId);
-      if (hospitalOpt.isEmpty() ||
-          (hospitalOpt.get().getStatus() != HospitalStatus.ACTIVE &&
-           hospitalOpt.get().getStatus() != HospitalStatus.ONBOARDING)) {
-        response.sendError(HttpServletResponse.SC_FORBIDDEN, "Hospital is inactive or does not exist");
+      if (hospitalOpt.isEmpty()
+          || (hospitalOpt.get().getStatus() != HospitalStatus.ACTIVE
+              && hospitalOpt.get().getStatus() != HospitalStatus.ONBOARDING)) {
+        response.sendError(
+            HttpServletResponse.SC_FORBIDDEN, "Hospital is inactive or does not exist");
         return false;
       }
 
@@ -89,11 +91,13 @@ public class TenantFilter extends OncePerRequestFilter {
       }
 
       // Validate Contract (Role Assignment) and Hospital for regular users
-      boolean hasActiveContract = user.getContracts().stream()
-          .anyMatch(a -> a.getHospitalId().equals(hospitalId) && a.isActive());
+      boolean hasActiveContract =
+          user.getContracts().stream()
+              .anyMatch(a -> a.getHospitalId().equals(hospitalId) && a.isActive());
 
       if (!hasActiveContract) {
-        response.sendError(HttpServletResponse.SC_FORBIDDEN, "No active contract found for this active hospital");
+        response.sendError(
+            HttpServletResponse.SC_FORBIDDEN, "No active contract found for this active hospital");
         return false;
       }
 

@@ -30,7 +30,8 @@ public class StaffController {
 
   @GetMapping("/doctors/selection")
   @PreAuthorize("isAuthenticated()")
-  public ApiResponse<java.util.List<com.res.hms.iam.application.dto.DoctorSelectionDTO>> getDoctorSelection() {
+  public ApiResponse<java.util.List<com.res.hms.iam.application.dto.DoctorSelectionDTO>>
+      getDoctorSelection() {
     return ApiResponse.success(staffService.getDoctorSelection());
   }
 

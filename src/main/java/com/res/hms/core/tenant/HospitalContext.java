@@ -76,7 +76,9 @@ public class HospitalContext {
   }
 
   public boolean isReceptionist() {
-    return hasRole(com.res.hms.iam.domain.RoleCode.RECEPTIONIST) && !isSuperAdmin() && !hasRole(com.res.hms.iam.domain.RoleCode.ADMIN);
+    return hasRole(com.res.hms.iam.domain.RoleCode.RECEPTIONIST)
+        && !isSuperAdmin()
+        && !hasRole(com.res.hms.iam.domain.RoleCode.ADMIN);
   }
 
   private Optional<HospitalUserPrincipal> getPrincipal() {

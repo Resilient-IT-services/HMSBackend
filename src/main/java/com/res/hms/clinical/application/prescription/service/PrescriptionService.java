@@ -43,7 +43,9 @@ public class PrescriptionService {
               .map(this::toSummaryDto));
     }
     return PageResponse.from(
-        prescriptionRepository.findAllByHospitalId(hospitalId, pageRequest).map(this::toSummaryDto));
+        prescriptionRepository
+            .findAllByHospitalId(hospitalId, pageRequest)
+            .map(this::toSummaryDto));
   }
 
   @Transactional(readOnly = true)
@@ -52,7 +54,9 @@ public class PrescriptionService {
       return null;
     }
 
-    UUID visitId = appointmentRepository.findById(prescription.getAppointmentId())
+    UUID visitId =
+        appointmentRepository
+            .findById(prescription.getAppointmentId())
             .map(Appointment::getVisitId)
             .orElse(null);
 
@@ -60,7 +64,8 @@ public class PrescriptionService {
         .id(prescription.getId())
         .patientId(prescription.getPatientId())
         .patientName(prescription.getPatientName())
-        .patientCode(prescription.getPatient() != null ? prescription.getPatient().getPatientCode() : null)
+        .patientCode(
+            prescription.getPatient() != null ? prescription.getPatient().getPatientCode() : null)
         .doctorId(prescription.getDoctorId())
         .doctorName(prescription.getDoctorName())
         .appointmentId(prescription.getAppointmentId())
@@ -171,7 +176,9 @@ public class PrescriptionService {
       return null;
     }
 
-    UUID visitId = appointmentRepository.findById(prescription.getAppointmentId())
+    UUID visitId =
+        appointmentRepository
+            .findById(prescription.getAppointmentId())
             .map(Appointment::getVisitId)
             .orElse(null);
 

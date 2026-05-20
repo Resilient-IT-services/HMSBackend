@@ -8,9 +8,8 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import com.res.hms.audit.application.dto.AuditDetail;
 import com.res.hms.audit.application.service.AuditLogService;
 import com.res.hms.audit.domain.AuditAction;
-import java.util.UUID;
-
 import com.res.hms.audit.domain.DomainEntity;
+import java.util.UUID;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -57,9 +56,17 @@ class AuditLogControllerIntegrationTest {
   void testListAuditLogs() throws Exception {
     // Manually record some logs
     auditLogService.record(
-        hospitalId, DomainEntity.HOSPITAL, UUID.randomUUID(), AuditAction.CREATE, new AuditDetail());
+        hospitalId,
+        DomainEntity.HOSPITAL,
+        UUID.randomUUID(),
+        AuditAction.CREATE,
+        new AuditDetail());
     auditLogService.record(
-        hospitalId, DomainEntity.HOSPITAL, UUID.randomUUID(), AuditAction.UPDATE, new AuditDetail());
+        hospitalId,
+        DomainEntity.HOSPITAL,
+        UUID.randomUUID(),
+        AuditAction.UPDATE,
+        new AuditDetail());
 
     mockMvc
         .perform(

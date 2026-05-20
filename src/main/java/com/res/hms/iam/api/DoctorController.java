@@ -39,16 +39,14 @@ public class DoctorController {
   @GetMapping("/{doctorId}/availability")
   @PreAuthorize("isAuthenticated()")
   public ApiResponse<DoctorAvailabilityResponse> getAvailability(
-      @PathVariable UUID doctorId,
-      @RequestParam LocalDate date) {
+      @PathVariable UUID doctorId, @RequestParam LocalDate date) {
     return ApiResponse.success(doctorProfileService.getAvailableSlots(doctorId, date));
   }
 
   @GetMapping("/{doctorId}/slots")
   @PreAuthorize("isAuthenticated()")
   public ApiResponse<java.util.List<com.res.hms.iam.application.dto.DoctorSlotDTO>> getSlots(
-      @PathVariable UUID doctorId,
-      @RequestParam LocalDate date) {
+      @PathVariable UUID doctorId, @RequestParam LocalDate date) {
     return ApiResponse.success(doctorProfileService.getSlots(doctorId, date));
   }
 
@@ -60,9 +58,12 @@ public class DoctorController {
       @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) java.time.Instant to) {
     // If doctor, ensure they only access their own revenue
     if (!hospitalContext.isSuperAdmin() && !hospitalContext.isAdmin()) {
-      if (!doctorId.equals(hospitalContext.requireUserId()) && 
-          !doctorId.equals(doctorProfileService.requireDoctor(doctorId, hospitalContext.requireHospitalId()).getId())) {
-           // Basic check for own profile/userId
+      if (!doctorId.equals(hospitalContext.requireUserId())
+          && !doctorId.equals(
+              doctorProfileService
+                  .requireDoctor(doctorId, hospitalContext.requireHospitalId())
+                  .getId())) {
+        // Basic check for own profile/userId
       }
     }
     return ApiResponse.success(doctorProfileService.getRevenueSummary(doctorId, from, to));

@@ -48,65 +48,64 @@ class UserDeactivationTest {
 
   @Test
   void userCannotDeactivateThemselves() throws Exception {
-      // 1. Setup an admin user
-      UserAccount adminUser = new UserAccount();
-      adminUser.setUsername("test_admin");
-      adminUser.setPasswordHash(passwordEncoder.encode("password"));
-      adminUser.setActive(true);
-      adminUser.setSuperuser(true);
-      userAccountRepository.saveAndFlush(adminUser);
+    // 1. Setup an admin user
+    UserAccount adminUser = new UserAccount();
+    adminUser.setUsername("test_admin");
+    adminUser.setPasswordHash(passwordEncoder.encode("password"));
+    adminUser.setActive(true);
+    adminUser.setSuperuser(true);
+    userAccountRepository.saveAndFlush(adminUser);
 
-      // 2. Login as this admin
-      MockHttpSession session =
-          (MockHttpSession)
-              mockMvc
-                  .perform(
-                      post("/api/v1/auth/login")
-                          .contentType(MediaType.APPLICATION_JSON)
-                          .content("{\"username\": \"test_admin\", \"password\": \"password\"}"))
-                  .andExpect(status().isOk())
-                  .andReturn()
-                  .getRequest()
-                  .getSession(false);
+    // 2. Login as this admin
+    MockHttpSession session =
+        (MockHttpSession)
+            mockMvc
+                .perform(
+                    post("/api/v1/auth/login")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"username\": \"test_admin\", \"password\": \"password\"}"))
+                .andExpect(status().isOk())
+                .andReturn()
+                .getRequest()
+                .getSession(false);
 
-      // 3. Try to deactivate themselves
-      mockMvc
-          .perform(
-              put("/api/v1/users/" + adminUser.getId())
-                  .session(session)
-                  .contentType(MediaType.APPLICATION_JSON)
-                  .content("{\"username\": \"test_admin\", \"active\": false}"))
-          .andExpect(status().isBadRequest()); // Expected to fail
+    // 3. Try to deactivate themselves
+    mockMvc
+        .perform(
+            put("/api/v1/users/" + adminUser.getId())
+                .session(session)
+                .contentType(MediaType.APPLICATION_JSON)
+                .content("{\"username\": \"test_admin\", \"active\": false}"))
+        .andExpect(status().isBadRequest()); // Expected to fail
   }
 
   @Test
   void userCannotDeleteThemselves() throws Exception {
-      // 1. Setup an admin user
-      UserAccount adminUser = new UserAccount();
-      adminUser.setUsername("test_admin_delete");
-      adminUser.setPasswordHash(passwordEncoder.encode("password"));
-      adminUser.setActive(true);
-      adminUser.setSuperuser(true);
-      userAccountRepository.saveAndFlush(adminUser);
+    // 1. Setup an admin user
+    UserAccount adminUser = new UserAccount();
+    adminUser.setUsername("test_admin_delete");
+    adminUser.setPasswordHash(passwordEncoder.encode("password"));
+    adminUser.setActive(true);
+    adminUser.setSuperuser(true);
+    userAccountRepository.saveAndFlush(adminUser);
 
-      // 2. Login as this admin
-      MockHttpSession session =
-          (MockHttpSession)
-              mockMvc
-                  .perform(
-                      post("/api/v1/auth/login")
-                          .contentType(MediaType.APPLICATION_JSON)
-                          .content("{\"username\": \"test_admin_delete\", \"password\": \"password\"}"))
-                  .andExpect(status().isOk())
-                  .andReturn()
-                  .getRequest()
-                  .getSession(false);
+    // 2. Login as this admin
+    MockHttpSession session =
+        (MockHttpSession)
+            mockMvc
+                .perform(
+                    post("/api/v1/auth/login")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(
+                            "{\"username\": \"test_admin_delete\", \"password\": \"password\"}"))
+                .andExpect(status().isOk())
+                .andReturn()
+                .getRequest()
+                .getSession(false);
 
-      // 3. Try to delete themselves
-      mockMvc
-          .perform(
-              delete("/api/v1/users/" + adminUser.getId())
-                  .session(session))
-          .andExpect(status().isBadRequest());
+    // 3. Try to delete themselves
+    mockMvc
+        .perform(delete("/api/v1/users/" + adminUser.getId()).session(session))
+        .andExpect(status().isBadRequest());
   }
 }

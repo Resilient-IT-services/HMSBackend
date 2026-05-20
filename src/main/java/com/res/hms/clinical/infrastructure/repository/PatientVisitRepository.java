@@ -8,5 +8,5 @@ import org.springframework.stereotype.Repository;
 
 @Repository
 public interface PatientVisitRepository extends BaseRepository<PatientVisit> {
-    Optional<PatientVisit> findByHospitalIdAndVisitNumber(UUID hospitalId, String visitNumber);
+  Optional<PatientVisit> findByHospitalIdAndVisitNumber(UUID hospitalId, String visitNumber);
 }

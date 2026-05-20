@@ -35,7 +35,9 @@ public class UserContract extends BaseEntity {
   @JoinColumn(name = "hospital_id", insertable = false, updatable = false)
   private com.res.hms.hospital.domain.Hospital hospital;
 
-  @ManyToMany(fetch = FetchType.EAGER, cascade = {CascadeType.PERSIST, CascadeType.MERGE})
+  @ManyToMany(
+      fetch = FetchType.EAGER,
+      cascade = {CascadeType.PERSIST, CascadeType.MERGE})
   @JoinTable(
       name = "user_contract_department",
       joinColumns = @JoinColumn(name = "user_contract_id"),
@@ -49,18 +51,38 @@ public class UserContract extends BaseEntity {
   @JoinColumn(name = "role_id", nullable = false)
   private Role role;
 
-  @OneToOne(mappedBy = "assignment", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.LAZY)
+  @OneToOne(
+      mappedBy = "assignment",
+      cascade = CascadeType.ALL,
+      orphanRemoval = true,
+      fetch = FetchType.LAZY)
   private DoctorHospitalDetails doctorDetails;
 
-  @OneToOne(mappedBy = "assignment", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.LAZY)
+  @OneToOne(
+      mappedBy = "assignment",
+      cascade = CascadeType.ALL,
+      orphanRemoval = true,
+      fetch = FetchType.LAZY)
   private NurseHospitalDetails nurseDetails;
 
-  @OneToOne(mappedBy = "assignment", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.LAZY)
+  @OneToOne(
+      mappedBy = "assignment",
+      cascade = CascadeType.ALL,
+      orphanRemoval = true,
+      fetch = FetchType.LAZY)
   private AdminHospitalDetails adminDetails;
 
-  @OneToOne(mappedBy = "assignment", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.LAZY)
+  @OneToOne(
+      mappedBy = "assignment",
+      cascade = CascadeType.ALL,
+      orphanRemoval = true,
+      fetch = FetchType.LAZY)
   private PharmacistHospitalDetails pharmacistDetails;
 
-  @OneToOne(mappedBy = "assignment", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.LAZY)
+  @OneToOne(
+      mappedBy = "assignment",
+      cascade = CascadeType.ALL,
+      orphanRemoval = true,
+      fetch = FetchType.LAZY)
   private ReceptionistHospitalDetails receptionistDetails;
 }

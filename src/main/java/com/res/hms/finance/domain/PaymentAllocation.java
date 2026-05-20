@@ -18,20 +18,20 @@ import lombok.Setter;
 @Table(name = "payment_allocation")
 public class PaymentAllocation extends BaseEntity {
 
-    @Column(name = "payment_id", nullable = false)
-    private UUID paymentId;
+  @Column(name = "payment_id", nullable = false)
+  private UUID paymentId;
 
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "payment_id", insertable = false, updatable = false)
-    private Payment payment;
+  @ManyToOne(fetch = FetchType.LAZY)
+  @JoinColumn(name = "payment_id", insertable = false, updatable = false)
+  private Payment payment;
 
-    @Column(name = "invoice_id", nullable = false)
-    private UUID invoiceId;
+  @Column(name = "invoice_id", nullable = false)
+  private UUID invoiceId;
 
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "invoice_id", insertable = false, updatable = false)
-    private Invoice invoice;
+  @ManyToOne(fetch = FetchType.LAZY)
+  @JoinColumn(name = "invoice_id", insertable = false, updatable = false)
+  private Invoice invoice;
 
-    @Column(name = "allocated_amount", nullable = false, precision = 12, scale = 2)
-    private BigDecimal allocatedAmount;
+  @Column(name = "allocated_amount", nullable = false, precision = 12, scale = 2)
+  private BigDecimal allocatedAmount;
 }

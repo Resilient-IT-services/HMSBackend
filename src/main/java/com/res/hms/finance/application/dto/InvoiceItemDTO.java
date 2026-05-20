@@ -13,15 +13,15 @@ import lombok.NoArgsConstructor;
 @NoArgsConstructor
 @AllArgsConstructor
 public class InvoiceItemDTO {
-    private UUID id;
-    private String itemDescription;
-    private InvoiceItemCategory category;
-    private BigDecimal quantity;
-    private BigDecimal unitPrice;
-    private BigDecimal subtotal;
-    private BigDecimal taxAmount;
-    private BigDecimal discountAmount;
-    private BigDecimal netTotal;
-    private com.res.hms.finance.domain.FinanceSourceType sourceType;
-    private UUID sourceId;
+  private UUID id;
+  private String itemDescription;
+  private InvoiceItemCategory category;
+  private BigDecimal quantity;
+  private BigDecimal unitPrice;
+  private BigDecimal subtotal;
+  private BigDecimal taxAmount;
+  private BigDecimal discountAmount;
+  private BigDecimal netTotal;
+  private com.res.hms.finance.domain.FinanceSourceType sourceType;
+  private UUID sourceId;
 }

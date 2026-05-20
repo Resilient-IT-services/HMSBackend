@@ -17,22 +17,25 @@ import org.springframework.transaction.annotation.Transactional;
 @Transactional
 class InvoiceServiceTest {
 
-    @Autowired private InvoiceService invoiceService;
-    @Autowired private TestDataHelper testDataHelper;
+  @Autowired private InvoiceService invoiceService;
+  @Autowired private TestDataHelper testDataHelper;
 
-    @Test
-    void testCreateAndCancelInvoice() {
-        UUID hospitalId = testDataHelper.createHospitalIfMissing("INV_SERVICE_TEST", "Inv Service Test Hospital");
-        UUID patientId = testDataHelper.createTestPatient(hospitalId).getId();
+  @Test
+  void testCreateAndCancelInvoice() {
+    UUID hospitalId =
+        testDataHelper.createHospitalIfMissing("INV_SERVICE_TEST", "Inv Service Test Hospital");
+    UUID patientId = testDataHelper.createTestPatient(hospitalId).getId();
 
-        Invoice invoice = invoiceService.createInvoice(hospitalId, patientId, null);
-        assertThat(invoice.getId()).isNotNull();
-        assertThat(invoice.getStatus()).isEqualTo(InvoiceStatus.UNPAID);
+    Invoice invoice = invoiceService.createInvoice(hospitalId, patientId, null);
+    assertThat(invoice.getId()).isNotNull();
+    assertThat(invoice.getStatus()).isEqualTo(InvoiceStatus.UNPAID);
 
-        invoiceService.cancelInvoice(invoice.getId());
-        
-        Invoice cancelled = invoiceService.createInvoice(hospitalId, patientId, null); // Dummy to avoid finding nothing if not saved
-        // We actually need to re-find it
-        // assertThat(invoice.getStatus()).isEqualTo(InvoiceStatus.CANCELLED);
-    }
+    invoiceService.cancelInvoice(invoice.getId());
+
+    Invoice cancelled =
+        invoiceService.createInvoice(
+            hospitalId, patientId, null); // Dummy to avoid finding nothing if not saved
+    // We actually need to re-find it
+    // assertThat(invoice.getStatus()).isEqualTo(InvoiceStatus.CANCELLED);
+  }
 }

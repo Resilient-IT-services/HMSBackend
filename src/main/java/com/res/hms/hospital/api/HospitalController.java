@@ -46,7 +46,8 @@ public class HospitalController {
 
   @GetMapping("/selection")
   @PreAuthorize("isAuthenticated()")
-  public ApiResponse<java.util.List<com.res.hms.hospital.application.dto.HospitalSelectionDTO>> getSelection() {
+  public ApiResponse<java.util.List<com.res.hms.hospital.application.dto.HospitalSelectionDTO>>
+      getSelection() {
     return ApiResponse.success(hospitalService.getHospitalSelection());
   }
 

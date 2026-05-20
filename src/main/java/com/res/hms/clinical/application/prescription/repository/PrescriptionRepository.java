@@ -11,28 +11,29 @@ import org.springframework.data.jpa.repository.Query;
 
 public interface PrescriptionRepository extends JpaRepository<Prescription, UUID> {
 
-  @Query("SELECT DISTINCT p FROM Prescription p LEFT JOIN FETCH p.patient LEFT JOIN FETCH p.items WHERE p.hospitalId = :hospitalId ORDER BY p.createdAt DESC")
+  @Query(
+      "SELECT DISTINCT p FROM Prescription p LEFT JOIN FETCH p.patient LEFT JOIN FETCH p.items WHERE p.hospitalId = :hospitalId ORDER BY p.createdAt DESC")
   Page<Prescription> findAllByHospitalId(UUID hospitalId, Pageable pageable);
 
   @Query(
       """
-      SELECT DISTINCT p FROM Prescription p 
-      LEFT JOIN FETCH p.patient 
-      LEFT JOIN FETCH p.items 
+      SELECT DISTINCT p FROM Prescription p
+      LEFT JOIN FETCH p.patient
+      LEFT JOIN FETCH p.items
       WHERE p.hospitalId = :hospitalId
         AND (LOWER(p.patientName) LIKE LOWER(CONCAT('%', :search, '%'))
              OR LOWER(p.doctorName) LIKE LOWER(CONCAT('%', :search, '%'))
              OR CAST(p.id AS string) LIKE LOWER(CONCAT('%', :search, '%')))
       ORDER BY p.createdAt DESC
       """)
-  Page<Prescription> searchPrescriptions(
-      UUID hospitalId, String search, Pageable pageable);
+  Page<Prescription> searchPrescriptions(UUID hospitalId, String search, Pageable pageable);
 
   @Query(
       "SELECT p FROM Prescription p LEFT JOIN FETCH p.patient WHERE p.patientId = :patientId AND p.hospitalId = :hospitalId")
   List<Prescription> findByPatientIdAndHospitalId(UUID patientId, UUID hospitalId);
 
-  @Query("SELECT p FROM Prescription p LEFT JOIN FETCH p.patient WHERE p.id = :id AND p.hospitalId = :hospitalId")
+  @Query(
+      "SELECT p FROM Prescription p LEFT JOIN FETCH p.patient WHERE p.id = :id AND p.hospitalId = :hospitalId")
   Optional<Prescription> findByIdAndHospitalId(UUID id, UUID hospitalId);
 
   Optional<Prescription> findByAppointmentId(UUID appointmentId);

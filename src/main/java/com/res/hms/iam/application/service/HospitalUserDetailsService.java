@@ -13,7 +13,6 @@ import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
 import java.util.stream.Collectors;
-
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.authentication.DisabledException;
 import org.springframework.security.core.userdetails.UserDetails;
@@ -57,8 +56,7 @@ public class HospitalUserDetailsService implements UserDetailsService {
                   .map(com.res.hms.hospital.domain.Hospital::getStatus)
                   .orElse(null);
 
-      if (hospitalStatus != HospitalStatus.ACTIVE
-          && hospitalStatus != HospitalStatus.ONBOARDING) {
+      if (hospitalStatus != HospitalStatus.ACTIVE && hospitalStatus != HospitalStatus.ONBOARDING) {
         continue;
       }
 
@@ -67,9 +65,8 @@ public class HospitalUserDetailsService implements UserDetailsService {
       hospitalRoles.computeIfAbsent(hid, k -> new HashSet<>()).add(code);
     }
 
-    Set<RoleCode> filteredRoleCodes = hospitalRoles.values().stream()
-        .flatMap(Set::stream)
-        .collect(Collectors.toSet());
+    Set<RoleCode> filteredRoleCodes =
+        hospitalRoles.values().stream().flatMap(Set::stream).collect(Collectors.toSet());
 
     return new HospitalUserPrincipal(
         userAccount.getId(),
@@ -80,7 +77,6 @@ public class HospitalUserDetailsService implements UserDetailsService {
         userAccount.isSuperuser(),
         hospitalRoles,
         null, // Active hospitalId
-        filteredRoleCodes
-        );
+        filteredRoleCodes);
   }
 }
