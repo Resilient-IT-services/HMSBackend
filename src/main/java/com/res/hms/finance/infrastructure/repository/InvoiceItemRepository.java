@@ -1,6 +1,7 @@
 package com.res.hms.finance.infrastructure.repository;
 
 import com.res.hms.core.repository.BaseRepository;
+import com.res.hms.finance.domain.FinanceSourceType;
 import com.res.hms.finance.domain.InvoiceItem;
 import java.util.List;
 import java.util.UUID;
@@ -42,5 +43,5 @@ public interface InvoiceItemRepository extends BaseRepository<InvoiceItem> {
         @org.springframework.data.repository.query.Param("startDate") java.time.Instant startDate,
         @org.springframework.data.repository.query.Param("endDate") java.time.Instant endDate);
 
-    boolean existsBySourceTypeAndSourceId(String sourceType, UUID sourceId);
+    boolean existsBySourceTypeAndSourceId(FinanceSourceType sourceType, UUID sourceId);
 }
