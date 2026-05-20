@@ -106,7 +106,9 @@ public abstract class UserMapper {
   }
 
   protected List<String> mapDepartments(Set<com.res.hms.hospital.domain.Department> departments) {
-    if (departments == null) return java.util.Collections.emptyList();
+    if (departments == null) {
+      return java.util.Collections.emptyList();
+    }
     return departments.stream()
         .map(com.res.hms.hospital.domain.Department::getName)
         .collect(Collectors.toList());
@@ -114,7 +116,9 @@ public abstract class UserMapper {
 
   protected List<String> mapSpecializations(
       Set<com.res.hms.iam.domain.Specialization> specializations) {
-    if (specializations == null) return java.util.Collections.emptyList();
+    if (specializations == null) {
+      return java.util.Collections.emptyList();
+    }
     return specializations.stream()
         .map(com.res.hms.iam.domain.Specialization::getName)
         .collect(Collectors.toList());

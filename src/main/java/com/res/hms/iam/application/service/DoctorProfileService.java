@@ -14,12 +14,10 @@ import com.res.hms.iam.application.dto.DoctorSlotDTO;
 import com.res.hms.iam.application.dto.ScheduleDTO;
 import com.res.hms.iam.application.dto.UserDetailsDTO;
 import com.res.hms.iam.application.repository.DoctorProfileRepository;
-import com.res.hms.iam.domain.DoctorHospitalDetails;
 import com.res.hms.iam.domain.DoctorProfile;
 import com.res.hms.iam.domain.RoleCode;
 import com.res.hms.iam.domain.UserAccount;
 import com.res.hms.iam.domain.UserContract;
-import com.res.hms.iam.infrastructure.repository.DoctorHospitalDetailsRepository;
 import com.res.hms.iam.infrastructure.repository.UserContractRepository;
 import java.time.LocalDate;
 import java.time.LocalTime;
@@ -28,7 +26,6 @@ import java.time.ZonedDateTime;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
-import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
 import java.util.UUID;
@@ -44,7 +41,7 @@ import org.springframework.transaction.annotation.Transactional;
 public class DoctorProfileService {
 
   private final DoctorProfileRepository doctorProfileRepository;
-  private final DoctorHospitalDetailsRepository doctorHospitalDetailsRepository;
+  private final DoctorHospitalProfileService doctorHospitalProfileService;
   private final HospitalRepository hospitalRepository;
   private final HospitalContext hospitalContext;
   private final ResourceLookup resourceLookup;
@@ -470,122 +467,12 @@ public class DoctorProfileService {
       DoctorHospitalDetailsDTO d,
       List<ScheduleDTO> schedules,
       List<AvailabilityExceptionDTO> exceptions) {
-
-    if (schedules != null) {
-      updateSchedules(assignment, schedules);
-    }
-
-    if (exceptions != null && assignment.getUser().getDoctorProfile() != null) {
-      updateExceptions(assignment, exceptions);
-    }
-
-    if (d != null) {
-      updateDoctorHospitalDetails(assignment, d);
-    }
-  }
-
-  private void updateSchedules(UserContract assignment, List<ScheduleDTO> schedules) {
-    List<DoctorSchedule> existingSchedules =
-        scheduleRepository.findByAssignmentId(assignment.getId());
-    com.res.hms.core.util.CollectionMergeUtil.merge(
-        existingSchedules,
-        schedules,
-        DoctorSchedule::getId,
-        ScheduleDTO::getId,
-        dto -> {
-          DoctorSchedule s = new DoctorSchedule();
-          s.setAssignmentId(assignment.getId());
-          applyScheduleDto(s, dto);
-          return s;
-        },
-        (existing, dto) -> applyScheduleDto(existing, dto),
-        s -> {
-          scheduleRepository.delete(s);
-          existingSchedules.remove(s);
-        });
-    scheduleRepository.saveAll(existingSchedules.stream().filter(Objects::nonNull).toList());
-  }
-
-  private void applyScheduleDto(DoctorSchedule s, ScheduleDTO dto) {
-    s.setDayOfWeek(dto.getDayOfWeek());
-    s.setStartTime(dto.getStartTime());
-    s.setEndTime(dto.getEndTime());
-    s.setSlotDurationMinutes(dto.getSlotDurationMinutes());
-    s.setMaxPatients(dto.getMaxPatients());
-  }
-
-  private void updateExceptions(
-      UserContract assignment, List<AvailabilityExceptionDTO> exceptions) {
-    DoctorProfile doctorProfile = assignment.getUser().getDoctorProfile();
-    List<DoctorAvailabilityException> existingExceptions =
-        availabilityExceptionRepository.findByDoctorIdAndHospitalId(
-            doctorProfile.getId(), assignment.getHospitalId());
-
-    com.res.hms.core.util.CollectionMergeUtil.merge(
-        existingExceptions,
-        exceptions,
-        DoctorAvailabilityException::getId,
-        AvailabilityExceptionDTO::getId,
-        dto -> {
-          DoctorAvailabilityException ex = new DoctorAvailabilityException();
-          ex.setDoctorId(doctorProfile.getId());
-          ex.setHospitalId(assignment.getHospitalId());
-          applyExceptionDto(ex, dto);
-          return ex;
-        },
-        (existing, dto) -> applyExceptionDto(existing, dto),
-        ex -> {
-          availabilityExceptionRepository.delete(ex);
-          existingExceptions.remove(ex);
-        });
-    availabilityExceptionRepository.saveAll(
-        existingExceptions.stream().filter(Objects::nonNull).toList());
-  }
-
-  private void applyExceptionDto(DoctorAvailabilityException ex, AvailabilityExceptionDTO dto) {
-    ex.setDate(dto.getDate());
-    ex.setType(dto.getType());
-    ex.setStartTime(dto.getStartTime());
-    ex.setEndTime(dto.getEndTime());
-    ex.setMode(dto.getMode());
-    ex.setSlotDurationMinutes(dto.getSlotDurationMinutes());
-    ex.setNote(dto.getNote());
-  }
-
-  private void updateDoctorHospitalDetails(UserContract assignment, DoctorHospitalDetailsDTO d) {
-    DoctorHospitalDetails det =
-        doctorHospitalDetailsRepository
-            .findById(assignment.getId())
-            .orElseGet(
-                () -> {
-                  DoctorHospitalDetails newDet = new DoctorHospitalDetails();
-                  newDet.setAssignment(assignment);
-                  return newDet;
-                });
-    if (d.getConsultationFee() != null) {
-      det.setConsultationFee(d.getConsultationFee());
-    }
-    if (d.getFollowUpDays() != null) {
-      det.setFollowUpDays(d.getFollowUpDays());
-    }
-    if (d.getCommissionType() != null) {
-      det.setCommissionType(d.getCommissionType());
-    }
-    if (d.getCommissionValue() != null) {
-      det.setCommissionValue(d.getCommissionValue());
-    }
-    det.setVisitingConsultant(d.isVisitingConsultant());
-    doctorHospitalDetailsRepository.save(det);
-    assignment.setDoctorDetails(det);
+    doctorHospitalProfileService.updateHospitalDetails(assignment, d, schedules, exceptions);
   }
 
   @Transactional
   public void deleteHospitalSpecificData(UserContract assignment) {
-    scheduleRepository.deleteByAssignmentId(assignment.getId());
-    if (assignment.getUser().getDoctorProfile() != null) {
-      availabilityExceptionRepository.deleteByDoctorIdAndHospitalId(
-          assignment.getUser().getDoctorProfile().getId(), assignment.getHospitalId());
-    }
+    doctorHospitalProfileService.deleteHospitalSpecificData(assignment);
   }
 
   public DoctorProfile requireDoctor(UUID id, UUID hospitalId) {
@@ -595,41 +482,11 @@ public class DoctorProfileService {
 
   @Transactional(readOnly = true)
   public List<ScheduleDTO> getScheduleDTOs(UUID assignmentId) {
-    return scheduleRepository.findByAssignmentId(assignmentId).stream()
-        .map(
-            s ->
-                ScheduleDTO.builder()
-                    .id(s.getId())
-                    .dayOfWeek(s.getDayOfWeek())
-                    .startTime(s.getStartTime())
-                    .endTime(s.getEndTime())
-                    .slotDurationMinutes(s.getSlotDurationMinutes())
-                    .maxPatients(s.getMaxPatients())
-                    .build())
-        .toList();
+    return doctorHospitalProfileService.getScheduleDTOs(assignmentId);
   }
 
   @Transactional(readOnly = true)
   public List<AvailabilityExceptionDTO> getExceptionDTOs(UUID userId, UUID hospitalId) {
-    DoctorProfile profile = doctorProfileRepository.findByUserId(userId).orElse(null);
-    if (profile == null) {
-      return Collections.emptyList();
-    }
-    return availabilityExceptionRepository
-        .findByDoctorIdAndHospitalId(profile.getId(), hospitalId)
-        .stream()
-        .map(
-            e ->
-                AvailabilityExceptionDTO.builder()
-                    .id(e.getId())
-                    .date(e.getDate())
-                    .type(e.getType())
-                    .startTime(e.getStartTime())
-                    .endTime(e.getEndTime())
-                    .mode(e.getMode())
-                    .slotDurationMinutes(e.getSlotDurationMinutes())
-                    .note(e.getNote())
-                    .build())
-        .toList();
+    return doctorHospitalProfileService.getExceptionDTOs(userId, hospitalId);
   }
 }

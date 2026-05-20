@@ -47,50 +47,58 @@ public class QuickPharmacySaleService {
     UUID hospitalId = hospitalContext.requireHospitalId();
     UUID userId = hospitalContext.currentUserIdOrNull();
 
+    requireLoggedInUser(userId);
+    validatePrescription(hospitalId, request.getPrescriptionId());
+
+    PharmacySale sale = initializeSale(hospitalId, request);
+    sale.setVisitId(resolveVisitId(request, sale));
+    sale.setTotalAmount(processItems(hospitalId, request.getItems(), sale));
+
+    PharmacySale savedSale = pharmacySaleRepository.save(sale);
+    Invoice invoice = createInvoice(request, hospitalId, savedSale);
+    addInvoiceItems(savedSale, invoice);
+    markPrescriptionDispensed(request.getPrescriptionId(), hospitalId);
+
+    PaymentReceipt paymentReceipt = recordPayment(request, hospitalId, userId, invoice);
+
+    var response = toQuickSaleResponse(savedSale);
+    response.setInvoiceNumber(invoice.getInvoiceNumber());
+    response.setPaymentId(paymentReceipt.paymentId());
+    response.setReceiptNumber(paymentReceipt.receiptNumber());
+    return response;
+  }
+
+  private void requireLoggedInUser(UUID userId) {
     if (userId == null) {
       throw new ApiException(
           "AUTH_ERROR", "User must be logged in to record sales", HttpStatus.UNAUTHORIZED);
     }
+  }
 
-    // 1. Create Pharmacy Sale
+  private void validatePrescription(UUID hospitalId, UUID prescriptionId) {
+    if (prescriptionId == null) {
+      return;
+    }
+    var prescription =
+        prescriptionRepository
+            .findByIdAndHospitalId(prescriptionId, hospitalId)
+            .orElseThrow(
+                () ->
+                    new ApiException("NOT_FOUND", "Prescription not found", HttpStatus.NOT_FOUND));
+
+    if ("DISPENSED".equals(prescription.getStatus())) {
+      throw new ApiException(
+          "ALREADY_DISPENSED",
+          "This prescription has already been dispensed.",
+          HttpStatus.CONFLICT);
+    }
+  }
+
+  private PharmacySale initializeSale(UUID hospitalId, QuickPharmacySaleRequest request) {
     PharmacySale sale = new PharmacySale();
     sale.setHospitalId(hospitalId);
     sale.setSaleType(request.getSaleType());
     sale.setPatientId(request.getPatientId());
-
-    // Check if already dispensed
-    if (request.getPrescriptionId() != null) {
-      var existingRx =
-          prescriptionRepository
-              .findByIdAndHospitalId(request.getPrescriptionId(), hospitalId)
-              .orElseThrow(
-                  () ->
-                      new ApiException(
-                          "NOT_FOUND", "Prescription not found", HttpStatus.NOT_FOUND));
-
-      if ("DISPENSED".equals(existingRx.getStatus())) {
-        throw new ApiException(
-            "ALREADY_DISPENSED",
-            "This prescription has already been dispensed.",
-            HttpStatus.CONFLICT);
-      }
-    }
-
-    // Resolve visitId from prescription/appointment
-    UUID resolvedVisitId = request.getVisitId();
-    if (request.getPrescriptionId() != null) {
-      appointmentRepository
-          .findById(request.getPrescriptionId())
-          .ifPresent(
-              app -> {
-                if (app.getVisitId() != null) {
-                  sale.setVisitId(app.getVisitId());
-                }
-              });
-    } else {
-      sale.setVisitId(resolvedVisitId);
-    }
-
     sale.setPrescriptionId(request.getPrescriptionId());
     sale.setDoctorId(request.getDoctorId());
     sale.setExternalDoctorName(request.getExternalDoctorName());
@@ -99,11 +107,29 @@ public class QuickPharmacySaleService {
     sale.setNotes(request.getNotes());
     sale.setStatus(PharmacySaleStatus.COMPLETED);
     sale.setSaleNumber("SALE-" + System.currentTimeMillis());
+    return sale;
+  }
 
+  private UUID resolveVisitId(QuickPharmacySaleRequest request, PharmacySale sale) {
+    if (request.getPrescriptionId() == null) {
+      return request.getVisitId();
+    }
+    appointmentRepository
+        .findById(request.getPrescriptionId())
+        .ifPresent(
+            app -> {
+              if (app.getVisitId() != null) {
+                sale.setVisitId(app.getVisitId());
+              }
+            });
+    return sale.getVisitId();
+  }
+
+  private BigDecimal processItems(
+      UUID hospitalId, List<QuickPharmacySaleRequest.Item> itemDtos, PharmacySale sale) {
     BigDecimal totalAmount = BigDecimal.ZERO;
 
-    // 2. Process Items and Validate Stock
-    for (QuickPharmacySaleRequest.Item itemDto : request.getItems()) {
+    for (QuickPharmacySaleRequest.Item itemDto : itemDtos) {
       PharmacyStock stock =
           pharmacyStockRepository
               .findByIdAndHospitalId(itemDto.getMedicineBatchId(), hospitalId)
@@ -146,16 +172,20 @@ public class QuickPharmacySaleService {
       totalAmount = totalAmount.add(itemNet);
     }
 
-    sale.setTotalAmount(totalAmount);
-    PharmacySale savedSale = pharmacySaleRepository.save(sale);
+    return totalAmount;
+  }
 
-    // 3. Create or Get Invoice
+  private Invoice createInvoice(
+      QuickPharmacySaleRequest request, UUID hospitalId, PharmacySale savedSale) {
     Invoice invoice =
-        invoiceService.getOrCreateInvoice(hospitalId, request.getPatientId(), sale.getVisitId());
+        invoiceService.getOrCreateInvoice(
+            hospitalId, request.getPatientId(), savedSale.getVisitId());
     savedSale.setInvoiceId(invoice.getId());
     savedSale.setSaleNumber(invoice.getInvoiceNumber());
+    return invoice;
+  }
 
-    // 4. Create Invoice Items
+  private void addInvoiceItems(PharmacySale savedSale, Invoice invoice) {
     for (PharmacySaleItem saleItem : savedSale.getItems()) {
       invoiceService.addItem(
           invoice.getId(),
@@ -168,20 +198,23 @@ public class QuickPharmacySaleService {
           savedSale.getDoctorId(),
           savedSale.getExternalDoctorName());
     }
+  }
 
-    // 5. Update Prescription Status if applicable
-    if (request.getPrescriptionId() != null) {
-      prescriptionRepository
-          .findByIdAndHospitalId(request.getPrescriptionId(), hospitalId)
-          .ifPresent(
-              p -> {
-                p.setStatus(com.res.hms.clinical.domain.PrescriptionStatus.DISPENSED);
-                prescriptionRepository.save(p);
-              });
+  private void markPrescriptionDispensed(UUID prescriptionId, UUID hospitalId) {
+    if (prescriptionId == null) {
+      return;
     }
-    // 6. Record Payment
-    String receiptNumber = null;
-    UUID paymentId = null;
+    prescriptionRepository
+        .findByIdAndHospitalId(prescriptionId, hospitalId)
+        .ifPresent(
+            p -> {
+              p.setStatus(com.res.hms.clinical.domain.PrescriptionStatus.DISPENSED);
+              prescriptionRepository.save(p);
+            });
+  }
+
+  private PaymentReceipt recordPayment(
+      QuickPharmacySaleRequest request, UUID hospitalId, UUID userId, Invoice invoice) {
     if (request.getPayment() != null
         && request.getPayment().getAmount().compareTo(BigDecimal.ZERO) > 0) {
       RecordPaymentRequest paymentReq = new RecordPaymentRequest();
@@ -193,16 +226,12 @@ public class QuickPharmacySaleService {
       paymentReq.setReferenceNumber(request.getPayment().getReferenceNumber());
 
       var paymentDto = paymentService.recordPayment(hospitalId, paymentReq, userId);
-      receiptNumber = paymentDto.getReceiptNumber();
-      paymentId = paymentDto.getId();
+      return new PaymentReceipt(paymentDto.getId(), paymentDto.getReceiptNumber());
     }
-
-    var response = toQuickSaleResponse(savedSale);
-    response.setInvoiceNumber(invoice.getInvoiceNumber());
-    response.setPaymentId(paymentId);
-    response.setReceiptNumber(receiptNumber);
-    return response;
+    return new PaymentReceipt(null, null);
   }
+
+  private record PaymentReceipt(UUID paymentId, String receiptNumber) {}
 
   @Transactional(readOnly = true)
   public QuickPharmacySaleResponse getSale(UUID id) {
