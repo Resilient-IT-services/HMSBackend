@@ -64,17 +64,24 @@ public class DoctorProfileService {
   @Transactional(readOnly = true)
   public com.res.hms.iam.application.dto.DoctorRevenueSummaryDTO getRevenueSummary(
       UUID doctorId, java.time.Instant from, java.time.Instant to) {
-    Object[] result = (Object[]) invoiceItemRepository.getDoctorRevenueSummary(doctorId, from, to);
+    List<Object[]> results = invoiceItemRepository.getDoctorRevenueSummary(doctorId, from, to);
+    Object[] result = results != null && !results.isEmpty() ? results.get(0) : null;
 
-    long count = result != null && result[0] != null ? (long) result[0] : 0;
-    java.math.BigDecimal total =
-        result != null && result[1] != null
-            ? (java.math.BigDecimal) result[1]
-            : java.math.BigDecimal.ZERO;
+    long count = 0;
+    java.math.BigDecimal total = java.math.BigDecimal.ZERO;
+
+    if (result != null) {
+      if (result[0] instanceof Number) {
+        count = ((Number) result[0]).longValue();
+      }
+      if (result[1] instanceof java.math.BigDecimal) {
+        total = (java.math.BigDecimal) result[1];
+      }
+    }
+
     java.math.BigDecimal average =
         count > 0
-            ? total.divide(
-                java.math.BigDecimal.valueOf(count), 2, java.math.RoundingMode.HALF_UP)
+            ? total.divide(java.math.BigDecimal.valueOf(count), 2, java.math.RoundingMode.HALF_UP)
             : java.math.BigDecimal.ZERO;
 
     return com.res.hms.iam.application.dto.DoctorRevenueSummaryDTO.builder()
