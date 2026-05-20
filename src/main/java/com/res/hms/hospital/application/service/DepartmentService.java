@@ -40,8 +40,11 @@ public class DepartmentService {
 
   @Transactional
   public Department update(UUID id, Department department) {
-    Department existing = departmentRepository.findById(id)
-        .orElseThrow(() -> new ApiException("NOT_FOUND", "Department not found", HttpStatus.NOT_FOUND));
+    Department existing =
+        departmentRepository
+            .findById(id)
+            .orElseThrow(
+                () -> new ApiException("NOT_FOUND", "Department not found", HttpStatus.NOT_FOUND));
     existing.setName(department.getName());
     existing.setDescription(department.getDescription());
     existing.setActive(department.isActive());

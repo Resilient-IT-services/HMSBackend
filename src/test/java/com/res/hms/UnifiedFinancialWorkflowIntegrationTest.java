@@ -2,12 +2,10 @@ package com.res.hms;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.res.hms.clinical.application.appointment.dto.AppointmentDTO;
 import com.res.hms.clinical.application.appointment.dto.OPDEncounterRequest;
 import com.res.hms.finance.domain.Invoice;
 import com.res.hms.finance.domain.Payment;
@@ -26,9 +24,9 @@ import com.res.hms.pharmacy.application.dto.PharmacySaleRequest;
 import com.res.hms.pharmacy.application.dto.QuickPharmacySaleRequest;
 import com.res.hms.pharmacy.domain.Medicine;
 import com.res.hms.pharmacy.domain.PharmacyStock;
+import com.res.hms.pharmacy.domain.SaleType;
 import com.res.hms.pharmacy.infrastructure.repository.MedicineRepository;
 import com.res.hms.pharmacy.infrastructure.repository.PharmacyStockRepository;
-import com.res.hms.pharmacy.domain.SaleType;
 import java.math.BigDecimal;
 import java.util.List;
 import java.util.UUID;
@@ -51,227 +49,249 @@ import org.springframework.transaction.annotation.Transactional;
 @Transactional
 class UnifiedFinancialWorkflowIntegrationTest {
 
-    @Autowired private MockMvc mockMvc;
-    @Autowired private TestDataHelper testDataHelper;
-    @Autowired private ObjectMapper objectMapper;
-    @Autowired private UserAccountRepository userAccountRepository;
-    @Autowired private RoleRepository roleRepository;
-    @Autowired private PasswordEncoder passwordEncoder;
-    @Autowired private InvoiceRepository invoiceRepository;
-    @Autowired private PaymentRepository paymentRepository;
-    @Autowired private DoctorHospitalDetailsRepository doctorHospitalDetailsRepository;
-    @Autowired private MedicineRepository medicineRepository;
-    @Autowired private PharmacyStockRepository pharmacyStockRepository;
-    @Autowired private com.res.hms.clinical.infrastructure.repository.PatientVisitRepository patientVisitRepository;
-    @Autowired private com.res.hms.clinical.infrastructure.repository.AppointmentRepository appointmentRepository;
-    @Autowired private com.res.hms.finance.infrastructure.repository.InvoiceItemRepository invoiceItemRepository;
+  @Autowired private MockMvc mockMvc;
+  @Autowired private TestDataHelper testDataHelper;
+  @Autowired private ObjectMapper objectMapper;
+  @Autowired private UserAccountRepository userAccountRepository;
+  @Autowired private RoleRepository roleRepository;
+  @Autowired private PasswordEncoder passwordEncoder;
+  @Autowired private InvoiceRepository invoiceRepository;
+  @Autowired private PaymentRepository paymentRepository;
+  @Autowired private DoctorHospitalDetailsRepository doctorHospitalDetailsRepository;
+  @Autowired private MedicineRepository medicineRepository;
+  @Autowired private PharmacyStockRepository pharmacyStockRepository;
 
-    private UUID hospitalId;
-    private UUID patientId;
-    private UUID doctorId;
-    private UUID userId;
-    private MockHttpSession session;
+  @Autowired
+  private com.res.hms.clinical.infrastructure.repository.PatientVisitRepository
+      patientVisitRepository;
 
-    @org.junit.jupiter.api.AfterEach
-    void tearDown() {
-        invoiceItemRepository.deleteAll();
-        invoiceRepository.deleteAll();
-        paymentRepository.deleteAll();
-        appointmentRepository.deleteAll();
-        patientVisitRepository.deleteAll();
-        doctorHospitalDetailsRepository.deleteAll();
-        userAccountRepository.deleteAll();
-    }
+  @Autowired
+  private com.res.hms.clinical.infrastructure.repository.AppointmentRepository
+      appointmentRepository;
 
-    @BeforeEach
-    void setUp() throws Exception {
-        hospitalId = testDataHelper.createHospitalIfMissing("UNIFIED_TEST", "Unified Hospital");
-        patientId = testDataHelper.createTestPatient(hospitalId).getId();
+  @Autowired
+  private com.res.hms.finance.infrastructure.repository.InvoiceItemRepository invoiceItemRepository;
 
-        // 1. Create Staff User
-        UserAccount user = new UserAccount();
-        user.setUsername("admin_test_" + UUID.randomUUID().toString().substring(0,4));
-        user.setFullName("Admin Test");
-        user.setPasswordHash(passwordEncoder.encode("password"));
-        user.setActive(true);
+  private UUID hospitalId;
+  private UUID patientId;
+  private UUID doctorId;
+  private UUID userId;
+  private MockHttpSession session;
 
-        UserContract assignRec = new UserContract();
-        assignRec.setUser(user);
-        assignRec.setHospitalId(hospitalId);
-        assignRec.setRole(roleRepository.findByCode(RoleCode.RECEPTIONIST).orElseThrow());
-        user.getContracts().add(assignRec);
+  @org.junit.jupiter.api.AfterEach
+  void tearDown() {
+    invoiceItemRepository.deleteAll();
+    invoiceRepository.deleteAll();
+    paymentRepository.deleteAll();
+    appointmentRepository.deleteAll();
+    patientVisitRepository.deleteAll();
+    doctorHospitalDetailsRepository.deleteAll();
+    userAccountRepository.deleteAll();
+  }
 
-        UserContract assignPharm = new UserContract();
-        assignPharm.setUser(user);
-        assignPharm.setHospitalId(hospitalId);
-        assignPharm.setRole(roleRepository.findByCode(RoleCode.PHARMACIST).orElseThrow());
-        user.getContracts().add(assignPharm);
+  @BeforeEach
+  void setUp() throws Exception {
+    hospitalId = testDataHelper.createHospitalIfMissing("UNIFIED_TEST", "Unified Hospital");
+    patientId = testDataHelper.createTestPatient(hospitalId).getId();
 
-        user = userAccountRepository.save(user);
-        userId = user.getId();
+    // 1. Create Staff User
+    UserAccount user = new UserAccount();
+    user.setUsername("admin_test_" + UUID.randomUUID().toString().substring(0, 4));
+    user.setFullName("Admin Test");
+    user.setPasswordHash(passwordEncoder.encode("password"));
+    user.setActive(true);
 
-        // 2. Create Doctor
-        UserAccount drAccount = new UserAccount();
-        drAccount.setUsername("doctor_test_" + UUID.randomUUID().toString().substring(0,4));
-        drAccount.setFullName("Doctor Test");
-        drAccount.setPasswordHash(passwordEncoder.encode("password"));
-        drAccount.setActive(true);
+    UserContract assignRec = new UserContract();
+    assignRec.setUser(user);
+    assignRec.setHospitalId(hospitalId);
+    assignRec.setRole(roleRepository.findByCode(RoleCode.RECEPTIONIST).orElseThrow());
+    user.getContracts().add(assignRec);
 
-        DoctorProfile drProfile = new DoctorProfile();
-        drProfile.setUser(drAccount);
-        com.res.hms.iam.domain.Specialization spec = new com.res.hms.iam.domain.Specialization();
-        spec.setName("General");
-        drProfile.getSpecializations().add(spec);
-        drAccount.setDoctorProfile(drProfile);
+    UserContract assignPharm = new UserContract();
+    assignPharm.setUser(user);
+    assignPharm.setHospitalId(hospitalId);
+    assignPharm.setRole(roleRepository.findByCode(RoleCode.PHARMACIST).orElseThrow());
+    user.getContracts().add(assignPharm);
 
-        UserContract drAssign = new UserContract();
-        drAssign.setUser(drAccount);
-        drAssign.setHospitalId(hospitalId);
-        drAssign.setRole(roleRepository.findByCode(RoleCode.DOCTOR).orElseThrow());
-        drAccount.getContracts().add(drAssign);
+    user = userAccountRepository.save(user);
+    userId = user.getId();
 
-        drAccount = userAccountRepository.save(drAccount);
-        doctorId = drAccount.getDoctorProfile().getId();
+    // 2. Create Doctor
+    UserAccount drAccount = new UserAccount();
+    drAccount.setUsername("doctor_test_" + UUID.randomUUID().toString().substring(0, 4));
+    drAccount.setFullName("Doctor Test");
+    drAccount.setPasswordHash(passwordEncoder.encode("password"));
+    drAccount.setActive(true);
 
-        DoctorHospitalDetails drDetails = new DoctorHospitalDetails();
-        drDetails.setAssignment(drAccount.getContracts().iterator().next());
-        drDetails.setConsultationFee(new BigDecimal("500.00"));
-        doctorHospitalDetailsRepository.save(drDetails);
+    DoctorProfile drProfile = new DoctorProfile();
+    drProfile.setUser(drAccount);
+    com.res.hms.iam.domain.Specialization spec = new com.res.hms.iam.domain.Specialization();
+    spec.setName("General");
+    drProfile.getSpecializations().add(spec);
+    drAccount.setDoctorProfile(drProfile);
 
-        // Login
-        String loginBody = "{\"username\": \"" + user.getUsername() + "\", \"password\": \"password\"}";
-        MvcResult loginResult = mockMvc.perform(post("/api/v1/auth/login")
-                .contentType(MediaType.APPLICATION_JSON)
-                .content(loginBody))
-                .andExpect(status().isOk())
-                .andReturn();
-        session = (MockHttpSession) loginResult.getRequest().getSession();
-    }
+    UserContract drAssign = new UserContract();
+    drAssign.setUser(drAccount);
+    drAssign.setHospitalId(hospitalId);
+    drAssign.setRole(roleRepository.findByCode(RoleCode.DOCTOR).orElseThrow());
+    drAccount.getContracts().add(drAssign);
 
-    @Test
-    void testAtomicOPDBookingWithPayment() throws Exception {
-        OPDEncounterRequest request = new OPDEncounterRequest();
-        request.setPatientId(patientId);
-        request.setDoctorId(doctorId);
-        request.setAppointmentTime(java.time.OffsetDateTime.now().plusDays(1));
+    drAccount = userAccountRepository.save(drAccount);
+    doctorId = drAccount.getDoctorProfile().getId();
 
-        OPDEncounterRequest.PaymentInfo paymentInfo = new OPDEncounterRequest.PaymentInfo();
-        paymentInfo.setAmount(new BigDecimal("500.00"));
-        paymentInfo.setMode(PaymentMode.CASH);
-        paymentInfo.setReferenceNumber("CASH-001");
-        request.setPayment(paymentInfo);
+    DoctorHospitalDetails drDetails = new DoctorHospitalDetails();
+    drDetails.setAssignment(drAccount.getContracts().iterator().next());
+    drDetails.setConsultationFee(new BigDecimal("500.00"));
+    doctorHospitalDetailsRepository.save(drDetails);
 
-        MvcResult result = mockMvc.perform(post("/api/v1/appointments/book-consultation")
-                .session(session)
-                .header("X-Hospital-Id", hospitalId.toString())
-                .contentType(MediaType.APPLICATION_JSON)
-                .content(objectMapper.writeValueAsString(request)))
-                .andExpect(status().isOk())
-                .andReturn();
+    // Login
+    String loginBody = "{\"username\": \"" + user.getUsername() + "\", \"password\": \"password\"}";
+    MvcResult loginResult =
+        mockMvc
+            .perform(
+                post("/api/v1/auth/login")
+                    .contentType(MediaType.APPLICATION_JSON)
+                    .content(loginBody))
+            .andExpect(status().isOk())
+            .andReturn();
+    session = (MockHttpSession) loginResult.getRequest().getSession();
+  }
 
-        String content = result.getResponse().getContentAsString();
-        UUID visitId = UUID.fromString(objectMapper.readTree(content).path("data").path("visitId").asText());
+  @Test
+  void testAtomicOPDBookingWithPayment() throws Exception {
+    OPDEncounterRequest request = new OPDEncounterRequest();
+    request.setPatientId(patientId);
+    request.setDoctorId(doctorId);
+    request.setAppointmentTime(java.time.OffsetDateTime.now().plusDays(1));
 
-        // Verify Invoice
-        List<Invoice> invoices = invoiceRepository.findAllByHospitalId(hospitalId);
-        assertThat(invoices).hasSize(1);
-        assertThat(invoices.get(0).getTotalAmount()).isEqualByComparingTo("500.00");
-        assertThat(invoices.get(0).getStatus()).isEqualTo(com.res.hms.finance.domain.InvoiceStatus.PAID);
+    OPDEncounterRequest.PaymentInfo paymentInfo = new OPDEncounterRequest.PaymentInfo();
+    paymentInfo.setAmount(new BigDecimal("500.00"));
+    paymentInfo.setMode(PaymentMode.CASH);
+    paymentInfo.setReferenceNumber("CASH-001");
+    request.setPayment(paymentInfo);
 
-        // Verify Payment
-        List<Payment> payments = paymentRepository.findAllByHospitalId(hospitalId);
-        assertThat(payments).hasSize(1);
-        assertThat(payments.get(0).getAmount()).isEqualByComparingTo("500.00");
-        assertThat(payments.get(0).getVisitId()).isEqualTo(visitId);
-    }
+    MvcResult result =
+        mockMvc
+            .perform(
+                post("/api/v1/appointments/book-consultation")
+                    .session(session)
+                    .header("X-Hospital-Id", hospitalId.toString())
+                    .contentType(MediaType.APPLICATION_JSON)
+                    .content(objectMapper.writeValueAsString(request)))
+            .andExpect(status().isOk())
+            .andReturn();
 
-    @Test
-    void testPharmacyWalkInQuickSale() throws Exception {
-        // Setup Medicine
-        Medicine med = new Medicine();
-        med.setName("Walkin Med");
-        med = medicineRepository.save(med);
+    String content = result.getResponse().getContentAsString();
+    UUID visitId =
+        UUID.fromString(objectMapper.readTree(content).path("data").path("visitId").asText());
 
-        PharmacyStock stock = new PharmacyStock();
-        stock.setHospitalId(hospitalId);
-        stock.setMedicine(med);
-        stock.setBatchNumber("W-001");
-        stock.setQuantity(10);
-        stock.setSellingPrice(new BigDecimal("200.00"));
-        pharmacyStockRepository.save(stock);
+    // Verify Invoice
+    List<Invoice> invoices = invoiceRepository.findAllByHospitalId(hospitalId);
+    assertThat(invoices).hasSize(1);
+    assertThat(invoices.get(0).getTotalAmount()).isEqualByComparingTo("500.00");
+    assertThat(invoices.get(0).getStatus())
+        .isEqualTo(com.res.hms.finance.domain.InvoiceStatus.PAID);
 
-        PharmacySaleRequest saleReq = new PharmacySaleRequest();
-        saleReq.setPatientId(patientId);
-        PharmacySaleRequest.Item item = new PharmacySaleRequest.Item();
-        item.setMedicineId(med.getId());
-        item.setQuantity(1);
-        saleReq.setItems(List.of(item));
+    // Verify Payment
+    List<Payment> payments = paymentRepository.findAllByHospitalId(hospitalId);
+    assertThat(payments).hasSize(1);
+    assertThat(payments.get(0).getAmount()).isEqualByComparingTo("500.00");
+    assertThat(payments.get(0).getVisitId()).isEqualTo(visitId);
+  }
 
-        mockMvc.perform(post("/api/v1/pharmacy/sales")
+  @Test
+  void testPharmacyWalkInQuickSale() throws Exception {
+    // Setup Medicine
+    Medicine med = new Medicine();
+    med.setName("Walkin Med");
+    med = medicineRepository.save(med);
+
+    PharmacyStock stock = new PharmacyStock();
+    stock.setHospitalId(hospitalId);
+    stock.setMedicine(med);
+    stock.setBatchNumber("W-001");
+    stock.setQuantity(10);
+    stock.setSellingPrice(new BigDecimal("200.00"));
+    pharmacyStockRepository.save(stock);
+
+    PharmacySaleRequest saleReq = new PharmacySaleRequest();
+    saleReq.setPatientId(patientId);
+    PharmacySaleRequest.Item item = new PharmacySaleRequest.Item();
+    item.setMedicineId(med.getId());
+    item.setQuantity(1);
+    saleReq.setItems(List.of(item));
+
+    mockMvc
+        .perform(
+            post("/api/v1/pharmacy/sales")
                 .session(session)
                 .header("X-Hospital-Id", hospitalId.toString())
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(objectMapper.writeValueAsString(saleReq)))
-                .andExpect(status().isOk());
+        .andExpect(status().isOk());
 
-        // Verify that a WALK-IN visit was created and an invoice generated
-        List<Invoice> invoices = invoiceRepository.findAllByHospitalId(hospitalId);
-        assertThat(invoices).hasSize(1);
-        assertThat(invoices.get(0).getTotalAmount()).isEqualByComparingTo("200.00");
-    }
+    // Verify that a WALK-IN visit was created and an invoice generated
+    List<Invoice> invoices = invoiceRepository.findAllByHospitalId(hospitalId);
+    assertThat(invoices).hasSize(1);
+    assertThat(invoices.get(0).getTotalAmount()).isEqualByComparingTo("200.00");
+  }
 
-    @Test
-    void testQuickPharmacyWalkinSale() throws Exception {
-        // 1. Setup Medicine & Stock
-        Medicine med = new Medicine();
-        med.setName("Quick Med");
-        med = medicineRepository.save(med);
+  @Test
+  void testQuickPharmacyWalkinSale() throws Exception {
+    // 1. Setup Medicine & Stock
+    Medicine med = new Medicine();
+    med.setName("Quick Med");
+    med = medicineRepository.save(med);
 
-        PharmacyStock stock = new PharmacyStock();
-        stock.setHospitalId(hospitalId);
-        stock.setMedicine(med);
-        stock.setBatchNumber("Q-001");
-        stock.setQuantity(100);
-        stock.setSellingPrice(new BigDecimal("150.00"));
-        stock = pharmacyStockRepository.save(stock);
+    PharmacyStock stock = new PharmacyStock();
+    stock.setHospitalId(hospitalId);
+    stock.setMedicine(med);
+    stock.setBatchNumber("Q-001");
+    stock.setQuantity(100);
+    stock.setSellingPrice(new BigDecimal("150.00"));
+    stock = pharmacyStockRepository.save(stock);
 
-        // 2. Prepare Quick Sale Request
-        QuickPharmacySaleRequest request = new QuickPharmacySaleRequest();
-        request.setSaleType(SaleType.WALKIN);
-        request.setCustomerName("Walkin Customer");
-        request.setCustomerPhone("1234567890");
-        request.setExternalDoctorName("Dr. External");
+    // 2. Prepare Quick Sale Request
+    QuickPharmacySaleRequest request = new QuickPharmacySaleRequest();
+    request.setSaleType(SaleType.WALKIN);
+    request.setCustomerName("Walkin Customer");
+    request.setCustomerPhone("1234567890");
+    request.setExternalDoctorName("Dr. External");
 
-        QuickPharmacySaleRequest.Item item = new QuickPharmacySaleRequest.Item();
-        item.setMedicineId(med.getId());
-        item.setMedicineBatchId(stock.getId());
-        item.setQuantity(2);
-        item.setUnitPrice(new BigDecimal("150.00"));
-        request.setItems(List.of(item));
+    QuickPharmacySaleRequest.Item item = new QuickPharmacySaleRequest.Item();
+    item.setMedicineId(med.getId());
+    item.setMedicineBatchId(stock.getId());
+    item.setQuantity(2);
+    item.setUnitPrice(new BigDecimal("150.00"));
+    request.setItems(List.of(item));
 
-        QuickPharmacySaleRequest.PaymentInfo payment = new QuickPharmacySaleRequest.PaymentInfo();
-        payment.setAmount(new BigDecimal("300.00"));
-        payment.setMode(PaymentMode.CASH);
-        request.setPayment(payment);
+    QuickPharmacySaleRequest.PaymentInfo payment = new QuickPharmacySaleRequest.PaymentInfo();
+    payment.setAmount(new BigDecimal("300.00"));
+    payment.setMode(PaymentMode.CASH);
+    request.setPayment(payment);
 
-        // 3. Perform Request
-        mockMvc.perform(post("/api/v1/pharmacy/quick-sale")
+    // 3. Perform Request
+    mockMvc
+        .perform(
+            post("/api/v1/pharmacy/quick-sale")
                 .session(session)
                 .header("X-Hospital-Id", hospitalId.toString())
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(objectMapper.writeValueAsString(request)))
-                .andExpect(status().isOk())
-                .andExpect(jsonPath("$.success").value(true))
-                .andExpect(jsonPath("$.data.saleNumber").exists())
-                .andExpect(jsonPath("$.data.totalAmount").value(300.00));
+        .andExpect(status().isOk())
+        .andExpect(jsonPath("$.success").value(true))
+        .andExpect(jsonPath("$.data.saleNumber").exists())
+        .andExpect(jsonPath("$.data.totalAmount").value(300.00));
 
-        // 4. Verify Financials
-        List<Invoice> invoices = invoiceRepository.findAllByHospitalId(hospitalId);
-        // We might have invoices from other tests if not cleaned properly, but @Transactional should handle it.
-        // Actually, we expect 1 here if it's the only test running in this tx.
-        assertThat(invoices).anyMatch(inv -> inv.getTotalAmount().compareTo(new BigDecimal("300.00")) == 0);
+    // 4. Verify Financials
+    List<Invoice> invoices = invoiceRepository.findAllByHospitalId(hospitalId);
+    // We might have invoices from other tests if not cleaned properly, but @Transactional should
+    // handle it.
+    // Actually, we expect 1 here if it's the only test running in this tx.
+    assertThat(invoices)
+        .anyMatch(inv -> inv.getTotalAmount().compareTo(new BigDecimal("300.00")) == 0);
 
-        List<Payment> payments = paymentRepository.findAllByHospitalId(hospitalId);
-        assertThat(payments).anyMatch(p -> p.getAmount().compareTo(new BigDecimal("300.00")) == 0);
-    }
+    List<Payment> payments = paymentRepository.findAllByHospitalId(hospitalId);
+    assertThat(payments).anyMatch(p -> p.getAmount().compareTo(new BigDecimal("300.00")) == 0);
+  }
 }

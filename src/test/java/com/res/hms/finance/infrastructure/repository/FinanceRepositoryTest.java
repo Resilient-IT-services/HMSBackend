@@ -21,30 +21,33 @@ import org.springframework.transaction.annotation.Transactional;
 @Transactional
 class FinanceRepositoryTest {
 
-    @Autowired private InvoiceRepository invoiceRepository;
-    @Autowired private TestDataHelper testDataHelper;
+  @Autowired private InvoiceRepository invoiceRepository;
+  @Autowired private TestDataHelper testDataHelper;
 
-    @Test
-    void testInvoiceRepositoryMethods() {
-        UUID hospitalId = testDataHelper.createHospitalIfMissing("REPO_TEST", "Repo Hospital");
-        UUID patientId = testDataHelper.createTestPatient(hospitalId).getId();
+  @Test
+  void testInvoiceRepositoryMethods() {
+    UUID hospitalId = testDataHelper.createHospitalIfMissing("REPO_TEST", "Repo Hospital");
+    UUID patientId = testDataHelper.createTestPatient(hospitalId).getId();
 
-        Invoice invoice = new Invoice();
-        invoice.setHospitalId(hospitalId);
-        invoice.setPatientId(patientId);
-        invoice.setInvoiceNumber("INV-REPO-001");
-        invoice.setStatus(InvoiceStatus.UNPAID);
-        invoice.setTotalAmount(BigDecimal.TEN);
-        invoice.setAmountPaid(BigDecimal.ZERO);
-        invoiceRepository.save(invoice);
+    Invoice invoice = new Invoice();
+    invoice.setHospitalId(hospitalId);
+    invoice.setPatientId(patientId);
+    invoice.setInvoiceNumber("INV-REPO-001");
+    invoice.setStatus(InvoiceStatus.UNPAID);
+    invoice.setTotalAmount(BigDecimal.TEN);
+    invoice.setAmountPaid(BigDecimal.ZERO);
+    invoiceRepository.save(invoice);
 
-        Optional<Invoice> found = invoiceRepository.findByHospitalIdAndInvoiceNumber(hospitalId, "INV-REPO-001");
-        assertThat(found).isPresent();
+    Optional<Invoice> found =
+        invoiceRepository.findByHospitalIdAndInvoiceNumber(hospitalId, "INV-REPO-001");
+    assertThat(found).isPresent();
 
-        Page<Invoice> page = invoiceRepository.findAllByHospitalIdOrderByCreatedAtDesc(hospitalId, PageRequest.of(0, 10));
-        assertThat(page.getContent()).isNotEmpty();
+    Page<Invoice> page =
+        invoiceRepository.findAllByHospitalIdOrderByCreatedAtDesc(
+            hospitalId, PageRequest.of(0, 10));
+    assertThat(page.getContent()).isNotEmpty();
 
-        Optional<Invoice> byId = invoiceRepository.findByIdAndHospitalId(invoice.getId(), hospitalId);
-        assertThat(byId).isPresent();
-    }
+    Optional<Invoice> byId = invoiceRepository.findByIdAndHospitalId(invoice.getId(), hospitalId);
+    assertThat(byId).isPresent();
+  }
 }

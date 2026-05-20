@@ -19,17 +19,20 @@ import org.springframework.transaction.annotation.Transactional;
 @Transactional
 class PaymentServiceTest {
 
-    @Autowired private PaymentService paymentService;
-    @Autowired private TestDataHelper testDataHelper;
+  @Autowired private PaymentService paymentService;
+  @Autowired private TestDataHelper testDataHelper;
 
-    @Test
-    void testRecordPayment() {
-        UUID hospitalId = testDataHelper.createHospitalIfMissing("PAY_SERVICE_TEST", "Pay Service Test Hospital");
-        UUID patientId = testDataHelper.createTestPatient(hospitalId).getId();
+  @Test
+  void testRecordPayment() {
+    UUID hospitalId =
+        testDataHelper.createHospitalIfMissing("PAY_SERVICE_TEST", "Pay Service Test Hospital");
+    UUID patientId = testDataHelper.createTestPatient(hospitalId).getId();
 
-        Payment payment = paymentService.recordPayment(hospitalId, patientId, new BigDecimal("500.00"), PaymentMode.CASH, UUID.randomUUID());
-        assertThat(payment.getId()).isNotNull();
-        assertThat(payment.getStatus()).isEqualTo(PaymentStatus.SUCCESS);
-        assertThat(payment.getAmount()).isEqualByComparingTo("500.00");
-    }
+    Payment payment =
+        paymentService.recordPayment(
+            hospitalId, patientId, new BigDecimal("500.00"), PaymentMode.CASH, UUID.randomUUID());
+    assertThat(payment.getId()).isNotNull();
+    assertThat(payment.getStatus()).isEqualTo(PaymentStatus.SUCCESS);
+    assertThat(payment.getAmount()).isEqualByComparingTo("500.00");
+  }
 }

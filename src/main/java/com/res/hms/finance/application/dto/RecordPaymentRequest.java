@@ -9,17 +9,17 @@ import lombok.Data;
 
 @Data
 public class RecordPaymentRequest {
-    @NotNull private UUID patientId;
-    
-    private UUID visitId;
-    
-    @NotNull 
-    @Min(0)
-    private BigDecimal amount;
-    
-    @NotNull private PaymentMode paymentMode;
-    
-    private String referenceNumber;
-    
-    private UUID invoiceId; // Optional: directly allocate to this invoice
+  @NotNull private UUID patientId;
+
+  private UUID visitId;
+
+  @NotNull
+  @Min(0)
+  private BigDecimal amount;
+
+  @NotNull private PaymentMode paymentMode;
+
+  private String referenceNumber;
+
+  private UUID invoiceId; // Optional: directly allocate to this invoice
 }

@@ -5,5 +5,4 @@ import com.res.hms.finance.domain.Refund;
 import org.springframework.stereotype.Repository;
 
 @Repository
-public interface RefundRepository extends BaseRepository<Refund> {
-}
+public interface RefundRepository extends BaseRepository<Refund> {}

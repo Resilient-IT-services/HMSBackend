@@ -8,6 +8,7 @@ import org.springframework.stereotype.Repository;
 
 @Repository
 public interface PaymentAllocationRepository extends JpaRepository<PaymentAllocation, UUID> {
-    List<PaymentAllocation> findAllByInvoiceId(UUID invoiceId);
-    List<PaymentAllocation> findAllByPaymentId(UUID paymentId);
+  List<PaymentAllocation> findAllByInvoiceId(UUID invoiceId);
+
+  List<PaymentAllocation> findAllByPaymentId(UUID paymentId);
 }

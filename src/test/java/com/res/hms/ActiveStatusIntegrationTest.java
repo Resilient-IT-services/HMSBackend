@@ -7,9 +7,9 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 
 import com.res.hms.iam.domain.RoleCode;
 import com.res.hms.iam.domain.UserAccount;
+import com.res.hms.iam.infrastructure.repository.RoleRepository;
 import com.res.hms.iam.infrastructure.repository.SpecializationRepository;
 import com.res.hms.iam.infrastructure.repository.UserAccountRepository;
-import com.res.hms.iam.infrastructure.repository.RoleRepository;
 import java.util.UUID;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -30,8 +30,8 @@ import org.springframework.transaction.annotation.Transactional;
 class ActiveStatusIntegrationTest {
 
   @Autowired private MockMvc mockMvc;
-    @Autowired private UserAccountRepository userAccountRepository;
-    @Autowired private SpecializationRepository specializationRepository;
+  @Autowired private UserAccountRepository userAccountRepository;
+  @Autowired private SpecializationRepository specializationRepository;
   @Autowired private PasswordEncoder passwordEncoder;
   @Autowired private TestDataHelper testDataHelper;
 
@@ -55,7 +55,8 @@ class ActiveStatusIntegrationTest {
                 .perform(
                     post("/api/v1/auth/login")
                         .contentType(MediaType.APPLICATION_JSON)
-                        .content("{\"username\": \"admin_active_test\", \"password\": \"admin123\"}"))
+                        .content(
+                            "{\"username\": \"admin_active_test\", \"password\": \"admin123\"}"))
                 .andExpect(status().isOk())
                 .andReturn()
                 .getRequest()
@@ -68,7 +69,14 @@ class ActiveStatusIntegrationTest {
   void inactiveDoctorsShouldNotBeListed() throws Exception {
     // 1. Create an inactive doctor
     String username = "inactive_dr";
-    testDataHelper.createUserIfMissing(username, RoleCode.DOCTOR, testHospitalId, "password", passwordEncoder, userAccountRepository, roleRepository);
+    testDataHelper.createUserIfMissing(
+        username,
+        RoleCode.DOCTOR,
+        testHospitalId,
+        "password",
+        passwordEncoder,
+        userAccountRepository,
+        roleRepository);
 
     UserAccount doctor = userAccountRepository.findByUsername(username).orElseThrow();
     doctor.setActive(false);
@@ -90,27 +98,36 @@ class ActiveStatusIntegrationTest {
                 .session(session)
                 .header("X-Hospital-Id", testHospitalId.toString()))
         .andExpect(status().isOk())
-        .andExpect(jsonPath("$.data.content[?(@.fullName=='" + doctor.getFullName() + "')]").doesNotExist());
+        .andExpect(
+            jsonPath("$.data.content[?(@.fullName=='" + doctor.getFullName() + "')]")
+                .doesNotExist());
   }
 
   @Test
   void cannotBookAppointmentWithInactiveDoctor() throws Exception {
     // 1. Create an inactive doctor
     String username = "inactive_dr_booking";
-    testDataHelper.createUserIfMissing(username, RoleCode.DOCTOR, testHospitalId, "password", passwordEncoder, userAccountRepository, roleRepository);
+    testDataHelper.createUserIfMissing(
+        username,
+        RoleCode.DOCTOR,
+        testHospitalId,
+        "password",
+        passwordEncoder,
+        userAccountRepository,
+        roleRepository);
 
     UserAccount doctor = userAccountRepository.findByUsername(username).orElseThrow();
     doctor.setActive(false);
 
     // Ensure DoctorProfile exists (it should be created if needed, but let's check)
     if (doctor.getDoctorProfile() == null) {
-        com.res.hms.iam.domain.DoctorProfile profile = new com.res.hms.iam.domain.DoctorProfile();
-        profile.setUser(doctor);
-        com.res.hms.iam.domain.Specialization spec = new com.res.hms.iam.domain.Specialization();
-        spec.setName("General");
-        specializationRepository.save(spec);
-        profile.getSpecializations().add(spec);
-        doctor.setDoctorProfile(profile);
+      com.res.hms.iam.domain.DoctorProfile profile = new com.res.hms.iam.domain.DoctorProfile();
+      profile.setUser(doctor);
+      com.res.hms.iam.domain.Specialization spec = new com.res.hms.iam.domain.Specialization();
+      spec.setName("General");
+      specializationRepository.save(spec);
+      profile.getSpecializations().add(spec);
+      doctor.setDoctorProfile(profile);
     }
 
     userAccountRepository.saveAndFlush(doctor);
@@ -118,9 +135,10 @@ class ActiveStatusIntegrationTest {
     com.res.hms.clinical.domain.Patient patient = testDataHelper.createTestPatient(testHospitalId);
 
     // 2. Try to book appointment
-    String appointmentJson = String.format(
-        "{\"patientId\":\"%s\", \"doctorId\":\"%s\", \"appointmentTime\":\"2026-05-20T10:00:00Z\", \"status\":\"SCHEDULED\"}",
-        patient.getId(), doctor.getDoctorProfile().getId());
+    String appointmentJson =
+        String.format(
+            "{\"patientId\":\"%s\", \"doctorId\":\"%s\", \"appointmentTime\":\"2026-05-20T10:00:00Z\", \"status\":\"SCHEDULED\"}",
+            patient.getId(), doctor.getDoctorProfile().getId());
 
     mockMvc
         .perform(

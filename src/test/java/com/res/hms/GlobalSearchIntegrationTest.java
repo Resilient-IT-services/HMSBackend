@@ -48,7 +48,7 @@ class GlobalSearchIntegrationTest {
       admin.setActive(true);
       admin.setFullName("Global Admin");
 
-        UserContract assignment = new UserContract();
+      UserContract assignment = new UserContract();
       assignment.setUser(admin);
       assignment.setHospitalId(testHospitalId);
       assignment.setRole(roleRepository.findByCode(RoleCode.ADMIN).orElseThrow());

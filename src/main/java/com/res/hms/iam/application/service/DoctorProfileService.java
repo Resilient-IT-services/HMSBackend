@@ -73,8 +73,7 @@ public class DoctorProfileService {
             : java.math.BigDecimal.ZERO;
     java.math.BigDecimal average =
         count > 0
-            ? total.divide(
-                java.math.BigDecimal.valueOf(count), 2, java.math.RoundingMode.HALF_UP)
+            ? total.divide(java.math.BigDecimal.valueOf(count), 2, java.math.RoundingMode.HALF_UP)
             : java.math.BigDecimal.ZERO;
 
     return com.res.hms.iam.application.dto.DoctorRevenueSummaryDTO.builder()
@@ -119,8 +118,10 @@ public class DoctorProfileService {
     List<DoctorAvailabilityResponse.SessionInfo> sessions = new ArrayList<>();
     Optional<DoctorAvailabilityException> override =
         exceptions.stream()
-            .filter(e -> ExceptionType.MODIFIED.equals(e.getType()) 
-                || ExceptionType.ADDED.equals(e.getType()))
+            .filter(
+                e ->
+                    ExceptionType.MODIFIED.equals(e.getType())
+                        || ExceptionType.ADDED.equals(e.getType()))
             .findFirst();
 
     if (override.isPresent()) {
@@ -232,8 +233,10 @@ public class DoctorProfileService {
     List<DoctorSlotDTO> allSlots = new ArrayList<>();
     Optional<DoctorAvailabilityException> override =
         exceptions.stream()
-            .filter(e -> ExceptionType.MODIFIED.equals(e.getType()) 
-                || ExceptionType.ADDED.equals(e.getType()))
+            .filter(
+                e ->
+                    ExceptionType.MODIFIED.equals(e.getType())
+                        || ExceptionType.ADDED.equals(e.getType()))
             .findFirst();
 
     if (override.isPresent()) {
@@ -346,7 +349,8 @@ public class DoctorProfileService {
 
   private UserContract findAssignment(DoctorProfile profile, UUID hospitalId) {
     return profile.getUser().getContracts().stream()
-        .filter(a -> hospitalId.equals(a.getHospitalId()) && a.getRole().getCode() == RoleCode.DOCTOR)
+        .filter(
+            a -> hospitalId.equals(a.getHospitalId()) && a.getRole().getCode() == RoleCode.DOCTOR)
         .findFirst()
         .orElseThrow(
             () ->
@@ -481,7 +485,8 @@ public class DoctorProfileService {
   }
 
   private void updateSchedules(UserContract assignment, List<ScheduleDTO> schedules) {
-    List<DoctorSchedule> existingSchedules = scheduleRepository.findByAssignmentId(assignment.getId());
+    List<DoctorSchedule> existingSchedules =
+        scheduleRepository.findByAssignmentId(assignment.getId());
     com.res.hms.core.util.CollectionMergeUtil.merge(
         existingSchedules,
         schedules,
@@ -509,7 +514,8 @@ public class DoctorProfileService {
     s.setMaxPatients(dto.getMaxPatients());
   }
 
-  private void updateExceptions(UserContract assignment, List<AvailabilityExceptionDTO> exceptions) {
+  private void updateExceptions(
+      UserContract assignment, List<AvailabilityExceptionDTO> exceptions) {
     DoctorProfile doctorProfile = assignment.getUser().getDoctorProfile();
     List<DoctorAvailabilityException> existingExceptions =
         availabilityExceptionRepository.findByDoctorIdAndHospitalId(
@@ -609,7 +615,8 @@ public class DoctorProfileService {
     if (profile == null) {
       return Collections.emptyList();
     }
-    return availabilityExceptionRepository.findByDoctorIdAndHospitalId(profile.getId(), hospitalId)
+    return availabilityExceptionRepository
+        .findByDoctorIdAndHospitalId(profile.getId(), hospitalId)
         .stream()
         .map(
             e ->

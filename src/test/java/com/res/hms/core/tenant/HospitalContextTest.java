@@ -12,13 +12,13 @@ import org.springframework.test.context.ActiveProfiles;
 @ActiveProfiles("test")
 class HospitalContextTest {
 
-    @Autowired private HospitalContext hospitalContext;
+  @Autowired private HospitalContext hospitalContext;
 
-    @Test
-    void testHospitalContext() {
-        UUID id = UUID.randomUUID();
-        TenantContext.setHospitalId(id);
-        assertThat(hospitalContext.getHospitalIdOrNull()).isEqualTo(id);
-        TenantContext.clear();
-    }
+  @Test
+  void testHospitalContext() {
+    UUID id = UUID.randomUUID();
+    TenantContext.setHospitalId(id);
+    assertThat(hospitalContext.getHospitalIdOrNull()).isEqualTo(id);
+    TenantContext.clear();
+  }
 }

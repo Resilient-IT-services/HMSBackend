@@ -54,7 +54,9 @@ public class Hospital extends BaseEntity {
   @Column(name = "settings", columnDefinition = "jsonb")
   private HospitalSettings settings;
 
-  @ManyToMany(fetch = FetchType.LAZY, cascade = {CascadeType.PERSIST, CascadeType.MERGE})
+  @ManyToMany(
+      fetch = FetchType.LAZY,
+      cascade = {CascadeType.PERSIST, CascadeType.MERGE})
   @JoinTable(
       name = "hospital_departments",
       joinColumns = @JoinColumn(name = "hospital_id"),

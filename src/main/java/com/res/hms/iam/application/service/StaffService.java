@@ -19,6 +19,7 @@ import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
+import java.util.stream.Collectors;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
@@ -28,8 +29,6 @@ import org.springframework.data.jpa.domain.Specification;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-
-import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
@@ -93,28 +92,25 @@ public class StaffService {
                     cb.lower(root.get("user").get("fullName")), "%" + name.toLowerCase() + "%"));
           }
           if (department != null && !department.isBlank()) {
-            Join<UserContract, com.res.hms.hospital.domain.Department> deptJoin = root.join("departments");
+            Join<UserContract, com.res.hms.hospital.domain.Department> deptJoin =
+                root.join("departments");
             predicates.add(
-                cb.like(
-                    cb.lower(deptJoin.get("name")), "%" + department.toLowerCase() + "%"));
+                cb.like(cb.lower(deptJoin.get("name")), "%" + department.toLowerCase() + "%"));
           }
           if (specialization != null && !specialization.isBlank()) {
             Join<UserContract, UserAccount> userJoin = root.join("user");
             Join<UserAccount, DoctorProfile> doctorJoin = userJoin.join("doctorProfile");
-            Join<DoctorProfile, com.res.hms.iam.domain.Specialization> specJoin = doctorJoin.join("specializations");
+            Join<DoctorProfile, com.res.hms.iam.domain.Specialization> specJoin =
+                doctorJoin.join("specializations");
             predicates.add(
-                cb.like(
-                    cb.lower(specJoin.get("name")),
-                    "%" + specialization.toLowerCase() + "%"));
+                cb.like(cb.lower(specJoin.get("name")), "%" + specialization.toLowerCase() + "%"));
           }
           if (minFee != null) {
-            Join<UserContract, DoctorHospitalDetails> detailsJoin =
-                root.join("doctorDetails");
+            Join<UserContract, DoctorHospitalDetails> detailsJoin = root.join("doctorDetails");
             predicates.add(cb.greaterThanOrEqualTo(detailsJoin.get("consultationFee"), minFee));
           }
           if (maxFee != null) {
-            Join<UserContract, DoctorHospitalDetails> detailsJoin =
-                root.join("doctorDetails");
+            Join<UserContract, DoctorHospitalDetails> detailsJoin = root.join("doctorDetails");
             predicates.add(cb.lessThanOrEqualTo(detailsJoin.get("consultationFee"), maxFee));
           }
 
@@ -151,10 +147,10 @@ public class StaffService {
                     cb.lower(root.get("user").get("fullName")), "%" + name.toLowerCase() + "%"));
           }
           if (department != null && !department.isBlank()) {
-             Join<UserContract, com.res.hms.hospital.domain.Department> deptJoin = root.join("departments");
-             predicates.add(
-                cb.like(
-                    cb.lower(deptJoin.get("name")), "%" + department.toLowerCase() + "%"));
+            Join<UserContract, com.res.hms.hospital.domain.Department> deptJoin =
+                root.join("departments");
+            predicates.add(
+                cb.like(cb.lower(deptJoin.get("name")), "%" + department.toLowerCase() + "%"));
           }
 
           return cb.and(predicates.toArray(new Predicate[0]));
@@ -167,27 +163,32 @@ public class StaffService {
   @Transactional(readOnly = true)
   public List<com.res.hms.iam.application.dto.DoctorSelectionDTO> getDoctorSelection() {
     UUID hospitalId = hospitalContext.requireHospitalId();
-    return assignmentRepository.findByHospitalIdAndRoleCodeAndActive(hospitalId, RoleCode.DOCTOR, true)
+    return assignmentRepository
+        .findByHospitalIdAndRoleCodeAndActive(hospitalId, RoleCode.DOCTOR, true)
         .stream()
-        .map(a -> {
-          UserAccount u = a.getUser();
-          DoctorProfile d = u.getDoctorProfile();
-          String spec = (d != null && d.getSpecializations() != null) 
-              ? d.getSpecializations().stream()
-                  .map(com.res.hms.iam.domain.Specialization::getName)
-                  .collect(Collectors.joining(", "))
-              : "";
-          java.math.BigDecimal fee = (a.getDoctorDetails() != null && a.getDoctorDetails().getConsultationFee() != null)
-              ? a.getDoctorDetails().getConsultationFee()
-              : (d != null ? d.getConsultationFee() : null);
+        .map(
+            a -> {
+              UserAccount u = a.getUser();
+              DoctorProfile d = u.getDoctorProfile();
+              String spec =
+                  (d != null && d.getSpecializations() != null)
+                      ? d.getSpecializations().stream()
+                          .map(com.res.hms.iam.domain.Specialization::getName)
+                          .collect(Collectors.joining(", "))
+                      : "";
+              java.math.BigDecimal fee =
+                  (a.getDoctorDetails() != null
+                          && a.getDoctorDetails().getConsultationFee() != null)
+                      ? a.getDoctorDetails().getConsultationFee()
+                      : (d != null ? d.getConsultationFee() : null);
 
-          return com.res.hms.iam.application.dto.DoctorSelectionDTO.builder()
-              .id(d != null ? d.getId() : null)
-              .fullName(u.getFullName())
-              .specialization(spec)
-              .consultationFee(fee)
-              .build();
-        })
+              return com.res.hms.iam.application.dto.DoctorSelectionDTO.builder()
+                  .id(d != null ? d.getId() : null)
+                  .fullName(u.getFullName())
+                  .specialization(spec)
+                  .consultationFee(fee)
+                  .build();
+            })
         .filter(dto -> dto.getId() != null)
         .collect(Collectors.toList());
   }
@@ -204,12 +205,16 @@ public class StaffService {
         .fullName(u.getFullName())
         .phone(u.getPhone())
         .gender(u.getGender())
-        .departments(a.getDepartments().stream()
-            .map(com.res.hms.hospital.domain.Department::getName)
-            .collect(Collectors.toList()))
-        .specializations(d != null ? d.getSpecializations().stream()
-            .map(com.res.hms.iam.domain.Specialization::getName)
-            .collect(Collectors.toList()) : null)
+        .departments(
+            a.getDepartments().stream()
+                .map(com.res.hms.hospital.domain.Department::getName)
+                .collect(Collectors.toList()))
+        .specializations(
+            d != null
+                ? d.getSpecializations().stream()
+                    .map(com.res.hms.iam.domain.Specialization::getName)
+                    .collect(Collectors.toList())
+                : null)
         .consultationFee(det != null ? det.getConsultationFee() : null)
         .build();
   }
@@ -226,9 +231,10 @@ public class StaffService {
         .fullName(u.getFullName())
         .phone(u.getPhone())
         .gender(u.getGender())
-        .departments(a.getDepartments().stream()
-            .map(com.res.hms.hospital.domain.Department::getName)
-            .collect(Collectors.toList()))
+        .departments(
+            a.getDepartments().stream()
+                .map(com.res.hms.hospital.domain.Department::getName)
+                .collect(Collectors.toList()))
         .certificationLevel(n != null ? n.getCertificationLevel() : null)
         .shiftType(det != null ? det.getShiftType() : null)
         .build();

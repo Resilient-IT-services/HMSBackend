@@ -20,36 +20,36 @@ import org.springframework.transaction.annotation.Transactional;
 @Transactional
 class RepositoryCoverageTest {
 
-    @Autowired private PatientVisitRepository patientVisitRepository;
-    @Autowired private InvoiceRepository invoiceRepository;
-    @Autowired private InvoiceItemRepository invoiceItemRepository;
-    @Autowired private PaymentRepository paymentRepository;
-    @Autowired private PaymentAllocationRepository paymentAllocationRepository;
-    @Autowired private RefundRepository refundRepository;
+  @Autowired private PatientVisitRepository patientVisitRepository;
+  @Autowired private InvoiceRepository invoiceRepository;
+  @Autowired private InvoiceItemRepository invoiceItemRepository;
+  @Autowired private PaymentRepository paymentRepository;
+  @Autowired private PaymentAllocationRepository paymentAllocationRepository;
+  @Autowired private RefundRepository refundRepository;
 
-    @Test
-    void testAllRepositories() {
-        assertThat(patientVisitRepository.count()).isGreaterThanOrEqualTo(0);
-        assertThat(invoiceRepository.count()).isGreaterThanOrEqualTo(0);
-        assertThat(invoiceItemRepository.count()).isGreaterThanOrEqualTo(0);
-        assertThat(paymentRepository.count()).isGreaterThanOrEqualTo(0);
-        assertThat(paymentAllocationRepository.count()).isGreaterThanOrEqualTo(0);
-        assertThat(refundRepository.count()).isGreaterThanOrEqualTo(0);
-    }
-    
-    @Test
-    void testRepositoryLookups() {
-        UUID randomId = UUID.randomUUID();
-        UUID hospId = UUID.randomUUID();
-        
-        assertThat(patientVisitRepository.findByIdAndHospitalId(randomId, hospId)).isEmpty();
-        assertThat(invoiceRepository.findByIdAndHospitalId(randomId, hospId)).isEmpty();
-        assertThat(paymentRepository.findByIdAndHospitalId(randomId, hospId)).isEmpty();
-        assertThat(refundRepository.findByIdAndHospitalId(randomId, hospId)).isEmpty();
-        
-        assertThat(patientVisitRepository.findAllByHospitalId(hospId)).isEmpty();
-        assertThat(invoiceRepository.findAllByHospitalId(hospId)).isEmpty();
-        assertThat(paymentRepository.findAllByHospitalId(hospId)).isEmpty();
-        assertThat(refundRepository.findAllByHospitalId(hospId)).isEmpty();
-    }
+  @Test
+  void testAllRepositories() {
+    assertThat(patientVisitRepository.count()).isGreaterThanOrEqualTo(0);
+    assertThat(invoiceRepository.count()).isGreaterThanOrEqualTo(0);
+    assertThat(invoiceItemRepository.count()).isGreaterThanOrEqualTo(0);
+    assertThat(paymentRepository.count()).isGreaterThanOrEqualTo(0);
+    assertThat(paymentAllocationRepository.count()).isGreaterThanOrEqualTo(0);
+    assertThat(refundRepository.count()).isGreaterThanOrEqualTo(0);
+  }
+
+  @Test
+  void testRepositoryLookups() {
+    UUID randomId = UUID.randomUUID();
+    UUID hospId = UUID.randomUUID();
+
+    assertThat(patientVisitRepository.findByIdAndHospitalId(randomId, hospId)).isEmpty();
+    assertThat(invoiceRepository.findByIdAndHospitalId(randomId, hospId)).isEmpty();
+    assertThat(paymentRepository.findByIdAndHospitalId(randomId, hospId)).isEmpty();
+    assertThat(refundRepository.findByIdAndHospitalId(randomId, hospId)).isEmpty();
+
+    assertThat(patientVisitRepository.findAllByHospitalId(hospId)).isEmpty();
+    assertThat(invoiceRepository.findAllByHospitalId(hospId)).isEmpty();
+    assertThat(paymentRepository.findAllByHospitalId(hospId)).isEmpty();
+    assertThat(refundRepository.findAllByHospitalId(hospId)).isEmpty();
+  }
 }

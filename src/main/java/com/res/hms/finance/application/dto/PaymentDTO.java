@@ -14,13 +14,13 @@ import lombok.NoArgsConstructor;
 @NoArgsConstructor
 @AllArgsConstructor
 public class PaymentDTO {
-    private UUID id;
-    private UUID patientId;
-    private String receiptNumber;
-    private BigDecimal amount;
-    private PaymentMode paymentMode;
-    private String referenceNumber;
-    private PaymentStatus status;
-    private java.time.Instant paymentDate;
-    private UUID collectedBy;
+  private UUID id;
+  private UUID patientId;
+  private String receiptNumber;
+  private BigDecimal amount;
+  private PaymentMode paymentMode;
+  private String referenceNumber;
+  private PaymentStatus status;
+  private java.time.Instant paymentDate;
+  private UUID collectedBy;
 }

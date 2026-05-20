@@ -7,7 +7,8 @@ import org.junit.jupiter.api.Test;
 
 class WebConfigTest {
 
-  private final WebConfig.StringToLocalDateConverter converter = new WebConfig.StringToLocalDateConverter();
+  private final WebConfig.StringToLocalDateConverter converter =
+      new WebConfig.StringToLocalDateConverter();
 
   @Test
   void testConvertSimpleDate() {
@@ -20,9 +21,10 @@ class WebConfigTest {
     LocalDate result = converter.convert("2026-05-20T18:30:00.000Z");
     // If the system default is IST (+05:30), 18:30Z becomes 00:00 on the 21st.
     // We expect the converter to shift the date accordingly.
-    LocalDate expected = java.time.ZonedDateTime.parse("2026-05-20T18:30:00.000Z")
-        .withZoneSameInstant(java.time.ZoneId.systemDefault())
-        .toLocalDate();
+    LocalDate expected =
+        java.time.ZonedDateTime.parse("2026-05-20T18:30:00.000Z")
+            .withZoneSameInstant(java.time.ZoneId.systemDefault())
+            .toLocalDate();
     assertEquals(expected, result);
   }
 

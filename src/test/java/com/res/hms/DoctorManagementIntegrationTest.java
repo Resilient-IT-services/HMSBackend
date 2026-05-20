@@ -150,7 +150,7 @@ class DoctorManagementIntegrationTest {
         .andExpect(jsonPath("$.data.sessions.length()").value(1))
         .andExpect(jsonPath("$.data.sessions[0].startTime").value("14:00"))
         .andExpect(jsonPath("$.data.sessions[0].endTime").value("16:00"));
-}
+  }
 
   @Test
   void createDoctorWithoutLicenseNumberShouldFail() throws Exception {

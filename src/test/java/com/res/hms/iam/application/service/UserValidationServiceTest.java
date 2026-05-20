@@ -46,7 +46,10 @@ class UserValidationServiceTest {
   void validateProfileUniquenessRejectsDoctorCreateWithoutLicenseNumber() {
     UserDetailsDTO request =
         UserDetailsDTO.builder()
-            .doctorInfo(UserDetailsDTO.DoctorInfo.builder().specializations(java.util.List.of("General")).build())
+            .doctorInfo(
+                UserDetailsDTO.DoctorInfo.builder()
+                    .specializations(java.util.List.of("General"))
+                    .build())
             .memberships(doctorMemberships())
             .build();
 

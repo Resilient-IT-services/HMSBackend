@@ -6,13 +6,13 @@ import com.res.hms.pharmacy.application.dto.MedicineDTO;
 import com.res.hms.pharmacy.application.dto.MedicineImportResponse;
 import com.res.hms.pharmacy.application.dto.MedicineSummaryDTO;
 import com.res.hms.pharmacy.application.dto.PharmacyReturnRequest;
-import com.res.hms.pharmacy.application.service.MedicineService;
 import com.res.hms.pharmacy.application.dto.PharmacyReturnResponse;
 import com.res.hms.pharmacy.application.dto.PharmacySaleRequest;
 import com.res.hms.pharmacy.application.dto.PharmacySaleResponse;
 import com.res.hms.pharmacy.application.dto.PharmacyStockDTO;
 import com.res.hms.pharmacy.application.dto.StockImportResponse;
 import com.res.hms.pharmacy.application.dto.StockRequest;
+import com.res.hms.pharmacy.application.service.MedicineService;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import java.util.List;
@@ -108,7 +108,8 @@ public class MedicineController {
       @RequestParam(required = false) String search,
       @RequestParam(defaultValue = "false") boolean lowStock,
       @RequestParam(required = false) UUID medicineId) {
-    return ApiResponse.success(medicineService.listStock(page, Math.min(size, 100), search, lowStock, medicineId));
+    return ApiResponse.success(
+        medicineService.listStock(page, Math.min(size, 100), search, lowStock, medicineId));
   }
 
   @PostMapping("/sales")

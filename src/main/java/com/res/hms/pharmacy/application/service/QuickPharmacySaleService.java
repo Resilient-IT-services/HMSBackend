@@ -1,5 +1,7 @@
 package com.res.hms.pharmacy.application.service;
 
+import com.res.hms.clinical.application.prescription.repository.PrescriptionRepository;
+import com.res.hms.clinical.infrastructure.repository.AppointmentRepository;
 import com.res.hms.core.exception.ApiException;
 import com.res.hms.core.tenant.HospitalContext;
 import com.res.hms.finance.application.dto.RecordPaymentRequest;
@@ -8,11 +10,8 @@ import com.res.hms.finance.application.service.PaymentService;
 import com.res.hms.finance.domain.FinanceSourceType;
 import com.res.hms.finance.domain.Invoice;
 import com.res.hms.finance.domain.InvoiceItemCategory;
-import com.res.hms.clinical.application.prescription.repository.PrescriptionRepository;
-import com.res.hms.clinical.infrastructure.repository.AppointmentRepository;
 import com.res.hms.pharmacy.application.dto.QuickPharmacySaleRequest;
 import com.res.hms.pharmacy.application.dto.QuickPharmacySaleResponse;
-import com.res.hms.pharmacy.domain.PharmacySale;
 import com.res.hms.pharmacy.domain.PharmacySale;
 import com.res.hms.pharmacy.domain.PharmacySaleItem;
 import com.res.hms.pharmacy.domain.PharmacySaleStatus;
@@ -49,7 +48,8 @@ public class QuickPharmacySaleService {
     UUID userId = hospitalContext.currentUserIdOrNull();
 
     if (userId == null) {
-        throw new ApiException("AUTH_ERROR", "User must be logged in to record sales", HttpStatus.UNAUTHORIZED);
+      throw new ApiException(
+          "AUTH_ERROR", "User must be logged in to record sales", HttpStatus.UNAUTHORIZED);
     }
 
     // 1. Create Pharmacy Sale
@@ -60,25 +60,35 @@ public class QuickPharmacySaleService {
 
     // Check if already dispensed
     if (request.getPrescriptionId() != null) {
-        var existingRx = prescriptionRepository.findByIdAndHospitalId(request.getPrescriptionId(), hospitalId)
-            .orElseThrow(() -> new ApiException("NOT_FOUND", "Prescription not found", HttpStatus.NOT_FOUND));
+      var existingRx =
+          prescriptionRepository
+              .findByIdAndHospitalId(request.getPrescriptionId(), hospitalId)
+              .orElseThrow(
+                  () ->
+                      new ApiException(
+                          "NOT_FOUND", "Prescription not found", HttpStatus.NOT_FOUND));
 
-        if ("DISPENSED".equals(existingRx.getStatus())) {
-            throw new ApiException("ALREADY_DISPENSED", "This prescription has already been dispensed.", HttpStatus.CONFLICT);
-        }
+      if ("DISPENSED".equals(existingRx.getStatus())) {
+        throw new ApiException(
+            "ALREADY_DISPENSED",
+            "This prescription has already been dispensed.",
+            HttpStatus.CONFLICT);
+      }
     }
 
     // Resolve visitId from prescription/appointment
     UUID resolvedVisitId = request.getVisitId();
     if (request.getPrescriptionId() != null) {
-        appointmentRepository.findById(request.getPrescriptionId())
-            .ifPresent(app -> {
+      appointmentRepository
+          .findById(request.getPrescriptionId())
+          .ifPresent(
+              app -> {
                 if (app.getVisitId() != null) {
-                    sale.setVisitId(app.getVisitId());
+                  sale.setVisitId(app.getVisitId());
                 }
-            });
+              });
     } else {
-        sale.setVisitId(resolvedVisitId);
+      sale.setVisitId(resolvedVisitId);
     }
 
     sale.setPrescriptionId(request.getPrescriptionId());
@@ -94,11 +104,18 @@ public class QuickPharmacySaleService {
 
     // 2. Process Items and Validate Stock
     for (QuickPharmacySaleRequest.Item itemDto : request.getItems()) {
-      PharmacyStock stock = pharmacyStockRepository.findByIdAndHospitalId(itemDto.getMedicineBatchId(), hospitalId)
-          .orElseThrow(() -> new ApiException("NOT_FOUND", "Stock batch not found", HttpStatus.NOT_FOUND));
+      PharmacyStock stock =
+          pharmacyStockRepository
+              .findByIdAndHospitalId(itemDto.getMedicineBatchId(), hospitalId)
+              .orElseThrow(
+                  () ->
+                      new ApiException("NOT_FOUND", "Stock batch not found", HttpStatus.NOT_FOUND));
 
       if (stock.getQuantity() < itemDto.getQuantity()) {
-        throw new ApiException("INSUFFICIENT_STOCK", "Insufficient stock for " + stock.getMedicine().getName(), HttpStatus.CONFLICT);
+        throw new ApiException(
+            "INSUFFICIENT_STOCK",
+            "Insufficient stock for " + stock.getMedicine().getName(),
+            HttpStatus.CONFLICT);
       }
 
       // Update stock
@@ -112,13 +129,17 @@ public class QuickPharmacySaleService {
       saleItem.setStock(stock);
       saleItem.setQuantity(itemDto.getQuantity());
       saleItem.setUnitPrice(itemDto.getUnitPrice());
-      saleItem.setDiscountAmount(itemDto.getDiscountAmount() != null ? itemDto.getDiscountAmount() : BigDecimal.ZERO);
-      saleItem.setTaxAmount(itemDto.getTaxAmount() != null ? itemDto.getTaxAmount() : BigDecimal.ZERO);
+      saleItem.setDiscountAmount(
+          itemDto.getDiscountAmount() != null ? itemDto.getDiscountAmount() : BigDecimal.ZERO);
+      saleItem.setTaxAmount(
+          itemDto.getTaxAmount() != null ? itemDto.getTaxAmount() : BigDecimal.ZERO);
 
-      BigDecimal itemSubtotal = itemDto.getUnitPrice().multiply(BigDecimal.valueOf(itemDto.getQuantity()));
+      BigDecimal itemSubtotal =
+          itemDto.getUnitPrice().multiply(BigDecimal.valueOf(itemDto.getQuantity()));
       saleItem.setSubtotal(itemSubtotal);
 
-      BigDecimal itemNet = itemSubtotal.add(saleItem.getTaxAmount()).subtract(saleItem.getDiscountAmount());
+      BigDecimal itemNet =
+          itemSubtotal.add(saleItem.getTaxAmount()).subtract(saleItem.getDiscountAmount());
       saleItem.setNetAmount(itemNet);
 
       sale.getItems().add(saleItem);
@@ -129,48 +150,51 @@ public class QuickPharmacySaleService {
     PharmacySale savedSale = pharmacySaleRepository.save(sale);
 
     // 3. Create or Get Invoice
-    Invoice invoice = invoiceService.getOrCreateInvoice(hospitalId, request.getPatientId(), sale.getVisitId());
+    Invoice invoice =
+        invoiceService.getOrCreateInvoice(hospitalId, request.getPatientId(), sale.getVisitId());
     savedSale.setInvoiceId(invoice.getId());
     savedSale.setSaleNumber(invoice.getInvoiceNumber());
 
     // 4. Create Invoice Items
     for (PharmacySaleItem saleItem : savedSale.getItems()) {
-        invoiceService.addItem(
-            invoice.getId(),
-            saleItem.getMedicine().getName() + " (" + saleItem.getStock().getBatchNumber() + ")",
-            InvoiceItemCategory.PHARMACY,
-            BigDecimal.valueOf(saleItem.getQuantity()),
-            saleItem.getUnitPrice(),
-            FinanceSourceType.PHARMACY_SALE_ITEM,
-            saleItem.getId(),
-            savedSale.getDoctorId(),
-            savedSale.getExternalDoctorName()
-            );
-            }
+      invoiceService.addItem(
+          invoice.getId(),
+          saleItem.getMedicine().getName() + " (" + saleItem.getStock().getBatchNumber() + ")",
+          InvoiceItemCategory.PHARMACY,
+          BigDecimal.valueOf(saleItem.getQuantity()),
+          saleItem.getUnitPrice(),
+          FinanceSourceType.PHARMACY_SALE_ITEM,
+          saleItem.getId(),
+          savedSale.getDoctorId(),
+          savedSale.getExternalDoctorName());
+    }
 
-            // 5. Update Prescription Status if applicable
-            if (request.getPrescriptionId() != null) {
-            prescriptionRepository.findByIdAndHospitalId(request.getPrescriptionId(), hospitalId)
-            .ifPresent(p -> {
+    // 5. Update Prescription Status if applicable
+    if (request.getPrescriptionId() != null) {
+      prescriptionRepository
+          .findByIdAndHospitalId(request.getPrescriptionId(), hospitalId)
+          .ifPresent(
+              p -> {
                 p.setStatus(com.res.hms.clinical.domain.PrescriptionStatus.DISPENSED);
                 prescriptionRepository.save(p);
-            });
-            }
+              });
+    }
     // 6. Record Payment
     String receiptNumber = null;
     UUID paymentId = null;
-    if (request.getPayment() != null && request.getPayment().getAmount().compareTo(BigDecimal.ZERO) > 0) {
-        RecordPaymentRequest paymentReq = new RecordPaymentRequest();
-        paymentReq.setInvoiceId(invoice.getId());
-        paymentReq.setPatientId(request.getPatientId());
-        paymentReq.setVisitId(request.getVisitId());
-        paymentReq.setAmount(request.getPayment().getAmount());
-        paymentReq.setPaymentMode(request.getPayment().getMode());
-        paymentReq.setReferenceNumber(request.getPayment().getReferenceNumber());
+    if (request.getPayment() != null
+        && request.getPayment().getAmount().compareTo(BigDecimal.ZERO) > 0) {
+      RecordPaymentRequest paymentReq = new RecordPaymentRequest();
+      paymentReq.setInvoiceId(invoice.getId());
+      paymentReq.setPatientId(request.getPatientId());
+      paymentReq.setVisitId(request.getVisitId());
+      paymentReq.setAmount(request.getPayment().getAmount());
+      paymentReq.setPaymentMode(request.getPayment().getMode());
+      paymentReq.setReferenceNumber(request.getPayment().getReferenceNumber());
 
-        var paymentDto = paymentService.recordPayment(hospitalId, paymentReq, userId);
-        receiptNumber = paymentDto.getReceiptNumber();
-        paymentId = paymentDto.getId();
+      var paymentDto = paymentService.recordPayment(hospitalId, paymentReq, userId);
+      receiptNumber = paymentDto.getReceiptNumber();
+      paymentId = paymentDto.getId();
     }
 
     var response = toQuickSaleResponse(savedSale);
@@ -183,8 +207,11 @@ public class QuickPharmacySaleService {
   @Transactional(readOnly = true)
   public QuickPharmacySaleResponse getSale(UUID id) {
     UUID hospitalId = hospitalContext.requireHospitalId();
-    PharmacySale sale = pharmacySaleRepository.findByIdAndHospitalId(id, hospitalId)
-        .orElseThrow(() -> new ApiException("NOT_FOUND", "Sale not found", HttpStatus.NOT_FOUND));
+    PharmacySale sale =
+        pharmacySaleRepository
+            .findByIdAndHospitalId(id, hospitalId)
+            .orElseThrow(
+                () -> new ApiException("NOT_FOUND", "Sale not found", HttpStatus.NOT_FOUND));
 
     return toQuickSaleResponse(sale);
   }
@@ -192,25 +219,35 @@ public class QuickPharmacySaleService {
   @Transactional(readOnly = true)
   public QuickPharmacySaleResponse getSaleByPrescription(UUID prescriptionId) {
     UUID hospitalId = hospitalContext.requireHospitalId();
-    PharmacySale sale = pharmacySaleRepository.findByPrescriptionIdAndHospitalId(prescriptionId, hospitalId)
-        .orElseThrow(() -> new ApiException("NOT_FOUND", "No dispensing record found for this prescription", HttpStatus.NOT_FOUND));
+    PharmacySale sale =
+        pharmacySaleRepository
+            .findByPrescriptionIdAndHospitalId(prescriptionId, hospitalId)
+            .orElseThrow(
+                () ->
+                    new ApiException(
+                        "NOT_FOUND",
+                        "No dispensing record found for this prescription",
+                        HttpStatus.NOT_FOUND));
 
     return toQuickSaleResponse(sale);
   }
 
   private QuickPharmacySaleResponse toQuickSaleResponse(PharmacySale sale) {
-    List<QuickPharmacySaleResponse.Item> items = sale.getItems().stream()
-        .map(item -> QuickPharmacySaleResponse.Item.builder()
-            .id(item.getId())
-            .medicineName(item.getMedicine().getName())
-            .batchNumber(item.getStock().getBatchNumber())
-            .quantity(item.getQuantity())
-            .unitPrice(item.getUnitPrice())
-            .subtotal(item.getSubtotal())
-            .discountAmount(item.getDiscountAmount())
-            .netAmount(item.getNetAmount())
-            .build())
-        .toList();
+    List<QuickPharmacySaleResponse.Item> items =
+        sale.getItems().stream()
+            .map(
+                item ->
+                    QuickPharmacySaleResponse.Item.builder()
+                        .id(item.getId())
+                        .medicineName(item.getMedicine().getName())
+                        .batchNumber(item.getStock().getBatchNumber())
+                        .quantity(item.getQuantity())
+                        .unitPrice(item.getUnitPrice())
+                        .subtotal(item.getSubtotal())
+                        .discountAmount(item.getDiscountAmount())
+                        .netAmount(item.getNetAmount())
+                        .build())
+            .toList();
 
     return QuickPharmacySaleResponse.builder()
         .saleId(sale.getId())

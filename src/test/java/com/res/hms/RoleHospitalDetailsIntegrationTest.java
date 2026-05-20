@@ -33,8 +33,11 @@ class RoleHospitalDetailsIntegrationTest {
   @Autowired private TestDataHelper testDataHelper;
   @MockBean private HospitalContext hospitalContext;
 
-  @Autowired private com.res.hms.hospital.infrastructure.repository.HospitalRepository hospitalRepository;
-  @Autowired private com.res.hms.hospital.infrastructure.repository.DepartmentRepository departmentRepository;
+  @Autowired
+  private com.res.hms.hospital.infrastructure.repository.HospitalRepository hospitalRepository;
+
+  @Autowired
+  private com.res.hms.hospital.infrastructure.repository.DepartmentRepository departmentRepository;
 
   private UUID hospitalId;
 

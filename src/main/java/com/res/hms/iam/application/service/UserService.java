@@ -79,16 +79,24 @@ public class UserService {
 
     // Orchestrate cross-domain data population (restore schedules visibility)
     if (dto.getMemberships() != null) {
-      dto.getMemberships().forEach(membership -> {
-        if (membership.getRoleAssignments() != null) {
-          membership.getRoleAssignments().forEach(ra -> {
-            if ("DOCTOR".equals(ra.getRoleCode())) {
-              ra.setSchedules(doctorProfileService.getScheduleDTOs(ra.getAssignmentId()));
-              ra.setAvailabilityExceptions(doctorProfileService.getExceptionDTOs(user.getId(), membership.getHospitalId()));
-            }
-          });
-        }
-      });
+      dto.getMemberships()
+          .forEach(
+              membership -> {
+                if (membership.getRoleAssignments() != null) {
+                  membership
+                      .getRoleAssignments()
+                      .forEach(
+                          ra -> {
+                            if ("DOCTOR".equals(ra.getRoleCode())) {
+                              ra.setSchedules(
+                                  doctorProfileService.getScheduleDTOs(ra.getAssignmentId()));
+                              ra.setAvailabilityExceptions(
+                                  doctorProfileService.getExceptionDTOs(
+                                      user.getId(), membership.getHospitalId()));
+                            }
+                          });
+                }
+              });
     }
     return dto;
   }

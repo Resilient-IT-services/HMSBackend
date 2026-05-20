@@ -58,10 +58,14 @@ public abstract class UserMapper {
     }
 
     return user.getContracts().stream()
-        .filter(a -> a.isActive() && 
-                    (a.getHospital() == null || 
-                     a.getHospital().getStatus() == com.res.hms.hospital.domain.HospitalStatus.ACTIVE ||
-                     a.getHospital().getStatus() == com.res.hms.hospital.domain.HospitalStatus.ONBOARDING))
+        .filter(
+            a ->
+                a.isActive()
+                    && (a.getHospital() == null
+                        || a.getHospital().getStatus()
+                            == com.res.hms.hospital.domain.HospitalStatus.ACTIVE
+                        || a.getHospital().getStatus()
+                            == com.res.hms.hospital.domain.HospitalStatus.ONBOARDING))
         .collect(Collectors.groupingBy(UserContract::getHospitalId))
         .entrySet()
         .stream()
@@ -82,8 +86,9 @@ public abstract class UserMapper {
                           .map(com.res.hms.iam.domain.Specialization::getName)
                           .collect(Collectors.toList())
                       : Collections.emptyList();
-              
-              List<String> departments = entry.getValue().stream()
+
+              List<String> departments =
+                  entry.getValue().stream()
                       .flatMap(a -> a.getDepartments().stream())
                       .map(com.res.hms.hospital.domain.Department::getName)
                       .distinct()
@@ -101,13 +106,18 @@ public abstract class UserMapper {
   }
 
   protected List<String> mapDepartments(Set<com.res.hms.hospital.domain.Department> departments) {
-      if (departments == null) return java.util.Collections.emptyList();
-      return departments.stream().map(com.res.hms.hospital.domain.Department::getName).collect(Collectors.toList());
+    if (departments == null) return java.util.Collections.emptyList();
+    return departments.stream()
+        .map(com.res.hms.hospital.domain.Department::getName)
+        .collect(Collectors.toList());
   }
 
-  protected List<String> mapSpecializations(Set<com.res.hms.iam.domain.Specialization> specializations) {
-      if (specializations == null) return java.util.Collections.emptyList();
-      return specializations.stream().map(com.res.hms.iam.domain.Specialization::getName).collect(Collectors.toList());
+  protected List<String> mapSpecializations(
+      Set<com.res.hms.iam.domain.Specialization> specializations) {
+    if (specializations == null) return java.util.Collections.emptyList();
+    return specializations.stream()
+        .map(com.res.hms.iam.domain.Specialization::getName)
+        .collect(Collectors.toList());
   }
 
   @Mapping(target = "assignmentId", source = "id")
@@ -117,8 +127,7 @@ public abstract class UserMapper {
   @Mapping(target = "adminDetails", source = "adminDetails")
   @Mapping(target = "pharmacistDetails", source = "pharmacistDetails")
   @Mapping(target = "receptionistDetails", source = "receptionistDetails")
-  public abstract UserDetailsDTO.RoleAssignmentDTO toRoleAssignmentDTO(
-      UserContract assignment);
+  public abstract UserDetailsDTO.RoleAssignmentDTO toRoleAssignmentDTO(UserContract assignment);
 
   @Mapping(target = "id", source = "id")
   public abstract UserDetailsDTO.DoctorInfo toDoctorInfo(DoctorProfile profile);
@@ -158,10 +167,14 @@ public abstract class UserMapper {
     }
 
     return user.getContracts().stream()
-        .filter(a -> a.isActive() && 
-                    (a.getHospital() == null || 
-                     a.getHospital().getStatus() == com.res.hms.hospital.domain.HospitalStatus.ACTIVE ||
-                     a.getHospital().getStatus() == com.res.hms.hospital.domain.HospitalStatus.ONBOARDING))
+        .filter(
+            a ->
+                a.isActive()
+                    && (a.getHospital() == null
+                        || a.getHospital().getStatus()
+                            == com.res.hms.hospital.domain.HospitalStatus.ACTIVE
+                        || a.getHospital().getStatus()
+                            == com.res.hms.hospital.domain.HospitalStatus.ONBOARDING))
         .collect(Collectors.groupingBy(UserContract::getHospitalId))
         .entrySet()
         .stream()
@@ -184,12 +197,11 @@ public abstract class UserMapper {
               String hospitalName = "Global Access";
               if (hospitalId != null) {
                 hospitalName =
-                    first.getHospital() != null
-                        ? first.getHospital().getName()
-                        : "Global Access";
+                    first.getHospital() != null ? first.getHospital().getName() : "Global Access";
               }
 
-              List<String> departments = hospitalAssignments.stream()
+              List<String> departments =
+                  hospitalAssignments.stream()
                       .flatMap(a -> a.getDepartments().stream())
                       .map(com.res.hms.hospital.domain.Department::getName)
                       .distinct()
@@ -207,10 +219,14 @@ public abstract class UserMapper {
     }
 
     return user.getContracts().stream()
-        .filter(a -> a.isActive() && 
-                    (a.getHospital() == null || 
-                     a.getHospital().getStatus() == com.res.hms.hospital.domain.HospitalStatus.ACTIVE ||
-                     a.getHospital().getStatus() == com.res.hms.hospital.domain.HospitalStatus.ONBOARDING))
+        .filter(
+            a ->
+                a.isActive()
+                    && (a.getHospital() == null
+                        || a.getHospital().getStatus()
+                            == com.res.hms.hospital.domain.HospitalStatus.ACTIVE
+                        || a.getHospital().getStatus()
+                            == com.res.hms.hospital.domain.HospitalStatus.ONBOARDING))
         .collect(Collectors.groupingBy(UserContract::getHospitalId))
         .entrySet()
         .stream()

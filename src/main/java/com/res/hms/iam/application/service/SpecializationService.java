@@ -33,15 +33,21 @@ public class SpecializationService {
   @Transactional
   public Specialization create(Specialization specialization) {
     if (specializationRepository.findByName(specialization.getName()).isPresent()) {
-      throw new ApiException("ALREADY_EXISTS", "Specialization already exists", HttpStatus.CONFLICT);
+      throw new ApiException(
+          "ALREADY_EXISTS", "Specialization already exists", HttpStatus.CONFLICT);
     }
     return specializationRepository.save(specialization);
   }
 
   @Transactional
   public Specialization update(UUID id, Specialization specialization) {
-    Specialization existing = specializationRepository.findById(id)
-        .orElseThrow(() -> new ApiException("NOT_FOUND", "Specialization not found", HttpStatus.NOT_FOUND));
+    Specialization existing =
+        specializationRepository
+            .findById(id)
+            .orElseThrow(
+                () ->
+                    new ApiException(
+                        "NOT_FOUND", "Specialization not found", HttpStatus.NOT_FOUND));
     existing.setName(specialization.getName());
     existing.setDescription(specialization.getDescription());
     existing.setActive(specialization.isActive());

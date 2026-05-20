@@ -45,8 +45,12 @@ class StaffControllerIntegrationTest {
   @Autowired private NurseHospitalDetailsRepository nurseHospitalDetailsRepository;
   @Autowired private PasswordEncoder passwordEncoder;
   @Autowired private TestDataHelper testDataHelper;
-  @Autowired private com.res.hms.hospital.infrastructure.repository.HospitalRepository hospitalRepository;
-  @Autowired private com.res.hms.hospital.infrastructure.repository.DepartmentRepository departmentRepository;
+
+  @Autowired
+  private com.res.hms.hospital.infrastructure.repository.HospitalRepository hospitalRepository;
+
+  @Autowired
+  private com.res.hms.hospital.infrastructure.repository.DepartmentRepository departmentRepository;
 
   private UUID testHospitalId;
   private MockHttpSession session;
@@ -189,9 +193,11 @@ class StaffControllerIntegrationTest {
 
     dualUser = userAccountRepository.save(dualUser);
 
-    UserContract savedDrContractDual = dualUser.getContracts().stream()
-        .filter(c -> c.getRole().getCode() == RoleCode.DOCTOR)
-        .findFirst().orElseThrow();
+    UserContract savedDrContractDual =
+        dualUser.getContracts().stream()
+            .filter(c -> c.getRole().getCode() == RoleCode.DOCTOR)
+            .findFirst()
+            .orElseThrow();
 
     DoctorHospitalDetails drDetailsDual = new DoctorHospitalDetails();
     drDetailsDual.setAssignment(savedDrContractDual);

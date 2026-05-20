@@ -1,6 +1,7 @@
 package com.res.hms.clinical.api;
 
 import com.res.hms.clinical.application.patient.dto.PatientDTO;
+import com.res.hms.clinical.application.patient.dto.PatientDashboardStatsDTO;
 import com.res.hms.clinical.application.patient.dto.PatientSummaryDTO;
 import com.res.hms.clinical.application.patient.service.PatientAggregateService;
 import com.res.hms.clinical.application.patient.service.PatientService;
@@ -19,7 +20,6 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
-import com.res.hms.clinical.application.patient.dto.PatientDashboardStatsDTO;
 
 @Tag(name = "Patients")
 @RestController
@@ -99,12 +99,11 @@ public class PatientController {
     request.setId(patientId);
     return ApiResponse.success(patientAggregateService.savePatientAggregate(request));
   }
-    @GetMapping("/dashboard-stats")
-    @PreAuthorize("hasAnyRole('ADMIN','RECEPTIONIST','DOCTOR','NURSE','SUPER_ADMIN')")
-    public ApiResponse<PatientDashboardStatsDTO> getDashboardStats() {
 
-        return ApiResponse.success(
-            patientService.getDashboardStats()
-        );
-    }
+  @GetMapping("/dashboard-stats")
+  @PreAuthorize("hasAnyRole('ADMIN','RECEPTIONIST','DOCTOR','NURSE','SUPER_ADMIN')")
+  public ApiResponse<PatientDashboardStatsDTO> getDashboardStats() {
+
+    return ApiResponse.success(patientService.getDashboardStats());
+  }
 }

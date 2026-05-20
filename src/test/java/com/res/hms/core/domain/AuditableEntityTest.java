@@ -17,25 +17,25 @@ import org.springframework.transaction.annotation.Transactional;
 @Transactional
 class AuditableEntityTest {
 
-    @Autowired private PatientRepository patientRepository;
-    @Autowired private TestDataHelper testDataHelper;
+  @Autowired private PatientRepository patientRepository;
+  @Autowired private TestDataHelper testDataHelper;
 
-    @Test
-    void testAuditFields() {
-        UUID hospitalId = testDataHelper.createHospitalIfMissing("AUDIT_TEST", "Audit Hospital");
-        Patient p = new Patient();
-        p.setHospitalId(hospitalId);
-        p.setFullName("Audit Patient");
-        p.setPatientCode("AUD-1");
-        
-        p = patientRepository.saveAndFlush(p);
-        
-        assertThat(p.getCreatedAt()).isNotNull();
-        assertThat(p.getUpdatedAt()).isNotNull();
-        
-        p.setFullName("Updated Name");
-        p = patientRepository.saveAndFlush(p);
-        
-        assertThat(p.getUpdatedAt()).isAfterOrEqualTo(p.getCreatedAt());
-    }
+  @Test
+  void testAuditFields() {
+    UUID hospitalId = testDataHelper.createHospitalIfMissing("AUDIT_TEST", "Audit Hospital");
+    Patient p = new Patient();
+    p.setHospitalId(hospitalId);
+    p.setFullName("Audit Patient");
+    p.setPatientCode("AUD-1");
+
+    p = patientRepository.saveAndFlush(p);
+
+    assertThat(p.getCreatedAt()).isNotNull();
+    assertThat(p.getUpdatedAt()).isNotNull();
+
+    p.setFullName("Updated Name");
+    p = patientRepository.saveAndFlush(p);
+
+    assertThat(p.getUpdatedAt()).isAfterOrEqualTo(p.getCreatedAt());
+  }
 }

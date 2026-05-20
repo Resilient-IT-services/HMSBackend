@@ -16,17 +16,21 @@ import org.springframework.transaction.annotation.Transactional;
 @Transactional
 class ClinicalRepositoryTest {
 
-    @Autowired private PatientVisitRepository patientVisitRepository;
-    @Autowired private TestDataHelper testDataHelper;
+  @Autowired private PatientVisitRepository patientVisitRepository;
+  @Autowired private TestDataHelper testDataHelper;
 
-    @Test
-    void testPatientVisitRepositoryMethods() {
-        UUID hospitalId = testDataHelper.createHospitalIfMissing("VISIT_REPO_TEST", "Visit Repo Hospital");
-        UUID patientId = testDataHelper.createTestPatient(hospitalId).getId();
+  @Test
+  void testPatientVisitRepositoryMethods() {
+    UUID hospitalId =
+        testDataHelper.createHospitalIfMissing("VISIT_REPO_TEST", "Visit Repo Hospital");
+    UUID patientId = testDataHelper.createTestPatient(hospitalId).getId();
 
-        PatientVisit visit = testDataHelper.createTestVisit(hospitalId, patientId);
-        
-        assertThat(patientVisitRepository.findByHospitalIdAndVisitNumber(hospitalId, visit.getVisitNumber())).isPresent();
-        assertThat(patientVisitRepository.findAllByHospitalId(hospitalId)).isNotEmpty();
-    }
+    PatientVisit visit = testDataHelper.createTestVisit(hospitalId, patientId);
+
+    assertThat(
+            patientVisitRepository.findByHospitalIdAndVisitNumber(
+                hospitalId, visit.getVisitNumber()))
+        .isPresent();
+    assertThat(patientVisitRepository.findAllByHospitalId(hospitalId)).isNotEmpty();
+  }
 }

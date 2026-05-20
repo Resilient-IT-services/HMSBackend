@@ -33,19 +33,14 @@ public class HospitalService {
   @Transactional(readOnly = true)
   public PageResponse<HospitalDTO> list(int page, int size, String name, String status) {
     Specification<Hospital> spec = Specification.where(null);
-      if (name != null && !name.isBlank()) {
-          spec =
-              spec.and(
-                  (root, query, cb) ->
-                      cb.or(
-                          cb.like(
-                              cb.lower(root.get("name")),
-                              "%" + name.toLowerCase() + "%"),
-                          cb.like(
-                              cb.lower(root.get("code")),
-                              "%" + name.toLowerCase() + "%")
-                      ));
-      }
+    if (name != null && !name.isBlank()) {
+      spec =
+          spec.and(
+              (root, query, cb) ->
+                  cb.or(
+                      cb.like(cb.lower(root.get("name")), "%" + name.toLowerCase() + "%"),
+                      cb.like(cb.lower(root.get("code")), "%" + name.toLowerCase() + "%")));
+    }
     if (status != null && !status.isBlank()) {
       try {
         HospitalStatus hospitalStatus = HospitalStatus.valueOf(status.toUpperCase());
@@ -61,13 +56,16 @@ public class HospitalService {
   }
 
   @Transactional(readOnly = true)
-  public java.util.List<com.res.hms.hospital.application.dto.HospitalSelectionDTO> getHospitalSelection() {
+  public java.util.List<com.res.hms.hospital.application.dto.HospitalSelectionDTO>
+      getHospitalSelection() {
     return hospitalRepository.findAll().stream()
         .filter(h -> !h.isDeleted())
-        .map(h -> com.res.hms.hospital.application.dto.HospitalSelectionDTO.builder()
-            .id(h.getId())
-            .name(h.getName())
-            .build())
+        .map(
+            h ->
+                com.res.hms.hospital.application.dto.HospitalSelectionDTO.builder()
+                    .id(h.getId())
+                    .name(h.getName())
+                    .build())
         .collect(Collectors.toList());
   }
 
@@ -85,9 +83,10 @@ public class HospitalService {
         .registrationNo(hospital.getRegistrationNo())
         .timezone(hospital.getTimezone())
         .settings(hospital.getSettings())
-        .departments(hospital.getDepartments().stream()
-            .map(com.res.hms.hospital.domain.Department::getName)
-            .collect(Collectors.toList()))
+        .departments(
+            hospital.getDepartments().stream()
+                .map(com.res.hms.hospital.domain.Department::getName)
+                .collect(Collectors.toList()))
         .build();
   }
 }

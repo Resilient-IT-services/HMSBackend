@@ -9,8 +9,8 @@ import com.res.hms.core.tenant.HospitalContext;
 import com.res.hms.iam.application.dto.ScheduleDTO;
 import com.res.hms.iam.application.dto.UserDetailsDTO;
 import com.res.hms.iam.application.service.UserAggregateService;
-import java.time.LocalDate;
 import java.time.DayOfWeek;
+import java.time.LocalDate;
 import java.time.LocalTime;
 import java.util.List;
 import java.util.UUID;
@@ -49,7 +49,10 @@ class DoctorOverlapIntegrationTest {
             .fullName("Overlap Dr")
             .gender(Gender.MALE)
             .dob(LocalDate.of(1980, 1, 1))
-            .doctorInfo(UserDetailsDTO.DoctorInfo.builder().specializations(java.util.List.of("General")).build())
+            .doctorInfo(
+                UserDetailsDTO.DoctorInfo.builder()
+                    .specializations(java.util.List.of("General"))
+                    .build())
             .memberships(
                 List.of(
                     UserDetailsDTO.HospitalMembershipDTO.builder()

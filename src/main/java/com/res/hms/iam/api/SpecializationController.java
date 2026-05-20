@@ -36,7 +36,8 @@ public class SpecializationController {
 
   @PutMapping("/{id}")
   @PreAuthorize("hasRole('SUPER_ADMIN')")
-  public ApiResponse<Specialization> update(@PathVariable UUID id, @RequestBody Specialization specialization) {
+  public ApiResponse<Specialization> update(
+      @PathVariable UUID id, @RequestBody Specialization specialization) {
     return ApiResponse.success(specializationService.update(id, specialization));
   }
 

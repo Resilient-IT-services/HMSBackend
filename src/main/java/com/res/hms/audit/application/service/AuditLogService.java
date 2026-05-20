@@ -2,9 +2,9 @@ package com.res.hms.audit.application.service;
 
 import com.res.hms.audit.application.dto.AuditDetail;
 import com.res.hms.audit.application.dto.AuditLogResponse;
-import com.res.hms.audit.domain.DomainEntity;
 import com.res.hms.audit.domain.AuditAction;
 import com.res.hms.audit.domain.AuditLog;
+import com.res.hms.audit.domain.DomainEntity;
 import com.res.hms.audit.infrastructure.repository.AuditLogRepository;
 import com.res.hms.core.api.PageResponse;
 import com.res.hms.core.exception.ApiException;
@@ -24,7 +24,11 @@ public class AuditLogService {
   private final HospitalContext hospitalContext;
 
   public void record(
-      UUID hospitalId, DomainEntity entityName, UUID entityId, AuditAction action, AuditDetail details) {
+      UUID hospitalId,
+      DomainEntity entityName,
+      UUID entityId,
+      AuditAction action,
+      AuditDetail details) {
     AuditLog auditLog = new AuditLog();
     auditLog.setHospitalId(hospitalId);
     auditLog.setEntityName(entityName);

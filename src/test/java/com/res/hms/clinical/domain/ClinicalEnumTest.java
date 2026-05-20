@@ -6,15 +6,15 @@ import org.junit.jupiter.api.Test;
 
 class ClinicalEnumTest {
 
-    @Test
-    void testVisitTypeEnum() {
-        assertThat(VisitType.valueOf("OPD")).isEqualTo(VisitType.OPD);
-        assertThat(VisitType.values()).hasSize(4);
-    }
+  @Test
+  void testVisitTypeEnum() {
+    assertThat(VisitType.valueOf("OPD")).isEqualTo(VisitType.OPD);
+    assertThat(VisitType.values()).hasSize(4);
+  }
 
-    @Test
-    void testVisitStatusEnum() {
-        assertThat(VisitStatus.valueOf("ACTIVE")).isEqualTo(VisitStatus.ACTIVE);
-        assertThat(VisitStatus.values()).hasSize(3);
-    }
+  @Test
+  void testVisitStatusEnum() {
+    assertThat(VisitStatus.valueOf("ACTIVE")).isEqualTo(VisitStatus.ACTIVE);
+    assertThat(VisitStatus.values()).hasSize(3);
+  }
 }

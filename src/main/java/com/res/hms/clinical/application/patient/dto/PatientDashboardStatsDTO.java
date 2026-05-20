@@ -7,9 +7,9 @@ import lombok.Data;
 @AllArgsConstructor
 public class PatientDashboardStatsDTO {
 
-    private long totalRecords;
+  private long totalRecords;
 
-    private long newToday;
+  private long newToday;
 
-    private long inPatient;
+  private long inPatient;
 }

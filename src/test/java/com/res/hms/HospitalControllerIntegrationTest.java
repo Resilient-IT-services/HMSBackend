@@ -101,7 +101,8 @@ class HospitalControllerIntegrationTest {
         .andExpect(status().isBadRequest());
 
     // 2. Complete data should succeed
-    hospitalJson = "{\"name\": \"Validation Hospital\", \"code\": \"VAL-HOSP\", \"timezone\": \"Asia/Kolkata\"}";
+    hospitalJson =
+        "{\"name\": \"Validation Hospital\", \"code\": \"VAL-HOSP\", \"timezone\": \"Asia/Kolkata\"}";
     mockMvc
         .perform(
             post("/api/v1/hospitals")

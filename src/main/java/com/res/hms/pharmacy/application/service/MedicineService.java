@@ -76,10 +76,7 @@ public class MedicineService {
   @Transactional
   public MedicineDTO create(MedicineDTO request) {
     if (medicineRepository.existsDuplicate(
-        request.getName(),
-        request.getGenericName(),
-        request.getStrength(),
-        request.getForm())) {
+        request.getName(), request.getGenericName(), request.getStrength(), request.getForm())) {
       throw new ApiException("DUPLICATE_MEDICINE", "Medicine already exists", HttpStatus.CONFLICT);
     }
 
@@ -229,7 +226,9 @@ public class MedicineService {
               .map(this::toStockDtoSimple));
     }
     return PageResponse.from(
-        pharmacyStockRepository.findDetailedStock(hospitalId, pageRequest).map(this::toStockDtoSimple));
+        pharmacyStockRepository
+            .findDetailedStock(hospitalId, pageRequest)
+            .map(this::toStockDtoSimple));
   }
 
   private PharmacyStockDTO toStockDtoSimple(PharmacyStock stock) {
@@ -248,21 +247,26 @@ public class MedicineService {
         .build();
   }
 
-  private final com.res.hms.clinical.application.prescription.repository.PrescriptionRepository prescriptionRepository;
-  private final com.res.hms.clinical.infrastructure.repository.AppointmentRepository appointmentRepository;
+  private final com.res.hms.clinical.application.prescription.repository.PrescriptionRepository
+      prescriptionRepository;
+  private final com.res.hms.clinical.infrastructure.repository.AppointmentRepository
+      appointmentRepository;
 
   @Transactional
   public PharmacySaleResponse createSale(PharmacySaleRequest request) {
     UUID hospitalId = hospitalContext.requireHospitalId();
-    
+
     // Idempotency check: Ensure prescription isn't already processed
     if (request.getPrescriptionId() != null) {
-      pharmacySaleRepository.findByPrescriptionIdAndHospitalId(request.getPrescriptionId(), hospitalId)
-          .ifPresent(s -> {
-              throw new ApiException("ALREADY_DISPENSED", 
-                  "Prescription already dispensed in Sale #" + s.getSaleNumber(), 
-                  HttpStatus.CONFLICT);
-          });
+      pharmacySaleRepository
+          .findByPrescriptionIdAndHospitalId(request.getPrescriptionId(), hospitalId)
+          .ifPresent(
+              s -> {
+                throw new ApiException(
+                    "ALREADY_DISPENSED",
+                    "Prescription already dispensed in Sale #" + s.getSaleNumber(),
+                    HttpStatus.CONFLICT);
+              });
     }
 
     PharmacySale sale = new PharmacySale();
@@ -271,25 +275,27 @@ public class MedicineService {
     sale.setPrescriptionId(request.getPrescriptionId());
 
     UUID resolvedVisitId = request.getVisitId();
-    
+
     // 1. Try to resolve Visit ID from Prescription
     if (resolvedVisitId == null && request.getPrescriptionId() != null) {
-      resolvedVisitId = prescriptionRepository.findById(request.getPrescriptionId())
-          .filter(p -> p.getAppointmentId() != null)
-          .flatMap(p -> appointmentRepository.findById(p.getAppointmentId()))
-          .map(com.res.hms.clinical.domain.Appointment::getVisitId)
-          .orElse(null);
+      resolvedVisitId =
+          prescriptionRepository
+              .findById(request.getPrescriptionId())
+              .filter(p -> p.getAppointmentId() != null)
+              .flatMap(p -> appointmentRepository.findById(p.getAppointmentId()))
+              .map(com.res.hms.clinical.domain.Appointment::getVisitId)
+              .orElse(null);
     }
 
     // 2. If still null (Walk-in), create a new quick encounter
     if (resolvedVisitId == null) {
-      com.res.hms.clinical.domain.PatientVisit visit = patientVisitService.createVisit(
-          hospitalId, request.getPatientId(), com.res.hms.clinical.domain.VisitType.WALKIN);
+      com.res.hms.clinical.domain.PatientVisit visit =
+          patientVisitService.createVisit(
+              hospitalId, request.getPatientId(), com.res.hms.clinical.domain.VisitType.WALKIN);
       resolvedVisitId = visit.getId();
     }
-    
-    sale.setVisitId(resolvedVisitId);
 
+    sale.setVisitId(resolvedVisitId);
 
     BigDecimal total = BigDecimal.ZERO;
     LocalDate today = LocalDate.now();

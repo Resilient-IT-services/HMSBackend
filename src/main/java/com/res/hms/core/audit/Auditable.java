@@ -1,7 +1,6 @@
 package com.res.hms.core.audit;
 
 import com.res.hms.audit.domain.DomainEntity;
-
 import java.lang.annotation.ElementType;
 import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;

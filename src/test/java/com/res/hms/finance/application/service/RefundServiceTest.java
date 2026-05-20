@@ -18,21 +18,25 @@ import org.springframework.transaction.annotation.Transactional;
 @Transactional
 class RefundServiceTest {
 
-    @Autowired private RefundService refundService;
-    @Autowired private TestDataHelper testDataHelper;
+  @Autowired private RefundService refundService;
+  @Autowired private TestDataHelper testDataHelper;
 
-    @Test
-    void testRefundLifecycle() {
-        UUID hospitalId = testDataHelper.createHospitalIfMissing("REFUND_SERVICE_TEST", "Refund Service Test Hospital");
-        
-        Refund refund = refundService.initiateRefund(hospitalId, UUID.randomUUID(), UUID.randomUUID(), new BigDecimal("100.00"), "Test");
-        assertThat(refund.getId()).isNotNull();
-        assertThat(refund.getStatus()).isEqualTo(RefundStatus.INITIATED);
+  @Test
+  void testRefundLifecycle() {
+    UUID hospitalId =
+        testDataHelper.createHospitalIfMissing(
+            "REFUND_SERVICE_TEST", "Refund Service Test Hospital");
 
-        refundService.completeRefund(refund.getId());
-        assertThat(refund.getStatus()).isEqualTo(RefundStatus.COMPLETED);
-        assertThat(refund.getProcessedAt()).isNotNull();
-        
-        refundService.completeRefund(UUID.randomUUID()); // Branch coverage
-    }
+    Refund refund =
+        refundService.initiateRefund(
+            hospitalId, UUID.randomUUID(), UUID.randomUUID(), new BigDecimal("100.00"), "Test");
+    assertThat(refund.getId()).isNotNull();
+    assertThat(refund.getStatus()).isEqualTo(RefundStatus.INITIATED);
+
+    refundService.completeRefund(refund.getId());
+    assertThat(refund.getStatus()).isEqualTo(RefundStatus.COMPLETED);
+    assertThat(refund.getProcessedAt()).isNotNull();
+
+    refundService.completeRefund(UUID.randomUUID()); // Branch coverage
+  }
 }

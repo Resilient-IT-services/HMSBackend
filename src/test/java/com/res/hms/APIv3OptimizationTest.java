@@ -24,65 +24,75 @@ import org.springframework.test.web.servlet.MockMvc;
 @ActiveProfiles("test")
 public class APIv3OptimizationTest {
 
-    @Autowired private MockMvc mockMvc;
-    @Autowired private UserAccountRepository userAccountRepository;
-    @Autowired private PasswordEncoder passwordEncoder;
-    @Autowired private TestDataHelper testDataHelper;
+  @Autowired private MockMvc mockMvc;
+  @Autowired private UserAccountRepository userAccountRepository;
+  @Autowired private PasswordEncoder passwordEncoder;
+  @Autowired private TestDataHelper testDataHelper;
 
-    private UUID testHospitalId;
-    private MockHttpSession superAdminSession;
+  private UUID testHospitalId;
+  private MockHttpSession superAdminSession;
 
-    @BeforeEach
-    void setup() throws Exception {
-        testHospitalId = testDataHelper.createHospitalIfMissing("OPT_TEST", "Optimization Hospital");
+  @BeforeEach
+  void setup() throws Exception {
+    testHospitalId = testDataHelper.createHospitalIfMissing("OPT_TEST", "Optimization Hospital");
 
-        if (!userAccountRepository.existsByUsername("super_admin_opt")) {
-            UserAccount superAdmin = new UserAccount();
-            superAdmin.setUsername("super_admin_opt");
-            superAdmin.setPasswordHash(passwordEncoder.encode("admin123"));
-            superAdmin.setSuperuser(true);
-            superAdmin.setActive(true);
-            superAdmin.setFullName("Super Admin");
-            userAccountRepository.save(superAdmin);
-        }
-
-        superAdminSession = (MockHttpSession) mockMvc.perform(post("/api/v1/auth/login")
-                .contentType(MediaType.APPLICATION_JSON)
-                .content("{\"username\": \"super_admin_opt\", \"password\": \"admin123\"}"))
-                .andExpect(status().isOk())
-                .andReturn().getRequest().getSession(false);
+    if (!userAccountRepository.existsByUsername("super_admin_opt")) {
+      UserAccount superAdmin = new UserAccount();
+      superAdmin.setUsername("super_admin_opt");
+      superAdmin.setPasswordHash(passwordEncoder.encode("admin123"));
+      superAdmin.setSuperuser(true);
+      superAdmin.setActive(true);
+      superAdmin.setFullName("Super Admin");
+      userAccountRepository.save(superAdmin);
     }
 
-    @Test
-    void testLightweightSelectionEndpoints() throws Exception {
-        mockMvc.perform(get("/api/v1/staff/doctors/selection")
+    superAdminSession =
+        (MockHttpSession)
+            mockMvc
+                .perform(
+                    post("/api/v1/auth/login")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"username\": \"super_admin_opt\", \"password\": \"admin123\"}"))
+                .andExpect(status().isOk())
+                .andReturn()
+                .getRequest()
+                .getSession(false);
+  }
+
+  @Test
+  void testLightweightSelectionEndpoints() throws Exception {
+    mockMvc
+        .perform(
+            get("/api/v1/staff/doctors/selection")
                 .session(superAdminSession)
                 .header("X-Hospital-Id", testHospitalId.toString()))
-                .andExpect(status().isOk())
-                .andExpect(jsonPath("$.data").isArray());
+        .andExpect(status().isOk())
+        .andExpect(jsonPath("$.data").isArray());
 
-        mockMvc.perform(get("/api/v1/hospitals/selection")
-                .session(superAdminSession))
-                .andExpect(status().isOk())
-                .andExpect(jsonPath("$.data").isArray());
-    }
+    mockMvc
+        .perform(get("/api/v1/hospitals/selection").session(superAdminSession))
+        .andExpect(status().isOk())
+        .andExpect(jsonPath("$.data").isArray());
+  }
 
-    @Test
-    void testAdminStatsEndpoint() throws Exception {
-        mockMvc.perform(get("/api/v1/admin/stats")
-                .session(superAdminSession))
-                .andExpect(status().isOk())
-                .andExpect(jsonPath("$.data.totalUsers").isNumber())
-                .andExpect(jsonPath("$.data.totalHospitals").isNumber());
-    }
+  @Test
+  void testAdminStatsEndpoint() throws Exception {
+    mockMvc
+        .perform(get("/api/v1/admin/stats").session(superAdminSession))
+        .andExpect(status().isOk())
+        .andExpect(jsonPath("$.data.totalUsers").isNumber())
+        .andExpect(jsonPath("$.data.totalHospitals").isNumber());
+  }
 
-    @Test
-    void testAppointmentPatientFiltering() throws Exception {
-        UUID patientId = UUID.randomUUID(); // Doesn't need to exist for empty result check
-        mockMvc.perform(get("/api/v1/appointments?patientId=" + patientId)
+  @Test
+  void testAppointmentPatientFiltering() throws Exception {
+    UUID patientId = UUID.randomUUID(); // Doesn't need to exist for empty result check
+    mockMvc
+        .perform(
+            get("/api/v1/appointments?patientId=" + patientId)
                 .session(superAdminSession)
                 .header("X-Hospital-Id", testHospitalId.toString()))
-                .andExpect(status().isOk())
-                .andExpect(jsonPath("$.data.content").isArray());
-    }
+        .andExpect(status().isOk())
+        .andExpect(jsonPath("$.data.content").isArray());
+  }
 }

@@ -10,7 +10,6 @@ import com.res.hms.iam.domain.UserAccount;
 import com.res.hms.iam.domain.UserContract;
 import com.res.hms.iam.infrastructure.repository.RoleRepository;
 import com.res.hms.iam.infrastructure.repository.UserAccountRepository;
-import java.time.LocalDate;
 import java.util.UUID;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
