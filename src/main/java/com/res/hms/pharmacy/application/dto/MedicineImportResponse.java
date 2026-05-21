@@ -13,4 +13,6 @@ public class MedicineImportResponse {
   private int totalRows;
   private int importedRows;
   private int skippedRows;
+  private int failedRows;
+  private String errorFileBase64;
 }
