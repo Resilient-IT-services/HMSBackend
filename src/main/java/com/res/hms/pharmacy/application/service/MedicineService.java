@@ -6,10 +6,6 @@ import com.res.hms.core.tenant.HospitalContext;
 import com.res.hms.pharmacy.application.dto.MedicineDTO;
 import com.res.hms.pharmacy.application.dto.MedicineImportResponse;
 import com.res.hms.pharmacy.application.dto.MedicineSummaryDTO;
-import com.res.hms.pharmacy.application.dto.PharmacyReturnRequest;
-import com.res.hms.pharmacy.application.dto.PharmacyReturnResponse;
-import com.res.hms.pharmacy.application.dto.PharmacySaleRequest;
-import com.res.hms.pharmacy.application.dto.PharmacySaleResponse;
 import com.res.hms.pharmacy.application.dto.PharmacyStockDTO;
 import com.res.hms.pharmacy.application.dto.StockImportResponse;
 import com.res.hms.pharmacy.application.dto.StockRequest;
@@ -49,7 +45,6 @@ public class MedicineService {
   private final PharmacyStockRepository pharmacyStockRepository;
   private final HospitalContext hospitalContext;
   private final PharmacyExcelService pharmacyExcelService;
-  private final MedicineSalesService medicineSalesService;
 
   private Specification<Medicine> getFilterSpec(String search) {
     return (root, query, cb) -> {
@@ -271,24 +266,36 @@ public class MedicineService {
         .build();
   }
 
-  @Transactional
-  public PharmacySaleResponse createSale(PharmacySaleRequest request) {
-    return medicineSalesService.createSale(request);
-  }
+  public MedicineDTO toDto(Medicine medicine) {
+    MedicineDTO.MedicineDTOBuilder builder =
+        MedicineDTO.builder()
+            .id(medicine.getId())
+            .name(medicine.getName())
+            .genericName(medicine.getGenericName())
+            .composition(medicine.getComposition())
+            .strength(medicine.getStrength())
+            .form(medicine.getForm())
+            .scheduleType(medicine.getScheduleType())
+            .category(medicine.getCategory())
+            .manufacturer(medicine.getManufacturer())
+            .temperature(medicine.getStorageTemperature())
+            .humidity(medicine.getStorageHumidity())
+            .specialNotes(medicine.getSpecialNotes());
 
-  @Transactional
-  public PharmacyReturnResponse returnStock(PharmacyReturnRequest request) {
-    return medicineSalesService.returnStock(request);
-  }
+    Optional.ofNullable(hospitalContext.getHospitalIdOrNull())
+        .ifPresent(
+            hospitalId -> {
+              hospitalMedicineCatalogRepository
+                  .findByHospitalIdAndMedicineId(hospitalId, medicine.getId())
+                  .ifPresent(
+                      catalog -> {
+                        builder.reorderLevel(catalog.getReorderLevel());
+                        builder.sellingPrice(catalog.getBaseSellingPrice());
+                        builder.taxPercentage(catalog.getTaxPercentage());
+                      });
+            });
 
-  @Transactional(readOnly = true)
-  public List<PharmacyStockDTO> expiryAlerts(int days) {
-    return medicineSalesService.expiryAlerts(days);
-  }
-
-  @Transactional(readOnly = true)
-  public PageResponse<PharmacyStockDTO> lowStockAlerts(int page, int size, int threshold) {
-    return medicineSalesService.lowStockAlerts(page, size, threshold);
+    return builder.build();
   }
 
   public Medicine requireMedicine(UUID id) {
@@ -320,38 +327,6 @@ public class MedicineService {
                   pharmacyStockRepository.availableQuantity(
                       hospitalId, medicine.getId(), LocalDate.now());
               builder.currentStock(total != null ? total.intValue() : 0);
-            });
-
-    return builder.build();
-  }
-
-  public MedicineDTO toDto(Medicine medicine) {
-    MedicineDTO.MedicineDTOBuilder builder =
-        MedicineDTO.builder()
-            .id(medicine.getId())
-            .name(medicine.getName())
-            .genericName(medicine.getGenericName())
-            .composition(medicine.getComposition())
-            .strength(medicine.getStrength())
-            .form(medicine.getForm())
-            .scheduleType(medicine.getScheduleType())
-            .category(medicine.getCategory())
-            .manufacturer(medicine.getManufacturer())
-            .temperature(medicine.getStorageTemperature())
-            .humidity(medicine.getStorageHumidity())
-            .specialNotes(medicine.getSpecialNotes());
-
-    Optional.ofNullable(hospitalContext.getHospitalIdOrNull())
-        .ifPresent(
-            hospitalId -> {
-              hospitalMedicineCatalogRepository
-                  .findByHospitalIdAndMedicineId(hospitalId, medicine.getId())
-                  .ifPresent(
-                      catalog -> {
-                        builder.reorderLevel(catalog.getReorderLevel());
-                        builder.sellingPrice(catalog.getBaseSellingPrice());
-                        builder.taxPercentage(catalog.getTaxPercentage());
-                      });
             });
 
     return builder.build();

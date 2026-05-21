@@ -7,12 +7,13 @@ import com.res.hms.pharmacy.application.dto.MedicineImportResponse;
 import com.res.hms.pharmacy.application.dto.MedicineSummaryDTO;
 import com.res.hms.pharmacy.application.dto.PharmacyReturnRequest;
 import com.res.hms.pharmacy.application.dto.PharmacyReturnResponse;
-import com.res.hms.pharmacy.application.dto.PharmacySaleRequest;
-import com.res.hms.pharmacy.application.dto.PharmacySaleResponse;
 import com.res.hms.pharmacy.application.dto.PharmacyStockDTO;
+import com.res.hms.pharmacy.application.dto.QuickPharmacySaleRequest;
+import com.res.hms.pharmacy.application.dto.QuickPharmacySaleResponse;
 import com.res.hms.pharmacy.application.dto.StockImportResponse;
 import com.res.hms.pharmacy.application.dto.StockRequest;
 import com.res.hms.pharmacy.application.service.MedicineService;
+import com.res.hms.pharmacy.application.service.PharmacySaleService;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import java.util.List;
@@ -37,6 +38,7 @@ import org.springframework.web.multipart.MultipartFile;
 public class MedicineController {
 
   private final MedicineService medicineService;
+  private final PharmacySaleService pharmacySaleService;
 
   @PostMapping("/medicines/import")
   @PreAuthorize("hasRole('SUPER_ADMIN')")
@@ -114,23 +116,50 @@ public class MedicineController {
 
   @PostMapping("/sales")
   @PreAuthorize("hasAnyRole('ADMIN','PHARMACIST','SUPER_ADMIN')")
-  public ApiResponse<PharmacySaleResponse> createSale(
-      @Valid @RequestBody PharmacySaleRequest request) {
-    return ApiResponse.success(medicineService.createSale(request));
+  public ApiResponse<QuickPharmacySaleResponse> createSale(
+      @Valid @RequestBody QuickPharmacySaleRequest request) {
+    return ApiResponse.success(pharmacySaleService.createSale(request));
+  }
+
+  @PostMapping("/prescriptions/{id}/dispense")
+  @PreAuthorize("hasAnyRole('ADMIN','PHARMACIST','SUPER_ADMIN')")
+  public ApiResponse<QuickPharmacySaleResponse> dispense(
+      @PathVariable UUID id, @Valid @RequestBody QuickPharmacySaleRequest request) {
+    request.setPrescriptionId(id);
+    return ApiResponse.success(pharmacySaleService.createSale(request));
+  }
+
+  @GetMapping("/sales/{id}")
+  @PreAuthorize("hasAnyRole('ADMIN','PHARMACIST','SUPER_ADMIN')")
+  public ApiResponse<QuickPharmacySaleResponse> getSale(@PathVariable UUID id) {
+    return ApiResponse.success(pharmacySaleService.getSale(id));
+  }
+
+  @GetMapping("/sales/prescription/{prescriptionId}")
+  @PreAuthorize("hasAnyRole('ADMIN','PHARMACIST','SUPER_ADMIN')")
+  public ApiResponse<QuickPharmacySaleResponse> getSaleByPrescription(
+      @PathVariable UUID prescriptionId) {
+    return ApiResponse.success(pharmacySaleService.getSaleByPrescription(prescriptionId));
+  }
+
+  @GetMapping("/recent-customers")
+  @PreAuthorize("hasAnyRole('ADMIN','PHARMACIST','SUPER_ADMIN')")
+  public ApiResponse<List<Object[]>> searchRecentCustomers(@RequestParam String search) {
+    return ApiResponse.success(pharmacySaleService.searchRecentCustomers(search));
   }
 
   @PostMapping("/returns")
   @PreAuthorize("hasAnyRole('ADMIN','PHARMACIST','SUPER_ADMIN')")
   public ApiResponse<PharmacyReturnResponse> returnStock(
       @Valid @RequestBody PharmacyReturnRequest request) {
-    return ApiResponse.success(medicineService.returnStock(request));
+    return ApiResponse.success(pharmacySaleService.returnStock(request));
   }
 
   @GetMapping("/alerts/expiry")
   @PreAuthorize("hasAnyRole('ADMIN','PHARMACIST','SUPER_ADMIN')")
   public ApiResponse<List<PharmacyStockDTO>> expiryAlerts(
       @RequestParam(defaultValue = "30") int days) {
-    return ApiResponse.success(medicineService.expiryAlerts(days));
+    return ApiResponse.success(pharmacySaleService.expiryAlerts(days));
   }
 
   @GetMapping("/alerts/low-stock")
@@ -140,6 +169,6 @@ public class MedicineController {
       @RequestParam(defaultValue = "20") int size,
       @RequestParam(defaultValue = "20") int threshold) {
     return ApiResponse.success(
-        medicineService.lowStockAlerts(page, Math.min(size, 100), threshold));
+        pharmacySaleService.lowStockAlerts(page, Math.min(size, 100), threshold));
   }
 }
