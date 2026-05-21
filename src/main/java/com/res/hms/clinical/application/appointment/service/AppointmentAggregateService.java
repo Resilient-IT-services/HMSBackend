@@ -3,6 +3,7 @@ package com.res.hms.clinical.application.appointment.service;
 import com.res.hms.clinical.application.appointment.dto.AppointmentDTO;
 import com.res.hms.clinical.application.appointment.dto.VitalsDTO;
 import com.res.hms.clinical.application.patient.service.PatientService;
+import com.res.hms.clinical.application.prescription.service.PrescriptionService;
 import com.res.hms.clinical.domain.Appointment;
 import com.res.hms.clinical.domain.AppointmentStatus;
 import com.res.hms.clinical.domain.Patient;
@@ -27,6 +28,7 @@ public class AppointmentAggregateService {
   private final AppointmentService appointmentService;
   private final PatientService patientService;
   private final DoctorProfileService doctorProfileService;
+  private final PrescriptionService prescriptionService;
   private final HospitalContext hospitalContext;
   private final com.res.hms.clinical.application.vital.service.VitalValidationService
       vitalValidationService;
@@ -191,6 +193,10 @@ public class AppointmentAggregateService {
     appointment.setClinicalNotes(dto.getClinicalNotes());
     appointment.setIcdCodes(dto.getIcdCodes());
     appointment.setStatus(AppointmentStatus.CONSULTATION_STARTED);
+
+    if (dto.getPrescription() != null) {
+      prescriptionService.saveOrUpdatePrescription(appointment, dto.getPrescription());
+    }
 
     return appointmentService.toDto(appointmentRepository.save(appointment));
   }

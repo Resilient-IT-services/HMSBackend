@@ -27,7 +27,7 @@ public class PharmacyQuickSaleController {
   @PostMapping
   public ApiResponse<QuickPharmacySaleResponse> createQuickSale(
       @jakarta.validation.Valid @RequestBody QuickPharmacySaleRequest request) {
-    return ApiResponse.success(quickPharmacySaleService.createQuickSale(request));
+    return ApiResponse.success(quickPharmacySaleService.createQui.ckSale(request));
   }
 
   @GetMapping("/{id}")
