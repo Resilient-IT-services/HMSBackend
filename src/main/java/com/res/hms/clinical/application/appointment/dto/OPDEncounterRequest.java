@@ -18,11 +18,13 @@ public class OPDEncounterRequest {
   private VitalsDTO vitals;
 
   // Immediate Payment Info
-  private PaymentInfo payment;
+  @jakarta.validation.Valid private PaymentInfo payment;
 
   @Data
   public static class PaymentInfo {
-    @NotNull private BigDecimal amount;
+    @NotNull
+    @jakarta.validation.constraints.Min(0)
+    private BigDecimal amount;
     @NotNull private PaymentMode mode;
     private String referenceNumber;
   }

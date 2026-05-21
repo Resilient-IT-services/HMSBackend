@@ -23,8 +23,8 @@ public class QuickPharmacySaleRequest {
   private String customerName;
   private String customerPhone;
   private String notes;
-  private List<Item> items;
-  private PaymentInfo payment;
+  @jakarta.validation.Valid private List<Item> items;
+  @jakarta.validation.Valid private PaymentInfo payment;
 
   @Data
   @Builder
@@ -35,7 +35,9 @@ public class QuickPharmacySaleRequest {
     private UUID medicineBatchId;
     private Integer quantity;
     private BigDecimal unitPrice;
+    @jakarta.validation.constraints.Min(0)
     private BigDecimal discountAmount;
+    @jakarta.validation.constraints.Min(0)
     private BigDecimal taxAmount;
   }
 
@@ -45,6 +47,7 @@ public class QuickPharmacySaleRequest {
   @AllArgsConstructor
   public static class PaymentInfo {
     private PaymentMode mode;
+    @jakarta.validation.constraints.Min(0)
     private BigDecimal amount;
     private String referenceNumber;
   }
