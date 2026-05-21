@@ -147,6 +147,14 @@ public class PrescriptionService {
           HttpStatus.BAD_REQUEST);
     }
 
+    if (appointment.getStatus() != AppointmentStatus.VITALS_RECORDED
+        && appointment.getStatus() != AppointmentStatus.CONSULTATION_STARTED) {
+      throw new ApiException(
+          "BUSINESS_RULE_VIOLATION",
+          "Prescription can only be created after vitals are recorded.",
+          HttpStatus.BAD_REQUEST);
+    }
+
     Prescription prescription = new Prescription();
     prescription.setHospitalId(hospitalId);
     prescription.setAppointmentId(appointment.getId());

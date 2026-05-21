@@ -114,6 +114,11 @@ class PrescriptionControllerIntegrationTest {
 
   @Test
   void testCreateAndGetPrescription() throws Exception {
+    // 0. Update status to VITALS_RECORDED (Business rule: cannot prescribe without vitals)
+    Appointment apt = appointmentRepository.findById(appointmentId).orElseThrow();
+    apt.setStatus(AppointmentStatus.VITALS_RECORDED);
+    appointmentRepository.saveAndFlush(apt);
+
     // 1. Create Medicine
     Medicine med = new Medicine();
     med.setName("Paracetamol");
@@ -161,7 +166,29 @@ class PrescriptionControllerIntegrationTest {
   }
 
   @Test
+  void testCreatePrescriptionFailsWithoutVitals() throws Exception {
+    // Status is SCHEDULED from setUp
+    PrescriptionDTO dto =
+        PrescriptionDTO.builder().appointmentId(appointmentId).items(List.of()).build();
+
+    mockMvc
+        .perform(
+            post("/api/v1/pharmacy/prescriptions")
+                .session(session)
+                .header("X-Hospital-Id", hospitalId.toString())
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(dto)))
+        .andExpect(status().isBadRequest())
+        .andExpect(jsonPath("$.error.message").value("Prescription can only be created after vitals are recorded."));
+  }
+
+  @Test
   void testCreateDuplicatePrescriptionFails() throws Exception {
+    // 0. Update status to VITALS_RECORDED
+    Appointment apt = appointmentRepository.findById(appointmentId).orElseThrow();
+    apt.setStatus(AppointmentStatus.VITALS_RECORDED);
+    appointmentRepository.saveAndFlush(apt);
+
     // 1. Create first prescription
     PrescriptionDTO dto =
         PrescriptionDTO.builder().appointmentId(appointmentId).items(List.of()).build();

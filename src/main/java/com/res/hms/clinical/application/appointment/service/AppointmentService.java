@@ -58,7 +58,7 @@ public class AppointmentService {
 
     private Specification<Appointment> getFilterSpec(
         UUID hospitalId, String search, java.time.Instant from, java.time.Instant to,
-        UUID patientId, UUID doctorId) {
+        UUID patientId, UUID doctorId, com.res.hms.clinical.domain.AppointmentStatus status) {
 
         return (root, query, cb) -> {
             List<Predicate> predicates = new ArrayList<>();
@@ -70,6 +70,9 @@ public class AppointmentService {
             }
             if (doctorId != null) {
                 predicates.add(cb.equal(root.get("doctorId"), doctorId));
+            }
+            if (status != null) {
+                predicates.add(cb.equal(root.get("status"), status));
             }
             if (search != null && !search.trim().isEmpty()) {
                 String pattern = "%" + search.toLowerCase().trim() + "%";
@@ -95,11 +98,12 @@ public class AppointmentService {
         String search,
         java.time.Instant from,
         java.time.Instant to,
-        UUID patientId, UUID doctorId) {
+        UUID patientId, UUID doctorId,
+        com.res.hms.clinical.domain.AppointmentStatus status) {
         UUID hospitalId = hospitalContext.requireHospitalId();
         Pageable pageable = PageRequest.of(page, size, Sort.by("appointmentTime").descending());
 
-        Specification<Appointment> spec = getFilterSpec(hospitalId, search, from, to, patientId, doctorId);
+        Specification<Appointment> spec = getFilterSpec(hospitalId, search, from, to, patientId, doctorId, status);
 
         Specification<Appointment> fetchSpec = (root, query, cb) -> {
             if (query.getResultType() != Long.class && query.getResultType() != long.class) {
@@ -116,14 +120,15 @@ public class AppointmentService {
 
     @Transactional(readOnly = true)
     public com.res.hms.clinical.application.appointment.dto.AppointmentStatsDTO getStats(
-        String search, java.time.Instant from, java.time.Instant to, UUID patientId, UUID doctorId) {
+        String search, java.time.Instant from, java.time.Instant to, UUID patientId, UUID doctorId,
+        com.res.hms.clinical.domain.AppointmentStatus status) {
         UUID hospitalId = hospitalContext.requireHospitalId();
 
         CriteriaBuilder cb = entityManager.getCriteriaBuilder();
         CriteriaQuery<Object[]> query = cb.createQuery(Object[].class);
         Root<Appointment> root = query.from(Appointment.class);
 
-        Specification<Appointment> spec = getFilterSpec(hospitalId, search, from, to, patientId, doctorId);
+        Specification<Appointment> spec = getFilterSpec(hospitalId, search, from, to, patientId, doctorId, status);
         Predicate predicate = spec.toPredicate(root, query, cb);
         if (predicate != null) {
             query.where(predicate);
@@ -137,17 +142,17 @@ public class AppointmentService {
         long total = 0;
 
         for (Object[] result : results) {
-            com.res.hms.clinical.domain.AppointmentStatus status =
+            com.res.hms.clinical.domain.AppointmentStatus s =
                 (com.res.hms.clinical.domain.AppointmentStatus) result[0];
             Long count = (Long) result[1];
-            byStatus.put(status, count);
+            byStatus.put(s, count);
             total += count;
         }
 
         // Upcoming count logic (reuses the same filter but only looks at future appointments)
         CriteriaQuery<Long> countQuery = cb.createQuery(Long.class);
         Root<Appointment> countRoot = countQuery.from(Appointment.class);
-        Predicate baseCountPredicate = getFilterSpec(hospitalId, search, from, null, patientId, doctorId).toPredicate(countRoot, countQuery, cb);
+        Predicate baseCountPredicate = getFilterSpec(hospitalId, search, from, null, patientId, doctorId, status).toPredicate(countRoot, countQuery, cb);
 
         java.time.Instant now = java.time.Instant.now();
         Predicate futurePredicate = cb.greaterThan(countRoot.get("appointmentTime"), now);
@@ -170,11 +175,12 @@ public class AppointmentService {
 
     @Transactional(readOnly = true)
     public PageResponse<AppointmentSummaryDTO> listSummary(
-        int page, int size, String search, java.time.Instant from, java.time.Instant to, UUID patientId, UUID doctorId) {
+        int page, int size, String search, java.time.Instant from, java.time.Instant to, UUID patientId, UUID doctorId,
+        com.res.hms.clinical.domain.AppointmentStatus status) {
         UUID hospitalId = hospitalContext.requireHospitalId();
         Pageable pageable = PageRequest.of(page, size, Sort.by("appointmentTime").descending());
 
-        Specification<Appointment> spec = getFilterSpec(hospitalId, search, from, to, patientId, doctorId);
+        Specification<Appointment> spec = getFilterSpec(hospitalId, search, from, to, patientId, doctorId, status);
 
         Specification<Appointment> fetchSpec = (root, query, cb) -> {
             if (query.getResultType() != Long.class && query.getResultType() != long.class) {

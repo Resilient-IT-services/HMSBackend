@@ -67,9 +67,11 @@ public class AppointmentController {
         @org.springframework.format.annotation.DateTimeFormat(
             iso = org.springframework.format.annotation.DateTimeFormat.ISO.DATE_TIME)
         java.time.Instant to,
-        @RequestParam(required = false) UUID patientId, @RequestParam(required = false) UUID doctorId) {
+        @RequestParam(required = false) UUID patientId,
+        @RequestParam(required = false) UUID doctorId,
+        @RequestParam(required = false) com.res.hms.clinical.domain.AppointmentStatus status) {
         return ApiResponse.success(
-            appointmentService.list(page, Math.min(size, 100), search, from, to, patientId, doctorId));
+            appointmentService.list(page, Math.min(size, 100), search, from, to, patientId, doctorId, status));
     }
 
     @GetMapping("/summary")
@@ -87,9 +89,10 @@ public class AppointmentController {
             iso = org.springframework.format.annotation.DateTimeFormat.ISO.DATE_TIME)
         java.time.Instant to,
         @RequestParam(required = false) UUID patientId,
-        @RequestParam(required = false) UUID doctorId) {
+        @RequestParam(required = false) UUID doctorId,
+        @RequestParam(required = false) com.res.hms.clinical.domain.AppointmentStatus status) {
         return ApiResponse.success(
-            appointmentService.listSummary(page, Math.min(size, 100), search, from, to, patientId, doctorId));
+            appointmentService.listSummary(page, Math.min(size, 100), search, from, to, patientId, doctorId, status));
     }
 
     @GetMapping("/stats")
@@ -105,8 +108,9 @@ public class AppointmentController {
             iso = org.springframework.format.annotation.DateTimeFormat.ISO.DATE_TIME)
         java.time.Instant to,
         @RequestParam(required = false) UUID patientId,
-        @RequestParam(required = false) UUID doctorId) {
-        return ApiResponse.success(appointmentService.getStats(search, from, to, patientId, doctorId));
+        @RequestParam(required = false) UUID doctorId,
+        @RequestParam(required = false) com.res.hms.clinical.domain.AppointmentStatus status) {
+        return ApiResponse.success(appointmentService.getStats(search, from, to, patientId, doctorId, status));
     }
 
     @GetMapping("/{appointmentId}")
