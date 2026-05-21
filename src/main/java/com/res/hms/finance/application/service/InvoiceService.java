@@ -126,6 +126,8 @@ public class InvoiceService {
       InvoiceItemCategory category,
       BigDecimal quantity,
       BigDecimal unitPrice,
+      BigDecimal taxAmount,
+      BigDecimal discountAmount,
       com.res.hms.finance.domain.FinanceSourceType sourceType,
       UUID sourceId,
       UUID doctorId,
@@ -143,10 +145,10 @@ public class InvoiceService {
     item.setQuantity(quantity);
     item.setUnitPrice(unitPrice);
     item.setTaxPercentage(BigDecimal.ZERO);
-    item.setTaxAmount(BigDecimal.ZERO);
-    item.setDiscountAmount(BigDecimal.ZERO);
+    item.setTaxAmount(taxAmount != null ? taxAmount : BigDecimal.ZERO);
+    item.setDiscountAmount(discountAmount != null ? discountAmount : BigDecimal.ZERO);
     item.setSubtotal(unitPrice.multiply(quantity));
-    item.setNetTotal(item.getSubtotal());
+    item.setNetTotal(item.getSubtotal().add(item.getTaxAmount()).subtract(item.getDiscountAmount()));
     item.setSourceType(sourceType);
     item.setSourceId(sourceId);
     item.setDoctorId(doctorId);

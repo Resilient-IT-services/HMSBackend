@@ -193,6 +193,8 @@ public class QuickPharmacySaleService {
           InvoiceItemCategory.PHARMACY,
           BigDecimal.valueOf(saleItem.getQuantity()),
           saleItem.getUnitPrice(),
+          saleItem.getTaxAmount(),
+          saleItem.getDiscountAmount(),
           FinanceSourceType.PHARMACY_SALE_ITEM,
           saleItem.getId(),
           savedSale.getDoctorId(),

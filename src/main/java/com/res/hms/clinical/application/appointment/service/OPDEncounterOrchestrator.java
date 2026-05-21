@@ -83,6 +83,8 @@ public class OPDEncounterOrchestrator {
         InvoiceItemCategory.CONSULTATION,
         BigDecimal.ONE,
         fee,
+        BigDecimal.ZERO,
+        BigDecimal.ZERO,
         FinanceSourceType.APPOINTMENT,
         savedAppointment.getId(),
         request.getDoctorId(),
