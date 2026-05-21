@@ -1,0 +1,146 @@
+pipeline {
+    agent any
+
+    options {
+        disableConcurrentBuilds()
+        timestamps()
+    }
+
+    environment {
+        WORK_DIR = "${WORKSPACE}/HMS"
+        BACKEND_DIR = "${WORK_DIR}/HMSBackend"
+        FRONTEND_DIR = "${WORK_DIR}/HMSFrontEnd"
+
+        BACKEND_CHANGED = "false"
+        FRONTEND_CHANGED = "false"
+    }
+
+    stages {
+
+        stage('Checkout') {
+            parallel {
+
+                stage('Checkout Backend') {
+                    steps {
+                        dir("${BACKEND_DIR}") {
+                            git branch: 'main',
+                                credentialsId: 'github-token',
+                                url: 'https://github.com/Resilient-IT-services/HMSBackend.git'
+
+                            script {
+                                def changes = sh(
+                                    script: '''
+                                        git fetch origin main
+                                        git rev-parse HEAD > current.txt
+                                        git rev-parse origin/main > remote.txt
+                                        diff current.txt remote.txt
+                                    ''',
+                                    returnStatus: true
+                                )
+
+                                if (changes != 0) {
+                                    env.BACKEND_CHANGED = "true"
+                                }
+                            }
+                        }
+                    }
+                }
+
+                stage('Checkout Frontend') {
+                    steps {
+                        dir("${FRONTEND_DIR}") {
+                            git branch: 'main',
+                                credentialsId: 'github-token',
+                                url: 'https://github.com/Resilient-IT-services/HMSFrontEnd.git'
+
+                            script {
+                                def changes = sh(
+                                    script: '''
+                                        git fetch origin main
+                                        git rev-parse HEAD > current.txt
+                                        git rev-parse origin/main > remote.txt
+                                        diff current.txt remote.txt
+                                    ''',
+                                    returnStatus: true
+                                )
+
+                                if (changes != 0) {
+                                    env.FRONTEND_CHANGED = "true"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+
+        stage('Run Tests') {
+            parallel {
+
+                stage('Backend Tests') {
+                    when {
+                        expression {
+                            env.BACKEND_CHANGED == "true"
+                        }
+                    }
+
+                    steps {
+                        dir("${BACKEND_DIR}") {
+                            sh 'chmod +x gradlew'
+                            sh './gradlew test'
+                        }
+                    }
+                }
+
+                stage('Frontend Tests') {
+                    when {
+                        expression {
+                            env.FRONTEND_CHANGED == "true"
+                        }
+                    }
+
+                    steps {
+                        nodejs(nodeJSInstallationName: 'node26') {
+                            dir("${FRONTEND_DIR}") {
+                                sh 'npm ci'
+                                sh 'npm run test'
+                            }
+                        }
+                    }
+                }
+            }
+        }
+
+        stage('Deploy Backend') {
+            when {
+                expression {
+                    env.BACKEND_CHANGED == "true"
+                }
+            }
+
+            steps {
+                dir("${BACKEND_DIR}") {
+                    sh '''
+                    docker compose up -d --build backend
+                    '''
+                }
+            }
+        }
+
+        stage('Deploy Frontend') {
+            when {
+                expression {
+                    env.FRONTEND_CHANGED == "true"
+                }
+            }
+
+            steps {
+                dir("${FRONTEND_DIR}") {
+                    sh '''
+                    docker compose up -d --build frontend
+                    '''
+                }
+            }
+        }
+    }
+}
