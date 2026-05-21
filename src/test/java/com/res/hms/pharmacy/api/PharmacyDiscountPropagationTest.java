@@ -78,7 +78,7 @@ public class PharmacyDiscountPropagationTest {
     payment.setAmount(new BigDecimal("15.00"));
     request.setPayment(payment);
 
-    MvcResult result = mockMvc.perform(post("/api/v1/pharmacy/quick-sale")
+    MvcResult result = mockMvc.perform(post("/api/v1/pharmacy/sales")
         .session(session)
         .header("X-Hospital-Id", hospitalId.toString())
         .contentType(MediaType.APPLICATION_JSON)

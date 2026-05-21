@@ -47,7 +47,7 @@ public class DiscountValidationIntegrationTest {
     payment.setAmount(new BigDecimal("90.00"));
     request.setPayment(payment);
 
-    mockMvc.perform(post("/api/v1/pharmacy/quick-sale")
+    mockMvc.perform(post("/api/v1/pharmacy/sales")
         .contentType(MediaType.APPLICATION_JSON)
         .content(objectMapper.writeValueAsString(request)))
         .andExpect(status().isBadRequest());
