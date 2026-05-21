@@ -6,12 +6,11 @@ import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
-import org.springframework.data.domain.Page;
-import org.springframework.data.domain.Pageable;
+import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
-public interface PatientRepository extends BaseRepository<Patient> {
+public interface PatientRepository extends BaseRepository<Patient>, JpaSpecificationExecutor<Patient> {
   boolean existsByPatientCode(String patientCode);
 
   boolean existsByPatientCodeAndIdNot(String patientCode, UUID id);
@@ -43,12 +42,4 @@ public interface PatientRepository extends BaseRepository<Patient> {
     """,
       nativeQuery = true)
   Optional<String> findLastPatientCodeGlobal(@Param("prefix") String prefix);
-
-  @Query(
-      "SELECT p FROM Patient p WHERE p.hospitalId = :hospitalId AND "
-          + "(LOWER(p.fullName) LIKE :query OR "
-          + "LOWER(p.patientCode) LIKE :query OR "
-          + "p.phone LIKE :query)")
-  Page<Patient> search(
-      @Param("hospitalId") UUID hospitalId, @Param("query") String query, Pageable pageable);
 }

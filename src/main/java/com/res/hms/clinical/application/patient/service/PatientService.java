@@ -9,9 +9,16 @@ import com.res.hms.core.api.PageResponse;
 import com.res.hms.core.tenant.HospitalContext;
 import com.res.hms.core.util.ResourceLookup;
 import java.time.LocalDate;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.UUID;
+import jakarta.persistence.criteria.Predicate;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
+import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
 
 @Service
@@ -22,36 +29,40 @@ public class PatientService {
   private final HospitalContext hospitalContext;
   private final ResourceLookup resourceLookup;
 
+  private Specification<Patient> getFilterSpec(UUID hospitalId, String search) {
+    return (root, query, cb) -> {
+      List<Predicate> predicates = new ArrayList<>();
+      predicates.add(cb.equal(root.get("hospitalId"), hospitalId));
+      predicates.add(cb.equal(root.get("deleted"), false));
+
+      if (search != null && !search.trim().isEmpty()) {
+        String pattern = "%" + search.trim().toLowerCase() + "%";
+        predicates.add(cb.or(
+            cb.like(cb.lower(root.get("fullName")), pattern),
+            cb.like(cb.lower(root.get("patientCode")), pattern),
+            cb.like(root.get("phone"), pattern)
+        ));
+      }
+      return cb.and(predicates.toArray(new Predicate[0]));
+    };
+  }
+
   public PageResponse<PatientDTO> list(int page, int size, String search) {
     UUID hospitalId = hospitalContext.requireHospitalId();
-    PageRequest pageRequest = PageRequest.of(page, size);
+    Pageable pageable = PageRequest.of(page, size, Sort.by("createdAt").descending());
 
-    if (search != null && !search.trim().isEmpty()) {
-      String searchPattern = "%" + search.trim().toLowerCase() + "%";
-      return PageResponse.from(
-          patientRepository.search(hospitalId, searchPattern, pageRequest).map(this::toDto));
-    }
-
-    return PageResponse.from(
-        patientRepository
-            .findAllByHospitalIdOrderByCreatedAtDesc(hospitalId, pageRequest)
-            .map(this::toDto));
+    Specification<Patient> spec = getFilterSpec(hospitalId, search);
+    Page<Patient> results = patientRepository.findAll(spec, pageable);
+    return PageResponse.from(results.map(this::toDto));
   }
 
   public PageResponse<PatientSummaryDTO> listSummary(int page, int size, String search) {
     UUID hospitalId = hospitalContext.requireHospitalId();
-    PageRequest pageRequest = PageRequest.of(page, size);
+    Pageable pageable = PageRequest.of(page, size, Sort.by("createdAt").descending());
 
-    if (search != null && !search.trim().isEmpty()) {
-      String searchPattern = "%" + search.trim().toLowerCase() + "%";
-      return PageResponse.from(
-          patientRepository.search(hospitalId, searchPattern, pageRequest).map(this::toSummaryDto));
-    }
-
-    return PageResponse.from(
-        patientRepository
-            .findAllByHospitalIdOrderByCreatedAtDesc(hospitalId, pageRequest)
-            .map(this::toSummaryDto));
+    Specification<Patient> spec = getFilterSpec(hospitalId, search);
+    Page<Patient> results = patientRepository.findAll(spec, pageable);
+    return PageResponse.from(results.map(this::toSummaryDto));
   }
 
   public PatientDTO get(UUID id) {

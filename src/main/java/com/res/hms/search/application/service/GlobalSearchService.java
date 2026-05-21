@@ -87,7 +87,19 @@ public class GlobalSearchService {
     // 3. Search Patients (Top 5)
     if (currentHospitalId != null) {
       patientRepository
-          .search(currentHospitalId, searchPattern, PageRequest.of(0, 5))
+          .findAll(
+              (Specification<com.res.hms.clinical.domain.Patient>)
+                  (root, q, cb) -> {
+                    String pattern = "%" + query.trim().toLowerCase() + "%";
+                    return cb.and(
+                        cb.equal(root.get("hospitalId"), currentHospitalId),
+                        cb.equal(root.get("deleted"), false),
+                        cb.or(
+                            cb.like(cb.lower(root.get("fullName")), pattern),
+                            cb.like(cb.lower(root.get("patientCode")), pattern),
+                            cb.like(root.get("phone"), pattern)));
+                  },
+              PageRequest.of(0, 5))
           .getContent()
           .forEach(
               p -> {

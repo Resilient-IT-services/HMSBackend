@@ -13,51 +13,6 @@ import org.springframework.data.repository.query.Param;
 
 public interface AppointmentRepository extends BaseRepository<Appointment>, JpaSpecificationExecutor<Appointment> {
     @Query(
-        "SELECT a FROM Appointment a LEFT JOIN FETCH a.patient LEFT JOIN FETCH a.doctor "
-            + "WHERE a.hospitalId = :hospitalId "
-            + "ORDER BY a.appointmentTime DESC")
-    Page<Appointment> findAllByHospitalIdOrderByAppointmentTimeDesc(
-        @Param("hospitalId") UUID hospitalId, Pageable pageable);
-
-
-    @Query(
-        "SELECT a FROM Appointment a LEFT JOIN FETCH a.patient LEFT JOIN FETCH a.doctor "
-            + "WHERE a.hospitalId = :hospitalId AND "
-            + "(LOWER(a.patientName) LIKE :query OR "
-            + "LOWER(a.doctorName) LIKE :query) "
-            + "ORDER BY a.appointmentTime DESC")
-    Page<Appointment> search(
-        @Param("hospitalId") UUID hospitalId, @Param("query") String query, Pageable pageable);
-
-    @Query(
-        "SELECT a FROM Appointment a LEFT JOIN FETCH a.patient LEFT JOIN FETCH a.doctor "
-            + "WHERE a.hospitalId = :hospitalId AND "
-            + "a.appointmentTime >= :from AND a.appointmentTime <= :to "
-            + "ORDER BY a.appointmentTime DESC")
-    Page<Appointment> findAllByHospitalIdAndRange(
-        @Param("hospitalId") UUID hospitalId,
-        @Param("from") java.time.Instant from,
-        @Param("to") java.time.Instant to,
-        Pageable pageable);
-
-    @Query(
-        "SELECT a.status, COUNT(a) FROM Appointment a "
-            + "WHERE a.hospitalId = :hospitalId AND "
-            + "a.appointmentTime >= :from AND a.appointmentTime <= :to "
-            + "GROUP BY a.status")
-    java.util.List<Object[]> getStatsByRange(
-        @Param("hospitalId") UUID hospitalId,
-        @Param("from") java.time.Instant from,
-        @Param("to") java.time.Instant to);
-
-    @Query(
-        "SELECT COUNT(a) FROM Appointment a "
-            + "WHERE a.hospitalId = :hospitalId AND "
-            + "a.appointmentTime > :to")
-    long countUpcomingAfter(@Param("hospitalId") UUID hospitalId, @Param("to") java.time.Instant to);
-
-
-    @Query(
         "SELECT COUNT(a) FROM Appointment a "
             + "WHERE a.hospitalId = :hospitalId AND "
             + "CAST(a.appointmentTime AS date) > :date")

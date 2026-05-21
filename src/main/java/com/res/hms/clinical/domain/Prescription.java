@@ -23,6 +23,10 @@ public class Prescription extends HospitalScopedEntity {
   @Column(name = "appointment_id", nullable = false)
   private java.util.UUID appointmentId;
 
+  @jakarta.persistence.ManyToOne(fetch = jakarta.persistence.FetchType.LAZY)
+  @jakarta.persistence.JoinColumn(name = "appointment_id", insertable = false, updatable = false)
+  private Appointment appointment;
+
   @Column(name = "patient_id", nullable = false)
   private java.util.UUID patientId;
 

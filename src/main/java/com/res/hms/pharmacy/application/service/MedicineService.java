@@ -20,12 +20,18 @@ import com.res.hms.pharmacy.infrastructure.repository.MedicineRepository;
 import com.res.hms.pharmacy.infrastructure.repository.PharmacyStockRepository;
 import java.math.BigDecimal;
 import java.time.LocalDate;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import jakarta.persistence.criteria.Predicate;
+import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
+import org.springframework.data.jpa.domain.Specification;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -45,15 +51,28 @@ public class MedicineService {
   private final PharmacyExcelService pharmacyExcelService;
   private final MedicineSalesService medicineSalesService;
 
+  private Specification<Medicine> getFilterSpec(String search) {
+    return (root, query, cb) -> {
+      List<Predicate> predicates = new ArrayList<>();
+      if (hasText(search)) {
+        String pattern = "%" + search.trim().toLowerCase() + "%";
+        predicates.add(cb.or(
+            cb.like(cb.lower(root.get("name")), pattern),
+            cb.like(cb.lower(root.get("genericName")), pattern),
+            cb.like(cb.lower(root.get("composition")), pattern)
+        ));
+      }
+      return predicates.isEmpty() ? null : cb.and(predicates.toArray(new Predicate[0]));
+    };
+  }
+
   @Transactional(readOnly = true)
   public PageResponse<MedicineDTO> list(int page, int size, String search) {
-    PageRequest pageRequest = PageRequest.of(page, size);
-    if (hasText(search)) {
-      return PageResponse.from(
-          medicineRepository.searchMaster(search.trim(), pageRequest).map(this::toDto));
-    }
-    return PageResponse.from(
-        medicineRepository.findAllByOrderByCreatedAtDesc(pageRequest).map(this::toDto));
+    Sort sort = hasText(search) ? Sort.by("name").ascending() : Sort.by("createdAt").descending();
+    Pageable pageable = PageRequest.of(page, size, sort);
+    Specification<Medicine> spec = getFilterSpec(search);
+    Page<Medicine> results = medicineRepository.findAll(spec, pageable);
+    return PageResponse.from(results.map(this::toDto));
   }
 
   @Transactional
@@ -150,13 +169,10 @@ public class MedicineService {
 
   @Transactional(readOnly = true)
   public PageResponse<MedicineSummaryDTO> listSummary(int page, int size, String search) {
-    PageRequest pageRequest = PageRequest.of(page, size);
-    org.springframework.data.domain.Page<Medicine> medicinesPage;
-    if (hasText(search)) {
-      medicinesPage = medicineRepository.searchMaster(search.trim(), pageRequest);
-    } else {
-      medicinesPage = medicineRepository.findAllByOrderByCreatedAtDesc(pageRequest);
-    }
+    Sort sort = hasText(search) ? Sort.by("name").ascending() : Sort.by("createdAt").descending();
+    Pageable pageable = PageRequest.of(page, size, sort);
+    Specification<Medicine> spec = getFilterSpec(search);
+    org.springframework.data.domain.Page<Medicine> medicinesPage = medicineRepository.findAll(spec, pageable);
 
     UUID hospitalId = hospitalContext.getHospitalIdOrNull();
     java.util.Map<UUID, Integer> stockMap = new java.util.HashMap<>();

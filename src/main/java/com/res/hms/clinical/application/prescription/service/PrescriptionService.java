@@ -14,11 +14,18 @@ import com.res.hms.core.exception.ApiException;
 import com.res.hms.core.tenant.HospitalContext;
 import com.res.hms.pharmacy.domain.Medicine;
 import com.res.hms.pharmacy.infrastructure.repository.MedicineRepository;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
 import java.util.stream.Collectors;
 import lombok.RequiredArgsConstructor;
+import jakarta.persistence.criteria.JoinType;
+import jakarta.persistence.criteria.Predicate;
+import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
+import org.springframework.data.jpa.domain.Specification;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -32,20 +39,40 @@ public class PrescriptionService {
   private final AppointmentRepository appointmentRepository;
   private final HospitalContext hospitalContext;
 
+  private Specification<Prescription> getFilterSpec(UUID hospitalId, String search) {
+    return (root, query, cb) -> {
+      List<Predicate> predicates = new ArrayList<>();
+      predicates.add(cb.equal(root.get("hospitalId"), hospitalId));
+      predicates.add(cb.equal(root.get("deleted"), false));
+
+      if (search != null && !search.trim().isEmpty()) {
+        String pattern = "%" + search.trim().toLowerCase() + "%";
+        predicates.add(cb.or(
+            cb.like(cb.lower(root.get("patientName")), pattern),
+            cb.like(cb.lower(root.get("doctorName")), pattern),
+            cb.like(cb.lower(root.get("id").as(String.class)), pattern)
+        ));
+      }
+      return cb.and(predicates.toArray(new Predicate[0]));
+    };
+  }
+
   @Transactional(readOnly = true)
   public PageResponse<PrescriptionSummaryDTO> listSummary(int page, int size, String search) {
     UUID hospitalId = hospitalContext.requireHospitalId();
-    PageRequest pageRequest = PageRequest.of(page, size);
-    if (search != null && !search.trim().isEmpty()) {
-      return PageResponse.from(
-          prescriptionRepository
-              .searchPrescriptions(hospitalId, search.trim(), pageRequest)
-              .map(this::toSummaryDto));
-    }
-    return PageResponse.from(
-        prescriptionRepository
-            .findAllByHospitalId(hospitalId, pageRequest)
-            .map(this::toSummaryDto));
+    Pageable pageable = PageRequest.of(page, size, Sort.by("createdAt").descending());
+
+    Specification<Prescription> spec = getFilterSpec(hospitalId, search);
+    Specification<Prescription> fetchSpec = (root, query, cb) -> {
+      if (query.getResultType() != Long.class && query.getResultType() != long.class) {
+        root.fetch("patient", JoinType.LEFT);
+        root.fetch("appointment", JoinType.LEFT);
+      }
+      return null;
+    };
+
+    Page<Prescription> results = prescriptionRepository.findAll(Specification.where(spec).and(fetchSpec), pageable);
+    return PageResponse.from(results.map(this::toSummaryDto));
   }
 
   @Transactional(readOnly = true)
@@ -54,11 +81,7 @@ public class PrescriptionService {
       return null;
     }
 
-    UUID visitId =
-        appointmentRepository
-            .findById(prescription.getAppointmentId())
-            .map(Appointment::getVisitId)
-            .orElse(null);
+    UUID visitId = prescription.getAppointment() != null ? prescription.getAppointment().getVisitId() : null;
 
     return PrescriptionSummaryDTO.builder()
         .id(prescription.getId())
@@ -79,15 +102,20 @@ public class PrescriptionService {
   @Transactional(readOnly = true)
   public PageResponse<PrescriptionDTO> list(int page, int size, String search) {
     UUID hospitalId = hospitalContext.requireHospitalId();
-    PageRequest pageRequest = PageRequest.of(page, size);
-    if (search != null && !search.trim().isEmpty()) {
-      return PageResponse.from(
-          prescriptionRepository
-              .searchPrescriptions(hospitalId, search.trim(), pageRequest)
-              .map(this::toDto));
-    }
-    return PageResponse.from(
-        prescriptionRepository.findAllByHospitalId(hospitalId, pageRequest).map(this::toDto));
+    Pageable pageable = PageRequest.of(page, size, Sort.by("createdAt").descending());
+
+    Specification<Prescription> spec = getFilterSpec(hospitalId, search);
+    Specification<Prescription> fetchSpec = (root, query, cb) -> {
+      if (query.getResultType() != Long.class && query.getResultType() != long.class) {
+        root.fetch("patient", JoinType.LEFT);
+        root.fetch("items", JoinType.LEFT);
+        root.fetch("appointment", JoinType.LEFT);
+      }
+      return null;
+    };
+
+    Page<Prescription> results = prescriptionRepository.findAll(Specification.where(spec).and(fetchSpec), pageable);
+    return PageResponse.from(results.map(this::toDto));
   }
 
   @Transactional
@@ -176,11 +204,7 @@ public class PrescriptionService {
       return null;
     }
 
-    UUID visitId =
-        appointmentRepository
-            .findById(prescription.getAppointmentId())
-            .map(Appointment::getVisitId)
-            .orElse(null);
+    UUID visitId = prescription.getAppointment() != null ? prescription.getAppointment().getVisitId() : null;
 
     PrescriptionDTO.PrescriptionDTOBuilder builder =
         PrescriptionDTO.builder()

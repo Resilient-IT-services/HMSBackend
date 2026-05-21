@@ -4,42 +4,12 @@ import com.res.hms.pharmacy.domain.Medicine;
 import com.res.hms.pharmacy.domain.MedicineForm;
 import java.util.Optional;
 import java.util.UUID;
-import org.springframework.data.domain.Page;
-import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
-public interface MedicineRepository extends JpaRepository<Medicine, UUID> {
-
-  Page<Medicine> findAllByOrderByCreatedAtDesc(Pageable pageable);
-
-  @Query(
-      """
-      SELECT m FROM Medicine m
-      WHERE lower(m.name) LIKE lower(concat('%', :search, '%'))
-         OR lower(m.genericName) LIKE lower(concat('%', :search, '%'))
-         OR lower(m.composition) LIKE lower(concat('%', :search, '%'))
-      ORDER BY m.name
-      """)
-  Page<Medicine> searchMaster(@Param("search") String search, Pageable pageable);
-
-  @Query(
-      """
-      SELECT DISTINCT m FROM Medicine m
-      JOIN PharmacyStock s ON s.medicine = m
-      WHERE s.hospitalId = :hospitalId
-        AND s.quantity > 0
-        AND (s.expiryDate IS NULL OR s.expiryDate >= CURRENT_DATE)
-        AND (
-          lower(m.name) LIKE lower(concat('%', :search, '%'))
-          OR lower(m.genericName) LIKE lower(concat('%', :search, '%'))
-          OR lower(m.composition) LIKE lower(concat('%', :search, '%'))
-        )
-      ORDER BY m.name
-      """)
-  Page<Medicine> searchAvailableForHospital(
-      @Param("hospitalId") UUID hospitalId, @Param("search") String search, Pageable pageable);
+public interface MedicineRepository extends JpaRepository<Medicine, UUID>, JpaSpecificationExecutor<Medicine> {
 
   Optional<Medicine> findByNameIgnoreCase(String name);
 
