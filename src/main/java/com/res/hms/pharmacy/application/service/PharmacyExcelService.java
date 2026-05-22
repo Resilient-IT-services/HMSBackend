@@ -52,7 +52,7 @@ public class PharmacyExcelService {
   public MedicineImportResponse importMedicines(MultipartFile file) {
     try (Workbook workbook = WorkbookFactory.create(file.getInputStream())) {
       Sheet sheet = workbook.getSheetAt(0);
-      
+
       // Prepare styles
       CellStyle headerStyle = createStyle(workbook, IndexedColors.GREY_25_PERCENT, FillPatternType.SOLID_FOREGROUND, true);
       CellStyle successStyle = createStyle(workbook, IndexedColors.LIGHT_GREEN, FillPatternType.SOLID_FOREGROUND, false);
@@ -60,7 +60,7 @@ public class PharmacyExcelService {
       CellStyle errorStyle = createStyle(workbook, IndexedColors.RED, FillPatternType.SOLID_FOREGROUND, false);
 
       int statusColIndex = prepareHeaderAndGetStatusColumn(sheet, headerStyle);
-      
+
       int totalRows = 0;
       int imported = 0;
       int skipped = 0;
@@ -110,7 +110,7 @@ public class PharmacyExcelService {
     if (headerRow == null) {
       headerRow = sheet.createRow(0);
     }
-    
+
     int statusColIndex = -1;
     for (int c = 0; c < headerRow.getLastCellNum(); c++) {
       String headerVal = text(headerRow, c);
@@ -131,7 +131,7 @@ public class PharmacyExcelService {
     return statusColIndex;
   }
 
-  private String processMedicineRow(Row row, int statusColIndex, CellStyle successStyle, 
+  private String processMedicineRow(Row row, int statusColIndex, CellStyle successStyle,
                                    CellStyle skippedStyle, CellStyle errorStyle) {
     Cell statusCell = row.getCell(statusColIndex);
     if (statusCell == null) {
@@ -148,7 +148,7 @@ public class PharmacyExcelService {
       String manufacturer = text(row, 5);
       String scheduleStr = text(row, 6);
 
-      List<String> errors = validateMedicineData(name, formStr, scheduleStr);
+      List<String> errors = validateMedicineData(name, genericName, composition, strength, formStr, manufacturer, scheduleStr);
       if (!errors.isEmpty()) {
         throw new IllegalArgumentException(String.join(" | ", errors));
       }
@@ -169,7 +169,7 @@ public class PharmacyExcelService {
       medicine.setManufacturer(manufacturer);
       medicine.setScheduleType(parseMedicineSchedule(scheduleStr));
       medicineRepository.save(medicine);
-      
+
       statusCell.setCellValue("SUCCESS");
       statusCell.setCellStyle(successStyle);
       return "SUCCESS";
@@ -182,12 +182,24 @@ public class PharmacyExcelService {
     }
   }
 
-  private List<String> validateMedicineData(String name, String formStr, String scheduleStr) {
+  private List<String> validateMedicineData(String name, String genericName, String composition, String strength, String formStr, String manufacturer, String scheduleStr) {
     List<String> errors = new ArrayList<>();
     if (!hasText(name)) {
       errors.add("Name is required");
     }
-    
+    if (!hasText(genericName)) {
+      errors.add("Generic Name is required");
+    }
+    if (!hasText(composition)) {
+      errors.add("Salt/Composition is required");
+    }
+    if (!hasText(strength)) {
+      errors.add("Strength is required");
+    }
+    if (!hasText(manufacturer)) {
+      errors.add("Manufacturer is required");
+    }
+
     MedicineForm form = parseMedicineForm(formStr);
     if (form == null) {
       String acceptedForms = java.util.Arrays.toString(MedicineForm.values());
@@ -197,7 +209,7 @@ public class PharmacyExcelService {
         errors.add("Medicine Form is required. Accepted: " + acceptedForms);
       }
     }
-    
+
     MedicineSchedule schedule = parseMedicineSchedule(scheduleStr);
     if (schedule == null && hasText(scheduleStr)) {
       String acceptedSchedules = java.util.Arrays.toString(MedicineSchedule.values());

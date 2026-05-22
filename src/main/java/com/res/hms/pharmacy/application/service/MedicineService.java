@@ -36,21 +36,17 @@ import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
-
 @Slf4j
 @Service
 @RequiredArgsConstructor
 public class MedicineService {
-
   private static final int DEFAULT_LOW_STOCK_THRESHOLD = 20;
-
   private final MedicineRepository medicineRepository;
   private final HospitalMedicineCatalogRepository hospitalMedicineCatalogRepository;
   private final PharmacyStockRepository pharmacyStockRepository;
   private final HospitalContext hospitalContext;
   private final PharmacyExcelService pharmacyExcelService;
   private final MedicineSalesService medicineSalesService;
-
   private Specification<Medicine> getFilterSpec(String search) {
     return (root, query, cb) -> {
       List<Predicate> predicates = new ArrayList<>();

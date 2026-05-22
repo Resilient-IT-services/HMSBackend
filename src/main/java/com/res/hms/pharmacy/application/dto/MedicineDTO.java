@@ -1,6 +1,7 @@
 package com.res.hms.pharmacy.application.dto;
 
 import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.NotNull;
 import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.util.UUID;
@@ -19,12 +20,22 @@ public class MedicineDTO {
   @NotBlank(message = "Medicine name is required")
   private String name;
 
+  @NotBlank(message = "Generic name is required")
   private String genericName;
+
+  @NotBlank(message = "Salt/Composition is required")
   private String composition;
+
+  @NotBlank(message = "Strength is required")
   private String strength;
+
+  @NotNull(message = "Medicine form is required")
   private com.res.hms.pharmacy.domain.MedicineForm form;
+
   private com.res.hms.pharmacy.domain.MedicineSchedule scheduleType;
   private String category;
+
+  @NotBlank(message = "Manufacturer is required")
   private String manufacturer;
 
   // Inventory & Batch Information (Initial/Default)
