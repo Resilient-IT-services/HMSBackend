@@ -7,7 +7,6 @@ import com.res.hms.pharmacy.application.dto.StockImportResponse;
 import com.res.hms.pharmacy.application.dto.StockRequest;
 import com.res.hms.pharmacy.domain.Medicine;
 import com.res.hms.pharmacy.domain.MedicineForm;
-import com.res.hms.pharmacy.domain.MedicineSchedule;
 import com.res.hms.pharmacy.domain.PharmacyStock;
 import com.res.hms.pharmacy.infrastructure.repository.MedicineRepository;
 import com.res.hms.pharmacy.infrastructure.repository.PharmacyStockRepository;
@@ -15,7 +14,6 @@ import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.math.BigDecimal;
 import java.time.LocalDate;
-import java.util.ArrayList;
 import java.util.Base64;
 import java.util.List;
 import java.util.UUID;
@@ -83,25 +81,36 @@ public class PharmacyExcelService {
         }
       }
 
-      String base64 = null;
-      // Generate feedback file ONLY if there are actual failures (failed > 0)
-      if (failed > 0) {
-        ByteArrayOutputStream baos = new ByteArrayOutputStream();
-        workbook.write(baos);
-        base64 = Base64.getEncoder().encodeToString(baos.toByteArray());
-      }
-
-      return MedicineImportResponse.builder()
-          .totalRows(totalRows)
-          .importedRows(imported)
-          .skippedRows(skipped)
-          .failedRows(failed)
-          .errorFileBase64(base64)
-          .build();
+      return generateMedicineImportResponse(totalRows, imported, skipped, failed, workbook);
 
     } catch (IOException e) {
       log.error("Excel import failed", e);
       throw new ApiException("IMPORT_FAILED", "Unable to process Excel file: " + e.getMessage(), HttpStatus.BAD_REQUEST);
+    }
+  }
+
+  private MedicineImportResponse generateMedicineImportResponse(int total, int imported, int skipped, int failed, Workbook workbook) {
+    String base64 = null;
+    if (failed > 0) {
+      base64 = getFeedbackFileBase64(workbook);
+    }
+
+    return MedicineImportResponse.builder()
+        .totalRows(total)
+        .importedRows(imported)
+        .skippedRows(skipped)
+        .failedRows(failed)
+        .errorFileBase64(base64)
+        .build();
+  }
+
+  private String getFeedbackFileBase64(Workbook workbook) {
+    try (ByteArrayOutputStream baos = new ByteArrayOutputStream()) {
+      workbook.write(baos);
+      return Base64.getEncoder().encodeToString(baos.toByteArray());
+    } catch (IOException e) {
+      log.warn("Failed to generate feedback file", e);
+      return null;
     }
   }
 
@@ -148,12 +157,12 @@ public class PharmacyExcelService {
       String manufacturer = text(row, 5);
       String scheduleStr = text(row, 6);
 
-      List<String> errors = validateMedicineData(name, genericName, composition, strength, formStr, manufacturer, scheduleStr);
+      List<String> errors = PharmacyExcelHelper.validateMedicineData(name, genericName, composition, strength, formStr, manufacturer, scheduleStr);
       if (!errors.isEmpty()) {
         throw new IllegalArgumentException(String.join(" | ", errors));
       }
 
-      MedicineForm form = parseMedicineForm(formStr);
+      MedicineForm form = PharmacyExcelHelper.parseMedicineForm(formStr);
       if (medicineRepository.existsDuplicate(name, genericName, strength, form)) {
         statusCell.setCellValue("SKIPPED: Medicine already exists");
         statusCell.setCellStyle(skippedStyle);
@@ -167,7 +176,7 @@ public class PharmacyExcelService {
       medicine.setStrength(strength);
       medicine.setForm(form);
       medicine.setManufacturer(manufacturer);
-      medicine.setScheduleType(parseMedicineSchedule(scheduleStr));
+      medicine.setScheduleType(PharmacyExcelHelper.parseMedicineSchedule(scheduleStr));
       medicineRepository.save(medicine);
 
       statusCell.setCellValue("SUCCESS");
@@ -179,67 +188,6 @@ public class PharmacyExcelService {
       statusCell.setCellValue(errorMsg);
       statusCell.setCellStyle(errorStyle);
       return "ERROR";
-    }
-  }
-
-  private List<String> validateMedicineData(String name, String genericName, String composition, String strength, String formStr, String manufacturer, String scheduleStr) {
-    List<String> errors = new ArrayList<>();
-    if (!hasText(name)) {
-      errors.add("Name is required");
-    }
-    if (!hasText(genericName)) {
-      errors.add("Generic Name is required");
-    }
-    if (!hasText(composition)) {
-      errors.add("Salt/Composition is required");
-    }
-    if (!hasText(strength)) {
-      errors.add("Strength is required");
-    }
-    if (!hasText(manufacturer)) {
-      errors.add("Manufacturer is required");
-    }
-
-    MedicineForm form = parseMedicineForm(formStr);
-    if (form == null) {
-      String acceptedForms = java.util.Arrays.toString(MedicineForm.values());
-      if (hasText(formStr)) {
-        errors.add("Invalid Medicine Form: " + formStr + ". Accepted: " + acceptedForms);
-      } else {
-        errors.add("Medicine Form is required. Accepted: " + acceptedForms);
-      }
-    }
-
-    MedicineSchedule schedule = parseMedicineSchedule(scheduleStr);
-    if (schedule == null && hasText(scheduleStr)) {
-      String acceptedSchedules = java.util.Arrays.toString(MedicineSchedule.values());
-      errors.add("Invalid Schedule: " + scheduleStr + ". Accepted: " + acceptedSchedules);
-    }
-    return errors;
-  }
-
-  private MedicineForm parseMedicineForm(String val) {
-    if (!hasText(val)) {
-      return null;
-    }
-    String s = val.trim().toUpperCase();
-    try {
-      return MedicineForm.valueOf(s);
-    } catch (Exception e) {
-      return PharmacyExcelHelper.mapFormFallback(s);
-    }
-  }
-
-  private MedicineSchedule parseMedicineSchedule(String val) {
-    if (!hasText(val)) {
-      return MedicineSchedule.OTC;
-    }
-    String s = val.trim().toUpperCase();
-    try {
-      MedicineSchedule mapped = PharmacyExcelHelper.mapScheduleFallback(s);
-      return mapped != null ? mapped : MedicineSchedule.valueOf(s);
-    } catch (Exception e) {
-      return null;
     }
   }
 
@@ -259,44 +207,48 @@ public class PharmacyExcelService {
   @Transactional
   public StockImportResponse importStock(MultipartFile file) {
     try (var workbook = WorkbookFactory.create(file.getInputStream())) {
-      int totalRows = 0;
-      int imported = 0;
-      int skipped = 0;
-      int notFound = 0;
-      String lastError = null;
-
-      for (Row row : workbook.getSheetAt(0)) {
-        if (row.getRowNum() == 0 || blank(row, 0)) {
-          continue;
-        }
-
-        totalRows++;
-        try {
-          String result = processStockRow(row);
-          if ("SUCCESS".equals(result)) {
-            imported++;
-          } else if ("NOT_FOUND".equals(result)) {
-            notFound++;
-          }
-        } catch (Exception e) {
-          log.error("Failed to import stock row {}: {}", row.getRowNum(), e.getMessage());
-          lastError = e.getMessage();
-          skipped++;
-        }
-      }
-
-      return StockImportResponse.builder()
-          .totalRows(totalRows)
-          .importedRows(imported)
-          .skippedRows(skipped)
-          .medicineNotFoundRows(notFound)
-          .lastError(lastError)
-          .build();
+      return processStockWorkbook(workbook);
     } catch (IOException e) {
       log.error("Stock Excel import failed", e);
       throw new ApiException(
           "IMPORT_FAILED", "Unable to read stock Excel file", HttpStatus.BAD_REQUEST);
     }
+  }
+
+  private StockImportResponse processStockWorkbook(Workbook workbook) {
+    int totalRows = 0;
+    int imported = 0;
+    int skipped = 0;
+    int notFound = 0;
+    String lastError = null;
+
+    for (Row row : workbook.getSheetAt(0)) {
+      if (row.getRowNum() == 0 || blank(row, 0)) {
+        continue;
+      }
+
+      totalRows++;
+      try {
+        String result = processStockRow(row);
+        if ("SUCCESS".equals(result)) {
+          imported++;
+        } else if ("NOT_FOUND".equals(result)) {
+          notFound++;
+        }
+      } catch (Exception e) {
+        log.error("Failed to import stock row {}: {}", row.getRowNum(), e.getMessage());
+        lastError = e.getMessage();
+        skipped++;
+      }
+    }
+
+    return StockImportResponse.builder()
+        .totalRows(totalRows)
+        .importedRows(imported)
+        .skippedRows(skipped)
+        .medicineNotFoundRows(notFound)
+        .lastError(lastError)
+        .build();
   }
 
   private String processStockRow(Row row) {

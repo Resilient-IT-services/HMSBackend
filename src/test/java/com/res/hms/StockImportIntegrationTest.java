@@ -82,7 +82,15 @@ class StockImportIntegrationTest {
                 .session(session)
                 .header("X-Hospital-Id", testHospitalId.toString())
                 .contentType(MediaType.APPLICATION_JSON)
-                .content("{\"name\": \"ExcelMedicine\", \"strength\": \"500mg\"}"))
+                .content(
+                    "{"
+                        + "\"name\": \"ExcelMedicine\","
+                        + "\"genericName\": \"ExcelMedicine\","
+                        + "\"composition\": \"ExcelMedicine 500mg\","
+                        + "\"strength\": \"500mg\","
+                        + "\"form\": \"TABLET\","
+                        + "\"manufacturer\": \"Generic Pharma\""
+                        + "}"))
         .andExpect(status().isOk());
 
     // 2. Prepare Excel file
