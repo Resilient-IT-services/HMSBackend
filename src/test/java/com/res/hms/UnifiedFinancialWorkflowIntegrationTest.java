@@ -273,7 +273,7 @@ class UnifiedFinancialWorkflowIntegrationTest {
     // 3. Perform Request
     mockMvc
         .perform(
-            post("/api/v1/pharmacy/quick-sale")
+            post("/api/v1/pharmacy/sales")
                 .session(session)
                 .header("X-Hospital-Id", hospitalId.toString())
                 .contentType(MediaType.APPLICATION_JSON)

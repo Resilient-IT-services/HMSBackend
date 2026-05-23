@@ -165,20 +165,25 @@ public class PrescriptionService {
 
     if (dto.getItems() != null) {
       for (PrescriptionItemDTO itemDto : dto.getItems()) {
-        Medicine medicine =
-            medicineRepository
-                .findById(itemDto.getMedicineId())
-                .orElseThrow(
-                    () ->
-                        new ApiException("NOT_FOUND", "Medicine not found", HttpStatus.NOT_FOUND));
-
         PrescriptionItem item = new PrescriptionItem();
         item.setHospitalId(hospitalId);
         item.setPrescription(prescription);
-        item.setMedicineId(medicine.getId());
-        item.setMedicineName(medicine.getName());
         item.setDosage(itemDto.getDosage());
         item.setDuration(itemDto.getDuration());
+
+        if (itemDto.getMedicineId() != null) {
+          Medicine medicine =
+              medicineRepository
+                  .findById(itemDto.getMedicineId())
+                  .orElseThrow(
+                      () ->
+                          new ApiException("NOT_FOUND", "Medicine not found", HttpStatus.NOT_FOUND));
+          item.setMedicineId(medicine.getId());
+          item.setMedicineName(medicine.getName());
+        } else {
+          item.setMedicineId(null);
+          item.setMedicineName(itemDto.getMedicineName());
+        }
         prescription.getItems().add(item);
       }
     }
@@ -187,6 +192,56 @@ public class PrescriptionService {
     appointmentRepository.save(appointment);
 
     return toDto(prescriptionRepository.save(prescription));
+  }
+
+  @Transactional
+  public void saveOrUpdatePrescription(Appointment appointment, PrescriptionDTO dto) {
+    UUID hospitalId = hospitalContext.requireHospitalId();
+
+    Prescription prescription =
+        prescriptionRepository
+            .findByAppointmentId(appointment.getId())
+            .orElseGet(
+                () -> {
+                  Prescription p = new Prescription();
+                  p.setHospitalId(hospitalId);
+                  p.setAppointmentId(appointment.getId());
+                  p.setPatientId(appointment.getPatientId());
+                  p.setPatientName(appointment.getPatientName());
+                  p.setDoctorId(appointment.getDoctorId());
+                  p.setDoctorName(appointment.getDoctorName());
+                  return p;
+                });
+
+    // Clear existing items and re-add from DTO for simplicity in "upsert"
+    prescription.getItems().clear();
+
+    if (dto.getItems() != null) {
+      for (PrescriptionItemDTO itemDto : dto.getItems()) {
+        PrescriptionItem item = new PrescriptionItem();
+        item.setHospitalId(hospitalId);
+        item.setPrescription(prescription);
+        item.setDosage(itemDto.getDosage());
+        item.setDuration(itemDto.getDuration());
+
+        if (itemDto.getMedicineId() != null) {
+          Medicine medicine =
+              medicineRepository
+                  .findById(itemDto.getMedicineId())
+                  .orElseThrow(
+                      () ->
+                          new ApiException("NOT_FOUND", "Medicine not found", HttpStatus.NOT_FOUND));
+          item.setMedicineId(medicine.getId());
+          item.setMedicineName(medicine.getName());
+        } else {
+          item.setMedicineId(null);
+          item.setMedicineName(itemDto.getMedicineName());
+        }
+        prescription.getItems().add(item);
+      }
+    }
+
+    prescriptionRepository.save(prescription);
   }
 
   @Transactional(readOnly = true)
