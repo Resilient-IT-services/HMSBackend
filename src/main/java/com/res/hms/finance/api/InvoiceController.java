@@ -5,6 +5,9 @@ import com.res.hms.finance.application.dto.InvoiceDTO;
 import com.res.hms.finance.application.service.InvoiceService;
 import java.util.UUID;
 import lombok.RequiredArgsConstructor;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.MediaType;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -26,4 +29,19 @@ public class InvoiceController {
   public ApiResponse<InvoiceDTO> getById(@PathVariable UUID id) {
     return ApiResponse.success(invoiceService.getById(id));
   }
+
+    @GetMapping("/{id}/export")
+    public ResponseEntity<byte[]> exportInvoice(
+        @PathVariable UUID id) {
+
+        byte[] pdf = invoiceService.exportInvoicePdf(id);
+
+        return ResponseEntity.ok()
+            .header(
+                HttpHeaders.CONTENT_DISPOSITION,
+                "attachment; filename=invoice.pdf"
+            )
+            .contentType(MediaType.APPLICATION_PDF)
+            .body(pdf);
+    }
 }

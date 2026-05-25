@@ -245,7 +245,13 @@ public class AppointmentService {
             .ifPresent(p -> builder.prescription(prescriptionService.toDto(p)));
 
         if (appointment.getPatientId() != null) {
-            builder.patientId(appointment.getPatientId()).patientName(appointment.getPatientName());
+            builder.patientId(appointment.getPatientId())
+                .patientName(appointment.getPatientName())
+                .patientCode(
+                    appointment.getPatient() != null
+                        ? appointment.getPatient().getPatientCode()
+                        : null
+                );
         }
 
         if (appointment.getDoctorId() != null) {

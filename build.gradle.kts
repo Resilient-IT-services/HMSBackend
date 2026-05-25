@@ -43,6 +43,7 @@ dependencies {
     implementation("org.mapstruct:mapstruct:1.5.5.Final")
     implementation("org.apache.poi:poi-ooxml:5.2.5")
     implementation("com.github.librepdf:openpdf:1.3.30")
+    implementation("com.itextpdf:itextpdf:5.5.13.3")
     compileOnly("org.projectlombok:lombok")
     developmentOnly("org.springframework.boot:spring-boot-devtools")
     runtimeOnly("org.postgresql:postgresql")
