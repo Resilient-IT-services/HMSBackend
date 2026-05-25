@@ -15,4 +15,5 @@ public class StockImportResponse {
   private int skippedRows;
   private int medicineNotFoundRows;
   private String lastError;
+  private String errorFileBase64;
 }

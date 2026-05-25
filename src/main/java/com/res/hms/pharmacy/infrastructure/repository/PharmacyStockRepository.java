@@ -14,8 +14,22 @@ import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
 public interface PharmacyStockRepository extends BaseRepository<PharmacyStock> {
+  List<PharmacyStock> findByHospitalIdOrderByMedicineNameAsc(UUID hospitalId);
+
   Page<PharmacyStock> findAllByHospitalIdAndQuantityLessThan(
       UUID hospitalId, Integer threshold, Pageable pageable);
+
+  @Query(
+      """
+      SELECT s FROM PharmacyStock s
+      JOIN FETCH s.medicine m
+      LEFT JOIN HospitalMedicineCatalog c ON c.medicine.id = m.id AND c.hospitalId = :hospitalId
+      WHERE s.hospitalId = :hospitalId
+        AND s.quantity > 0
+        AND s.quantity < COALESCE(c.reorderLevel, 50)
+      ORDER BY s.medicine.name ASC
+      """)
+  Page<PharmacyStock> findLowStock(@Param("hospitalId") UUID hospitalId, Pageable pageable);
 
   Optional<PharmacyStock> findByIdAndHospitalId(UUID id, UUID hospitalId);
 

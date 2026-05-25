@@ -22,6 +22,7 @@ public class PharmacyStockDTO {
   private LocalDate expiryDate;
   private Integer quantity;
   private Integer totalQuantity;
+  private Integer reorderLevel;
   private BigDecimal purchasePrice;
   private BigDecimal sellingPrice;
   private BigDecimal price;
