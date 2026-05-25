@@ -102,6 +102,12 @@ public class MedicineController {
     return ApiResponse.success(medicineService.addStock(request));
   }
 
+  @GetMapping("/stock/export")
+  @PreAuthorize("hasAnyRole('ADMIN','PHARMACIST','SUPER_ADMIN')")
+  public void exportStock(jakarta.servlet.http.HttpServletResponse response) throws java.io.IOException {
+    medicineService.exportStockExcel(response);
+  }
+
   @GetMapping("/stock")
   @PreAuthorize("hasAnyRole('ADMIN','PHARMACIST','DOCTOR','NURSE','SUPER_ADMIN')")
   public ApiResponse<PageResponse<PharmacyStockDTO>> listStock(

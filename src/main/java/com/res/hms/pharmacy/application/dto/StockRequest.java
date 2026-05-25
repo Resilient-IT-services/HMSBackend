@@ -26,4 +26,5 @@ public class StockRequest {
 
   @NotNull private BigDecimal purchasePrice;
   @NotNull private BigDecimal sellingPrice;
+  private Integer reorderLevel;
 }

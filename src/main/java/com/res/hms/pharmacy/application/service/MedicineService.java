@@ -158,7 +158,73 @@ public class MedicineService {
     stock.setPurchasePrice(request.getPurchasePrice());
     stock.setSellingPrice(request.getSellingPrice());
     PharmacyStock saved = pharmacyStockRepository.save(stock);
+
+    if (request.getReorderLevel() != null) {
+      hospitalMedicineCatalogRepository
+          .findByHospitalIdAndMedicineId(hospitalId, medicine.getId())
+          .ifPresent(catalog -> {
+            catalog.setReorderLevel(request.getReorderLevel());
+            hospitalMedicineCatalogRepository.save(catalog);
+          });
+    }
+
     return toStockDto(saved);
+  }
+
+  @Transactional(readOnly = true)
+  public void exportStockExcel(jakarta.servlet.http.HttpServletResponse response) throws java.io.IOException {
+    UUID hospitalId = hospitalContext.requireHospitalId();
+    List<PharmacyStock> allStock = pharmacyStockRepository.findByHospitalIdOrderByMedicineNameAsc(hospitalId);
+
+    response.setContentType("application/vnd.openxmlformats-officedocument.spreadsheetml.sheet");
+    response.setHeader("Content-Disposition", "attachment; filename=pharmacy_stock_export.xlsx");
+
+    try (var workbook = new org.apache.poi.xssf.usermodel.XSSFWorkbook();
+         var outputStream = response.getOutputStream()) {
+      var sheet = workbook.createSheet("Stock Inventory");
+      
+      // Header Style
+      var headerStyle = workbook.createCellStyle();
+      headerStyle.setFillForegroundColor(org.apache.poi.ss.usermodel.IndexedColors.GREY_25_PERCENT.getIndex());
+      headerStyle.setFillPattern(org.apache.poi.ss.usermodel.FillPatternType.SOLID_FOREGROUND);
+      var font = workbook.createFont();
+      font.setBold(true);
+      headerStyle.setFont(font);
+
+      // Create Header Row
+      var headerRow = sheet.createRow(0);
+      String[] columns = {"Medicine Name", "Batch Number", "Expiry Date", "Quantity", "Purchase Price", "Selling Price", "Low Stock Label"};
+      for (int i = 0; i < columns.length; i++) {
+        var cell = headerRow.createCell(i);
+        cell.setCellValue(columns[i]);
+        cell.setCellStyle(headerStyle);
+      }
+
+      // Populate Data
+      int rowIdx = 1;
+      for (PharmacyStock stock : allStock) {
+        var row = sheet.createRow(rowIdx++);
+        row.createCell(0).setCellValue(stock.getMedicine().getName());
+        row.createCell(1).setCellValue(stock.getBatchNumber());
+        row.createCell(2).setCellValue(stock.getExpiryDate() != null ? stock.getExpiryDate().toString() : "");
+        row.createCell(3).setCellValue(stock.getQuantity());
+        row.createCell(4).setCellValue(stock.getPurchasePrice().doubleValue());
+        row.createCell(5).setCellValue(stock.getSellingPrice().doubleValue());
+        
+        // Fetch reorder level from catalog
+        int reorderLevel = hospitalMedicineCatalogRepository
+            .findByHospitalIdAndMedicineId(hospitalId, stock.getMedicine().getId())
+            .map(com.res.hms.pharmacy.domain.HospitalMedicineCatalog::getReorderLevel)
+            .orElse(50);
+        row.createCell(6).setCellValue(reorderLevel);
+      }
+
+      for (int i = 0; i < columns.length; i++) {
+        sheet.autoSizeColumn(i);
+      }
+
+      workbook.write(outputStream);
+    }
   }
 
   @Transactional(readOnly = true)
@@ -214,8 +280,7 @@ public class MedicineService {
     if (lowStock) {
       return PageResponse.from(
           pharmacyStockRepository
-              .findAllByHospitalIdAndQuantityLessThan(
-                  hospitalId, DEFAULT_LOW_STOCK_THRESHOLD, pageRequest)
+              .findLowStock(hospitalId, pageRequest)
               .map(this::toStockDtoSimple));
     }
     if (hasText(search)) {
@@ -231,6 +296,11 @@ public class MedicineService {
   }
 
   private PharmacyStockDTO toStockDtoSimple(PharmacyStock stock) {
+    Integer reorderLevel = hospitalMedicineCatalogRepository
+        .findByHospitalIdAndMedicineId(stock.getHospitalId(), stock.getMedicine().getId())
+        .map(com.res.hms.pharmacy.domain.HospitalMedicineCatalog::getReorderLevel)
+        .orElse(50);
+
     return PharmacyStockDTO.builder()
         .id(stock.getId())
         .medicineId(stock.getMedicine().getId())
@@ -240,6 +310,7 @@ public class MedicineService {
         .batchNumber(stock.getBatchNumber())
         .expiryDate(stock.getExpiryDate())
         .quantity(stock.getQuantity())
+        .reorderLevel(reorderLevel)
         .purchasePrice(stock.getPurchasePrice())
         .sellingPrice(stock.getSellingPrice())
         .price(stock.getSellingPrice())
@@ -250,6 +321,12 @@ public class MedicineService {
     Long total =
         pharmacyStockRepository.availableQuantity(
             stock.getHospitalId(), stock.getMedicine().getId(), LocalDate.now());
+    
+    Integer reorderLevel = hospitalMedicineCatalogRepository
+        .findByHospitalIdAndMedicineId(stock.getHospitalId(), stock.getMedicine().getId())
+        .map(com.res.hms.pharmacy.domain.HospitalMedicineCatalog::getReorderLevel)
+        .orElse(50);
+
     return PharmacyStockDTO.builder()
         .id(stock.getId())
         .medicineId(stock.getMedicine().getId())
@@ -260,6 +337,7 @@ public class MedicineService {
         .expiryDate(stock.getExpiryDate())
         .quantity(stock.getQuantity())
         .totalQuantity(total.intValue())
+        .reorderLevel(reorderLevel)
         .purchasePrice(stock.getPurchasePrice())
         .sellingPrice(stock.getSellingPrice())
         .price(stock.getSellingPrice())
@@ -361,7 +439,7 @@ public class MedicineService {
                             c.setMedicine(medicine);
                             return c;
                           });
-              catalog.setReorderLevel(dto.getReorderLevel());
+              catalog.setReorderLevel(dto.getReorderLevel() != null ? dto.getReorderLevel() : 50);
               catalog.setBaseSellingPrice(dto.getSellingPrice());
               catalog.setTaxPercentage(dto.getTaxPercentage());
               hospitalMedicineCatalogRepository.save(catalog);
