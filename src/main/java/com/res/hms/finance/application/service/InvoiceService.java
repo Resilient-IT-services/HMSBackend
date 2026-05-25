@@ -1,5 +1,16 @@
 package com.res.hms.finance.application.service;
 
+import java.awt.Color;
+import com.lowagie.text.Phrase;
+import com.lowagie.text.Document;
+import com.lowagie.text.Element;
+import com.lowagie.text.Font;
+import com.lowagie.text.FontFactory;
+import com.lowagie.text.PageSize;
+import com.lowagie.text.Paragraph;
+import com.lowagie.text.pdf.PdfPCell;
+import com.lowagie.text.pdf.PdfPTable;
+import com.lowagie.text.pdf.PdfWriter;
 import com.res.hms.finance.application.dto.InvoiceDTO;
 import com.res.hms.finance.application.dto.InvoiceItemDTO;
 import com.res.hms.finance.domain.Invoice;
@@ -8,7 +19,10 @@ import com.res.hms.finance.domain.InvoiceItemCategory;
 import com.res.hms.finance.domain.InvoiceStatus;
 import com.res.hms.finance.infrastructure.repository.InvoiceItemRepository;
 import com.res.hms.finance.infrastructure.repository.InvoiceRepository;
+
+import java.io.ByteArrayOutputStream;
 import java.math.BigDecimal;
+import java.nio.charset.StandardCharsets;
 import java.util.List;
 import java.util.UUID;
 import java.util.stream.Collectors;
@@ -17,6 +31,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+
 
 @Slf4j
 @Service
@@ -196,4 +211,121 @@ public class InvoiceService {
               invoiceRepository.save(invoice);
             });
   }
+    @Transactional(readOnly = true)
+    public byte[] exportInvoicePdf(UUID invoiceId) {
+
+        try {
+
+            Invoice invoice =
+                invoiceRepository
+                    .findById(invoiceId)
+                    .orElseThrow(() -> new RuntimeException("Invoice not found"));
+
+            String patientName =
+                invoice.getPatient() != null
+                    ? invoice.getPatient().getFullName()
+                    : "Unknown";
+
+            ByteArrayOutputStream baos = new ByteArrayOutputStream();
+            Document document = new Document(PageSize.A4, 40, 40, 50, 50);
+            PdfWriter.getInstance(document, baos);
+
+            document.open();
+
+// Fonts
+            Font titleFont = FontFactory.getFont(FontFactory.HELVETICA_BOLD, 22);
+            Font headingFont = FontFactory.getFont(FontFactory.HELVETICA_BOLD, 14);
+            Font normalFont = FontFactory.getFont(FontFactory.HELVETICA, 12);
+            Font boldFont = FontFactory.getFont(FontFactory.HELVETICA_BOLD, 12);
+
+// Header
+            Paragraph hospitalTitle = new Paragraph("CAREFLOW HOSPITAL", titleFont);
+            hospitalTitle.setAlignment(Element.ALIGN_CENTER);
+            document.add(hospitalTitle);
+
+            Paragraph subtitle = new Paragraph("Consultation Invoice", normalFont);
+            subtitle.setAlignment(Element.ALIGN_CENTER);
+            subtitle.setSpacingAfter(25);
+            document.add(subtitle);
+
+// Invoice Info Table
+            PdfPTable infoTable = new PdfPTable(2);
+
+            infoTable.setWidthPercentage(100);
+            infoTable.setSpacingAfter(20);
+
+            infoTable.addCell(getCell("Invoice Number", boldFont));
+            infoTable.addCell(getCell(invoice.getInvoiceNumber(), normalFont));
+
+            infoTable.addCell(getCell("Patient Name", boldFont));
+            infoTable.addCell(getCell(patientName, normalFont));
+
+            infoTable.addCell(getCell("Invoice Status", boldFont));
+            infoTable.addCell(getCell(invoice.getStatus().name(), normalFont));
+
+            infoTable.addCell(getCell("Total Amount", boldFont));
+            infoTable.addCell(getCell("₹ " + invoice.getTotalAmount(), normalFont));
+
+            document.add(infoTable);
+
+// Billing Table
+            PdfPTable billingTable = new PdfPTable(4);
+
+            billingTable.setWidthPercentage(100);
+            billingTable.setSpacingBefore(10);
+
+            billingTable.addCell(getHeaderCell("Description"));
+            billingTable.addCell(getHeaderCell("Qty"));
+            billingTable.addCell(getHeaderCell("Price"));
+            billingTable.addCell(getHeaderCell("Total"));
+
+            billingTable.addCell(getCell("Consultation Fee", normalFont));
+            billingTable.addCell(getCell("1", normalFont));
+            billingTable.addCell(getCell("₹ " + invoice.getSubtotalAmount(), normalFont));
+            billingTable.addCell(getCell("₹ " + invoice.getTotalAmount(), boldFont));
+
+            document.add(billingTable);
+
+// Footer
+            Paragraph footer = new Paragraph(
+                "\nThank you for choosing CareFlow Hospital.",
+                normalFont
+            );
+
+            footer.setAlignment(Element.ALIGN_CENTER);
+            footer.setSpacingBefore(40);
+
+            document.add(footer);
+
+            document.close();
+
+            return baos.toByteArray();
+
+        } catch (Exception e) {
+            throw new RuntimeException("Failed to generate PDF", e);
+        }
+    }
+    private PdfPCell getCell(String text, Font font) {
+
+        PdfPCell cell = new PdfPCell(new Phrase(text, font));
+
+        cell.setPadding(10);
+        cell.setBorderWidth(0.5f);
+
+        return cell;
+    }
+
+    private PdfPCell getHeaderCell(String text) {
+
+        Font font = FontFactory.getFont(FontFactory.HELVETICA_BOLD);
+        font.setSize(12);
+
+        PdfPCell cell = new PdfPCell(new Phrase(text, font));
+
+        cell.setBackgroundColor(new Color(255, 102, 0));
+
+        cell.setPadding(10);
+
+        return cell;
+    }
 }
