@@ -232,13 +232,13 @@ public class InvoiceService {
 
             document.open();
 
-// Fonts
+
             Font titleFont = FontFactory.getFont(FontFactory.HELVETICA_BOLD, 22);
             Font headingFont = FontFactory.getFont(FontFactory.HELVETICA_BOLD, 14);
             Font normalFont = FontFactory.getFont(FontFactory.HELVETICA, 12);
             Font boldFont = FontFactory.getFont(FontFactory.HELVETICA_BOLD, 12);
 
-// Header
+
             Paragraph hospitalTitle = new Paragraph("CAREFLOW HOSPITAL", titleFont);
             hospitalTitle.setAlignment(Element.ALIGN_CENTER);
             document.add(hospitalTitle);
@@ -248,7 +248,7 @@ public class InvoiceService {
             subtitle.setSpacingAfter(25);
             document.add(subtitle);
 
-// Invoice Info Table
+
             PdfPTable infoTable = new PdfPTable(2);
 
             infoTable.setWidthPercentage(100);
@@ -268,7 +268,7 @@ public class InvoiceService {
 
             document.add(infoTable);
 
-// Billing Table
+
             PdfPTable billingTable = new PdfPTable(4);
 
             billingTable.setWidthPercentage(100);
@@ -286,7 +286,7 @@ public class InvoiceService {
 
             document.add(billingTable);
 
-// Footer
+
             Paragraph footer = new Paragraph(
                 "\nThank you for choosing CareFlow Hospital.",
                 normalFont
