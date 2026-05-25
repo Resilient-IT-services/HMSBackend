@@ -6,10 +6,6 @@ import com.res.hms.core.tenant.HospitalContext;
 import com.res.hms.pharmacy.application.dto.MedicineDTO;
 import com.res.hms.pharmacy.application.dto.MedicineImportResponse;
 import com.res.hms.pharmacy.application.dto.MedicineSummaryDTO;
-import com.res.hms.pharmacy.application.dto.PharmacyReturnRequest;
-import com.res.hms.pharmacy.application.dto.PharmacyReturnResponse;
-import com.res.hms.pharmacy.application.dto.PharmacySaleRequest;
-import com.res.hms.pharmacy.application.dto.PharmacySaleResponse;
 import com.res.hms.pharmacy.application.dto.PharmacyStockDTO;
 import com.res.hms.pharmacy.application.dto.StockImportResponse;
 import com.res.hms.pharmacy.application.dto.StockRequest;
@@ -36,20 +32,17 @@ import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
-
 @Slf4j
 @Service
 @RequiredArgsConstructor
 public class MedicineService {
-
   private static final int DEFAULT_LOW_STOCK_THRESHOLD = 20;
-
   private final MedicineRepository medicineRepository;
   private final HospitalMedicineCatalogRepository hospitalMedicineCatalogRepository;
   private final PharmacyStockRepository pharmacyStockRepository;
   private final HospitalContext hospitalContext;
   private final PharmacyExcelService pharmacyExcelService;
-  private final MedicineSalesService medicineSalesService;
+  private final PharmacySaleService pharmacySaleService;
 
   private Specification<Medicine> getFilterSpec(String search) {
     return (root, query, cb) -> {
@@ -269,26 +262,6 @@ public class MedicineService {
         .sellingPrice(stock.getSellingPrice())
         .price(stock.getSellingPrice())
         .build();
-  }
-
-  @Transactional
-  public PharmacySaleResponse createSale(PharmacySaleRequest request) {
-    return medicineSalesService.createSale(request);
-  }
-
-  @Transactional
-  public PharmacyReturnResponse returnStock(PharmacyReturnRequest request) {
-    return medicineSalesService.returnStock(request);
-  }
-
-  @Transactional(readOnly = true)
-  public List<PharmacyStockDTO> expiryAlerts(int days) {
-    return medicineSalesService.expiryAlerts(days);
-  }
-
-  @Transactional(readOnly = true)
-  public PageResponse<PharmacyStockDTO> lowStockAlerts(int page, int size, int threshold) {
-    return medicineSalesService.lowStockAlerts(page, size, threshold);
   }
 
   public Medicine requireMedicine(UUID id) {

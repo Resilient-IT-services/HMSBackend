@@ -46,11 +46,20 @@ class PharmacyExcelServiceTest {
     var sheet = workbook.createSheet();
     var header = sheet.createRow(0);
     header.createCell(0).setCellValue("Name");
+    header.createCell(1).setCellValue("Generic Name");
+    header.createCell(2).setCellValue("Salt/Composition");
+    header.createCell(3).setCellValue("Strength");
+    header.createCell(4).setCellValue("Form");
+    header.createCell(5).setCellValue("Manufacturer");
+    header.createCell(6).setCellValue("Schedule");
 
     var row = sheet.createRow(1);
     row.createCell(0).setCellValue("New Med");
+    row.createCell(1).setCellValue("Generic Name");
+    row.createCell(2).setCellValue("Salt/Composition");
     row.createCell(3).setCellValue("500mg");
     row.createCell(4).setCellValue("TABLET");
+    row.createCell(5).setCellValue("Manufacturer");
     row.createCell(6).setCellValue("OTC");
 
     var out = new ByteArrayOutputStream();

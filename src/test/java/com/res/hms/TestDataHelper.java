@@ -121,4 +121,29 @@ public class TestDataHelper {
 
     userRepo.save(user);
   }
+
+  @Autowired private com.res.hms.pharmacy.infrastructure.repository.MedicineRepository medicineRepository;
+  @Autowired private com.res.hms.pharmacy.infrastructure.repository.PharmacyStockRepository pharmacyStockRepository;
+
+  @Transactional(propagation = Propagation.REQUIRES_NEW)
+  public com.res.hms.pharmacy.domain.Medicine createTestMedicine(UUID hospitalId, String name, String strength) {
+    com.res.hms.pharmacy.domain.Medicine m = new com.res.hms.pharmacy.domain.Medicine();
+    m.setName(name);
+    m.setStrength(strength);
+    m.setCategory("General");
+    return medicineRepository.save(m);
+  }
+
+  @Transactional(propagation = Propagation.REQUIRES_NEW)
+  public com.res.hms.pharmacy.domain.PharmacyStock addStock(UUID hospitalId, com.res.hms.pharmacy.domain.Medicine medicine, int quantity, BigDecimal unitPrice, String batch) {
+    com.res.hms.pharmacy.domain.PharmacyStock s = new com.res.hms.pharmacy.domain.PharmacyStock();
+    s.setHospitalId(hospitalId);
+    s.setMedicine(medicine);
+    s.setQuantity(quantity);
+    s.setSellingPrice(unitPrice);
+    s.setPurchasePrice(unitPrice.subtract(BigDecimal.ONE));
+    s.setBatchNumber(batch);
+    s.setExpiryDate(java.time.LocalDate.now().plusYears(1));
+    return pharmacyStockRepository.save(s);
+  }
 }

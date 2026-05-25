@@ -71,7 +71,15 @@ class MedicineControllerIntegrationTest {
 
   @Test
   void testDuplicateMedicineValidation() throws Exception {
-    String medicineJson = "{\"name\": \"Azithromycin\", \"strength\": \"250mg\"}";
+    String medicineJson =
+        "{"
+            + "\"name\": \"Azithromycin\","
+            + "\"genericName\": \"Azithromycin\","
+            + "\"composition\": \"Azithromycin 250mg\","
+            + "\"strength\": \"250mg\","
+            + "\"form\": \"TABLET\","
+            + "\"manufacturer\": \"Generic Pharma\""
+            + "}";
 
     // 1. Create first time
     mockMvc
@@ -103,6 +111,8 @@ class MedicineControllerIntegrationTest {
             + "\"name\": \"Paracetamol\","
             + "\"genericName\": \"Acetaminophen\","
             + "\"composition\": \"500mg\","
+            + "\"strength\": \"500mg\","
+            + "\"form\": \"TABLET\","
             + "\"category\": \"Analgesic\","
             + "\"manufacturer\": \"GSK\","
             + "\"batchNumber\": \"BATCH-001\","
@@ -162,6 +172,11 @@ class MedicineControllerIntegrationTest {
                 .content(
                     "{"
                         + "\"name\": \"Amoxicillin\","
+                        + "\"genericName\": \"Amoxicillin\","
+                        + "\"composition\": \"Amoxicillin 500mg\","
+                        + "\"strength\": \"500mg\","
+                        + "\"form\": \"CAPSULE\","
+                        + "\"manufacturer\": \"Generic Pharma\","
                         + "\"batchNumber\": \"AMOX-01\","
                         + "\"currentStock\": 50,"
                         + "\"sellingPrice\": 10.0"

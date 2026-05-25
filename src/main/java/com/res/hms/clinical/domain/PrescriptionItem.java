@@ -20,7 +20,7 @@ public class PrescriptionItem extends HospitalScopedEntity {
   @JoinColumn(name = "prescription_id", nullable = false)
   private Prescription prescription;
 
-  @Column(name = "medicine_id", nullable = false)
+  @Column(name = "medicine_id")
   private java.util.UUID medicineId;
 
   @Column(name = "medicine_name")
