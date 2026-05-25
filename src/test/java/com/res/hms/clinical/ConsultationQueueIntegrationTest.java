@@ -37,124 +37,134 @@ import org.springframework.transaction.annotation.Transactional;
 @Transactional
 class ConsultationQueueIntegrationTest {
 
-    @Autowired private MockMvc mockMvc;
-    @Autowired private UserAccountRepository userAccountRepository;
-    @Autowired private RoleRepository roleRepository;
-    @Autowired private PasswordEncoder passwordEncoder;
-    @Autowired private TestDataHelper testDataHelper;
-    @Autowired private AppointmentRepository appointmentRepository;
+  @Autowired private MockMvc mockMvc;
+  @Autowired private UserAccountRepository userAccountRepository;
+  @Autowired private RoleRepository roleRepository;
+  @Autowired private PasswordEncoder passwordEncoder;
+  @Autowired private TestDataHelper testDataHelper;
+  @Autowired private AppointmentRepository appointmentRepository;
 
-    private UUID hospitalId;
-    private UUID doctorId;
-    private MockHttpSession session;
+  private UUID hospitalId;
+  private UUID doctorId;
+  private MockHttpSession session;
 
-    @BeforeEach
-    void setUp() throws Exception {
-        hospitalId = testDataHelper.createHospitalIfMissing("QUEUE_TEST", "Queue Hospital");
+  @BeforeEach
+  void setUp() throws Exception {
+    hospitalId = testDataHelper.createHospitalIfMissing("QUEUE_TEST", "Queue Hospital");
 
-        // Create Doctor
-        UserAccount drUser = new UserAccount();
-        drUser.setUsername("queue_dr");
-        drUser.setFullName("Dr. Queue");
-        drUser.setPasswordHash(passwordEncoder.encode("password"));
-        drUser.setActive(true);
-        drUser.setGender(Gender.MALE);
-        drUser.setDob(LocalDate.of(1980, 1, 1));
+    // Create Doctor
+    UserAccount drUser = new UserAccount();
+    drUser.setUsername("queue_dr");
+    drUser.setFullName("Dr. Queue");
+    drUser.setPasswordHash(passwordEncoder.encode("password"));
+    drUser.setActive(true);
+    drUser.setGender(Gender.MALE);
+    drUser.setDob(LocalDate.of(1980, 1, 1));
 
-        DoctorProfile drProfile = new DoctorProfile();
-        drProfile.setUser(drUser);
-        drUser.setDoctorProfile(drProfile);
+    DoctorProfile drProfile = new DoctorProfile();
+    drProfile.setUser(drUser);
+    drUser.setDoctorProfile(drProfile);
 
-        UserContract drAssign = new UserContract();
-        drAssign.setUser(drUser);
-        drAssign.setHospitalId(hospitalId);
-        drAssign.setRole(roleRepository.findByCode(RoleCode.DOCTOR).orElseThrow());
+    UserContract drAssign = new UserContract();
+    drAssign.setUser(drUser);
+    drAssign.setHospitalId(hospitalId);
+    drAssign.setRole(roleRepository.findByCode(RoleCode.DOCTOR).orElseThrow());
 
-        drUser.getContracts().add(drAssign);
-        UserAccount saved = userAccountRepository.save(drUser);
-        doctorId = saved.getDoctorProfile().getId();
+    drUser.getContracts().add(drAssign);
+    UserAccount saved = userAccountRepository.save(drUser);
+    doctorId = saved.getDoctorProfile().getId();
 
-        // Session
-        session = (MockHttpSession) mockMvc.perform(post("/api/v1/auth/login")
-                .contentType(MediaType.APPLICATION_JSON)
-                .content("{\"username\": \"queue_dr\", \"password\": \"password\"}"))
+    // Session
+    session =
+        (MockHttpSession)
+            mockMvc
+                .perform(
+                    post("/api/v1/auth/login")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"username\": \"queue_dr\", \"password\": \"password\"}"))
                 .andExpect(status().isOk())
-                .andReturn().getRequest().getSession();
-    }
+                .andReturn()
+                .getRequest()
+                .getSession();
+  }
 
-    @Test
-    void testDoctorSeesAllAppointmentsRegardlessOfVitals() throws Exception {
-        com.res.hms.clinical.domain.Patient patient1 = testDataHelper.createTestPatient(hospitalId);
-        com.res.hms.clinical.domain.Patient patient2 = testDataHelper.createTestPatient(hospitalId);
+  @Test
+  void testDoctorSeesAllAppointmentsRegardlessOfVitals() throws Exception {
+    com.res.hms.clinical.domain.Patient patient1 = testDataHelper.createTestPatient(hospitalId);
+    com.res.hms.clinical.domain.Patient patient2 = testDataHelper.createTestPatient(hospitalId);
 
-        // Appointment 1: SCHEDULED (No vitals)
-        Appointment apt1 = new Appointment();
-        apt1.setHospitalId(hospitalId);
-        apt1.setDoctorId(doctorId);
-        apt1.setDoctorName("Dr. Queue");
-        apt1.setPatientId(patient1.getId());
-        apt1.setPatientName(patient1.getFullName());
-        apt1.setAppointmentTime(Instant.now());
-        apt1.setStatus(AppointmentStatus.SCHEDULED);
-        appointmentRepository.save(apt1);
+    // Appointment 1: SCHEDULED (No vitals)
+    Appointment apt1 = new Appointment();
+    apt1.setHospitalId(hospitalId);
+    apt1.setDoctorId(doctorId);
+    apt1.setDoctorName("Dr. Queue");
+    apt1.setPatientId(patient1.getId());
+    apt1.setPatientName(patient1.getFullName());
+    apt1.setAppointmentTime(Instant.now());
+    apt1.setStatus(AppointmentStatus.SCHEDULED);
+    appointmentRepository.save(apt1);
 
-        // Appointment 2: VITALS_RECORDED
-        Appointment apt2 = new Appointment();
-        apt2.setHospitalId(hospitalId);
-        apt2.setDoctorId(doctorId);
-        apt2.setDoctorName("Dr. Queue");
-        apt2.setPatientId(patient2.getId());
-        apt2.setPatientName(patient2.getFullName());
-        apt2.setAppointmentTime(Instant.now().plusSeconds(3600));
-        apt2.setStatus(AppointmentStatus.VITALS_RECORDED);
-        appointmentRepository.save(apt2);
+    // Appointment 2: VITALS_RECORDED
+    Appointment apt2 = new Appointment();
+    apt2.setHospitalId(hospitalId);
+    apt2.setDoctorId(doctorId);
+    apt2.setDoctorName("Dr. Queue");
+    apt2.setPatientId(patient2.getId());
+    apt2.setPatientName(patient2.getFullName());
+    apt2.setAppointmentTime(Instant.now().plusSeconds(3600));
+    apt2.setStatus(AppointmentStatus.VITALS_RECORDED);
+    appointmentRepository.save(apt2);
 
-        // Doctor fetches their appointments
-        // Without status filter: Both are visible
-        mockMvc.perform(get("/api/v1/appointments")
+    // Doctor fetches their appointments
+    // Without status filter: Both are visible
+    mockMvc
+        .perform(
+            get("/api/v1/appointments")
                 .session(session)
                 .header("X-Hospital-Id", hospitalId.toString())
                 .param("doctorId", doctorId.toString()))
-                .andExpect(status().isOk())
-                .andExpect(jsonPath("$.data.content.length()").value(2));
-    }
+        .andExpect(status().isOk())
+        .andExpect(jsonPath("$.data.content.length()").value(2));
+  }
 
-    @Test
-    void testDoctorCanFilterByVitalsRecorded() throws Exception {
-        com.res.hms.clinical.domain.Patient patient1 = testDataHelper.createTestPatient(hospitalId);
-        com.res.hms.clinical.domain.Patient patient2 = testDataHelper.createTestPatient(hospitalId);
+  @Test
+  void testDoctorCanFilterByVitalsRecorded() throws Exception {
+    com.res.hms.clinical.domain.Patient patient1 = testDataHelper.createTestPatient(hospitalId);
+    com.res.hms.clinical.domain.Patient patient2 = testDataHelper.createTestPatient(hospitalId);
 
-        // Appointment 1: SCHEDULED (No vitals)
-        Appointment apt1 = new Appointment();
-        apt1.setHospitalId(hospitalId);
-        apt1.setDoctorId(doctorId);
-        apt1.setDoctorName("Dr. Queue");
-        apt1.setPatientId(patient1.getId());
-        apt1.setPatientName(patient1.getFullName());
-        apt1.setAppointmentTime(Instant.now());
-        apt1.setStatus(AppointmentStatus.SCHEDULED);
-        appointmentRepository.save(apt1);
+    // Appointment 1: SCHEDULED (No vitals)
+    Appointment apt1 = new Appointment();
+    apt1.setHospitalId(hospitalId);
+    apt1.setDoctorId(doctorId);
+    apt1.setDoctorName("Dr. Queue");
+    apt1.setPatientId(patient1.getId());
+    apt1.setPatientName(patient1.getFullName());
+    apt1.setAppointmentTime(Instant.now());
+    apt1.setStatus(AppointmentStatus.SCHEDULED);
+    appointmentRepository.save(apt1);
 
-        // Appointment 2: VITALS_RECORDED
-        Appointment apt2 = new Appointment();
-        apt2.setHospitalId(hospitalId);
-        apt2.setDoctorId(doctorId);
-        apt2.setDoctorName("Dr. Queue");
-        apt2.setPatientId(patient2.getId());
-        apt2.setPatientName(patient2.getFullName());
-        apt2.setAppointmentTime(Instant.now().plusSeconds(3600));
-        apt2.setStatus(AppointmentStatus.VITALS_RECORDED);
-        appointmentRepository.save(apt2);
+    // Appointment 2: VITALS_RECORDED
+    Appointment apt2 = new Appointment();
+    apt2.setHospitalId(hospitalId);
+    apt2.setDoctorId(doctorId);
+    apt2.setDoctorName("Dr. Queue");
+    apt2.setPatientId(patient2.getId());
+    apt2.setPatientName(patient2.getFullName());
+    apt2.setAppointmentTime(Instant.now().plusSeconds(3600));
+    apt2.setStatus(AppointmentStatus.VITALS_RECORDED);
+    appointmentRepository.save(apt2);
 
-        // Doctor fetches their queue (only VITALS_RECORDED)
-        mockMvc.perform(get("/api/v1/appointments")
+    // Doctor fetches their queue (only VITALS_RECORDED)
+    mockMvc
+        .perform(
+            get("/api/v1/appointments")
                 .session(session)
                 .header("X-Hospital-Id", hospitalId.toString())
                 .param("doctorId", doctorId.toString())
                 .param("status", "VITALS_RECORDED"))
-                .andExpect(status().isOk())
-                .andExpect(jsonPath("$.data.content.length()").value(1))
-                .andExpect(jsonPath("$.data.content[0].patientName").value(patient2.getFullName()))
-                .andExpect(jsonPath("$.data.content[0].status").value("VITALS_RECORDED"));
-    }
+        .andExpect(status().isOk())
+        .andExpect(jsonPath("$.data.content.length()").value(1))
+        .andExpect(jsonPath("$.data.content[0].patientName").value(patient2.getFullName()))
+        .andExpect(jsonPath("$.data.content[0].status").value("VITALS_RECORDED"));
+  }
 }

@@ -30,18 +30,14 @@ public class InvoiceController {
     return ApiResponse.success(invoiceService.getById(id));
   }
 
-    @GetMapping("/{id}/export")
-    public ResponseEntity<byte[]> exportInvoice(
-        @PathVariable UUID id) {
+  @GetMapping("/{id}/export")
+  public ResponseEntity<byte[]> exportInvoice(@PathVariable UUID id) {
 
-        byte[] pdf = invoiceService.exportInvoicePdf(id);
+    byte[] pdf = invoiceService.exportInvoicePdf(id);
 
-        return ResponseEntity.ok()
-            .header(
-                HttpHeaders.CONTENT_DISPOSITION,
-                "attachment; filename=invoice.pdf"
-            )
-            .contentType(MediaType.APPLICATION_PDF)
-            .body(pdf);
-    }
+    return ResponseEntity.ok()
+        .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=invoice.pdf")
+        .contentType(MediaType.APPLICATION_PDF)
+        .body(pdf);
+  }
 }

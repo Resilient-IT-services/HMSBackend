@@ -165,7 +165,9 @@ public class PharmacySaleService {
         }
       } else {
         throw new ApiException(
-            "BAD_REQUEST", "Either medicineId or medicineBatchId is required", HttpStatus.BAD_REQUEST);
+            "BAD_REQUEST",
+            "Either medicineId or medicineBatchId is required",
+            HttpStatus.BAD_REQUEST);
       }
     }
 
@@ -173,10 +175,7 @@ public class PharmacySaleService {
   }
 
   private BigDecimal consumeStock(
-      PharmacySale sale,
-      PharmacyStock stock,
-      int quantity,
-      QuickPharmacySaleRequest.Item itemDto) {
+      PharmacySale sale, PharmacyStock stock, int quantity, QuickPharmacySaleRequest.Item itemDto) {
     if (stock.getQuantity() < quantity) {
       throw new ApiException(
           "INSUFFICIENT_STOCK",

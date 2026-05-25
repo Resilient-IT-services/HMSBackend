@@ -7,7 +7,14 @@ import java.util.List;
 
 public class PharmacyExcelHelper {
 
-  public static List<String> validateMedicineData(String name, String genericName, String composition, String strength, String formStr, String manufacturer, String scheduleStr) {
+  public static List<String> validateMedicineData(
+      String name,
+      String genericName,
+      String composition,
+      String strength,
+      String formStr,
+      String manufacturer,
+      String scheduleStr) {
     List<String> errors = new ArrayList<>();
     if (!hasText(name)) {
       errors.add("Name is required");

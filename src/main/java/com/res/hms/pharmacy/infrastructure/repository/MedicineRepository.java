@@ -9,7 +9,8 @@ import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
-public interface MedicineRepository extends JpaRepository<Medicine, UUID>, JpaSpecificationExecutor<Medicine> {
+public interface MedicineRepository
+    extends JpaRepository<Medicine, UUID>, JpaSpecificationExecutor<Medicine> {
 
   Optional<Medicine> findByNameIgnoreCase(String name);
 

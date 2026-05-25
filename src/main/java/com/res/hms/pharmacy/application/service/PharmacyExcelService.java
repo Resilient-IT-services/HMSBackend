@@ -44,18 +44,24 @@ public class PharmacyExcelService {
       new org.apache.poi.ss.usermodel.DataFormatter();
 
   /**
-   * Imports medicines from an Excel file.
-   * Operates on a single workbook to provide feedback on each row.
+   * Imports medicines from an Excel file. Operates on a single workbook to provide feedback on each
+   * row.
    */
   public MedicineImportResponse importMedicines(MultipartFile file) {
     try (Workbook workbook = WorkbookFactory.create(file.getInputStream())) {
       Sheet sheet = workbook.getSheetAt(0);
 
       // Prepare styles
-      CellStyle headerStyle = createStyle(workbook, IndexedColors.GREY_25_PERCENT, FillPatternType.SOLID_FOREGROUND, true);
-      CellStyle successStyle = createStyle(workbook, IndexedColors.LIGHT_GREEN, FillPatternType.SOLID_FOREGROUND, false);
-      CellStyle skippedStyle = createStyle(workbook, IndexedColors.LIGHT_YELLOW, FillPatternType.SOLID_FOREGROUND, false);
-      CellStyle errorStyle = createStyle(workbook, IndexedColors.RED, FillPatternType.SOLID_FOREGROUND, false);
+      CellStyle headerStyle =
+          createStyle(
+              workbook, IndexedColors.GREY_25_PERCENT, FillPatternType.SOLID_FOREGROUND, true);
+      CellStyle successStyle =
+          createStyle(workbook, IndexedColors.LIGHT_GREEN, FillPatternType.SOLID_FOREGROUND, false);
+      CellStyle skippedStyle =
+          createStyle(
+              workbook, IndexedColors.LIGHT_YELLOW, FillPatternType.SOLID_FOREGROUND, false);
+      CellStyle errorStyle =
+          createStyle(workbook, IndexedColors.RED, FillPatternType.SOLID_FOREGROUND, false);
 
       int statusColIndex = prepareHeaderAndGetStatusColumn(sheet, headerStyle);
 
@@ -71,7 +77,8 @@ public class PharmacyExcelService {
         }
 
         totalRows++;
-        String result = processMedicineRow(row, statusColIndex, successStyle, skippedStyle, errorStyle);
+        String result =
+            processMedicineRow(row, statusColIndex, successStyle, skippedStyle, errorStyle);
         if ("SUCCESS".equals(result)) {
           imported++;
         } else if (result != null && result.startsWith("SKIPPED")) {
@@ -85,11 +92,15 @@ public class PharmacyExcelService {
 
     } catch (IOException e) {
       log.error("Excel import failed", e);
-      throw new ApiException("IMPORT_FAILED", "Unable to process Excel file: " + e.getMessage(), HttpStatus.BAD_REQUEST);
+      throw new ApiException(
+          "IMPORT_FAILED",
+          "Unable to process Excel file: " + e.getMessage(),
+          HttpStatus.BAD_REQUEST);
     }
   }
 
-  private MedicineImportResponse generateMedicineImportResponse(int total, int imported, int skipped, int failed, Workbook workbook) {
+  private MedicineImportResponse generateMedicineImportResponse(
+      int total, int imported, int skipped, int failed, Workbook workbook) {
     String base64 = null;
     if (failed > 0) {
       base64 = getFeedbackFileBase64(workbook);
@@ -140,8 +151,12 @@ public class PharmacyExcelService {
     return statusColIndex;
   }
 
-  private String processMedicineRow(Row row, int statusColIndex, CellStyle successStyle,
-                                   CellStyle skippedStyle, CellStyle errorStyle) {
+  private String processMedicineRow(
+      Row row,
+      int statusColIndex,
+      CellStyle successStyle,
+      CellStyle skippedStyle,
+      CellStyle errorStyle) {
     Cell statusCell = row.getCell(statusColIndex);
     if (statusCell == null) {
       statusCell = row.createCell(statusColIndex);
@@ -157,7 +172,9 @@ public class PharmacyExcelService {
       String manufacturer = text(row, 5);
       String scheduleStr = text(row, 6);
 
-      List<String> errors = PharmacyExcelHelper.validateMedicineData(name, genericName, composition, strength, formStr, manufacturer, scheduleStr);
+      List<String> errors =
+          PharmacyExcelHelper.validateMedicineData(
+              name, genericName, composition, strength, formStr, manufacturer, scheduleStr);
       if (!errors.isEmpty()) {
         throw new IllegalArgumentException(String.join(" | ", errors));
       }
@@ -191,7 +208,8 @@ public class PharmacyExcelService {
     }
   }
 
-  private CellStyle createStyle(Workbook wb, IndexedColors color, FillPatternType pattern, boolean bold) {
+  private CellStyle createStyle(
+      Workbook wb, IndexedColors color, FillPatternType pattern, boolean bold) {
     CellStyle style = wb.createCellStyle();
     style.setFillForegroundColor(color.getIndex());
     style.setFillPattern(pattern);
@@ -202,7 +220,6 @@ public class PharmacyExcelService {
     }
     return style;
   }
-
 
   @Transactional
   public StockImportResponse importStock(MultipartFile file) {
@@ -291,11 +308,16 @@ public class PharmacyExcelService {
 
   private void addStockInternal(StockRequest request) {
     UUID hospitalId = hospitalContext.requireHospitalId();
-    Medicine medicine = medicineRepository.findById(request.getMedicineId())
-            .orElseThrow(() -> new ApiException("NOT_FOUND", "Medicine not found", HttpStatus.NOT_FOUND));
+    Medicine medicine =
+        medicineRepository
+            .findById(request.getMedicineId())
+            .orElseThrow(
+                () -> new ApiException("NOT_FOUND", "Medicine not found", HttpStatus.NOT_FOUND));
 
-    PharmacyStock stock = pharmacyStockRepository
-            .findByHospitalIdAndMedicineIdAndBatchNumber(hospitalId, request.getMedicineId(), request.getBatchNumber())
+    PharmacyStock stock =
+        pharmacyStockRepository
+            .findByHospitalIdAndMedicineIdAndBatchNumber(
+                hospitalId, request.getMedicineId(), request.getBatchNumber())
             .orElseGet(() -> createNewStock(hospitalId, medicine, request.getBatchNumber()));
 
     stock.setExpiryDate(request.getExpiryDate());

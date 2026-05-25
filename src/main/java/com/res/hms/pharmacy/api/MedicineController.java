@@ -155,7 +155,6 @@ public class MedicineController {
     return ApiResponse.success(pharmacySaleService.returnStock(request));
   }
 
-
   @GetMapping("/alerts/expiry")
   @PreAuthorize("hasAnyRole('ADMIN','PHARMACIST','SUPER_ADMIN')")
   public ApiResponse<List<PharmacyStockDTO>> expiryAlerts(
