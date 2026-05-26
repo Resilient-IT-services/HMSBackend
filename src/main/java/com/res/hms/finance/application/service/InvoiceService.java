@@ -206,4 +206,3 @@ public class InvoiceService {
     return invoicePdfExportService.exportInvoicePdf(invoice);
   }
 }
-2
