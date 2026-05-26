@@ -177,6 +177,22 @@ public class PharmacySaleService {
       PharmacyStock stock,
       int quantity,
       QuickPharmacySaleRequest.Item itemDto) {
+      Integer availableStock = stock.getQuantity();
+
+      if (availableStock <= 0) {
+          throw new ApiException(
+              "OUT_OF_STOCK",
+              "Medicine is out of stock",
+              HttpStatus.CONFLICT);
+      }
+
+      if (quantity <= 0) {
+          throw new ApiException(
+              "INVALID_QUANTITY",
+              "Quantity must be greater than zero",
+              HttpStatus.CONFLICT);
+      }
+
     if (stock.getQuantity() < quantity) {
       throw new ApiException(
           "INSUFFICIENT_STOCK",
@@ -203,6 +219,13 @@ public class PharmacySaleService {
 
     BigDecimal itemSubtotal = unitPrice.multiply(BigDecimal.valueOf(quantity));
     saleItem.setSubtotal(itemSubtotal);
+
+      if (saleItem.getDiscountAmount().compareTo(itemSubtotal) > 0) {
+          throw new ApiException(
+              "INVALID_DISCOUNT",
+              "Discount amount cannot exceed medicine total price",
+              HttpStatus.CONFLICT);
+      }
 
     BigDecimal itemNet =
         itemSubtotal.add(saleItem.getTaxAmount()).subtract(saleItem.getDiscountAmount());
