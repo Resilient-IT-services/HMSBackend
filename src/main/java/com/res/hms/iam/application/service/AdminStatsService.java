@@ -23,7 +23,8 @@ public class AdminStatsService {
         .totalUsers(userRepository.count())
         .activeUsers(userRepository.countByActive(true))
         .totalHospitals(hospitalRepository.countByDeleted(false))
-        .totalDoctors(assignmentRepository.countDistinctUsersByRoleCodeAndActive(RoleCode.DOCTOR, true))
+        .totalDoctors(
+            assignmentRepository.countDistinctUsersByRoleCodeAndActive(RoleCode.DOCTOR, true))
         .build();
   }
 }

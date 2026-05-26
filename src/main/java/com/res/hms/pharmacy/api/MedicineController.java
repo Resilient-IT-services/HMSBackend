@@ -104,7 +104,8 @@ public class MedicineController {
 
   @GetMapping("/stock/export")
   @PreAuthorize("hasAnyRole('ADMIN','PHARMACIST','SUPER_ADMIN')")
-  public void exportStock(jakarta.servlet.http.HttpServletResponse response) throws java.io.IOException {
+  public void exportStock(jakarta.servlet.http.HttpServletResponse response)
+      throws java.io.IOException {
     medicineService.exportStockExcel(response);
   }
 
