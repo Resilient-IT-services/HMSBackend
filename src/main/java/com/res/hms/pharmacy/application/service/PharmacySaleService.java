@@ -172,19 +172,33 @@ public class PharmacySaleService {
     return totalAmount;
   }
 
-  private BigDecimal consumeStock(
-      PharmacySale sale,
-      PharmacyStock stock,
-      int quantity,
-      QuickPharmacySaleRequest.Item itemDto) {
-    if (stock.getQuantity() < quantity) {
-      throw new ApiException(
-          "INSUFFICIENT_STOCK",
-          "Insufficient stock for " + stock.getMedicine().getName(),
-          HttpStatus.CONFLICT);
-    }
+    private BigDecimal consumeStock(
+        PharmacySale sale,
+        PharmacyStock stock,
+        int quantity,
+        QuickPharmacySaleRequest.Item itemDto) {
 
-    stock.setQuantity(stock.getQuantity() - quantity);
+        Integer availableStock = stock.getQuantity();
+        if (availableStock <= 0) {
+            throw new ApiException(
+                "OUT_OF_STOCK",
+                "Medicine is out of stock",
+                HttpStatus.BAD_REQUEST);
+        }
+        if (quantity <= 0) {
+            throw new ApiException(
+                "INVALID_QUANTITY",
+                "Quantity must be greater than zero",
+                HttpStatus.BAD_REQUEST);
+        }
+        if (quantity > availableStock) {
+            throw new ApiException(
+                "INSUFFICIENT_STOCK",
+                "Insufficient stock for " + stock.getMedicine().getName(),
+                HttpStatus.CONFLICT);
+        }
+
+        stock.setQuantity(stock.getQuantity() - quantity);
     pharmacyStockRepository.save(stock);
 
     BigDecimal unitPrice =
@@ -203,6 +217,12 @@ public class PharmacySaleService {
 
     BigDecimal itemSubtotal = unitPrice.multiply(BigDecimal.valueOf(quantity));
     saleItem.setSubtotal(itemSubtotal);
+        if (saleItem.getDiscountAmount().compareTo(itemSubtotal) > 0) {
+            throw new ApiException(
+                "INVALID_DISCOUNT",
+                "Discount amount cannot exceed medicine total price",
+                HttpStatus.BAD_REQUEST);
+        }
 
     BigDecimal itemNet =
         itemSubtotal.add(saleItem.getTaxAmount()).subtract(saleItem.getDiscountAmount());
