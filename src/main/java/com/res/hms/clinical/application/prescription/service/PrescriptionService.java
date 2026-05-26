@@ -96,7 +96,6 @@ public class PrescriptionService {
         .doctorName(prescription.getDoctorName())
         .appointmentId(prescription.getAppointmentId())
         .visitId(visitId)
-        .status(prescription.getStatus())
         .createdAt(prescription.getCreatedAt())
         .itemCount(prescription.getItems() != null ? prescription.getItems().size() : 0)
         .build();

@@ -68,7 +68,6 @@ public class PharmacySaleService {
     PharmacySale savedSale = pharmacySaleRepository.save(sale);
     Invoice invoice = createInvoice(request, hospitalId, savedSale);
     addInvoiceItems(savedSale, invoice);
-    markPrescriptionDispensed(request.getPrescriptionId(), hospitalId);
 
     PaymentReceipt paymentReceipt = recordPayment(request, hospitalId, userId, invoice);
 
@@ -253,44 +252,28 @@ public class PharmacySaleService {
     }
   }
 
-  private void markPrescriptionDispensed(UUID prescriptionId, UUID hospitalId) {
-    if (prescriptionId == null) {
-      return;
+  private PaymentReceipt recordPayment(
+      QuickPharmacySaleRequest request, UUID hospitalId, UUID userId, Invoice invoice) {
+
+    if (request.getPayment() != null
+        && request.getPayment().getAmount() != null
+        && request.getPayment().getAmount().compareTo(BigDecimal.ZERO) > 0) {
+
+      RecordPaymentRequest paymentReq = new RecordPaymentRequest();
+      paymentReq.setInvoiceId(invoice.getId());
+      paymentReq.setPatientId(request.getPatientId());
+      paymentReq.setVisitId(request.getVisitId());
+      paymentReq.setAmount(request.getPayment().getAmount());
+      paymentReq.setPaymentMode(request.getPayment().getMode());
+      paymentReq.setReferenceNumber(request.getPayment().getReferenceNumber());
+
+      var paymentDto = paymentService.recordPayment(hospitalId, paymentReq, userId);
+
+      return new PaymentReceipt(paymentDto.getId(), paymentDto.getReceiptNumber());
     }
-    prescriptionRepository
-        .findByIdAndHospitalId(prescriptionId, hospitalId)
-        .ifPresent(
-            p -> {
-              p.setStatus(com.res.hms.clinical.domain.PrescriptionStatus.DISPENSED);
-              prescriptionRepository.save(p);
-            });
+
+    return new PaymentReceipt(null, null);
   }
-
-    private PaymentReceipt recordPayment(
-        QuickPharmacySaleRequest request, UUID hospitalId, UUID userId, Invoice invoice) {
-
-        if (request.getPayment() != null
-            && request.getPayment().getAmount() != null
-            && request.getPayment().getAmount().compareTo(BigDecimal.ZERO) > 0) {
-
-            RecordPaymentRequest paymentReq = new RecordPaymentRequest();
-            paymentReq.setInvoiceId(invoice.getId());
-            paymentReq.setPatientId(request.getPatientId());
-            paymentReq.setVisitId(request.getVisitId());
-            paymentReq.setAmount(request.getPayment().getAmount());
-            paymentReq.setPaymentMode(request.getPayment().getMode());
-            paymentReq.setReferenceNumber(request.getPayment().getReferenceNumber());
-
-            var paymentDto = paymentService.recordPayment(hospitalId, paymentReq, userId);
-
-            return new PaymentReceipt(
-                paymentDto.getId(),
-                paymentDto.getReceiptNumber()
-            );
-        }
-
-        return new PaymentReceipt(null, null);
-    }
 
   private record PaymentReceipt(UUID paymentId, String receiptNumber) {}
 

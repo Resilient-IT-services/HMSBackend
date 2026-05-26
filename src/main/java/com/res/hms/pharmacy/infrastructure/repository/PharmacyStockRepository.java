@@ -33,6 +33,8 @@ public interface PharmacyStockRepository extends BaseRepository<PharmacyStock> {
 
   Optional<PharmacyStock> findByIdAndHospitalId(UUID id, UUID hospitalId);
 
+  Optional<PharmacyStock> findByHospitalIdAndBatchNumber(UUID hospitalId, String batchNumber);
+
   Optional<PharmacyStock> findByHospitalIdAndMedicineIdAndBatchNumber(
       UUID hospitalId, UUID medicineId, String batchNumber);
 

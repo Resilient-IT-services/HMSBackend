@@ -1,7 +1,6 @@
 package com.res.hms.pharmacy.application.service;
 
 import com.res.hms.pharmacy.domain.MedicineForm;
-import com.res.hms.pharmacy.domain.MedicineSchedule;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.util.ArrayList;
@@ -21,90 +20,57 @@ public class PharmacyExcelHelper {
   private static final DataFormatter DATA_FORMATTER = new DataFormatter();
 
   public static List<String> validateMedicineData(
-      String name,
-      String genericName,
-      String composition,
-      String strength,
-      String formStr,
-      String manufacturer) {
+      String name, String gName, String comp, String str, String fStr, String mf) {
     List<String> errors = new ArrayList<>();
     if (!hasText(name)) {
       errors.add("Name is required");
     }
-    if (!hasText(genericName)) {
+    if (!hasText(gName)) {
       errors.add("Generic Name is required");
     }
-    if (!hasText(composition)) {
+    if (!hasText(comp)) {
       errors.add("Salt/Composition is required");
     }
-    if (!hasText(strength)) {
+    if (!hasText(str)) {
       errors.add("Strength is required");
     }
-    if (!hasText(manufacturer)) {
+    if (!hasText(mf)) {
       errors.add("Manufacturer is required");
     }
 
-    MedicineForm form = parseMedicineForm(formStr);
+    MedicineForm form = parseMedicineForm(fStr);
     if (form == null) {
-      String acceptedForms = java.util.Arrays.toString(MedicineForm.values());
-      if (hasText(formStr)) {
-        errors.add("Invalid Medicine Form: " + formStr + ". Accepted: " + acceptedForms);
-      } else {
-        errors.add("Medicine Form is required. Accepted: " + acceptedForms);
-      }
+      String accepted = java.util.Arrays.toString(MedicineForm.values());
+      errors.add("Medicine Form is required. Accepted: " + accepted);
     }
-
     return errors;
   }
 
   public static List<String> validateStockData(
-      String medicineName,
-      String batchNumber,
-      String qtyStr,
-      String sellingPriceStr,
-      String purchasePriceStr,
-      String expiryStr) {
+      String name, String batch, String qty, String sp, String pp, String exp) {
     List<String> errors = new ArrayList<>();
-
-    if (!hasText(medicineName)) {
-      errors.add("Medicine Name is missing");
+    if (!hasText(name)) {
+      errors.add("[Medicine Name] is missing");
     }
-
-    if (!hasText(batchNumber)) {
-      errors.add("Batch Number is missing");
+    if (!hasText(batch)) {
+      errors.add("[Batch Number] is missing");
     }
-
-    if (!hasText(qtyStr)) {
-      errors.add("Quantity is missing");
+    if (!hasText(exp)) {
+      errors.add("[Expiry Date] is missing");
+    }
+    if (!hasText(qty)) {
+      errors.add("[Quantity] is missing");
     } else {
-      try {
-        double q = Double.parseDouble(qtyStr);
-        if (q < 0) {
-          errors.add("Quantity cannot be negative");
-        }
-      } catch (NumberFormatException e) {
-        errors.add("Invalid Quantity format: " + qtyStr);
+      if (qty.replaceAll("[^\\d.]", "").isEmpty()) {
+        errors.add("[Quantity] Invalid: " + qty);
       }
     }
-
-    if (!hasText(sellingPriceStr)) {
-      errors.add("Selling Price is missing");
-    } else {
-      try {
-        new java.math.BigDecimal(sellingPriceStr);
-      } catch (Exception e) {
-        errors.add("Invalid Selling Price format: " + sellingPriceStr);
-      }
+    if (!hasText(pp)) {
+      errors.add("[Purchase Price] is missing");
     }
-
-    if (hasText(purchasePriceStr)) {
-      try {
-        new java.math.BigDecimal(purchasePriceStr);
-      } catch (Exception e) {
-        errors.add("Invalid Purchase Price format: " + purchasePriceStr);
-      }
+    if (!hasText(sp)) {
+      errors.add("[Selling Price] is missing");
     }
-
     return errors;
   }
 
@@ -117,19 +83,6 @@ public class PharmacyExcelHelper {
       return MedicineForm.valueOf(s);
     } catch (Exception e) {
       return mapFormFallback(s);
-    }
-  }
-
-  public static MedicineSchedule parseMedicineSchedule(String val) {
-    if (!hasText(val)) {
-      return MedicineSchedule.OTC;
-    }
-    String s = val.trim().toUpperCase();
-    try {
-      MedicineSchedule mapped = mapScheduleFallback(s);
-      return mapped != null ? mapped : MedicineSchedule.valueOf(s);
-    } catch (Exception e) {
-      return null;
     }
   }
 
@@ -157,22 +110,6 @@ public class PharmacyExcelHelper {
     }
     if (s.contains("INH")) {
       return MedicineForm.INHALER;
-    }
-    return null;
-  }
-
-  public static MedicineSchedule mapScheduleFallback(String s) {
-    if (s.equals("H") || s.contains("SCH_H") || s.contains("SCHEDULE_H")) {
-      return MedicineSchedule.SCHEDULE_H;
-    }
-    if (s.equals("G") || s.contains("SCH_G") || s.contains("SCHEDULE_G")) {
-      return MedicineSchedule.SCHEDULE_G;
-    }
-    if (s.equals("X") || s.contains("SCH_X") || s.contains("SCHEDULE_X")) {
-      return MedicineSchedule.SCHEDULE_X;
-    }
-    if (s.equals("OTC")) {
-      return MedicineSchedule.OTC;
     }
     return null;
   }
@@ -231,19 +168,109 @@ public class PharmacyExcelHelper {
 
   public static Cell getOrCreateCell(Row r, int c) {
     Cell cell = r.getCell(c);
-    return cell != null ? cell : r.createCell(c);
+    if (cell == null) {
+      return r.createCell(c);
+    }
+    return cell;
   }
 
   public static String text(Row r, int c) {
-    Cell v = r.getCell(c);
-    return v == null ? null : DATA_FORMATTER.formatCellValue(v).trim();
+    Cell cell = r.getCell(c);
+    if (cell == null) {
+      return null;
+    }
+    try {
+      if (cell.getCellType() == org.apache.poi.ss.usermodel.CellType.STRING) {
+        return cell.getStringCellValue().trim();
+      }
+      if (cell.getCellType() == org.apache.poi.ss.usermodel.CellType.NUMERIC) {
+        if (org.apache.poi.ss.usermodel.DateUtil.isCellDateFormatted(cell)) {
+          return cell.getLocalDateTimeCellValue().toLocalDate().toString();
+        }
+        return DATA_FORMATTER.formatCellValue(cell).trim();
+      }
+      return DATA_FORMATTER.formatCellValue(cell).trim();
+    } catch (Exception e) {
+      return "";
+    }
   }
 
-  public static boolean hasText(String value) {
-    return value != null && !value.trim().isEmpty();
+  public static boolean hasText(String v) {
+    return v != null && !v.trim().isEmpty();
   }
 
   public static boolean isBlank(Row r, int c) {
     return !hasText(text(r, c));
+  }
+
+  public static java.time.LocalDate parseDate(String val) {
+    if (!hasText(val)) {
+      return null;
+    }
+    String s = val.trim().replaceAll("[/. ]", "-");
+    String[] patterns = {
+      "yyyy-MM-dd", "dd-MM-yyyy", "dd-MMM-yyyy", "MM-yyyy", "MMM-yyyy", "dd-MM-yy", "MMM-yy"
+    };
+    for (String p : patterns) {
+      try {
+        if ((p.endsWith("-yy") || p.endsWith("-yyyy")) && !p.contains("dd")) {
+          return java.time.LocalDate.parse(
+              "01-" + s,
+              java.time.format.DateTimeFormatter.ofPattern("dd-" + p, java.util.Locale.ENGLISH));
+        }
+        return java.time.LocalDate.parse(
+            s, java.time.format.DateTimeFormatter.ofPattern(p, java.util.Locale.ENGLISH));
+      } catch (Exception e) {
+        // ignore
+      }
+    }
+    String d = s.replaceAll("[^\\d]", "");
+    try {
+      if (d.length() == 6) {
+        return java.time.LocalDate.parse(d, java.time.format.DateTimeFormatter.ofPattern("ddMMyy"));
+      }
+      if (d.length() == 8) {
+        return java.time.LocalDate.parse(
+            d, java.time.format.DateTimeFormatter.ofPattern("ddMMyyyy"));
+      }
+    } catch (Exception e) {
+      // ignore
+    }
+    return null;
+  }
+
+  public static Integer parseInteger(String s) {
+    try {
+      if (hasText(s)) {
+        return (int) Double.parseDouble(s.replaceAll("[^\\d.]", ""));
+      }
+      return null;
+    } catch (Exception e) {
+      return null;
+    }
+  }
+
+  public static java.math.BigDecimal parseBigDecimal(String s) {
+    try {
+      String stripped = hasText(s) ? s.replaceAll("[^\\d.]", "") : "";
+      if (stripped.isEmpty()) {
+        return java.math.BigDecimal.ZERO;
+      }
+      return new java.math.BigDecimal(stripped);
+    } catch (Exception e) {
+      return java.math.BigDecimal.ZERO;
+    }
+  }
+
+  public static int parseQuantity(String q) {
+    try {
+      String stripped = hasText(q) ? q.replaceAll("[^\\d.]", "") : "";
+      if (stripped.isEmpty()) {
+        return 0;
+      }
+      return (int) Double.parseDouble(stripped);
+    } catch (Exception e) {
+      return 0;
+    }
   }
 }
