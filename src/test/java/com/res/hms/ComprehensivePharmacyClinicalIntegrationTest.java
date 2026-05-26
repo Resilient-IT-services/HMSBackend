@@ -247,7 +247,6 @@ class ComprehensivePharmacyClinicalIntegrationTest {
     pres.setDoctorName("Dr. Comprehensive");
     pres.setAppointment(apt);
     pres.setAppointmentId(apt.getId());
-    pres.setStatus(com.res.hms.clinical.domain.PrescriptionStatus.ACTIVE);
     UUID prescriptionId = prescriptionRepository.save(pres).getId();
 
     // 3. First Sale: Specific Batch Selection (Quick Sale style)

@@ -9,6 +9,7 @@ import static org.mockito.Mockito.when;
 
 import com.res.hms.core.exception.ApiException;
 import com.res.hms.core.tenant.HospitalContext;
+import com.res.hms.pharmacy.infrastructure.repository.HospitalMedicineCatalogRepository;
 import com.res.hms.pharmacy.infrastructure.repository.MedicineRepository;
 import com.res.hms.pharmacy.infrastructure.repository.PharmacyStockRepository;
 import java.io.ByteArrayOutputStream;
@@ -27,9 +28,10 @@ import org.springframework.mock.web.MockMultipartFile;
 class PharmacyExcelServiceTest {
 
   @Mock private MedicineRepository medicineRepository;
+  @Mock private HospitalMedicineCatalogRepository hospitalMedicineCatalogRepository;
   @Mock private PharmacyStockRepository pharmacyStockRepository;
   @Mock private HospitalContext hospitalContext;
-  @Mock private MedicineService medicineService;
+  @Mock private jakarta.persistence.EntityManager entityManager;
 
   @InjectMocks private PharmacyExcelService excelService;
 

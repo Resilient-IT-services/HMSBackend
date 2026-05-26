@@ -36,7 +36,8 @@ class PharmacistPatientAccessIntegrationTest {
 
   @BeforeEach
   void setup() {
-    testHospitalId = testDataHelper.createHospitalIfMissing("PHARMA_TEST", "Pharmacist Test Hospital");
+    testHospitalId =
+        testDataHelper.createHospitalIfMissing("PHARMA_TEST", "Pharmacist Test Hospital");
 
     if (!userAccountRepository.existsByUsername("test_pharmacist")) {
       UserAccount pharmacist = new UserAccount();

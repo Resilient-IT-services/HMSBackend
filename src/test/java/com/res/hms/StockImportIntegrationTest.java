@@ -140,4 +140,109 @@ class StockImportIntegrationTest {
         .andExpect(jsonPath("$.data.importedRows").value(1))
         .andExpect(jsonPath("$.data.medicineNotFoundRows").value(1));
   }
+
+  @Test
+  void testDuplicateBatchAcrossDifferentMedicines() throws Exception {
+    // 1. Create two medicines
+    mockMvc
+        .perform(
+            post("/api/v1/pharmacy/medicines")
+                .session(session)
+                .header("X-Hospital-Id", testHospitalId.toString())
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(
+                    "{"
+                        + "\"name\": \"MedicineA\","
+                        + "\"genericName\": \"GenA\","
+                        + "\"composition\": \"CompA\","
+                        + "\"strength\": \"500mg\","
+                        + "\"form\": \"TABLET\","
+                        + "\"manufacturer\": \"MfA\""
+                        + "}"))
+        .andExpect(status().isOk());
+
+    mockMvc
+        .perform(
+            post("/api/v1/pharmacy/medicines")
+                .session(session)
+                .header("X-Hospital-Id", testHospitalId.toString())
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(
+                    "{"
+                        + "\"name\": \"MedicineB\","
+                        + "\"genericName\": \"GenB\","
+                        + "\"composition\": \"CompB\","
+                        + "\"strength\": \"500mg\","
+                        + "\"form\": \"TABLET\","
+                        + "\"manufacturer\": \"MfB\""
+                        + "}"))
+        .andExpect(status().isOk());
+
+    // 2. Prepare Excel with duplicate batch for DIFFERENT medicines
+    Workbook workbook = new XSSFWorkbook();
+    var sheet = workbook.createSheet();
+    var header = sheet.createRow(0);
+    header.createCell(0).setCellValue("Medicine Name");
+    header.createCell(1).setCellValue("Batch");
+    header.createCell(2).setCellValue("Expiry");
+    header.createCell(3).setCellValue("Qty");
+    header.createCell(4).setCellValue("Purchase Price");
+    header.createCell(5).setCellValue("Selling Price");
+
+    // First row: MedicineA, Batch B-DUP
+    var row1 = sheet.createRow(1);
+    row1.createCell(0).setCellValue("MedicineA");
+    row1.createCell(1).setCellValue("B-DUP");
+    row1.createCell(2).setCellValue("2026-12-31");
+    row1.createCell(3).setCellValue(100);
+    row1.createCell(4).setCellValue(10.0);
+    row1.createCell(5).setCellValue(20.0);
+
+    // Second row: MedicineB, Batch B-DUP (Should FAIL)
+    var row2 = sheet.createRow(2);
+    row2.createCell(0).setCellValue("MedicineB");
+    row2.createCell(1).setCellValue("B-DUP");
+    row2.createCell(2).setCellValue("2026-12-31");
+    row2.createCell(3).setCellValue(50);
+    row2.createCell(4).setCellValue(10.0);
+    row2.createCell(5).setCellValue(20.0);
+
+    // Third row: MedicineA, Batch B-DUP (Should be SKIPPED)
+    var row3 = sheet.createRow(3);
+    row3.createCell(0).setCellValue("MedicineA");
+    row3.createCell(1).setCellValue("B-DUP");
+    row3.createCell(2).setCellValue("2026-12-31");
+    row3.createCell(3).setCellValue(30);
+    row3.createCell(4).setCellValue(10.0);
+    row3.createCell(5).setCellValue(20.0);
+
+    ByteArrayOutputStream bos = new ByteArrayOutputStream();
+    workbook.write(bos);
+    byte[] content = bos.toByteArray();
+    workbook.close();
+
+    MockMultipartFile file =
+        new MockMultipartFile(
+            "file",
+            "stock_duplicates.xlsx",
+            "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+            content);
+
+    // 3. Import and verify results
+    mockMvc
+        .perform(
+            MockMvcRequestBuilders.multipart("/api/v1/pharmacy/stock/import")
+                .file(file)
+                .session(session)
+                .header("X-Hospital-Id", testHospitalId.toString()))
+        .andExpect(status().isOk())
+        .andExpect(jsonPath("$.data.totalRows").value(3))
+        .andExpect(jsonPath("$.data.importedRows").value(1)) // Only first row SUCCESS
+        .andExpect(
+            jsonPath("$.data.failedRows")
+                .value(1)) // Second row FAIL (assigned to another medicine)
+        .andExpect(
+            jsonPath("$.data.skippedRows")
+                .value(1)); // Third row SKIPPED (already exists for same medicine)
+  }
 }
