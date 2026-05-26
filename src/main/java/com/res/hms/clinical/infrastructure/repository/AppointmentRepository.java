@@ -61,4 +61,11 @@ public interface AppointmentRepository extends BaseRepository<Appointment>, JpaS
 
     Page<Appointment> findByPatientIdAndHospitalIdOrderByAppointmentTimeDesc(
         UUID patientId, UUID hospitalId, Pageable pageable);
+
+    @Query(
+        "SELECT a FROM Appointment a "
+            + "WHERE a.appointmentTime < :threshold "
+            + "AND a.status NOT IN (com.res.hms.clinical.domain.AppointmentStatus.COMPLETED, com.res.hms.clinical.domain.AppointmentStatus.CANCELLED) "
+            + "AND a.deleted = false")
+    java.util.List<Appointment> findOverdueIncompleteAppointments(@Param("threshold") java.time.Instant threshold);
 }

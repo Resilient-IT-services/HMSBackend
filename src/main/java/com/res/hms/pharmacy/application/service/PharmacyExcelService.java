@@ -1,29 +1,33 @@
 package com.res.hms.pharmacy.application.service;
 
+import static com.res.hms.pharmacy.application.service.PharmacyExcelHelper.getFeedbackFileBase64;
+import static com.res.hms.pharmacy.application.service.PharmacyExcelHelper.getOrCreateCell;
+import static com.res.hms.pharmacy.application.service.PharmacyExcelHelper.hasText;
+import static com.res.hms.pharmacy.application.service.PharmacyExcelHelper.isBlank;
+import static com.res.hms.pharmacy.application.service.PharmacyExcelHelper.prepareHeaderAndGetStatusColumn;
+import static com.res.hms.pharmacy.application.service.PharmacyExcelHelper.text;
+import static com.res.hms.pharmacy.application.service.PharmacyExcelHelper.updateCell;
+
 import com.res.hms.core.exception.ApiException;
 import com.res.hms.core.tenant.HospitalContext;
 import com.res.hms.pharmacy.application.dto.MedicineImportResponse;
 import com.res.hms.pharmacy.application.dto.StockImportResponse;
-import com.res.hms.pharmacy.application.dto.StockRequest;
 import com.res.hms.pharmacy.domain.Medicine;
 import com.res.hms.pharmacy.domain.MedicineForm;
 import com.res.hms.pharmacy.domain.PharmacyStock;
 import com.res.hms.pharmacy.infrastructure.repository.HospitalMedicineCatalogRepository;
 import com.res.hms.pharmacy.infrastructure.repository.MedicineRepository;
 import com.res.hms.pharmacy.infrastructure.repository.PharmacyStockRepository;
-import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.math.BigDecimal;
 import java.time.LocalDate;
-import java.util.Base64;
 import java.util.List;
+import java.util.Optional;
 import java.util.UUID;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.poi.ss.usermodel.Cell;
 import org.apache.poi.ss.usermodel.CellStyle;
-import org.apache.poi.ss.usermodel.FillPatternType;
-import org.apache.poi.ss.usermodel.IndexedColors;
 import org.apache.poi.ss.usermodel.Row;
 import org.apache.poi.ss.usermodel.Sheet;
 import org.apache.poi.ss.usermodel.Workbook;
@@ -32,7 +36,6 @@ import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
-import java.util.Optional;
 
 @Slf4j
 @Service
@@ -49,7 +52,7 @@ public class PharmacyExcelService {
   public MedicineImportResponse importMedicines(MultipartFile file) {
     try (Workbook workbook = WorkbookFactory.create(file.getInputStream())) {
       Sheet sheet = workbook.getSheetAt(0);
-      CellStyle[] styles = createFeedbackStyles(workbook);
+      CellStyle[] styles = PharmacyExcelHelper.createFeedbackStyles(workbook);
       int statusColIndex = prepareHeaderAndGetStatusColumn(sheet, styles[0]);
 
       int totalRows = 0;
@@ -59,7 +62,7 @@ public class PharmacyExcelService {
 
       for (int i = 1; i <= sheet.getLastRowNum(); i++) {
         Row row = sheet.getRow(i);
-        if (row == null || blank(row, 0)) {
+        if (row == null || isBlank(row, 0)) {
           continue;
         }
         totalRows++;
@@ -88,7 +91,7 @@ public class PharmacyExcelService {
   public StockImportResponse importStock(MultipartFile file) {
     try (Workbook workbook = WorkbookFactory.create(file.getInputStream())) {
       Sheet sheet = workbook.getSheetAt(0);
-      CellStyle[] styles = createFeedbackStyles(workbook);
+      CellStyle[] styles = PharmacyExcelHelper.createFeedbackStyles(workbook);
       int statusColIndex = prepareHeaderAndGetStatusColumn(sheet, styles[0]);
 
       int totalRows = 0;
@@ -100,7 +103,7 @@ public class PharmacyExcelService {
 
       for (int i = 1; i <= sheet.getLastRowNum(); i++) {
         Row row = sheet.getRow(i);
-        if (row == null || blank(row, 0)) {
+        if (row == null || isBlank(row, 0)) {
           continue;
         }
         totalRows++;
@@ -122,10 +125,12 @@ public class PharmacyExcelService {
           .skippedRows(skipped)
           .medicineNotFoundRows(notFound)
           .lastError(lastError)
-          .errorFileBase64((failed > 0 || skipped > 0 || notFound > 0) ? getFeedbackFileBase64(workbook) : null)
+          .errorFileBase64(
+              (failed > 0 || skipped > 0 || notFound > 0) ? getFeedbackFileBase64(workbook) : null)
           .build();
     } catch (IOException e) {
-      throw new ApiException("IMPORT_FAILED", "Unable to read stock Excel file", HttpStatus.BAD_REQUEST);
+      throw new ApiException(
+          "IMPORT_FAILED", "Unable to read stock Excel file", HttpStatus.BAD_REQUEST);
     }
   }
 
@@ -141,18 +146,22 @@ public class PharmacyExcelService {
       String reorderLevelStr = row.getLastCellNum() > 6 ? text(row, 6) : null;
 
       String name = nameRaw == null ? "" : nameRaw.replaceAll("[\\p{Z}\\s]+", " ").trim();
-      List<String> errors = PharmacyExcelHelper.validateStockData(name, batch, qtyStr, sPriceStr, pPriceStr, expStr);
-      if (!errors.isEmpty()) {
-        throw new IllegalArgumentException(String.join(" | ", errors));
-      }
 
       Medicine medicine = findMedicine(name, statusCell, styles[3]);
       if (medicine == null) {
         return "NOT_FOUND";
       }
 
+      List<String> errors =
+          PharmacyExcelHelper.validateStockData(name, batch, qtyStr, sPriceStr, pPriceStr, expStr);
+      if (!errors.isEmpty()) {
+        throw new IllegalArgumentException(String.join(" | ", errors));
+      }
+
       UUID hospitalId = hospitalContext.requireHospitalId();
-      if (pharmacyStockRepository.findByHospitalIdAndMedicineIdAndBatchNumber(hospitalId, medicine.getId(), batch).isPresent()) {
+      if (pharmacyStockRepository
+          .findByHospitalIdAndMedicineIdAndBatchNumber(hospitalId, medicine.getId(), batch)
+          .isPresent()) {
         updateCell(statusCell, "SKIPPED: Batch already exists", styles[2]);
         return "SKIPPED";
       }
@@ -180,7 +189,8 @@ public class PharmacyExcelService {
       String mf = text(row, 5);
       String rlStr = text(row, 6);
 
-      List<String> errors = PharmacyExcelHelper.validateMedicineData(name, gName, comp, str, fStr, mf);
+      List<String> errors =
+          PharmacyExcelHelper.validateMedicineData(name, gName, comp, str, fStr, mf);
       if (!errors.isEmpty()) {
         throw new IllegalArgumentException(String.join(" | ", errors));
       }
@@ -192,8 +202,12 @@ public class PharmacyExcelService {
       }
 
       Medicine m = new Medicine();
-      m.setName(name); m.setGenericName(gName); m.setComposition(comp);
-      m.setStrength(str); m.setForm(form); m.setManufacturer(mf);
+      m.setName(name);
+      m.setGenericName(gName);
+      m.setComposition(comp);
+      m.setStrength(str);
+      m.setForm(form);
+      m.setManufacturer(mf);
       m.setScheduleType(com.res.hms.pharmacy.domain.MedicineSchedule.OTC);
       medicineRepository.save(m);
 
@@ -206,15 +220,22 @@ public class PharmacyExcelService {
     }
   }
 
-  private void saveStock(UUID hId, Medicine m, String b, LocalDate exp, String q, String p, String s) {
-    PharmacyStock stock = pharmacyStockRepository.findByHospitalIdAndMedicineIdAndBatchNumber(hId, m.getId(), b)
-        .orElseGet(() -> {
-          PharmacyStock ps = new PharmacyStock();
-          ps.setHospitalId(hId); ps.setMedicine(m); ps.setBatchNumber(b); ps.setQuantity(0);
-          return ps;
-        });
+  private void saveStock(
+      UUID hId, Medicine m, String b, LocalDate exp, String q, String p, String s) {
+    PharmacyStock stock =
+        pharmacyStockRepository
+            .findByHospitalIdAndMedicineIdAndBatchNumber(hId, m.getId(), b)
+            .orElseGet(
+                () -> {
+                  PharmacyStock ps = new PharmacyStock();
+                  ps.setHospitalId(hId);
+                  ps.setMedicine(m);
+                  ps.setBatchNumber(b);
+                  ps.setQuantity(0);
+                  return ps;
+                });
     stock.setExpiryDate(exp);
-    
+
     // Use robust parsing to avoid NUMERIC/STRING cell mismatch errors
     int qtyToAdd = 0;
     if (hasText(q)) {
@@ -224,39 +245,51 @@ public class PharmacyExcelService {
         log.warn("Invalid quantity format in saveStock: {}", q);
       }
     }
-    
+
     stock.setQuantity(stock.getQuantity() + qtyToAdd);
-    
+
     try {
-      stock.setPurchasePrice(hasText(p) ? new BigDecimal(p.replaceAll("[^\\d.]", "")) : BigDecimal.ZERO);
-      stock.setSellingPrice(hasText(s) ? new BigDecimal(s.replaceAll("[^\\d.]", "")) : BigDecimal.ZERO);
+      stock.setPurchasePrice(
+          hasText(p) ? new BigDecimal(p.replaceAll("[^\\d.]", "")) : BigDecimal.ZERO);
+      stock.setSellingPrice(
+          hasText(s) ? new BigDecimal(s.replaceAll("[^\\d.]", "")) : BigDecimal.ZERO);
     } catch (Exception e) {
       log.warn("Invalid price format in saveStock: P={}, S={}", p, s);
     }
-    
+
     pharmacyStockRepository.save(stock);
   }
 
   private Medicine findMedicine(String name, Cell cell, CellStyle style) {
-    return medicineRepository.findByExactName(name).stream().findFirst()
+    return medicineRepository
+        .findByExactName(name)
+        .stream()
+        .findFirst()
         .or(() -> medicineRepository.findByNameIgnoreCase(name))
-        .orElseGet(() -> {
-          updateCell(cell, "ERROR: Medicine '" + name + "' not found", style);
-          return null;
-        });
+        .orElseGet(
+            () -> {
+              updateCell(cell, "ERROR: Medicine '" + name + "' not found", style);
+              return null;
+            });
   }
 
   private void updateMedicineReorderLevel(UUID mId, Integer rl) {
-    Optional.ofNullable(hospitalContext.getHospitalIdOrNull()).ifPresent(hId -> {
-      var cat = hospitalMedicineCatalogRepository.findByHospitalIdAndMedicineId(hId, mId)
-          .orElseGet(() -> {
-            var c = new com.res.hms.pharmacy.domain.HospitalMedicineCatalog();
-            c.setHospitalId(hId); c.setMedicine(medicineRepository.getReferenceById(mId));
-            return c;
-          });
-      cat.setReorderLevel(rl != null ? rl : 50);
-      hospitalMedicineCatalogRepository.save(cat);
-    });
+    Optional.ofNullable(hospitalContext.getHospitalIdOrNull())
+        .ifPresent(
+            hId -> {
+              var cat =
+                  hospitalMedicineCatalogRepository
+                      .findByHospitalIdAndMedicineId(hId, mId)
+                      .orElseGet(
+                          () -> {
+                            var c = new com.res.hms.pharmacy.domain.HospitalMedicineCatalog();
+                            c.setHospitalId(hId);
+                            c.setMedicine(medicineRepository.getReferenceById(mId));
+                            return c;
+                          });
+              cat.setReorderLevel(rl != null ? rl : 50);
+              hospitalMedicineCatalogRepository.save(cat);
+            });
   }
 
   private LocalDate parseDate(Row row, int col, String val) {
@@ -268,48 +301,34 @@ public class PharmacyExcelService {
       return c.getLocalDateTimeCellValue().toLocalDate();
     }
     String s = val.replaceAll("[^\\d\\-/.]", "").trim();
-    try { return LocalDate.parse(s); } catch (Exception e) {}
-    try { return LocalDate.parse(s, java.time.format.DateTimeFormatter.ofPattern("dd-MM-yyyy")); } catch (Exception e) {}
-    try { return LocalDate.parse(s, java.time.format.DateTimeFormatter.ofPattern("dd/MM/yyyy")); } catch (Exception e) {}
-    try { return LocalDate.parse(s, java.time.format.DateTimeFormatter.ofPattern("dd.MM.yyyy")); } catch (Exception e) {}
+    try {
+      return LocalDate.parse(s);
+    } catch (Exception e) {
+      // Ignored
+    }
+    try {
+      return LocalDate.parse(s, java.time.format.DateTimeFormatter.ofPattern("dd-MM-yyyy"));
+    } catch (Exception e) {
+      // Ignored
+    }
+    try {
+      return LocalDate.parse(s, java.time.format.DateTimeFormatter.ofPattern("dd/MM/yyyy"));
+    } catch (Exception e) {
+      // Ignored
+    }
+    try {
+      return LocalDate.parse(s, java.time.format.DateTimeFormatter.ofPattern("dd.MM.yyyy"));
+    } catch (Exception e) {
+      // Ignored
+    }
     return null;
   }
 
   private Integer parseInteger(String s) {
-    try { return hasText(s) ? (int) Double.parseDouble(s) : null; } catch (Exception e) { return null; }
+    try {
+      return hasText(s) ? (int) Double.parseDouble(s) : null;
+    } catch (Exception e) {
+      return null;
+    }
   }
-
-  private void updateCell(Cell c, String v, CellStyle s) { c.setCellValue(v); c.setCellStyle(s); }
-
-  private Cell getOrCreateCell(Row r, int c) { Cell cell = r.getCell(c); return cell != null ? cell : r.createCell(c); }
-
-  private CellStyle[] createFeedbackStyles(Workbook wb) {
-    return new CellStyle[] {
-      createStyle(wb, IndexedColors.GREY_25_PERCENT, FillPatternType.SOLID_FOREGROUND, true),
-      createStyle(wb, IndexedColors.LIGHT_GREEN, FillPatternType.SOLID_FOREGROUND, false),
-      createStyle(wb, IndexedColors.LIGHT_YELLOW, FillPatternType.SOLID_FOREGROUND, false),
-      createStyle(wb, IndexedColors.RED, FillPatternType.SOLID_FOREGROUND, false)
-    };
-  }
-
-  private CellStyle createStyle(Workbook wb, IndexedColors c, FillPatternType p, boolean b) {
-    CellStyle s = wb.createCellStyle(); s.setFillForegroundColor(c.getIndex()); s.setFillPattern(p);
-    if (b) { var f = wb.createFont(); f.setBold(true); s.setFont(f); }
-    return s;
-  }
-
-  private int prepareHeaderAndGetStatusColumn(Sheet s, CellStyle h) {
-    Row r = s.getRow(0); if (r == null) r = s.createRow(0);
-    for (int i = 0; i < r.getLastCellNum(); i++) if ("IMPORT STATUS".equalsIgnoreCase(text(r, i))) return i;
-    int idx = r.getLastCellNum(); Cell c = r.createCell(idx); c.setCellValue("IMPORT STATUS"); c.setCellStyle(h); return idx;
-  }
-
-  private String getFeedbackFileBase64(Workbook wb) {
-    try (ByteArrayOutputStream b = new ByteArrayOutputStream()) { wb.write(b); return Base64.getEncoder().encodeToString(b.toByteArray()); }
-    catch (IOException e) { return null; }
-  }
-
-  private String text(Row r, int c) { Cell v = r.getCell(c); return v == null ? null : dataFormatter.formatCellValue(v).trim(); }
-  private boolean hasText(String v) { return v != null && !v.trim().isEmpty(); }
-  private boolean blank(Row r, int c) { return !hasText(text(r, c)); }
 }

@@ -41,7 +41,7 @@ public class PatientController {
   }
 
   @GetMapping
-  @PreAuthorize("hasAnyRole('ADMIN','RECEPTIONIST','NURSE','DOCTOR','SUPER_ADMIN')")
+  @PreAuthorize("hasAnyRole('ADMIN','RECEPTIONIST','NURSE','DOCTOR','PHARMACIST','SUPER_ADMIN')")
   public ApiResponse<PageResponse<PatientDTO>> list(
       @RequestParam(defaultValue = "0") int page,
       @RequestParam(defaultValue = "20") int size,
@@ -50,7 +50,7 @@ public class PatientController {
   }
 
   @GetMapping("/summary")
-  @PreAuthorize("hasAnyRole('ADMIN','RECEPTIONIST','NURSE','DOCTOR','SUPER_ADMIN')")
+  @PreAuthorize("hasAnyRole('ADMIN','RECEPTIONIST','NURSE','DOCTOR','PHARMACIST','SUPER_ADMIN')")
   public ApiResponse<PageResponse<PatientSummaryDTO>> listSummary(
       @RequestParam(defaultValue = "0") int page,
       @RequestParam(defaultValue = "20") int size,

@@ -252,23 +252,31 @@ public class PharmacySaleService {
             });
   }
 
-  private PaymentReceipt recordPayment(
-      QuickPharmacySaleRequest request, UUID hospitalId, UUID userId, Invoice invoice) {
-    if (request.getPayment() != null
-        && request.getPayment().getAmount().compareTo(BigDecimal.ZERO) > 0) {
-      RecordPaymentRequest paymentReq = new RecordPaymentRequest();
-      paymentReq.setInvoiceId(invoice.getId());
-      paymentReq.setPatientId(request.getPatientId());
-      paymentReq.setVisitId(request.getVisitId());
-      paymentReq.setAmount(request.getPayment().getAmount());
-      paymentReq.setPaymentMode(request.getPayment().getMode());
-      paymentReq.setReferenceNumber(request.getPayment().getReferenceNumber());
+    private PaymentReceipt recordPayment(
+        QuickPharmacySaleRequest request, UUID hospitalId, UUID userId, Invoice invoice) {
 
-      var paymentDto = paymentService.recordPayment(hospitalId, paymentReq, userId);
-      return new PaymentReceipt(paymentDto.getId(), paymentDto.getReceiptNumber());
+        if (request.getPayment() != null
+            && request.getPayment().getAmount() != null
+            && request.getPayment().getAmount().compareTo(BigDecimal.ZERO) > 0) {
+
+            RecordPaymentRequest paymentReq = new RecordPaymentRequest();
+            paymentReq.setInvoiceId(invoice.getId());
+            paymentReq.setPatientId(request.getPatientId());
+            paymentReq.setVisitId(request.getVisitId());
+            paymentReq.setAmount(request.getPayment().getAmount());
+            paymentReq.setPaymentMode(request.getPayment().getMode());
+            paymentReq.setReferenceNumber(request.getPayment().getReferenceNumber());
+
+            var paymentDto = paymentService.recordPayment(hospitalId, paymentReq, userId);
+
+            return new PaymentReceipt(
+                paymentDto.getId(),
+                paymentDto.getReceiptNumber()
+            );
+        }
+
+        return new PaymentReceipt(null, null);
     }
-    return new PaymentReceipt(null, null);
-  }
 
   private record PaymentReceipt(UUID paymentId, String receiptNumber) {}
 

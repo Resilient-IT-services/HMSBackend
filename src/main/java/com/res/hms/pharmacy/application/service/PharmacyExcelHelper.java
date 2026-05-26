@@ -2,12 +2,31 @@ package com.res.hms.pharmacy.application.service;
 
 import com.res.hms.pharmacy.domain.MedicineForm;
 import com.res.hms.pharmacy.domain.MedicineSchedule;
+import java.io.ByteArrayOutputStream;
+import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Base64;
 import java.util.List;
+import org.apache.poi.ss.usermodel.Cell;
+import org.apache.poi.ss.usermodel.CellStyle;
+import org.apache.poi.ss.usermodel.DataFormatter;
+import org.apache.poi.ss.usermodel.FillPatternType;
+import org.apache.poi.ss.usermodel.IndexedColors;
+import org.apache.poi.ss.usermodel.Row;
+import org.apache.poi.ss.usermodel.Sheet;
+import org.apache.poi.ss.usermodel.Workbook;
 
 public class PharmacyExcelHelper {
 
-  public static List<String> validateMedicineData(String name, String genericName, String composition, String strength, String formStr, String manufacturer) {
+  private static final DataFormatter DATA_FORMATTER = new DataFormatter();
+
+  public static List<String> validateMedicineData(
+      String name,
+      String genericName,
+      String composition,
+      String strength,
+      String formStr,
+      String manufacturer) {
     List<String> errors = new ArrayList<>();
     if (!hasText(name)) {
       errors.add("Name is required");
@@ -38,13 +57,19 @@ public class PharmacyExcelHelper {
     return errors;
   }
 
-  public static List<String> validateStockData(String medicineName, String batchNumber, String qtyStr, String sellingPriceStr, String purchasePriceStr, String expiryStr) {
+  public static List<String> validateStockData(
+      String medicineName,
+      String batchNumber,
+      String qtyStr,
+      String sellingPriceStr,
+      String purchasePriceStr,
+      String expiryStr) {
     List<String> errors = new ArrayList<>();
-    
+
     if (!hasText(medicineName)) {
       errors.add("Medicine Name is missing");
     }
-    
+
     if (!hasText(batchNumber)) {
       errors.add("Batch Number is missing");
     }
@@ -152,7 +177,73 @@ public class PharmacyExcelHelper {
     return null;
   }
 
-  private static boolean hasText(String value) {
+  public static CellStyle[] createFeedbackStyles(Workbook wb) {
+    return new CellStyle[] {
+      createStyle(wb, IndexedColors.GREY_25_PERCENT, FillPatternType.SOLID_FOREGROUND, true),
+      createStyle(wb, IndexedColors.LIGHT_GREEN, FillPatternType.SOLID_FOREGROUND, false),
+      createStyle(wb, IndexedColors.LIGHT_YELLOW, FillPatternType.SOLID_FOREGROUND, false),
+      createStyle(wb, IndexedColors.RED, FillPatternType.SOLID_FOREGROUND, false)
+    };
+  }
+
+  public static CellStyle createStyle(Workbook wb, IndexedColors c, FillPatternType p, boolean b) {
+    CellStyle s = wb.createCellStyle();
+    s.setFillForegroundColor(c.getIndex());
+    s.setFillPattern(p);
+    if (b) {
+      var f = wb.createFont();
+      f.setBold(true);
+      s.setFont(f);
+    }
+    return s;
+  }
+
+  public static int prepareHeaderAndGetStatusColumn(Sheet s, CellStyle h) {
+    Row r = s.getRow(0);
+    if (r == null) {
+      r = s.createRow(0);
+    }
+    for (int i = 0; i < r.getLastCellNum(); i++) {
+      if ("IMPORT STATUS".equalsIgnoreCase(text(r, i))) {
+        return i;
+      }
+    }
+    int idx = r.getLastCellNum();
+    Cell c = r.createCell(idx);
+    c.setCellValue("IMPORT STATUS");
+    c.setCellStyle(h);
+    return idx;
+  }
+
+  public static String getFeedbackFileBase64(Workbook wb) {
+    try (ByteArrayOutputStream b = new ByteArrayOutputStream()) {
+      wb.write(b);
+      return Base64.getEncoder().encodeToString(b.toByteArray());
+    } catch (IOException e) {
+      return null;
+    }
+  }
+
+  public static void updateCell(Cell c, String v, CellStyle s) {
+    c.setCellValue(v);
+    c.setCellStyle(s);
+  }
+
+  public static Cell getOrCreateCell(Row r, int c) {
+    Cell cell = r.getCell(c);
+    return cell != null ? cell : r.createCell(c);
+  }
+
+  public static String text(Row r, int c) {
+    Cell v = r.getCell(c);
+    return v == null ? null : DATA_FORMATTER.formatCellValue(v).trim();
+  }
+
+  public static boolean hasText(String value) {
     return value != null && !value.trim().isEmpty();
+  }
+
+  public static boolean isBlank(Row r, int c) {
+    return !hasText(text(r, c));
   }
 }

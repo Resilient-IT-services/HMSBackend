@@ -22,7 +22,6 @@ import com.res.hms.finance.infrastructure.repository.InvoiceRepository;
 
 import java.io.ByteArrayOutputStream;
 import java.math.BigDecimal;
-import java.nio.charset.StandardCharsets;
 import java.util.List;
 import java.util.UUID;
 import java.util.stream.Collectors;
