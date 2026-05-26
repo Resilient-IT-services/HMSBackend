@@ -7,7 +7,14 @@ import java.util.List;
 
 public class PharmacyExcelHelper {
 
-  public static List<String> validateMedicineData(String name, String genericName, String composition, String strength, String formStr, String manufacturer) {
+  public static List<String> validateMedicineData(
+      String name,
+      String genericName,
+      String composition,
+      String strength,
+      String formStr,
+      String manufacturer,
+      String scheduleStr) {
     List<String> errors = new ArrayList<>();
     if (!hasText(name)) {
       errors.add("Name is required");
@@ -35,51 +42,11 @@ public class PharmacyExcelHelper {
       }
     }
 
-    return errors;
-  }
-
-  public static List<String> validateStockData(String medicineName, String batchNumber, String qtyStr, String sellingPriceStr, String purchasePriceStr, String expiryStr) {
-    List<String> errors = new ArrayList<>();
-    
-    if (!hasText(medicineName)) {
-      errors.add("Medicine Name is missing");
+    MedicineSchedule schedule = parseMedicineSchedule(scheduleStr);
+    if (schedule == null && hasText(scheduleStr)) {
+      String acceptedSchedules = java.util.Arrays.toString(MedicineSchedule.values());
+      errors.add("Invalid Schedule: " + scheduleStr + ". Accepted: " + acceptedSchedules);
     }
-    
-    if (!hasText(batchNumber)) {
-      errors.add("Batch Number is missing");
-    }
-
-    if (!hasText(qtyStr)) {
-      errors.add("Quantity is missing");
-    } else {
-      try {
-        double q = Double.parseDouble(qtyStr);
-        if (q < 0) {
-          errors.add("Quantity cannot be negative");
-        }
-      } catch (NumberFormatException e) {
-        errors.add("Invalid Quantity format: " + qtyStr);
-      }
-    }
-
-    if (!hasText(sellingPriceStr)) {
-      errors.add("Selling Price is missing");
-    } else {
-      try {
-        new java.math.BigDecimal(sellingPriceStr);
-      } catch (Exception e) {
-        errors.add("Invalid Selling Price format: " + sellingPriceStr);
-      }
-    }
-
-    if (hasText(purchasePriceStr)) {
-      try {
-        new java.math.BigDecimal(purchasePriceStr);
-      } catch (Exception e) {
-        errors.add("Invalid Purchase Price format: " + purchasePriceStr);
-      }
-    }
-
     return errors;
   }
 

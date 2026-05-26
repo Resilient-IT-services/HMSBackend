@@ -8,11 +8,11 @@ import com.res.hms.clinical.infrastructure.repository.PatientRepository;
 import com.res.hms.core.api.PageResponse;
 import com.res.hms.core.tenant.HospitalContext;
 import com.res.hms.core.util.ResourceLookup;
+import jakarta.persistence.criteria.Predicate;
 import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
-import jakarta.persistence.criteria.Predicate;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
@@ -37,11 +37,11 @@ public class PatientService {
 
       if (search != null && !search.trim().isEmpty()) {
         String pattern = "%" + search.trim().toLowerCase() + "%";
-        predicates.add(cb.or(
-            cb.like(cb.lower(root.get("fullName")), pattern),
-            cb.like(cb.lower(root.get("patientCode")), pattern),
-            cb.like(root.get("phone"), pattern)
-        ));
+        predicates.add(
+            cb.or(
+                cb.like(cb.lower(root.get("fullName")), pattern),
+                cb.like(cb.lower(root.get("patientCode")), pattern),
+                cb.like(root.get("phone"), pattern)));
       }
       return cb.and(predicates.toArray(new Predicate[0]));
     };

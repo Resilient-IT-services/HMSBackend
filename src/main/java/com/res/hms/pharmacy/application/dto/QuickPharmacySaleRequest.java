@@ -35,8 +35,10 @@ public class QuickPharmacySaleRequest {
     private UUID medicineBatchId;
     private Integer quantity;
     private BigDecimal unitPrice;
+
     @jakarta.validation.constraints.Min(0)
     private BigDecimal discountAmount;
+
     @jakarta.validation.constraints.Min(0)
     private BigDecimal taxAmount;
   }
@@ -47,8 +49,10 @@ public class QuickPharmacySaleRequest {
   @AllArgsConstructor
   public static class PaymentInfo {
     private PaymentMode mode;
+
     @jakarta.validation.constraints.Min(0)
     private BigDecimal amount;
+
     private String referenceNumber;
   }
 }

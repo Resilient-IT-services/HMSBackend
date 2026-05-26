@@ -25,6 +25,7 @@ public class OPDEncounterRequest {
     @NotNull
     @jakarta.validation.constraints.Min(0)
     private BigDecimal amount;
+
     @NotNull private PaymentMode mode;
     private String referenceNumber;
   }

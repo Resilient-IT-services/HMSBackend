@@ -8,7 +8,6 @@ import com.res.hms.pharmacy.application.dto.StockRequest;
 import com.res.hms.pharmacy.domain.Medicine;
 import com.res.hms.pharmacy.domain.MedicineForm;
 import com.res.hms.pharmacy.domain.PharmacyStock;
-import com.res.hms.pharmacy.infrastructure.repository.HospitalMedicineCatalogRepository;
 import com.res.hms.pharmacy.infrastructure.repository.MedicineRepository;
 import com.res.hms.pharmacy.infrastructure.repository.PharmacyStockRepository;
 import java.io.ByteArrayOutputStream;
@@ -32,7 +31,6 @@ import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
-import java.util.Optional;
 
 @Slf4j
 @Service
@@ -40,17 +38,32 @@ import java.util.Optional;
 public class PharmacyExcelService {
 
   private final MedicineRepository medicineRepository;
-  private final HospitalMedicineCatalogRepository hospitalMedicineCatalogRepository;
   private final PharmacyStockRepository pharmacyStockRepository;
   private final HospitalContext hospitalContext;
   private final org.apache.poi.ss.usermodel.DataFormatter dataFormatter =
       new org.apache.poi.ss.usermodel.DataFormatter();
 
+  /**
+   * Imports medicines from an Excel file. Operates on a single workbook to provide feedback on each
+   * row.
+   */
   public MedicineImportResponse importMedicines(MultipartFile file) {
     try (Workbook workbook = WorkbookFactory.create(file.getInputStream())) {
       Sheet sheet = workbook.getSheetAt(0);
-      CellStyle[] styles = createFeedbackStyles(workbook);
-      int statusColIndex = prepareHeaderAndGetStatusColumn(sheet, styles[0]);
+
+      // Prepare styles
+      CellStyle headerStyle =
+          createStyle(
+              workbook, IndexedColors.GREY_25_PERCENT, FillPatternType.SOLID_FOREGROUND, true);
+      CellStyle successStyle =
+          createStyle(workbook, IndexedColors.LIGHT_GREEN, FillPatternType.SOLID_FOREGROUND, false);
+      CellStyle skippedStyle =
+          createStyle(
+              workbook, IndexedColors.LIGHT_YELLOW, FillPatternType.SOLID_FOREGROUND, false);
+      CellStyle errorStyle =
+          createStyle(workbook, IndexedColors.RED, FillPatternType.SOLID_FOREGROUND, false);
+
+      int statusColIndex = prepareHeaderAndGetStatusColumn(sheet, headerStyle);
 
       int totalRows = 0;
       int imported = 0;
@@ -62,8 +75,10 @@ public class PharmacyExcelService {
         if (row == null || blank(row, 0)) {
           continue;
         }
+
         totalRows++;
-        String result = processMedicineRow(row, statusColIndex, styles);
+        String result =
+            processMedicineRow(row, statusColIndex, successStyle, skippedStyle, errorStyle);
         if ("SUCCESS".equals(result)) {
           imported++;
         } else if (result != null && result.startsWith("SKIPPED")) {
@@ -72,244 +87,265 @@ public class PharmacyExcelService {
           failed++;
         }
       }
-      return MedicineImportResponse.builder()
-          .totalRows(totalRows)
-          .importedRows(imported)
-          .skippedRows(skipped)
-          .failedRows(failed)
-          .errorFileBase64(failed > 0 ? getFeedbackFileBase64(workbook) : null)
-          .build();
+
+      return generateMedicineImportResponse(totalRows, imported, skipped, failed, workbook);
+
     } catch (IOException e) {
-      throw new ApiException("IMPORT_FAILED", "Unable to process Excel file", HttpStatus.BAD_REQUEST);
+      log.error("Excel import failed", e);
+      throw new ApiException(
+          "IMPORT_FAILED",
+          "Unable to process Excel file: " + e.getMessage(),
+          HttpStatus.BAD_REQUEST);
     }
+  }
+
+  private MedicineImportResponse generateMedicineImportResponse(
+      int total, int imported, int skipped, int failed, Workbook workbook) {
+    String base64 = null;
+    if (failed > 0) {
+      base64 = getFeedbackFileBase64(workbook);
+    }
+
+    return MedicineImportResponse.builder()
+        .totalRows(total)
+        .importedRows(imported)
+        .skippedRows(skipped)
+        .failedRows(failed)
+        .errorFileBase64(base64)
+        .build();
+  }
+
+  private String getFeedbackFileBase64(Workbook workbook) {
+    try (ByteArrayOutputStream baos = new ByteArrayOutputStream()) {
+      workbook.write(baos);
+      return Base64.getEncoder().encodeToString(baos.toByteArray());
+    } catch (IOException e) {
+      log.warn("Failed to generate feedback file", e);
+      return null;
+    }
+  }
+
+  private int prepareHeaderAndGetStatusColumn(Sheet sheet, CellStyle headerStyle) {
+    Row headerRow = sheet.getRow(0);
+    if (headerRow == null) {
+      headerRow = sheet.createRow(0);
+    }
+
+    int statusColIndex = -1;
+    for (int c = 0; c < headerRow.getLastCellNum(); c++) {
+      String headerVal = text(headerRow, c);
+      if ("IMPORT STATUS".equalsIgnoreCase(headerVal)) {
+        statusColIndex = c;
+        break;
+      }
+    }
+
+    if (statusColIndex == -1) {
+      statusColIndex = headerRow.getLastCellNum();
+      Cell statusHeaderCell = headerRow.createCell(statusColIndex);
+      statusHeaderCell.setCellValue("IMPORT STATUS");
+      statusHeaderCell.setCellStyle(headerStyle);
+    } else {
+      headerRow.getCell(statusColIndex).setCellStyle(headerStyle);
+    }
+    return statusColIndex;
+  }
+
+  private String processMedicineRow(
+      Row row,
+      int statusColIndex,
+      CellStyle successStyle,
+      CellStyle skippedStyle,
+      CellStyle errorStyle) {
+    Cell statusCell = row.getCell(statusColIndex);
+    if (statusCell == null) {
+      statusCell = row.createCell(statusColIndex);
+    }
+    statusCell.setCellValue("");
+
+    try {
+      String name = text(row, 0);
+      String genericName = text(row, 1);
+      String composition = text(row, 2);
+      String strength = text(row, 3);
+      String formStr = text(row, 4);
+      String manufacturer = text(row, 5);
+      String scheduleStr = text(row, 6);
+
+      List<String> errors =
+          PharmacyExcelHelper.validateMedicineData(
+              name, genericName, composition, strength, formStr, manufacturer, scheduleStr);
+      if (!errors.isEmpty()) {
+        throw new IllegalArgumentException(String.join(" | ", errors));
+      }
+
+      MedicineForm form = PharmacyExcelHelper.parseMedicineForm(formStr);
+      if (medicineRepository.existsDuplicate(name, genericName, strength, form)) {
+        statusCell.setCellValue("SKIPPED: Medicine already exists");
+        statusCell.setCellStyle(skippedStyle);
+        return "SKIPPED";
+      }
+
+      Medicine medicine = new Medicine();
+      medicine.setName(name);
+      medicine.setGenericName(genericName);
+      medicine.setComposition(composition);
+      medicine.setStrength(strength);
+      medicine.setForm(form);
+      medicine.setManufacturer(manufacturer);
+      medicine.setScheduleType(PharmacyExcelHelper.parseMedicineSchedule(scheduleStr));
+      medicineRepository.save(medicine);
+
+      statusCell.setCellValue("SUCCESS");
+      statusCell.setCellStyle(successStyle);
+      return "SUCCESS";
+
+    } catch (Exception e) {
+      String errorMsg = "ERROR: " + e.getMessage();
+      statusCell.setCellValue(errorMsg);
+      statusCell.setCellStyle(errorStyle);
+      return "ERROR";
+    }
+  }
+
+  private CellStyle createStyle(
+      Workbook wb, IndexedColors color, FillPatternType pattern, boolean bold) {
+    CellStyle style = wb.createCellStyle();
+    style.setFillForegroundColor(color.getIndex());
+    style.setFillPattern(pattern);
+    if (bold) {
+      org.apache.poi.ss.usermodel.Font font = wb.createFont();
+      font.setBold(true);
+      style.setFont(font);
+    }
+    return style;
   }
 
   @Transactional
   public StockImportResponse importStock(MultipartFile file) {
-    try (Workbook workbook = WorkbookFactory.create(file.getInputStream())) {
-      Sheet sheet = workbook.getSheetAt(0);
-      CellStyle[] styles = createFeedbackStyles(workbook);
-      int statusColIndex = prepareHeaderAndGetStatusColumn(sheet, styles[0]);
+    try (var workbook = WorkbookFactory.create(file.getInputStream())) {
+      return processStockWorkbook(workbook);
+    } catch (IOException e) {
+      log.error("Stock Excel import failed", e);
+      throw new ApiException(
+          "IMPORT_FAILED", "Unable to read stock Excel file", HttpStatus.BAD_REQUEST);
+    }
+  }
 
-      int totalRows = 0;
-      int imported = 0;
-      int skipped = 0;
-      int failed = 0;
-      int notFound = 0;
-      String lastError = null;
+  private StockImportResponse processStockWorkbook(Workbook workbook) {
+    int totalRows = 0;
+    int imported = 0;
+    int skipped = 0;
+    int notFound = 0;
+    String lastError = null;
 
-      for (int i = 1; i <= sheet.getLastRowNum(); i++) {
-        Row row = sheet.getRow(i);
-        if (row == null || blank(row, 0)) {
-          continue;
-        }
-        totalRows++;
-        String result = processStockRow(row, statusColIndex, styles);
+    for (Row row : workbook.getSheetAt(0)) {
+      if (row.getRowNum() == 0 || blank(row, 0)) {
+        continue;
+      }
+
+      totalRows++;
+      try {
+        String result = processStockRow(row);
         if ("SUCCESS".equals(result)) {
           imported++;
-        } else if ("SKIPPED".equals(result)) {
-          skipped++;
         } else if ("NOT_FOUND".equals(result)) {
           notFound++;
-        } else {
-          failed++;
-          lastError = result;
         }
-      }
-      return StockImportResponse.builder()
-          .totalRows(totalRows)
-          .importedRows(imported)
-          .skippedRows(skipped)
-          .medicineNotFoundRows(notFound)
-          .lastError(lastError)
-          .errorFileBase64((failed > 0 || skipped > 0 || notFound > 0) ? getFeedbackFileBase64(workbook) : null)
-          .build();
-    } catch (IOException e) {
-      throw new ApiException("IMPORT_FAILED", "Unable to read stock Excel file", HttpStatus.BAD_REQUEST);
-    }
-  }
-
-  private String processStockRow(Row row, int statusCol, CellStyle[] styles) {
-    Cell statusCell = getOrCreateCell(row, statusCol);
-    try {
-      String nameRaw = text(row, 0);
-      String batch = text(row, 1);
-      String expStr = text(row, 2);
-      String qtyStr = text(row, 3);
-      String pPriceStr = text(row, 4);
-      String sPriceStr = text(row, 5);
-      String reorderLevelStr = row.getLastCellNum() > 6 ? text(row, 6) : null;
-
-      String name = nameRaw == null ? "" : nameRaw.replaceAll("[\\p{Z}\\s]+", " ").trim();
-      List<String> errors = PharmacyExcelHelper.validateStockData(name, batch, qtyStr, sPriceStr, pPriceStr, expStr);
-      if (!errors.isEmpty()) {
-        throw new IllegalArgumentException(String.join(" | ", errors));
-      }
-
-      Medicine medicine = findMedicine(name, statusCell, styles[3]);
-      if (medicine == null) {
-        return "NOT_FOUND";
-      }
-
-      UUID hospitalId = hospitalContext.requireHospitalId();
-      if (pharmacyStockRepository.findByHospitalIdAndMedicineIdAndBatchNumber(hospitalId, medicine.getId(), batch).isPresent()) {
-        updateCell(statusCell, "SKIPPED: Batch already exists", styles[2]);
-        return "SKIPPED";
-      }
-
-      Integer reorderLevel = parseInteger(reorderLevelStr);
-      updateMedicineReorderLevel(medicine.getId(), reorderLevel);
-
-      saveStock(hospitalId, medicine, batch, parseDate(row, 2, expStr), qtyStr, pPriceStr, sPriceStr);
-      updateCell(statusCell, "SUCCESS", styles[1]);
-      return "SUCCESS";
-    } catch (Exception e) {
-      updateCell(statusCell, "ERROR: " + e.getMessage(), styles[3]);
-      return "ERROR";
-    }
-  }
-
-  private String processMedicineRow(Row row, int statusCol, CellStyle[] styles) {
-    Cell statusCell = getOrCreateCell(row, statusCol);
-    try {
-      String name = text(row, 0);
-      String gName = text(row, 1);
-      String comp = text(row, 2);
-      String str = text(row, 3);
-      String fStr = text(row, 4);
-      String mf = text(row, 5);
-      String rlStr = text(row, 6);
-
-      List<String> errors = PharmacyExcelHelper.validateMedicineData(name, gName, comp, str, fStr, mf);
-      if (!errors.isEmpty()) {
-        throw new IllegalArgumentException(String.join(" | ", errors));
-      }
-
-      MedicineForm form = PharmacyExcelHelper.parseMedicineForm(fStr);
-      if (medicineRepository.existsDuplicate(name, gName, str, form)) {
-        updateCell(statusCell, "SKIPPED: Medicine already exists", styles[2]);
-        return "SKIPPED";
-      }
-
-      Medicine m = new Medicine();
-      m.setName(name); m.setGenericName(gName); m.setComposition(comp);
-      m.setStrength(str); m.setForm(form); m.setManufacturer(mf);
-      m.setScheduleType(com.res.hms.pharmacy.domain.MedicineSchedule.OTC);
-      medicineRepository.save(m);
-
-      updateMedicineReorderLevel(m.getId(), parseInteger(rlStr));
-      updateCell(statusCell, "SUCCESS", styles[1]);
-      return "SUCCESS";
-    } catch (Exception e) {
-      updateCell(statusCell, "ERROR: " + e.getMessage(), styles[3]);
-      return "ERROR";
-    }
-  }
-
-  private void saveStock(UUID hId, Medicine m, String b, LocalDate exp, String q, String p, String s) {
-    PharmacyStock stock = pharmacyStockRepository.findByHospitalIdAndMedicineIdAndBatchNumber(hId, m.getId(), b)
-        .orElseGet(() -> {
-          PharmacyStock ps = new PharmacyStock();
-          ps.setHospitalId(hId); ps.setMedicine(m); ps.setBatchNumber(b); ps.setQuantity(0);
-          return ps;
-        });
-    stock.setExpiryDate(exp);
-    
-    // Use robust parsing to avoid NUMERIC/STRING cell mismatch errors
-    int qtyToAdd = 0;
-    if (hasText(q)) {
-      try {
-        qtyToAdd = (int) Double.parseDouble(q.replaceAll("[^\\d.]", ""));
       } catch (Exception e) {
-        log.warn("Invalid quantity format in saveStock: {}", q);
+        log.error("Failed to import stock row {}: {}", row.getRowNum(), e.getMessage());
+        lastError = e.getMessage();
+        skipped++;
       }
     }
-    
-    stock.setQuantity(stock.getQuantity() + qtyToAdd);
-    
-    try {
-      stock.setPurchasePrice(hasText(p) ? new BigDecimal(p.replaceAll("[^\\d.]", "")) : BigDecimal.ZERO);
-      stock.setSellingPrice(hasText(s) ? new BigDecimal(s.replaceAll("[^\\d.]", "")) : BigDecimal.ZERO);
-    } catch (Exception e) {
-      log.warn("Invalid price format in saveStock: P={}, S={}", p, s);
+
+    return StockImportResponse.builder()
+        .totalRows(totalRows)
+        .importedRows(imported)
+        .skippedRows(skipped)
+        .medicineNotFoundRows(notFound)
+        .lastError(lastError)
+        .build();
+  }
+
+  private String processStockRow(Row row) {
+    String medicineName = text(row, 0);
+    String batchNumber = text(row, 1);
+    String expiryStr = text(row, 2);
+    String qtyStr = text(row, 3);
+    String purchasePriceStr = text(row, 4);
+    String sellingPriceStr = text(row, 5);
+
+    var medicines = medicineRepository.findByExactName(medicineName);
+    if (medicines.isEmpty()) {
+      log.warn("Medicine not found for stock import: {}", medicineName);
+      return "NOT_FOUND";
     }
-    
+    var medicine = medicines.get(0);
+
+    LocalDate expiryDate = null;
+    if (hasText(expiryStr)) {
+      try {
+        expiryDate = LocalDate.parse(expiryStr);
+      } catch (Exception e) {
+        log.warn("Invalid date format in Excel row {}: {}", row.getRowNum(), expiryStr);
+      }
+    }
+
+    addStockInternal(
+        StockRequest.builder()
+            .medicineId(medicine.getId())
+            .batchNumber(batchNumber)
+            .expiryDate(expiryDate)
+            .quantity(qtyStr != null ? (int) Double.parseDouble(qtyStr) : 0)
+            .purchasePrice(
+                purchasePriceStr != null ? new BigDecimal(purchasePriceStr) : BigDecimal.ZERO)
+            .sellingPrice(
+                sellingPriceStr != null ? new BigDecimal(sellingPriceStr) : BigDecimal.ZERO)
+            .build());
+    return "SUCCESS";
+  }
+
+  private void addStockInternal(StockRequest request) {
+    UUID hospitalId = hospitalContext.requireHospitalId();
+    Medicine medicine =
+        medicineRepository
+            .findById(request.getMedicineId())
+            .orElseThrow(
+                () -> new ApiException("NOT_FOUND", "Medicine not found", HttpStatus.NOT_FOUND));
+
+    PharmacyStock stock =
+        pharmacyStockRepository
+            .findByHospitalIdAndMedicineIdAndBatchNumber(
+                hospitalId, request.getMedicineId(), request.getBatchNumber())
+            .orElseGet(() -> createNewStock(hospitalId, medicine, request.getBatchNumber()));
+
+    stock.setExpiryDate(request.getExpiryDate());
+    stock.setQuantity(stock.getQuantity() + request.getQuantity());
+    stock.setPurchasePrice(request.getPurchasePrice());
+    stock.setSellingPrice(request.getSellingPrice());
     pharmacyStockRepository.save(stock);
   }
 
-  private Medicine findMedicine(String name, Cell cell, CellStyle style) {
-    return medicineRepository.findByExactName(name).stream().findFirst()
-        .or(() -> medicineRepository.findByNameIgnoreCase(name))
-        .orElseGet(() -> {
-          updateCell(cell, "ERROR: Medicine '" + name + "' not found", style);
-          return null;
-        });
-  }
-
-  private void updateMedicineReorderLevel(UUID mId, Integer rl) {
-    Optional.ofNullable(hospitalContext.getHospitalIdOrNull()).ifPresent(hId -> {
-      var cat = hospitalMedicineCatalogRepository.findByHospitalIdAndMedicineId(hId, mId)
-          .orElseGet(() -> {
-            var c = new com.res.hms.pharmacy.domain.HospitalMedicineCatalog();
-            c.setHospitalId(hId); c.setMedicine(medicineRepository.getReferenceById(mId));
-            return c;
-          });
-      cat.setReorderLevel(rl != null ? rl : 50);
-      hospitalMedicineCatalogRepository.save(cat);
-    });
-  }
-
-  private LocalDate parseDate(Row row, int col, String val) {
-    if (!hasText(val)) {
-      return null;
-    }
-    Cell c = row.getCell(col);
-    if (c != null && org.apache.poi.ss.usermodel.DateUtil.isCellDateFormatted(c)) {
-      return c.getLocalDateTimeCellValue().toLocalDate();
-    }
-    String s = val.replaceAll("[^\\d\\-/.]", "").trim();
-    try { return LocalDate.parse(s); } catch (Exception e) {}
-    try { return LocalDate.parse(s, java.time.format.DateTimeFormatter.ofPattern("dd-MM-yyyy")); } catch (Exception e) {}
-    try { return LocalDate.parse(s, java.time.format.DateTimeFormatter.ofPattern("dd/MM/yyyy")); } catch (Exception e) {}
-    try { return LocalDate.parse(s, java.time.format.DateTimeFormatter.ofPattern("dd.MM.yyyy")); } catch (Exception e) {}
-    return null;
-  }
-
-  private Integer parseInteger(String s) {
-    try { return hasText(s) ? (int) Double.parseDouble(s) : null; } catch (Exception e) { return null; }
-  }
-
-  private void updateCell(Cell c, String v, CellStyle s) { c.setCellValue(v); c.setCellStyle(s); }
-
-  private Cell getOrCreateCell(Row r, int c) { Cell cell = r.getCell(c); return cell != null ? cell : r.createCell(c); }
-
-  private CellStyle[] createFeedbackStyles(Workbook wb) {
-    return new CellStyle[] {
-      createStyle(wb, IndexedColors.GREY_25_PERCENT, FillPatternType.SOLID_FOREGROUND, true),
-      createStyle(wb, IndexedColors.LIGHT_GREEN, FillPatternType.SOLID_FOREGROUND, false),
-      createStyle(wb, IndexedColors.LIGHT_YELLOW, FillPatternType.SOLID_FOREGROUND, false),
-      createStyle(wb, IndexedColors.RED, FillPatternType.SOLID_FOREGROUND, false)
-    };
-  }
-
-  private CellStyle createStyle(Workbook wb, IndexedColors c, FillPatternType p, boolean b) {
-    CellStyle s = wb.createCellStyle(); s.setFillForegroundColor(c.getIndex()); s.setFillPattern(p);
-    if (b) { var f = wb.createFont(); f.setBold(true); s.setFont(f); }
+  private PharmacyStock createNewStock(UUID hospitalId, Medicine medicine, String batchNumber) {
+    PharmacyStock s = new PharmacyStock();
+    s.setHospitalId(hospitalId);
+    s.setMedicine(medicine);
+    s.setBatchNumber(batchNumber);
+    s.setQuantity(0);
     return s;
   }
 
-  private int prepareHeaderAndGetStatusColumn(Sheet s, CellStyle h) {
-    Row r = s.getRow(0); if (r == null) r = s.createRow(0);
-    for (int i = 0; i < r.getLastCellNum(); i++) if ("IMPORT STATUS".equalsIgnoreCase(text(r, i))) return i;
-    int idx = r.getLastCellNum(); Cell c = r.createCell(idx); c.setCellValue("IMPORT STATUS"); c.setCellStyle(h); return idx;
+  private boolean hasText(String value) {
+    return value != null && !value.trim().isEmpty();
   }
 
-  private String getFeedbackFileBase64(Workbook wb) {
-    try (ByteArrayOutputStream b = new ByteArrayOutputStream()) { wb.write(b); return Base64.getEncoder().encodeToString(b.toByteArray()); }
-    catch (IOException e) { return null; }
+  private boolean blank(Row row, int cell) {
+    return !hasText(text(row, cell));
   }
 
-  private String text(Row r, int c) { Cell v = r.getCell(c); return v == null ? null : dataFormatter.formatCellValue(v).trim(); }
-  private boolean hasText(String v) { return v != null && !v.trim().isEmpty(); }
-  private boolean blank(Row r, int c) { return !hasText(text(r, c)); }
+  private String text(Row row, int cell) {
+    var value = row.getCell(cell);
+    return value == null ? null : dataFormatter.formatCellValue(value).trim();
+  }
 }

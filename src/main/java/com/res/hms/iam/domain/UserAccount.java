@@ -78,4 +78,3 @@ public class UserAccount extends BaseEntity {
     return contracts.stream().map(a -> a.getRole().getCode()).collect(Collectors.toSet());
   }
 }
-
