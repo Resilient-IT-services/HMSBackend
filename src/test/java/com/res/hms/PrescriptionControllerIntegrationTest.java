@@ -179,7 +179,9 @@ class PrescriptionControllerIntegrationTest {
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(objectMapper.writeValueAsString(dto)))
         .andExpect(status().isBadRequest())
-        .andExpect(jsonPath("$.error.message").value("Prescription can only be created after vitals are recorded."));
+        .andExpect(
+            jsonPath("$.error.message")
+                .value("Prescription can only be created after vitals are recorded."));
   }
 
   @Test

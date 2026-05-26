@@ -10,7 +10,8 @@ import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
-public interface PatientRepository extends BaseRepository<Patient>, JpaSpecificationExecutor<Patient> {
+public interface PatientRepository
+    extends BaseRepository<Patient>, JpaSpecificationExecutor<Patient> {
   boolean existsByPatientCode(String patientCode);
 
   boolean existsByPatientCodeAndIdNot(String patientCode, UUID id);

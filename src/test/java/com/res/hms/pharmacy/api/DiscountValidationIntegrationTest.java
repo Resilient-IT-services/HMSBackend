@@ -33,44 +33,48 @@ public class DiscountValidationIntegrationTest {
     QuickPharmacySaleRequest request = new QuickPharmacySaleRequest();
     request.setSaleType(SaleType.WALKIN);
     request.setCustomerName("Test Customer");
-    
+
     QuickPharmacySaleRequest.Item item = new QuickPharmacySaleRequest.Item();
     item.setMedicineId(UUID.randomUUID());
     item.setQuantity(1);
     item.setUnitPrice(new BigDecimal("100.00"));
     item.setDiscountAmount(new BigDecimal("-10.00")); // Negative discount!
-    
+
     request.setItems(List.of(item));
-    
+
     QuickPharmacySaleRequest.PaymentInfo payment = new QuickPharmacySaleRequest.PaymentInfo();
     payment.setMode(PaymentMode.CASH);
     payment.setAmount(new BigDecimal("90.00"));
     request.setPayment(payment);
 
-    mockMvc.perform(post("/api/v1/pharmacy/sales")
-        .contentType(MediaType.APPLICATION_JSON)
-        .content(objectMapper.writeValueAsString(request)))
+    mockMvc
+        .perform(
+            post("/api/v1/pharmacy/sales")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(request)))
         .andExpect(status().isBadRequest());
   }
 
   @Test
   @WithMockUser(roles = "RECEPTIONIST")
   void shouldRejectNegativePaymentInOPDEncounter() throws Exception {
-    com.res.hms.clinical.application.appointment.dto.OPDEncounterRequest request = 
+    com.res.hms.clinical.application.appointment.dto.OPDEncounterRequest request =
         new com.res.hms.clinical.application.appointment.dto.OPDEncounterRequest();
     request.setPatientId(UUID.randomUUID());
     request.setDoctorId(UUID.randomUUID());
     request.setAppointmentTime(java.time.OffsetDateTime.now());
-    
-    com.res.hms.clinical.application.appointment.dto.OPDEncounterRequest.PaymentInfo payment = 
+
+    com.res.hms.clinical.application.appointment.dto.OPDEncounterRequest.PaymentInfo payment =
         new com.res.hms.clinical.application.appointment.dto.OPDEncounterRequest.PaymentInfo();
     payment.setMode(PaymentMode.CASH);
     payment.setAmount(new BigDecimal("-50.00")); // Negative payment!
     request.setPayment(payment);
 
-    mockMvc.perform(post("/api/v1/appointments/book-consultation")
-        .contentType(MediaType.APPLICATION_JSON)
-        .content(objectMapper.writeValueAsString(request)))
+    mockMvc
+        .perform(
+            post("/api/v1/appointments/book-consultation")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(request)))
         .andExpect(status().isBadRequest());
   }
 }

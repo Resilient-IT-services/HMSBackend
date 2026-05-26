@@ -52,11 +52,22 @@ class ComprehensivePharmacyClinicalIntegrationTest {
   @Autowired private RoleRepository roleRepository;
   @Autowired private PasswordEncoder passwordEncoder;
   @Autowired private TestDataHelper testDataHelper;
-  @Autowired private com.res.hms.clinical.infrastructure.repository.AppointmentRepository appointmentRepository;
+
+  @Autowired
+  private com.res.hms.clinical.infrastructure.repository.AppointmentRepository
+      appointmentRepository;
+
   @Autowired private MedicineRepository medicineRepository;
   @Autowired private PharmacyStockRepository pharmacyStockRepository;
-  @Autowired private com.res.hms.iam.infrastructure.repository.PharmacistHospitalDetailsRepository pharmacistHospitalDetailsRepository;
-  @Autowired private com.res.hms.clinical.application.prescription.repository.PrescriptionRepository prescriptionRepository;
+
+  @Autowired
+  private com.res.hms.iam.infrastructure.repository.PharmacistHospitalDetailsRepository
+      pharmacistHospitalDetailsRepository;
+
+  @Autowired
+  private com.res.hms.clinical.application.prescription.repository.PrescriptionRepository
+      prescriptionRepository;
+
   @Autowired private jakarta.persistence.EntityManager entityManager;
   @Autowired private ObjectMapper objectMapper;
 
@@ -117,11 +128,16 @@ class ComprehensivePharmacyClinicalIntegrationTest {
   }
 
   private MockHttpSession login(String username) throws Exception {
-    return (MockHttpSession) mockMvc.perform(post("/api/v1/auth/login")
-            .contentType(MediaType.APPLICATION_JSON)
-            .content("{\"username\": \"" + username + "\", \"password\": \"password\"}"))
-        .andExpect(status().isOk())
-        .andReturn().getRequest().getSession();
+    return (MockHttpSession)
+        mockMvc
+            .perform(
+                post("/api/v1/auth/login")
+                    .contentType(MediaType.APPLICATION_JSON)
+                    .content("{\"username\": \"" + username + "\", \"password\": \"password\"}"))
+            .andExpect(status().isOk())
+            .andReturn()
+            .getRequest()
+            .getSession();
   }
 
   @Test
@@ -144,26 +160,40 @@ class ComprehensivePharmacyClinicalIntegrationTest {
     UUID catalogMedId = medicineRepository.save(catalogMed).getId();
 
     // 3. Submit Consultation with mixed prescription (catalog + custom)
-    PrescriptionDTO prescriptionDto = PrescriptionDTO.builder()
-        .items(List.of(
-            PrescriptionItemDTO.builder().medicineId(catalogMedId).dosage("1-0-1").duration("5 days").build(),
-            PrescriptionItemDTO.builder().medicineId(null).medicineName("Custom Herbal").dosage("5ml").duration("3 days").build()
-        )).build();
+    PrescriptionDTO prescriptionDto =
+        PrescriptionDTO.builder()
+            .items(
+                List.of(
+                    PrescriptionItemDTO.builder()
+                        .medicineId(catalogMedId)
+                        .dosage("1-0-1")
+                        .duration("5 days")
+                        .build(),
+                    PrescriptionItemDTO.builder()
+                        .medicineId(null)
+                        .medicineName("Custom Herbal")
+                        .dosage("5ml")
+                        .duration("3 days")
+                        .build()))
+            .build();
 
-    AppointmentDTO updateDto = AppointmentDTO.builder()
-        .id(appointmentId)
-        .patientId(patient.getId())
-        .doctorId(doctorProfileId)
-        .appointmentTime(OffsetDateTime.now(ZoneOffset.UTC))
-        .chiefComplaints("Fever")
-        .prescription(prescriptionDto)
-        .build();
+    AppointmentDTO updateDto =
+        AppointmentDTO.builder()
+            .id(appointmentId)
+            .patientId(patient.getId())
+            .doctorId(doctorProfileId)
+            .appointmentTime(OffsetDateTime.now(ZoneOffset.UTC))
+            .chiefComplaints("Fever")
+            .prescription(prescriptionDto)
+            .build();
 
-    mockMvc.perform(patch("/api/v1/appointments/" + appointmentId + "/consultation")
-            .session(doctorSession)
-            .header("X-Hospital-Id", hospitalId.toString())
-            .contentType(MediaType.APPLICATION_JSON)
-            .content(objectMapper.writeValueAsString(updateDto)))
+    mockMvc
+        .perform(
+            patch("/api/v1/appointments/" + appointmentId + "/consultation")
+                .session(doctorSession)
+                .header("X-Hospital-Id", hospitalId.toString())
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(updateDto)))
         .andExpect(status().isOk())
         .andExpect(jsonPath("$.data.prescription.items.length()").value(2))
         .andExpect(jsonPath("$.data.prescription.items[0].medicineName").value("Catalog Medicine"))
@@ -221,25 +251,32 @@ class ComprehensivePharmacyClinicalIntegrationTest {
     UUID prescriptionId = prescriptionRepository.save(pres).getId();
 
     // 3. First Sale: Specific Batch Selection (Quick Sale style)
-    QuickPharmacySaleRequest sale1 = QuickPharmacySaleRequest.builder()
-        .patientId(patient.getId())
-        .prescriptionId(prescriptionId)
-        .saleType(com.res.hms.pharmacy.domain.SaleType.VISIT)
-        .items(List.of(
-            QuickPharmacySaleRequest.Item.builder()
-                .medicineBatchId(batch1.getId())
-                .quantity(5)
-                .unitPrice(new BigDecimal("5.00"))
-                .build()
-        ))
-        .payment(QuickPharmacySaleRequest.PaymentInfo.builder().mode(com.res.hms.finance.domain.PaymentMode.CASH).amount(new BigDecimal("25.00")).build())
-        .build();
+    QuickPharmacySaleRequest sale1 =
+        QuickPharmacySaleRequest.builder()
+            .patientId(patient.getId())
+            .prescriptionId(prescriptionId)
+            .saleType(com.res.hms.pharmacy.domain.SaleType.VISIT)
+            .items(
+                List.of(
+                    QuickPharmacySaleRequest.Item.builder()
+                        .medicineBatchId(batch1.getId())
+                        .quantity(5)
+                        .unitPrice(new BigDecimal("5.00"))
+                        .build()))
+            .payment(
+                QuickPharmacySaleRequest.PaymentInfo.builder()
+                    .mode(com.res.hms.finance.domain.PaymentMode.CASH)
+                    .amount(new BigDecimal("25.00"))
+                    .build())
+            .build();
 
-    mockMvc.perform(post("/api/v1/pharmacy/sales")
-            .session(pharmacistSession)
-            .header("X-Hospital-Id", hospitalId.toString())
-            .contentType(MediaType.APPLICATION_JSON)
-            .content(objectMapper.writeValueAsString(sale1)))
+    mockMvc
+        .perform(
+            post("/api/v1/pharmacy/sales")
+                .session(pharmacistSession)
+                .header("X-Hospital-Id", hospitalId.toString())
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(sale1)))
         .andExpect(status().isOk())
         .andExpect(jsonPath("$.data.items[0].batchNumber").value("B1"))
         .andExpect(jsonPath("$.data.totalAmount").value(25.00));
@@ -247,23 +284,30 @@ class ComprehensivePharmacyClinicalIntegrationTest {
     // 4. Second Sale: Auto-Batch Selection (Dispense style)
     // Should auto-pick remaining 5 from B1 and then move to B2 if needed
     // If we request 10, it should take 5 from B1 and 5 from B2
-    QuickPharmacySaleRequest sale2 = QuickPharmacySaleRequest.builder()
-        .patientId(patient.getId())
-        .prescriptionId(prescriptionId)
-        .items(List.of(
-            QuickPharmacySaleRequest.Item.builder()
-                .medicineId(med.getId())
-                .quantity(10)
-                .build()
-        ))
-        .payment(QuickPharmacySaleRequest.PaymentInfo.builder().mode(com.res.hms.finance.domain.PaymentMode.CASH).amount(new BigDecimal("55.00")).build())
-        .build();
+    QuickPharmacySaleRequest sale2 =
+        QuickPharmacySaleRequest.builder()
+            .patientId(patient.getId())
+            .prescriptionId(prescriptionId)
+            .items(
+                List.of(
+                    QuickPharmacySaleRequest.Item.builder()
+                        .medicineId(med.getId())
+                        .quantity(10)
+                        .build()))
+            .payment(
+                QuickPharmacySaleRequest.PaymentInfo.builder()
+                    .mode(com.res.hms.finance.domain.PaymentMode.CASH)
+                    .amount(new BigDecimal("55.00"))
+                    .build())
+            .build();
 
-    mockMvc.perform(post("/api/v1/pharmacy/prescriptions/" + prescriptionId + "/dispense")
-            .session(pharmacistSession)
-            .header("X-Hospital-Id", hospitalId.toString())
-            .contentType(MediaType.APPLICATION_JSON)
-            .content(objectMapper.writeValueAsString(sale2)))
+    mockMvc
+        .perform(
+            post("/api/v1/pharmacy/prescriptions/" + prescriptionId + "/dispense")
+                .session(pharmacistSession)
+                .header("X-Hospital-Id", hospitalId.toString())
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(sale2)))
         .andExpect(status().isOk())
         .andExpect(jsonPath("$.data.items.length()").value(2)) // 5 from B1, 5 from B2
         .andExpect(jsonPath("$.data.totalAmount").value(55.00)); // (5*5) + (5*6) = 25+30 = 55

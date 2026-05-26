@@ -8,7 +8,8 @@ import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
 import org.springframework.data.jpa.repository.Query;
 
-public interface PrescriptionRepository extends JpaRepository<Prescription, UUID>, JpaSpecificationExecutor<Prescription> {
+public interface PrescriptionRepository
+    extends JpaRepository<Prescription, UUID>, JpaSpecificationExecutor<Prescription> {
 
   @Query(
       "SELECT p FROM Prescription p LEFT JOIN FETCH p.patient WHERE p.patientId = :patientId AND p.hospitalId = :hospitalId")
