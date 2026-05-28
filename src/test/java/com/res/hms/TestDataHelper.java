@@ -135,7 +135,6 @@ public class TestDataHelper {
     com.res.hms.pharmacy.domain.Medicine m = new com.res.hms.pharmacy.domain.Medicine();
     m.setName(name);
     m.setStrength(strength);
-    m.setCategory("General");
     return medicineRepository.save(m);
   }
 

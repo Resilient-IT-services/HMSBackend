@@ -136,9 +136,7 @@ class MedicineControllerIntegrationTest {
         .andExpect(status().isOk())
         .andExpect(jsonPath("$.data.name").value("Paracetamol"))
         .andExpect(jsonPath("$.data.genericName").value("Acetaminophen"))
-        .andExpect(jsonPath("$.data.category").value("Analgesic"))
-        .andExpect(jsonPath("$.data.sellingPrice").value(5.0))
-        .andExpect(jsonPath("$.data.specialNotes").value("Keep away from light"));
+        .andExpect(jsonPath("$.data.sellingPrice").value(5.0));
 
     // 2. List
     mockMvc

@@ -20,4 +20,5 @@ public class MedicineSummaryDTO {
   private String category;
   private String manufacturer;
   private Integer currentStock;
-}
+  private Integer thresholdQuantity;      }
+

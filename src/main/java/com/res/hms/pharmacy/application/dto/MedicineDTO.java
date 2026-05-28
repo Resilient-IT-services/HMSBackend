@@ -42,7 +42,7 @@ public class MedicineDTO {
   private String batchNumber;
   private LocalDate expiryDate;
   private Integer currentStock;
-  private Integer reorderLevel;
+  private Integer thresholdQuantity;
 
   // Pricing & Tax
   private BigDecimal purchasePrice;

@@ -149,7 +149,6 @@ public class PharmacyExcelService {
       String qtyStr = PharmacyExcelHelper.text(row, 3);
       String pPriceStr = PharmacyExcelHelper.text(row, 4);
       String sPriceStr = PharmacyExcelHelper.text(row, 5);
-      String rlStr = row.getLastCellNum() > 6 ? PharmacyExcelHelper.text(row, 6) : null;
 
       Medicine medicine = findMedicine(name, statusCell, styles[3]);
       if (medicine == null) {
@@ -180,7 +179,6 @@ public class PharmacyExcelService {
       }
 
       batches.put(batch, medicine.getId());
-      updateMedicineReorderLevel(medicine.getId(), PharmacyExcelHelper.parseInteger(rlStr));
       LocalDate expiryDate = PharmacyExcelHelper.parseDate(expStr);
       if (expiryDate == null) {
         throw new IllegalArgumentException(
@@ -205,7 +203,7 @@ public class PharmacyExcelService {
       String str = PharmacyExcelHelper.text(row, 3);
       String fStr = PharmacyExcelHelper.text(row, 4);
       String mf = PharmacyExcelHelper.text(row, 5);
-      String rlStr = PharmacyExcelHelper.text(row, 6);
+      String thresholdStr = PharmacyExcelHelper.text(row, 7);
       List<String> errors =
           PharmacyExcelHelper.validateMedicineData(name, gName, comp, str, fStr, mf);
       if (!errors.isEmpty()) {
@@ -225,9 +223,9 @@ public class PharmacyExcelService {
       m.setForm(form);
       m.setManufacturer(mf);
       m.setScheduleType(com.res.hms.pharmacy.domain.MedicineSchedule.OTC);
+      m.setThresholdQuantity(PharmacyExcelHelper.parsAnInt(thresholdStr));
       medicineRepository.save(m);
 
-      updateMedicineReorderLevel(m.getId(), PharmacyExcelHelper.parseInteger(rlStr));
       PharmacyExcelHelper.updateCell(statusCell, "SUCCESS", styles[1]);
       return "SUCCESS";
     } catch (Exception e) {
@@ -279,25 +277,6 @@ public class PharmacyExcelService {
               PharmacyExcelHelper.updateCell(
                   cell, "ERROR: Medicine '" + name + "' not found", style);
               return null;
-            });
-  }
-
-  private void updateMedicineReorderLevel(UUID mId, Integer rl) {
-    Optional.ofNullable(hospitalContext.getHospitalIdOrNull())
-        .ifPresent(
-            hId -> {
-              var cat =
-                  hospitalMedicineCatalogRepository
-                      .findByHospitalIdAndMedicineId(hId, mId)
-                      .orElseGet(
-                          () -> {
-                            var c = new com.res.hms.pharmacy.domain.HospitalMedicineCatalog();
-                            c.setHospitalId(hId);
-                            c.setMedicine(medicineRepository.getReferenceById(mId));
-                            return c;
-                          });
-              cat.setReorderLevel(rl != null ? rl : 50);
-              hospitalMedicineCatalogRepository.save(cat);
             });
   }
 }

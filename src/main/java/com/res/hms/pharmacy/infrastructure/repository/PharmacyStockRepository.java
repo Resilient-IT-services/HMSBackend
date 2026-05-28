@@ -23,10 +23,9 @@ public interface PharmacyStockRepository extends BaseRepository<PharmacyStock> {
       """
       SELECT s FROM PharmacyStock s
       JOIN FETCH s.medicine m
-      LEFT JOIN HospitalMedicineCatalog c ON c.medicine.id = m.id AND c.hospitalId = :hospitalId
       WHERE s.hospitalId = :hospitalId
         AND s.quantity > 0
-        AND s.quantity < COALESCE(c.reorderLevel, 50)
+        AND s.quantity <= m.thresholdQuantity
       ORDER BY s.medicine.name ASC
       """)
   Page<PharmacyStock> findLowStock(@Param("hospitalId") UUID hospitalId, Pageable pageable);

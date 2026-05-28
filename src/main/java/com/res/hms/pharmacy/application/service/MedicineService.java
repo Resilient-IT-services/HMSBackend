@@ -159,16 +159,6 @@ public class MedicineService {
     stock.setSellingPrice(request.getSellingPrice());
     PharmacyStock saved = pharmacyStockRepository.save(stock);
 
-    if (request.getReorderLevel() != null) {
-      hospitalMedicineCatalogRepository
-          .findByHospitalIdAndMedicineId(hospitalId, medicine.getId())
-          .ifPresent(
-              catalog -> {
-                catalog.setReorderLevel(request.getReorderLevel());
-                hospitalMedicineCatalogRepository.save(catalog);
-              });
-    }
-
     return toStockDto(saved);
   }
 
@@ -224,12 +214,8 @@ public class MedicineService {
         row.createCell(4).setCellValue(stock.getPurchasePrice().doubleValue());
         row.createCell(5).setCellValue(stock.getSellingPrice().doubleValue());
 
-        // Fetch reorder level from catalog
-        int reorderLevel =
-            hospitalMedicineCatalogRepository
-                .findByHospitalIdAndMedicineId(hospitalId, stock.getMedicine().getId())
-                .map(com.res.hms.pharmacy.domain.HospitalMedicineCatalog::getReorderLevel)
-                .orElse(50);
+        // Fetch reorder level from medicine entity
+        int reorderLevel = stock.getMedicine().getThresholdQuantity();
         row.createCell(6).setCellValue(reorderLevel);
       }
 
@@ -272,9 +258,9 @@ public class MedicineService {
         .composition(medicine.getComposition())
         .strength(medicine.getStrength())
         .form(medicine.getForm())
-        .category(medicine.getCategory())
         .manufacturer(medicine.getManufacturer())
         .currentStock(stock)
+        .thresholdQuantity(medicine.getThresholdQuantity())
         .build();
   }
 
@@ -310,13 +296,9 @@ public class MedicineService {
   }
 
   private PharmacyStockDTO toStockDtoSimple(PharmacyStock stock) {
-    Integer reorderLevel =
-        hospitalMedicineCatalogRepository
-            .findByHospitalIdAndMedicineId(stock.getHospitalId(), stock.getMedicine().getId())
-            .map(com.res.hms.pharmacy.domain.HospitalMedicineCatalog::getReorderLevel)
-            .orElse(50);
+      int threshold = stock.getMedicine().getThresholdQuantity();
 
-    return PharmacyStockDTO.builder()
+      return PharmacyStockDTO.builder()
         .id(stock.getId())
         .medicineId(stock.getMedicine().getId())
         .medicineName(stock.getMedicine().getName())
@@ -325,11 +307,12 @@ public class MedicineService {
         .batchNumber(stock.getBatchNumber())
         .expiryDate(stock.getExpiryDate())
         .quantity(stock.getQuantity())
-        .reorderLevel(reorderLevel)
+        .reorderLevel(threshold)
         .purchasePrice(stock.getPurchasePrice())
         .sellingPrice(stock.getSellingPrice())
         .price(stock.getSellingPrice())
         .build();
+
   }
 
   private PharmacyStockDTO toStockDto(PharmacyStock stock) {
@@ -337,13 +320,9 @@ public class MedicineService {
         pharmacyStockRepository.availableQuantity(
             stock.getHospitalId(), stock.getMedicine().getId(), LocalDate.now());
 
-    Integer reorderLevel =
-        hospitalMedicineCatalogRepository
-            .findByHospitalIdAndMedicineId(stock.getHospitalId(), stock.getMedicine().getId())
-            .map(com.res.hms.pharmacy.domain.HospitalMedicineCatalog::getReorderLevel)
-            .orElse(50);
+      int threshold = stock.getMedicine().getThresholdQuantity();
 
-    return PharmacyStockDTO.builder()
+      return PharmacyStockDTO.builder()
         .id(stock.getId())
         .medicineId(stock.getMedicine().getId())
         .medicineName(stock.getMedicine().getName())
@@ -353,7 +332,7 @@ public class MedicineService {
         .expiryDate(stock.getExpiryDate())
         .quantity(stock.getQuantity())
         .totalQuantity(total.intValue())
-        .reorderLevel(reorderLevel)
+        .reorderLevel(threshold)
         .purchasePrice(stock.getPurchasePrice())
         .sellingPrice(stock.getSellingPrice())
         .price(stock.getSellingPrice())
@@ -379,7 +358,7 @@ public class MedicineService {
             .genericName(medicine.getGenericName())
             .strength(medicine.getStrength())
             .form(medicine.getForm())
-            .category(medicine.getCategory())
+            .thresholdQuantity(medicine.getThresholdQuantity())
             .manufacturer(medicine.getManufacturer());
 
     Optional.ofNullable(hospitalContext.getHospitalIdOrNull())
@@ -404,11 +383,8 @@ public class MedicineService {
             .strength(medicine.getStrength())
             .form(medicine.getForm())
             .scheduleType(medicine.getScheduleType())
-            .category(medicine.getCategory())
-            .manufacturer(medicine.getManufacturer())
-            .temperature(medicine.getStorageTemperature())
-            .humidity(medicine.getStorageHumidity())
-            .specialNotes(medicine.getSpecialNotes());
+            .thresholdQuantity(medicine.getThresholdQuantity())
+            .manufacturer(medicine.getManufacturer());
 
     Optional.ofNullable(hospitalContext.getHospitalIdOrNull())
         .ifPresent(
@@ -417,7 +393,6 @@ public class MedicineService {
                   .findByHospitalIdAndMedicineId(hospitalId, medicine.getId())
                   .ifPresent(
                       catalog -> {
-                        builder.reorderLevel(catalog.getReorderLevel());
                         builder.sellingPrice(catalog.getBaseSellingPrice());
                         builder.taxPercentage(catalog.getTaxPercentage());
                       });
@@ -433,12 +408,10 @@ public class MedicineService {
     medicine.setStrength(dto.getStrength());
     medicine.setForm(dto.getForm());
     medicine.setScheduleType(dto.getScheduleType());
-    medicine.setCategory(dto.getCategory());
-    medicine.setManufacturer(dto.getManufacturer());
-    medicine.setStorageTemperature(dto.getTemperature());
-    medicine.setStorageHumidity(dto.getHumidity());
-    medicine.setSpecialNotes(dto.getSpecialNotes());
 
+    medicine.setManufacturer(dto.getManufacturer());
+
+    medicine.setThresholdQuantity(dto.getThresholdQuantity() != null ? dto.getThresholdQuantity() : 10);
     // Ensure medicine is saved first to have an ID for the catalog association
     medicineRepository.save(medicine);
 
@@ -455,7 +428,6 @@ public class MedicineService {
                             c.setMedicine(medicine);
                             return c;
                           });
-              catalog.setReorderLevel(dto.getReorderLevel() != null ? dto.getReorderLevel() : 50);
               catalog.setBaseSellingPrice(dto.getSellingPrice());
               catalog.setTaxPercentage(dto.getTaxPercentage());
               hospitalMedicineCatalogRepository.save(catalog);
