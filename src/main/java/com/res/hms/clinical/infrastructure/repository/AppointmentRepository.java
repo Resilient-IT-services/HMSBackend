@@ -6,6 +6,7 @@ import java.util.UUID;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
+import org.springframework.data.jpa.repository.Lock;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
@@ -68,4 +69,37 @@ public interface AppointmentRepository
           + "AND a.deleted = false")
   java.util.List<Appointment> findOverdueIncompleteAppointments(
       @Param("threshold") java.time.Instant threshold);
+
+  @Lock(jakarta.persistence.LockModeType.PESSIMISTIC_WRITE)
+  @Query(
+      "SELECT a FROM Appointment a "
+          + "WHERE a.hospitalId = :hospitalId "
+          + "AND a.doctorId = :doctorId "
+          + "AND CAST(a.appointmentTime AS date) = :date "
+          + "AND a.deleted = false "
+          + "AND a.status = com.res.hms.clinical.domain.AppointmentStatus.CONSULTATION_STARTED "
+          + "ORDER BY a.tokenNumber ASC, a.appointmentTime ASC")
+  java.util.List<Appointment> findRunningConsultationsForUpdate(
+      @Param("hospitalId") UUID hospitalId,
+      @Param("doctorId") UUID doctorId,
+      @Param("date") java.time.LocalDate date);
+
+  @Lock(jakarta.persistence.LockModeType.PESSIMISTIC_WRITE)
+  @Query(
+      "SELECT a FROM Appointment a "
+          + "WHERE a.hospitalId = :hospitalId "
+          + "AND a.doctorId = :doctorId "
+          + "AND CAST(a.appointmentTime AS date) = :date "
+          + "AND a.deleted = false "
+          + "AND a.status IN ("
+          + "com.res.hms.clinical.domain.AppointmentStatus.PAID, "
+          + "com.res.hms.clinical.domain.AppointmentStatus.VITALS_RECORDED"
+          + ") "
+          + "ORDER BY a.tokenNumber ASC, a.appointmentTime ASC")
+  java.util.List<Appointment> findWaitingAppointmentsForUpdate(
+      @Param("hospitalId") UUID hospitalId,
+      @Param("doctorId") UUID doctorId,
+      @Param("date") java.time.LocalDate date,
+      Pageable pageable);
 }
+
