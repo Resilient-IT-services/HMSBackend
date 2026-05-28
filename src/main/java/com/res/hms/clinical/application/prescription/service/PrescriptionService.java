@@ -64,12 +64,12 @@ public class PrescriptionService {
   }
 
   @Transactional(readOnly = true)
-  public PageResponse<PrescriptionSummaryDTO> listSummary(int page, int size, String search) {
+  public PageResponse<PrescriptionSummaryDTO> listSummary(
+      int page, int size, String search, PrescriptionStatus status) {
     UUID hospitalId = hospitalContext.requireHospitalId();
     Pageable pageable = PageRequest.of(page, size, Sort.by("createdAt").descending());
 
-    // Filter for PENDING status by default for pharmacy queue
-    Specification<Prescription> spec = getFilterSpec(hospitalId, search, PrescriptionStatus.PENDING);
+    Specification<Prescription> spec = getFilterSpec(hospitalId, search, status);
     Specification<Prescription> fetchSpec =
         (root, query, cb) -> {
           if (query.getResultType() != Long.class && query.getResultType() != long.class) {
@@ -110,12 +110,12 @@ public class PrescriptionService {
   }
 
   @Transactional(readOnly = true)
-  public PageResponse<PrescriptionDTO> list(int page, int size, String search) {
+  public PageResponse<PrescriptionDTO> list(
+      int page, int size, String search, PrescriptionStatus status) {
     UUID hospitalId = hospitalContext.requireHospitalId();
     Pageable pageable = PageRequest.of(page, size, Sort.by("createdAt").descending());
 
-    // Filter for PENDING status by default for pharmacy queue
-    Specification<Prescription> spec = getFilterSpec(hospitalId, search, PrescriptionStatus.PENDING);
+    Specification<Prescription> spec = getFilterSpec(hospitalId, search, status);
     Specification<Prescription> fetchSpec =
         (root, query, cb) -> {
           if (query.getResultType() != Long.class && query.getResultType() != long.class) {
@@ -275,6 +275,26 @@ public class PrescriptionService {
         .map(this::toDto)
         .orElseThrow(
             () -> new ApiException("NOT_FOUND", "Prescription not found", HttpStatus.NOT_FOUND));
+  }
+
+  @Transactional
+  public void cancelPrescription(UUID id) {
+    UUID hospitalId = hospitalContext.requireHospitalId();
+    Prescription prescription =
+        prescriptionRepository
+            .findByIdAndHospitalId(id, hospitalId)
+            .orElseThrow(
+                () -> new ApiException("NOT_FOUND", "Prescription not found", HttpStatus.NOT_FOUND));
+
+    if (prescription.getStatus() != PrescriptionStatus.PENDING) {
+      throw new ApiException(
+          "BUSINESS_RULE_VIOLATION",
+          "Only pending prescriptions can be cancelled. Current status: " + prescription.getStatus(),
+          HttpStatus.BAD_REQUEST);
+    }
+
+    prescription.setStatus(PrescriptionStatus.CANCELLED);
+    prescriptionRepository.save(prescription);
   }
 
   public PrescriptionDTO toDto(Prescription prescription) {

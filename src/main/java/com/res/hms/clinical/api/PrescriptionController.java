@@ -3,6 +3,7 @@ package com.res.hms.clinical.api;
 import com.res.hms.clinical.application.prescription.dto.PrescriptionDTO;
 import com.res.hms.clinical.application.prescription.dto.PrescriptionSummaryDTO;
 import com.res.hms.clinical.application.prescription.service.PrescriptionService;
+import com.res.hms.clinical.domain.PrescriptionStatus;
 import com.res.hms.core.api.ApiResponse;
 import com.res.hms.core.api.PageResponse;
 import io.swagger.v3.oas.annotations.tags.Tag;
@@ -29,8 +30,9 @@ public class PrescriptionController {
   public ApiResponse<PageResponse<PrescriptionDTO>> list(
       @RequestParam(defaultValue = "0") int page,
       @RequestParam(defaultValue = "20") int size,
-      @RequestParam(required = false) String search) {
-    return ApiResponse.success(prescriptionService.list(page, size, search));
+      @RequestParam(required = false) String search,
+      @RequestParam(required = false) PrescriptionStatus status) {
+    return ApiResponse.success(prescriptionService.list(page, size, search, status));
   }
 
   @GetMapping("/summary")
@@ -38,8 +40,9 @@ public class PrescriptionController {
   public ApiResponse<PageResponse<PrescriptionSummaryDTO>> listSummary(
       @RequestParam(defaultValue = "0") int page,
       @RequestParam(defaultValue = "20") int size,
-      @RequestParam(required = false) String search) {
-    return ApiResponse.success(prescriptionService.listSummary(page, size, search));
+      @RequestParam(required = false) String search,
+      @RequestParam(required = false) PrescriptionStatus status) {
+    return ApiResponse.success(prescriptionService.listSummary(page, size, search, status));
   }
 
   private final PrescriptionService prescriptionService;
@@ -54,5 +57,12 @@ public class PrescriptionController {
   @PreAuthorize("hasAnyRole('ADMIN','DOCTOR','NURSE','PHARMACIST','SUPER_ADMIN')")
   public ApiResponse<PrescriptionDTO> get(@PathVariable UUID id) {
     return ApiResponse.success(prescriptionService.getById(id));
+  }
+
+  @PostMapping("/{id}/cancel")
+  @PreAuthorize("hasAnyRole('ADMIN','DOCTOR','PHARMACIST','SUPER_ADMIN')")
+  public ApiResponse<Void> cancel(@PathVariable UUID id) {
+    prescriptionService.cancelPrescription(id);
+    return ApiResponse.success(null);
   }
 }
