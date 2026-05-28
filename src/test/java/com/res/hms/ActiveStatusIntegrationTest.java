@@ -32,6 +32,7 @@ class ActiveStatusIntegrationTest {
   @Autowired private MockMvc mockMvc;
   @Autowired private UserAccountRepository userAccountRepository;
   @Autowired private SpecializationRepository specializationRepository;
+  @Autowired private RoleRepository roleRepository;
   @Autowired private PasswordEncoder passwordEncoder;
   @Autowired private TestDataHelper testDataHelper;
 
@@ -62,8 +63,6 @@ class ActiveStatusIntegrationTest {
                 .getRequest()
                 .getSession(false);
   }
-
-  @Autowired private RoleRepository roleRepository;
 
   @Test
   void inactiveDoctorsShouldNotBeListed() throws Exception {

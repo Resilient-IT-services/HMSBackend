@@ -284,12 +284,14 @@ public class PrescriptionService {
         prescriptionRepository
             .findByIdAndHospitalId(id, hospitalId)
             .orElseThrow(
-                () -> new ApiException("NOT_FOUND", "Prescription not found", HttpStatus.NOT_FOUND));
+                () ->
+                    new ApiException("NOT_FOUND", "Prescription not found", HttpStatus.NOT_FOUND));
 
     if (prescription.getStatus() != PrescriptionStatus.PENDING) {
       throw new ApiException(
           "BUSINESS_RULE_VIOLATION",
-          "Only pending prescriptions can be cancelled. Current status: " + prescription.getStatus(),
+          "Only pending prescriptions can be cancelled. Current status: "
+              + prescription.getStatus(),
           HttpStatus.BAD_REQUEST);
     }
 

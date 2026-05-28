@@ -1,30 +1,20 @@
 package com.res.hms.iam.application.service;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertFalse;
-import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
-import com.res.hms.clinical.domain.DoctorAvailabilityOverride;
-import com.res.hms.clinical.domain.DoctorSchedule;
-import com.res.hms.clinical.domain.ExceptionType;
-import com.res.hms.clinical.infrastructure.repository.AppointmentRepository;
-import com.res.hms.clinical.infrastructure.repository.DoctorAvailabilityOverrideRepository;
-import com.res.hms.clinical.infrastructure.repository.DoctorScheduleRepository;
 import com.res.hms.core.tenant.HospitalContext;
+import com.res.hms.iam.application.dto.DoctorAvailabilityResponse;
 import com.res.hms.iam.application.repository.DoctorProfileRepository;
 import com.res.hms.iam.domain.DoctorProfile;
 import com.res.hms.iam.domain.Role;
 import com.res.hms.iam.domain.RoleCode;
 import com.res.hms.iam.domain.UserAccount;
 import com.res.hms.iam.domain.UserContract;
-import com.res.hms.iam.infrastructure.repository.UserContractRepository;
-import java.time.DayOfWeek;
 import java.time.LocalDate;
-import java.time.LocalTime;
-import java.util.List;
+import java.util.Collections;
 import java.util.Optional;
 import java.util.UUID;
 import org.junit.jupiter.api.BeforeEach;
@@ -39,19 +29,13 @@ class DoctorProfileServiceUnitTest {
 
   @Mock private DoctorProfileRepository doctorProfileRepository;
   @Mock private HospitalContext hospitalContext;
-  @Mock private UserContractRepository assignmentRepository;
-  @Mock private DoctorAvailabilityOverrideRepository availabilityOverrideRepository;
-  @Mock private DoctorScheduleRepository scheduleRepository;
-  @Mock private AppointmentRepository appointmentRepository;
+  @Mock private DoctorAvailabilityService doctorAvailabilityService;
 
   @Mock
   private com.res.hms.hospital.infrastructure.repository.HospitalRepository hospitalRepository;
 
-  @Mock
-  private com.res.hms.iam.infrastructure.repository.DoctorHospitalDetailsRepository
-      doctorHospitalDetailsRepository;
-
   @Mock private com.res.hms.core.util.ResourceLookup resourceLookup;
+  @Mock private DoctorHospitalProfileService doctorHospitalProfileService;
 
   @Mock
   private com.res.hms.finance.infrastructure.repository.InvoiceItemRepository invoiceItemRepository;
@@ -61,14 +45,14 @@ class DoctorProfileServiceUnitTest {
   private UUID hospitalId;
   private UUID doctorId;
   private DoctorProfile doctorProfile;
-  private UserAccount user;
 
   @BeforeEach
   void setUp() {
     hospitalId = UUID.randomUUID();
     doctorId = UUID.randomUUID();
-    user = new UserAccount();
+    UserAccount user = new UserAccount();
     user.setId(UUID.randomUUID());
+    user.setActive(true);
 
     doctorProfile = new DoctorProfile();
     doctorProfile.setId(doctorId);
@@ -85,47 +69,15 @@ class DoctorProfileServiceUnitTest {
   }
 
   @Test
-  void testGetAvailableSlots_FullDayOff() {
+  void testGetAvailableSlots_Delegation() {
     when(hospitalContext.requireHospitalId()).thenReturn(hospitalId);
     when(doctorProfileRepository.findById(doctorId)).thenReturn(Optional.of(doctorProfile));
-
-    DoctorAvailabilityOverride override = new DoctorAvailabilityOverride();
-    override.setType(ExceptionType.FULL_DAY_OFF);
-    when(availabilityOverrideRepository.findByDoctorIdAndHospitalIdAndDate(
-            any(), eq(hospitalId), any()))
-        .thenReturn(List.of(override));
+    when(doctorAvailabilityService.getAvailableSlots(any(), any(), any(), any()))
+        .thenReturn(new DoctorAvailabilityResponse(Collections.emptyList()));
 
     var response = doctorProfileService.getAvailableSlots(doctorId, LocalDate.now().plusDays(1));
 
-    assertTrue(response.getSessions().isEmpty());
-  }
-
-  @Test
-  void testGetAvailableSlots_RegularSchedule() {
-    LocalDate nextMonday = LocalDate.now().plusWeeks(1);
-    if (nextMonday.getDayOfWeek().getValue() != 1) {
-      nextMonday = nextMonday.plusDays(8 - nextMonday.getDayOfWeek().getValue());
-    }
-
-    when(hospitalContext.requireHospitalId()).thenReturn(hospitalId);
-    when(doctorProfileRepository.findById(doctorId)).thenReturn(Optional.of(doctorProfile));
-    when(availabilityOverrideRepository.findByDoctorIdAndHospitalIdAndDate(any(), any(), any()))
-        .thenReturn(List.of());
-    when(appointmentRepository.findByDoctorIdAndDate(any(), any())).thenReturn(List.of());
-
-    DoctorSchedule schedule = new DoctorSchedule();
-    schedule.setDayOfWeek(DayOfWeek.MONDAY);
-    schedule.setStartTime(LocalTime.of(9, 0));
-    schedule.setEndTime(LocalTime.of(12, 0));
-    schedule.setMaxPatients(10);
-    schedule.setSlotDurationMinutes(20);
-
-    when(scheduleRepository.findByAssignmentId(any())).thenReturn(List.of(schedule));
-
-    var response = doctorProfileService.getAvailableSlots(doctorId, nextMonday);
-
-    assertFalse(response.getSessions().isEmpty());
-    assertEquals(LocalTime.of(9, 0), response.getSessions().get(0).getStartTime());
-    assertEquals(10, response.getSessions().get(0).getMaxPatients());
+    assertNotNull(response);
+    verify(doctorAvailabilityService).getAvailableSlots(any(), any(), any(), any());
   }
 }

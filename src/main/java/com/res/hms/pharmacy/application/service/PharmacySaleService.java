@@ -1,6 +1,7 @@
 package com.res.hms.pharmacy.application.service;
 
 import com.res.hms.clinical.application.prescription.repository.PrescriptionRepository;
+import com.res.hms.clinical.domain.PrescriptionStatus;
 import com.res.hms.clinical.infrastructure.repository.AppointmentRepository;
 import com.res.hms.core.exception.ApiException;
 import com.res.hms.core.tenant.HospitalContext;
@@ -15,7 +16,6 @@ import com.res.hms.pharmacy.application.dto.PharmacyReturnResponse;
 import com.res.hms.pharmacy.application.dto.PharmacyStockDTO;
 import com.res.hms.pharmacy.application.dto.QuickPharmacySaleRequest;
 import com.res.hms.pharmacy.application.dto.QuickPharmacySaleResponse;
-import com.res.hms.clinical.domain.PrescriptionStatus;
 import com.res.hms.pharmacy.domain.PharmacyReturn;
 import com.res.hms.pharmacy.domain.PharmacySale;
 import com.res.hms.pharmacy.domain.PharmacySaleItem;
@@ -284,7 +284,9 @@ public class PharmacySaleService {
       // Validate that payment is at least the pharmacy sale amount
       if (request.getPayment().getAmount().compareTo(saleAmount) < 0) {
         throw new ApiException(
-            "INVALID_PAYMENT", "Paid amount is less than pharmacy bill amount", HttpStatus.BAD_REQUEST);
+            "INVALID_PAYMENT",
+            "Paid amount is less than pharmacy bill amount",
+            HttpStatus.BAD_REQUEST);
       }
 
       var paymentDto = paymentService.recordPayment(hospitalId, paymentReq, userId);

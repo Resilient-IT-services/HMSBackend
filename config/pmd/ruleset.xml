@@ -25,6 +25,11 @@
         <exclude name="GenericsNaming" />
         <exclude name="ConfusingTernary" />
     </rule>
+    <rule ref="category/java/codestyle.xml/TooManyStaticImports">
+        <properties>
+            <property name="maximumStaticImports" value="20" />
+        </properties>
+    </rule>
 
     <!-- Design -->
     <rule ref="category/java/design.xml">

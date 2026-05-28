@@ -25,6 +25,8 @@ import org.springframework.web.bind.annotation.RestController;
 @RequiredArgsConstructor
 public class PrescriptionController {
 
+  private final PrescriptionService prescriptionService;
+
   @GetMapping
   @PreAuthorize("hasAnyRole('ADMIN','DOCTOR','NURSE','PHARMACIST','SUPER_ADMIN')")
   public ApiResponse<PageResponse<PrescriptionDTO>> list(
@@ -44,8 +46,6 @@ public class PrescriptionController {
       @RequestParam(required = false) PrescriptionStatus status) {
     return ApiResponse.success(prescriptionService.listSummary(page, size, search, status));
   }
-
-  private final PrescriptionService prescriptionService;
 
   @PostMapping
   @PreAuthorize("hasAnyRole('ADMIN','DOCTOR','SUPER_ADMIN')")

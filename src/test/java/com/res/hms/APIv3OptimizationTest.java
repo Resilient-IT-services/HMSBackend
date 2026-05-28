@@ -22,7 +22,7 @@ import org.springframework.test.web.servlet.MockMvc;
 @SpringBootTest
 @AutoConfigureMockMvc
 @ActiveProfiles("test")
-public class APIv3OptimizationTest {
+class APIv3OptimizationTest {
 
   @Autowired private MockMvc mockMvc;
   @Autowired private UserAccountRepository userAccountRepository;

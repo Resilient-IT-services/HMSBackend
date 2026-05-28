@@ -11,10 +11,10 @@ import com.tngtech.archunit.lang.ArchRule;
 @AnalyzeClasses(
     packages = "com.res.hms",
     importOptions = {ImportOption.DoNotIncludeTests.class})
-public class ArchitectureTest {
+class ArchitectureTest {
 
   @ArchTest
-  static final ArchRule controllers_should_only_depend_on_services =
+  static final ArchRule CONTROLLERS_SHOULD_ONLY_DEPEND_ON_SERVICES =
       classes()
           .that()
           .haveSimpleNameEndingWith("Controller")
@@ -34,7 +34,7 @@ public class ArchitectureTest {
               "lombok..");
 
   @ArchTest
-  static final ArchRule controllers_should_not_access_repositories =
+  static final ArchRule CONTROLLERS_SHOULD_NOT_ACCESS_REPOSITORIES =
       noClasses()
           .that()
           .haveSimpleNameEndingWith("Controller")
@@ -43,11 +43,11 @@ public class ArchitectureTest {
           .haveSimpleNameEndingWith("Repository");
 
   @ArchTest
-  static final ArchRule services_should_be_in_service_package =
+  static final ArchRule SERVICES_SHOULD_BE_IN_SERVICE_PACKAGE =
       classes().that().haveSimpleNameEndingWith("Service").should().resideInAPackage("..service..");
 
   @ArchTest
-  static final ArchRule repositories_should_be_in_repository_package =
+  static final ArchRule REPOSITORIES_SHOULD_BE_IN_REPOSITORY_PACKAGE =
       classes()
           .that()
           .haveSimpleNameEndingWith("Repository")
@@ -55,13 +55,12 @@ public class ArchitectureTest {
           .resideInAPackage("..repository..");
 
   @ArchTest
-  static final ArchRule entities_should_have_uuid_id =
+  static final ArchRule ENTITIES_SHOULD_HAVE_UUID_ID =
       classes()
           .that()
           .areAnnotatedWith("jakarta.persistence.Entity")
           .should(
-              new com.tngtech.archunit.lang.ArchCondition<
-                  com.tngtech.archunit.core.domain.JavaClass>("have a UUID ID") {
+              new com.tngtech.archunit.lang.ArchCondition<>("have a UUID ID") {
                 @Override
                 public void check(
                     com.tngtech.archunit.core.domain.JavaClass item,

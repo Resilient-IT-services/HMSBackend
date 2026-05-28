@@ -30,7 +30,7 @@ import org.springframework.transaction.annotation.Transactional;
 @AutoConfigureMockMvc
 @ActiveProfiles("test")
 @Transactional
-public class PharmacyDiscountPropagationTest {
+class PharmacyDiscountPropagationTest {
 
   @Autowired private MockMvc mockMvc;
   @Autowired private ObjectMapper objectMapper;

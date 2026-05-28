@@ -77,7 +77,7 @@ public class PharmacyExcelService {
           .build();
     } catch (IOException e) {
       throw new ApiException(
-          "IMPORT_FAILED", "Unable to process Excel file", HttpStatus.BAD_REQUEST);
+          "IMPORT_FAILED", "Unable to process Excel file", HttpStatus.BAD_REQUEST, e);
     }
   }
 
@@ -129,7 +129,7 @@ public class PharmacyExcelService {
           .build();
     } catch (IOException e) {
       throw new ApiException(
-          "IMPORT_FAILED", "Unable to read stock Excel file", HttpStatus.BAD_REQUEST);
+          "IMPORT_FAILED", "Unable to read stock Excel file", HttpStatus.BAD_REQUEST, e);
     }
   }
 
@@ -158,15 +158,20 @@ public class PharmacyExcelService {
       List<String> errors =
           PharmacyExcelHelper.validateStockData(name, batch, qtyStr, sPriceStr, pPriceStr, expStr);
       if (!errors.isEmpty()) {
-        throw new IllegalArgumentException(String.join(" | ", errors));
+        String errorMsg = String.join(" | ", errors);
+        PharmacyExcelHelper.updateCell(statusCell, "ERROR: " + errorMsg, styles[3]);
+        return "ERROR";
       }
 
       if (batches.containsKey(batch)) {
         if (!batches.get(batch).equals(medicine.getId())) {
-          throw new IllegalArgumentException(
-              "Duplicate Error: Batch '"
+          PharmacyExcelHelper.updateCell(
+              statusCell,
+              "ERROR: Duplicate Error: Batch '"
                   + batch
-                  + "' is already assigned to another medicine in this file");
+                  + "' is already assigned to another medicine in this file",
+              styles[3]);
+          return "ERROR";
         }
         PharmacyExcelHelper.updateCell(statusCell, "SKIPPED: Batch already exists", styles[2]);
         return "SKIPPED";
@@ -181,11 +186,16 @@ public class PharmacyExcelService {
       batches.put(batch, medicine.getId());
       LocalDate expiryDate = PharmacyExcelHelper.parseDate(expStr);
       if (expiryDate == null) {
-        throw new IllegalArgumentException(
-            "[Expiry Date] Invalid format: '" + expStr + "'. Use YYYY-MM-DD");
+        PharmacyExcelHelper.updateCell(
+            statusCell,
+            "ERROR: [Expiry Date] Invalid format: '" + expStr + "'. Use YYYY-MM-DD",
+            styles[3]);
+        return "ERROR";
       }
       if (expiryDate.isBefore(LocalDate.now())) {
-        throw new IllegalArgumentException("[Expiry Date] cannot be in the past: " + expStr);
+        PharmacyExcelHelper.updateCell(
+            statusCell, "ERROR: [Expiry Date] cannot be in the past: " + expStr, styles[3]);
+        return "ERROR";
       }
       saveStock(hId, medicine, batch, expiryDate, qtyStr, pPriceStr, sPriceStr);
       PharmacyExcelHelper.updateCell(statusCell, "SUCCESS", styles[1]);
@@ -209,12 +219,16 @@ public class PharmacyExcelService {
       List<String> errors =
           PharmacyExcelHelper.validateMedicineData(name, gName, comp, str, fStr, mf);
       if (!errors.isEmpty()) {
-        throw new IllegalArgumentException(String.join(" | ", errors));
+        PharmacyExcelHelper.updateCell(
+            statusCell, "ERROR: " + String.join(" | ", errors), styles[3]);
+        return "ERROR";
       }
 
       MedicineForm form = PharmacyExcelHelper.parseMedicineForm(fStr);
       if (medicineRepository.existsDuplicate(name, gName, str, form)) {
-        throw new IllegalArgumentException("Duplicate: Medicine '" + name + "' already exists");
+        PharmacyExcelHelper.updateCell(
+            statusCell, "ERROR: Duplicate: Medicine '" + name + "' already exists", styles[3]);
+        return "ERROR";
       }
 
       Medicine m = new Medicine();

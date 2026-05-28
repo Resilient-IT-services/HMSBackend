@@ -22,7 +22,7 @@ import org.springframework.test.web.servlet.MockMvc;
 @SpringBootTest
 @AutoConfigureMockMvc
 @ActiveProfiles("test")
-public class DiscountValidationIntegrationTest {
+class DiscountValidationIntegrationTest {
 
   @Autowired private MockMvc mockMvc;
   @Autowired private ObjectMapper objectMapper;

@@ -107,8 +107,7 @@ public class DoctorHospitalProfileService {
     schedule.setMaxPatients(dto.getMaxPatients());
   }
 
-  private void updateOverrides(
-      UserContract assignment, List<AvailabilityExceptionDTO> exceptions) {
+  private void updateOverrides(UserContract assignment, List<AvailabilityExceptionDTO> exceptions) {
     DoctorProfile doctorProfile = assignment.getUser().getDoctorProfile();
     List<DoctorAvailabilityOverride> existingOverrides =
         availabilityOverrideRepository.findByDoctorIdAndHospitalId(
@@ -138,8 +137,7 @@ public class DoctorHospitalProfileService {
     return override;
   }
 
-  private void applyOverrideDto(
-      DoctorAvailabilityOverride override, AvailabilityExceptionDTO dto) {
+  private void applyOverrideDto(DoctorAvailabilityOverride override, AvailabilityExceptionDTO dto) {
     override.setDate(dto.getDate());
     override.setType(dto.getType());
     override.setStartTime(dto.getStartTime());
