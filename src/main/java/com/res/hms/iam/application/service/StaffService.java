@@ -185,7 +185,7 @@ public class StaffService {
                           .map(com.res.hms.iam.domain.Specialization::getName)
                           .collect(Collectors.joining(", "))
                       : "";
-              java.math.BigDecimal fee =
+              BigDecimal fee =
                   (a.getDoctorDetails() != null
                           && a.getDoctorDetails().getConsultationFee() != null)
                       ? a.getDoctorDetails().getConsultationFee()

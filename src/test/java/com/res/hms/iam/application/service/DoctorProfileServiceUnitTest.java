@@ -7,11 +7,11 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.when;
 
-import com.res.hms.clinical.domain.DoctorAvailabilityException;
+import com.res.hms.clinical.domain.DoctorAvailabilityOverride;
 import com.res.hms.clinical.domain.DoctorSchedule;
 import com.res.hms.clinical.domain.ExceptionType;
 import com.res.hms.clinical.infrastructure.repository.AppointmentRepository;
-import com.res.hms.clinical.infrastructure.repository.DoctorAvailabilityExceptionRepository;
+import com.res.hms.clinical.infrastructure.repository.DoctorAvailabilityOverrideRepository;
 import com.res.hms.clinical.infrastructure.repository.DoctorScheduleRepository;
 import com.res.hms.core.tenant.HospitalContext;
 import com.res.hms.iam.application.repository.DoctorProfileRepository;
@@ -40,7 +40,7 @@ class DoctorProfileServiceUnitTest {
   @Mock private DoctorProfileRepository doctorProfileRepository;
   @Mock private HospitalContext hospitalContext;
   @Mock private UserContractRepository assignmentRepository;
-  @Mock private DoctorAvailabilityExceptionRepository availabilityExceptionRepository;
+  @Mock private DoctorAvailabilityOverrideRepository availabilityOverrideRepository;
   @Mock private DoctorScheduleRepository scheduleRepository;
   @Mock private AppointmentRepository appointmentRepository;
 
@@ -89,11 +89,11 @@ class DoctorProfileServiceUnitTest {
     when(hospitalContext.requireHospitalId()).thenReturn(hospitalId);
     when(doctorProfileRepository.findById(doctorId)).thenReturn(Optional.of(doctorProfile));
 
-    DoctorAvailabilityException ex = new DoctorAvailabilityException();
-    ex.setType(ExceptionType.FULL_DAY_OFF);
-    when(availabilityExceptionRepository.findByDoctorIdAndHospitalIdAndDate(
+    DoctorAvailabilityOverride override = new DoctorAvailabilityOverride();
+    override.setType(ExceptionType.FULL_DAY_OFF);
+    when(availabilityOverrideRepository.findByDoctorIdAndHospitalIdAndDate(
             any(), eq(hospitalId), any()))
-        .thenReturn(List.of(ex));
+        .thenReturn(List.of(override));
 
     var response = doctorProfileService.getAvailableSlots(doctorId, LocalDate.now().plusDays(1));
 
@@ -109,7 +109,7 @@ class DoctorProfileServiceUnitTest {
 
     when(hospitalContext.requireHospitalId()).thenReturn(hospitalId);
     when(doctorProfileRepository.findById(doctorId)).thenReturn(Optional.of(doctorProfile));
-    when(availabilityExceptionRepository.findByDoctorIdAndHospitalIdAndDate(any(), any(), any()))
+    when(availabilityOverrideRepository.findByDoctorIdAndHospitalIdAndDate(any(), any(), any()))
         .thenReturn(List.of());
     when(appointmentRepository.findByDoctorIdAndDate(any(), any())).thenReturn(List.of());
 

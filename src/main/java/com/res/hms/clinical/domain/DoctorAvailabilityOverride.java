@@ -15,7 +15,7 @@ import lombok.Setter;
 @Setter
 @Entity
 @Table(name = "doctor_availability_exception")
-public class DoctorAvailabilityException extends BaseEntity {
+public class DoctorAvailabilityOverride extends BaseEntity {
 
   @Column(name = "doctor_id", nullable = false)
   private java.util.UUID doctorId;

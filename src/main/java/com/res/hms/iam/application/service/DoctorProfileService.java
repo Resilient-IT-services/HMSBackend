@@ -1,7 +1,7 @@
 package com.res.hms.iam.application.service;
 
 import com.res.hms.clinical.domain.Appointment;
-import com.res.hms.clinical.domain.DoctorAvailabilityException;
+import com.res.hms.clinical.domain.DoctorAvailabilityOverride;
 import com.res.hms.clinical.domain.DoctorSchedule;
 import com.res.hms.clinical.domain.ExceptionType;
 import com.res.hms.core.tenant.HospitalContext;
@@ -49,8 +49,8 @@ public class DoctorProfileService {
   private final UserContractRepository assignmentRepository;
   private final com.res.hms.clinical.infrastructure.repository.DoctorScheduleRepository
       scheduleRepository;
-  private final com.res.hms.clinical.infrastructure.repository.DoctorAvailabilityExceptionRepository
-      availabilityExceptionRepository;
+  private final com.res.hms.clinical.infrastructure.repository.DoctorAvailabilityOverrideRepository
+      availabilityOverrideRepository;
   private final com.res.hms.clinical.infrastructure.repository.AppointmentRepository
       appointmentRepository;
   private final com.res.hms.finance.infrastructure.repository.InvoiceItemRepository
@@ -101,11 +101,11 @@ public class DoctorProfileService {
     }
 
     UserContract assignment = findAssignment(doctorProfile, hospitalId);
-    List<DoctorAvailabilityException> exceptions =
-        availabilityExceptionRepository.findByDoctorIdAndHospitalIdAndDate(
+    List<DoctorAvailabilityOverride> overrides =
+        availabilityOverrideRepository.findByDoctorIdAndHospitalIdAndDate(
             doctorProfile.getId(), hospitalId, date);
 
-    if (exceptions.stream().anyMatch(e -> ExceptionType.FULL_DAY_OFF.equals(e.getType()))) {
+    if (overrides.stream().anyMatch(e -> ExceptionType.FULL_DAY_OFF.equals(e.getType()))) {
       return new DoctorAvailabilityResponse(Collections.emptyList());
     }
 
@@ -121,16 +121,16 @@ public class DoctorProfileService {
     }
 
     List<DoctorAvailabilityResponse.SessionInfo> sessions = new ArrayList<>();
-    Optional<DoctorAvailabilityException> override =
-        exceptions.stream()
+    Optional<DoctorAvailabilityOverride> availabilityOverride =
+        overrides.stream()
             .filter(
                 e ->
                     ExceptionType.MODIFIED.equals(e.getType())
                         || ExceptionType.ADDED.equals(e.getType()))
             .findFirst();
 
-    if (override.isPresent()) {
-      addOverrideSession(sessions, override.get(), appointments, date, today, now, zoneId);
+    if (availabilityOverride.isPresent()) {
+      addOverrideSession(sessions, availabilityOverride.get(), appointments, date, today, now, zoneId);
     } else {
       addBaseSessions(sessions, assignment, date, today, now, appointments, zoneId);
     }
@@ -140,7 +140,7 @@ public class DoctorProfileService {
 
   private void addOverrideSession(
       List<DoctorAvailabilityResponse.SessionInfo> sessions,
-      DoctorAvailabilityException o,
+      DoctorAvailabilityOverride o,
       List<Appointment> appointments,
       LocalDate date,
       LocalDate today,
@@ -215,11 +215,11 @@ public class DoctorProfileService {
     }
 
     UserContract assignment = findAssignment(doctorProfile, hospitalId);
-    List<DoctorAvailabilityException> exceptions =
-        availabilityExceptionRepository.findByDoctorIdAndHospitalIdAndDate(
+    List<DoctorAvailabilityOverride> overrides =
+        availabilityOverrideRepository.findByDoctorIdAndHospitalIdAndDate(
             doctorProfile.getId(), hospitalId, date);
 
-    if (exceptions.stream().anyMatch(e -> ExceptionType.FULL_DAY_OFF.equals(e.getType()))) {
+    if (overrides.stream().anyMatch(e -> ExceptionType.FULL_DAY_OFF.equals(e.getType()))) {
       return Collections.emptyList();
     }
 
@@ -236,20 +236,20 @@ public class DoctorProfileService {
     LocalTime now = nowHospital.toLocalTime();
 
     List<DoctorSlotDTO> allSlots = new ArrayList<>();
-    Optional<DoctorAvailabilityException> override =
-        exceptions.stream()
+    Optional<DoctorAvailabilityOverride> availabilityOverride =
+        overrides.stream()
             .filter(
                 e ->
                     ExceptionType.MODIFIED.equals(e.getType())
                         || ExceptionType.ADDED.equals(e.getType()))
             .findFirst();
 
-    if (override.isPresent()) {
+    if (availabilityOverride.isPresent()) {
       generateSlots(
-          override.get().getStartTime(),
-          override.get().getEndTime(),
-          override.get().getSlotDurationMinutes() != null
-              ? override.get().getSlotDurationMinutes()
+          availabilityOverride.get().getStartTime(),
+          availabilityOverride.get().getEndTime(),
+          availabilityOverride.get().getSlotDurationMinutes() != null
+              ? availabilityOverride.get().getSlotDurationMinutes()
               : 15,
           bookedTimes,
           date,
@@ -377,7 +377,7 @@ public class DoctorProfileService {
   @Transactional(readOnly = true)
   public boolean isFullDayOff(UUID doctorId, LocalDate date) {
     UUID hospitalId = hospitalContext.requireHospitalId();
-    return availabilityExceptionRepository
+    return availabilityOverrideRepository
         .findByDoctorIdAndHospitalIdAndDate(doctorId, hospitalId, date)
         .stream()
         .anyMatch(e -> ExceptionType.FULL_DAY_OFF.equals(e.getType()));

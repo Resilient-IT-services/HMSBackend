@@ -72,7 +72,14 @@ public class GlobalExceptionHandler {
       DataIntegrityViolationException exception) {
     log.error("Data integrity violation", exception);
     String message = "A data integrity violation occurred";
-    String rootMsg = exception.getRootCause() != null ? exception.getRootCause().getMessage() : "";
+    String rootMsg = "";
+    Throwable rootCause = exception.getRootCause();
+    if (rootCause != null) {
+      String msg = rootCause.getMessage();
+      if (msg != null) {
+        rootMsg = msg;
+      }
+    }
 
     if (rootMsg.contains("duplicate key value violates unique constraint")) {
       message = "A record with the same unique value already exists";

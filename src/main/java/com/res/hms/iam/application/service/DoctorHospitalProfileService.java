@@ -1,6 +1,6 @@
 package com.res.hms.iam.application.service;
 
-import com.res.hms.clinical.domain.DoctorAvailabilityException;
+import com.res.hms.clinical.domain.DoctorAvailabilityOverride;
 import com.res.hms.clinical.domain.DoctorSchedule;
 import com.res.hms.iam.application.dto.AvailabilityExceptionDTO;
 import com.res.hms.iam.application.dto.DoctorHospitalDetailsDTO;
@@ -26,8 +26,8 @@ public class DoctorHospitalProfileService {
   private final DoctorProfileRepository doctorProfileRepository;
   private final com.res.hms.clinical.infrastructure.repository.DoctorScheduleRepository
       scheduleRepository;
-  private final com.res.hms.clinical.infrastructure.repository.DoctorAvailabilityExceptionRepository
-      availabilityExceptionRepository;
+  private final com.res.hms.clinical.infrastructure.repository.DoctorAvailabilityOverrideRepository
+      availabilityOverrideRepository;
 
   @Transactional
   public void updateHospitalDetails(
@@ -39,7 +39,7 @@ public class DoctorHospitalProfileService {
       updateSchedules(assignment, schedules);
     }
     if (exceptions != null && assignment.getUser().getDoctorProfile() != null) {
-      updateExceptions(assignment, exceptions);
+      updateOverrides(assignment, exceptions);
     }
     if (details != null) {
       updateDoctorHospitalDetails(assignment, details);
@@ -50,7 +50,7 @@ public class DoctorHospitalProfileService {
   public void deleteHospitalSpecificData(UserContract assignment) {
     scheduleRepository.deleteByAssignmentId(assignment.getId());
     if (assignment.getUser().getDoctorProfile() != null) {
-      availabilityExceptionRepository.deleteByDoctorIdAndHospitalId(
+      availabilityOverrideRepository.deleteByDoctorIdAndHospitalId(
           assignment.getUser().getDoctorProfile().getId(), assignment.getHospitalId());
     }
   }
@@ -68,10 +68,10 @@ public class DoctorHospitalProfileService {
     if (profile == null) {
       return Collections.emptyList();
     }
-    return availabilityExceptionRepository
+    return availabilityOverrideRepository
         .findByDoctorIdAndHospitalId(profile.getId(), hospitalId)
         .stream()
-        .map(this::toExceptionDTO)
+        .map(this::toOverrideDTO)
         .toList();
   }
 
@@ -107,46 +107,46 @@ public class DoctorHospitalProfileService {
     schedule.setMaxPatients(dto.getMaxPatients());
   }
 
-  private void updateExceptions(
+  private void updateOverrides(
       UserContract assignment, List<AvailabilityExceptionDTO> exceptions) {
     DoctorProfile doctorProfile = assignment.getUser().getDoctorProfile();
-    List<DoctorAvailabilityException> existingExceptions =
-        availabilityExceptionRepository.findByDoctorIdAndHospitalId(
+    List<DoctorAvailabilityOverride> existingOverrides =
+        availabilityOverrideRepository.findByDoctorIdAndHospitalId(
             doctorProfile.getId(), assignment.getHospitalId());
 
     com.res.hms.core.util.CollectionMergeUtil.merge(
-        existingExceptions,
+        existingOverrides,
         exceptions,
-        DoctorAvailabilityException::getId,
+        DoctorAvailabilityOverride::getId,
         AvailabilityExceptionDTO::getId,
-        dto -> newException(assignment, doctorProfile, dto),
-        this::applyExceptionDto,
+        dto -> newOverride(assignment, doctorProfile, dto),
+        this::applyOverrideDto,
         ex -> {
-          availabilityExceptionRepository.delete(ex);
-          existingExceptions.remove(ex);
+          availabilityOverrideRepository.delete(ex);
+          existingOverrides.remove(ex);
         });
-    availabilityExceptionRepository.saveAll(
-        existingExceptions.stream().filter(Objects::nonNull).toList());
+    availabilityOverrideRepository.saveAll(
+        existingOverrides.stream().filter(Objects::nonNull).toList());
   }
 
-  private DoctorAvailabilityException newException(
+  private DoctorAvailabilityOverride newOverride(
       UserContract assignment, DoctorProfile doctorProfile, AvailabilityExceptionDTO dto) {
-    DoctorAvailabilityException exception = new DoctorAvailabilityException();
-    exception.setDoctorId(doctorProfile.getId());
-    exception.setHospitalId(assignment.getHospitalId());
-    applyExceptionDto(exception, dto);
-    return exception;
+    DoctorAvailabilityOverride override = new DoctorAvailabilityOverride();
+    override.setDoctorId(doctorProfile.getId());
+    override.setHospitalId(assignment.getHospitalId());
+    applyOverrideDto(override, dto);
+    return override;
   }
 
-  private void applyExceptionDto(
-      DoctorAvailabilityException exception, AvailabilityExceptionDTO dto) {
-    exception.setDate(dto.getDate());
-    exception.setType(dto.getType());
-    exception.setStartTime(dto.getStartTime());
-    exception.setEndTime(dto.getEndTime());
-    exception.setMode(dto.getMode());
-    exception.setSlotDurationMinutes(dto.getSlotDurationMinutes());
-    exception.setNote(dto.getNote());
+  private void applyOverrideDto(
+      DoctorAvailabilityOverride override, AvailabilityExceptionDTO dto) {
+    override.setDate(dto.getDate());
+    override.setType(dto.getType());
+    override.setStartTime(dto.getStartTime());
+    override.setEndTime(dto.getEndTime());
+    override.setMode(dto.getMode());
+    override.setSlotDurationMinutes(dto.getSlotDurationMinutes());
+    override.setNote(dto.getNote());
   }
 
   private void updateDoctorHospitalDetails(UserContract assignment, DoctorHospitalDetailsDTO dto) {
@@ -192,16 +192,16 @@ public class DoctorHospitalProfileService {
         .build();
   }
 
-  private AvailabilityExceptionDTO toExceptionDTO(DoctorAvailabilityException exception) {
+  private AvailabilityExceptionDTO toOverrideDTO(DoctorAvailabilityOverride override) {
     return AvailabilityExceptionDTO.builder()
-        .id(exception.getId())
-        .date(exception.getDate())
-        .type(exception.getType())
-        .startTime(exception.getStartTime())
-        .endTime(exception.getEndTime())
-        .mode(exception.getMode())
-        .slotDurationMinutes(exception.getSlotDurationMinutes())
-        .note(exception.getNote())
+        .id(override.getId())
+        .date(override.getDate())
+        .type(override.getType())
+        .startTime(override.getStartTime())
+        .endTime(override.getEndTime())
+        .mode(override.getMode())
+        .slotDurationMinutes(override.getSlotDurationMinutes())
+        .note(override.getNote())
         .build();
   }
 }

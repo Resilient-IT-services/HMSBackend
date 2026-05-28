@@ -23,5 +23,5 @@ public class Item extends HospitalScopedEntity {
   private UnitOfMeasure unit;
 
   @Column(nullable = false)
-  private boolean deleted = false;
+  private boolean deleted;
 }

@@ -51,13 +51,13 @@ public class UserAccount extends BaseEntity {
   private Set<UserContract> contracts = new HashSet<>();
 
   @Column(name = "is_superuser", nullable = false)
-  private boolean superuser = false;
+  private boolean superuser;
 
   @Column(name = "is_active", nullable = false)
   private boolean active = true;
 
   @Column(nullable = false)
-  private boolean deleted = false;
+  private boolean deleted;
 
   @OneToOne(mappedBy = "user", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
   private DoctorProfile doctorProfile;

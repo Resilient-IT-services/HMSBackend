@@ -102,4 +102,3 @@ public interface AppointmentRepository
       @Param("date") java.time.LocalDate date,
       Pageable pageable);
 }
-

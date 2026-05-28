@@ -245,9 +245,7 @@ public class AppointmentAggregateService {
 
     if (!runningAppointments.isEmpty()) {
       throw new ApiException(
-          "CONSULTATION_RUNNING",
-          "One consultation is already in progress",
-          HttpStatus.CONFLICT);
+          "CONSULTATION_RUNNING", "One consultation is already in progress", HttpStatus.CONFLICT);
     }
 
     java.util.List<Appointment> waitingAppointments =
@@ -406,10 +404,7 @@ public class AppointmentAggregateService {
 
   private void ensureNoOtherConsultationRunning(Appointment appointment) {
     java.time.LocalDate appointmentDate =
-        appointment
-            .getAppointmentTime()
-            .atZone(java.time.ZoneId.systemDefault())
-            .toLocalDate();
+        appointment.getAppointmentTime().atZone(java.time.ZoneId.systemDefault()).toLocalDate();
 
     java.util.List<Appointment> runningAppointments =
         appointmentRepository.findRunningConsultationsForUpdate(
@@ -421,9 +416,7 @@ public class AppointmentAggregateService {
 
     if (anotherConsultationRunning) {
       throw new ApiException(
-          "CONSULTATION_RUNNING",
-          "One consultation is already in progress",
-          HttpStatus.CONFLICT);
+          "CONSULTATION_RUNNING", "One consultation is already in progress", HttpStatus.CONFLICT);
     }
   }
 }

@@ -98,7 +98,7 @@ public class InvoiceService {
           .filter(i -> i.getStatus() != InvoiceStatus.CANCELLED)
           .orElseGet(() -> createInvoice(hospitalId, patientId, visitId));
     }
-    return createInvoice(hospitalId, patientId, visitId);
+    return createInvoice(hospitalId, patientId, null);
   }
 
   @Transactional

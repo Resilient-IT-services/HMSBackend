@@ -30,6 +30,7 @@ public interface PharmacyStockRepository extends BaseRepository<PharmacyStock> {
       """)
   Page<PharmacyStock> findLowStock(@Param("hospitalId") UUID hospitalId, Pageable pageable);
 
+  @Override
   Optional<PharmacyStock> findByIdAndHospitalId(UUID id, UUID hospitalId);
 
   Optional<PharmacyStock> findByHospitalIdAndBatchNumber(UUID hospitalId, String batchNumber);

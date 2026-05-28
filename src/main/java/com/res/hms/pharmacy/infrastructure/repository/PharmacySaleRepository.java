@@ -23,6 +23,7 @@ public interface PharmacySaleRepository extends BaseRepository<PharmacySale> {
   List<Object[]> searchRecentWalkinCustomers(
       @Param("hospitalId") UUID hospitalId, @Param("search") String search);
 
+  @Override
   java.util.Optional<PharmacySale> findByIdAndHospitalId(UUID id, UUID hospitalId);
 
   java.util.Optional<PharmacySale> findByPrescriptionIdAndHospitalId(

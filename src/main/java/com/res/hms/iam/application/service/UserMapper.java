@@ -1,6 +1,6 @@
 package com.res.hms.iam.application.service;
 
-import com.res.hms.clinical.domain.DoctorAvailabilityException;
+import com.res.hms.clinical.domain.DoctorAvailabilityOverride;
 import com.res.hms.clinical.domain.DoctorSchedule;
 import com.res.hms.core.tenant.HospitalContext;
 import com.res.hms.hospital.domain.Department;
@@ -151,7 +151,7 @@ public abstract class UserMapper {
   public abstract ScheduleDTO toScheduleDTO(DoctorSchedule schedule);
 
   public abstract AvailabilityExceptionDTO toAvailabilityExceptionDTO(
-      DoctorAvailabilityException unavailability);
+      DoctorAvailabilityOverride override);
 
   public abstract DoctorHospitalDetailsDTO toDoctorHospitalDetailsDTO(
       DoctorHospitalDetails details);

@@ -7,10 +7,10 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 
 import com.res.hms.clinical.domain.Appointment;
 import com.res.hms.clinical.domain.AppointmentStatus;
-import com.res.hms.clinical.domain.DoctorAvailabilityException;
+import com.res.hms.clinical.domain.DoctorAvailabilityOverride;
 import com.res.hms.clinical.domain.DoctorSchedule;
 import com.res.hms.clinical.domain.ExceptionType;
-import com.res.hms.clinical.infrastructure.repository.DoctorAvailabilityExceptionRepository;
+import com.res.hms.clinical.infrastructure.repository.DoctorAvailabilityOverrideRepository;
 import com.res.hms.core.domain.Gender;
 import com.res.hms.hospital.infrastructure.repository.HospitalRepository;
 import com.res.hms.iam.domain.DoctorProfile;
@@ -56,7 +56,7 @@ class DoctorControllerIntegrationTest {
   private com.res.hms.clinical.infrastructure.repository.DoctorScheduleRepository
       scheduleRepository;
 
-  @Autowired private DoctorAvailabilityExceptionRepository availabilityExceptionRepository;
+  @Autowired private DoctorAvailabilityOverrideRepository availabilityOverrideRepository;
 
   @Autowired private HospitalRepository hospitalRepository;
 
@@ -174,17 +174,17 @@ class DoctorControllerIntegrationTest {
     }
     UserAccount drUser = userAccountRepository.findByUsername("avail_dr").get();
 
-    // 1. Create an ADDED exception for Tuesday: 10 AM-4 PM
-    DoctorAvailabilityException ex = new DoctorAvailabilityException();
-    ex.setDoctorId(drUser.getDoctorProfile().getId());
-    ex.setHospitalId(hospitalId);
-    ex.setDate(tuesday);
-    ex.setType(ExceptionType.ADDED);
-    ex.setStartTime(LocalTime.of(10, 0));
-    ex.setEndTime(LocalTime.of(16, 0));
-    ex.setSlotDurationMinutes(30);
-    ex.setNote("Afternoon shift");
-    availabilityExceptionRepository.save(ex);
+    // 1. Create an ADDED override for Tuesday: 10 AM-4 PM
+    DoctorAvailabilityOverride override = new DoctorAvailabilityOverride();
+    override.setDoctorId(drUser.getDoctorProfile().getId());
+    override.setHospitalId(hospitalId);
+    override.setDate(tuesday);
+    override.setType(ExceptionType.ADDED);
+    override.setStartTime(LocalTime.of(10, 0));
+    override.setEndTime(LocalTime.of(16, 0));
+    override.setSlotDurationMinutes(30);
+    override.setNote("Afternoon shift");
+    availabilityOverrideRepository.save(override);
 
     // 2. Fetch availability for Tuesday
     mockMvc
