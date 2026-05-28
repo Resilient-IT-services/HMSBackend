@@ -152,4 +152,16 @@ public class AppointmentController {
       @Valid @RequestBody UpdateAppointmentStatusRequest request) {
     return ApiResponse.success(appointmentService.updateStatus(appointmentId, request));
   }
+
+  @PutMapping("/{id}/complete")
+  @PreAuthorize("hasAnyRole('ADMIN','DOCTOR','SUPER_ADMIN')")
+  public ApiResponse<AppointmentDTO> completeConsultation(@PathVariable UUID id) {
+    return ApiResponse.success(appointmentAggregateService.completeConsultation(id));
+  }
+
+  @PostMapping("/start-next/{doctorId}")
+  @PreAuthorize("hasAnyRole('ADMIN','DOCTOR','SUPER_ADMIN')")
+  public ApiResponse<AppointmentDTO> startNextConsultation(@PathVariable UUID doctorId) {
+    return ApiResponse.success(appointmentAggregateService.startNextConsultation(doctorId));
+  }
 }

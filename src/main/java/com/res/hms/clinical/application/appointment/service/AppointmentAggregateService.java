@@ -188,6 +188,10 @@ public class AppointmentAggregateService {
           HttpStatus.BAD_REQUEST);
     }
 
+    if (appointment.getStatus() == AppointmentStatus.VITALS_RECORDED) {
+      ensureNoOtherConsultationRunning(appointment);
+    }
+
     appointment.setChiefComplaints(dto.getChiefComplaints());
     appointment.setDiagnosis(dto.getDiagnosis());
     appointment.setClinicalNotes(dto.getClinicalNotes());
@@ -229,6 +233,38 @@ public class AppointmentAggregateService {
     // Move back to vitals recorded so consultation can continue
     appointment.setStatus(AppointmentStatus.VITALS_RECORDED);
     return appointmentService.toDto(appointmentRepository.save(appointment));
+  }
+
+  @Transactional
+  public AppointmentDTO startNextConsultation(UUID doctorId) {
+    UUID hospitalId = hospitalContext.requireHospitalId();
+    java.time.LocalDate today = java.time.LocalDate.now();
+
+    java.util.List<Appointment> runningAppointments =
+        appointmentRepository.findRunningConsultationsForUpdate(hospitalId, doctorId, today);
+
+    if (!runningAppointments.isEmpty()) {
+      throw new ApiException(
+          "CONSULTATION_RUNNING",
+          "One consultation is already in progress",
+          HttpStatus.CONFLICT);
+    }
+
+    java.util.List<Appointment> waitingAppointments =
+        appointmentRepository.findWaitingAppointmentsForUpdate(
+            hospitalId, doctorId, today, org.springframework.data.domain.PageRequest.of(0, 1));
+
+    if (waitingAppointments.isEmpty()) {
+      throw new ApiException(
+          "NO_PATIENTS",
+          "No paid or vitals-recorded patients are available in the queue",
+          HttpStatus.NOT_FOUND);
+    }
+
+    Appointment nextAppointment = waitingAppointments.get(0);
+    nextAppointment.setStatus(AppointmentStatus.CONSULTATION_STARTED);
+
+    return appointmentService.toDto(appointmentRepository.saveAndFlush(nextAppointment));
   }
 
   private void mapVitalsDtoToEntity(VitalsDTO dto, com.res.hms.clinical.domain.Vitals entity) {
@@ -328,6 +364,66 @@ public class AppointmentAggregateService {
       vitals.setTemperature(dto.getVitals().getTemperature());
       vitals.setWeight(dto.getVitals().getWeight());
       vitals.setOxygenLevel(dto.getVitals().getOxygenLevel());
+    }
+  }
+
+  @Transactional
+  public AppointmentDTO completeConsultation(UUID id) {
+    UUID hospitalId = hospitalContext.requireHospitalId();
+
+    Appointment appointment =
+        appointmentRepository
+            .findByIdAndHospitalId(id, hospitalId)
+            .orElseThrow(
+                () -> new ApiException("NOT_FOUND", "Appointment not found", HttpStatus.NOT_FOUND));
+
+    if (appointment.getStatus() == AppointmentStatus.COMPLETED) {
+      throw new ApiException(
+          "CONSULTATION_ALREADY_COMPLETED",
+          "Completed consultations cannot be completed or restarted again",
+          HttpStatus.CONFLICT);
+    }
+
+    if (appointment.getStatus() == AppointmentStatus.CANCELLED) {
+      throw new ApiException(
+          "CONSULTATION_CANCELLED",
+          "Cancelled appointments cannot be completed",
+          HttpStatus.BAD_REQUEST);
+    }
+
+    if (appointment.getStatus() != AppointmentStatus.CONSULTATION_STARTED
+        && appointment.getStatus() != AppointmentStatus.PRESCRIPTION_FINALIZED) {
+      throw new ApiException(
+          "CONSULTATION_NOT_STARTED",
+          "Only an active consultation can be completed",
+          HttpStatus.BAD_REQUEST);
+    }
+
+    appointment.setStatus(AppointmentStatus.COMPLETED);
+
+    return appointmentService.toDto(appointmentRepository.saveAndFlush(appointment));
+  }
+
+  private void ensureNoOtherConsultationRunning(Appointment appointment) {
+    java.time.LocalDate appointmentDate =
+        appointment
+            .getAppointmentTime()
+            .atZone(java.time.ZoneId.systemDefault())
+            .toLocalDate();
+
+    java.util.List<Appointment> runningAppointments =
+        appointmentRepository.findRunningConsultationsForUpdate(
+            appointment.getHospitalId(), appointment.getDoctorId(), appointmentDate);
+
+    boolean anotherConsultationRunning =
+        runningAppointments.stream()
+            .anyMatch(running -> !running.getId().equals(appointment.getId()));
+
+    if (anotherConsultationRunning) {
+      throw new ApiException(
+          "CONSULTATION_RUNNING",
+          "One consultation is already in progress",
+          HttpStatus.CONFLICT);
     }
   }
 }

@@ -2,6 +2,7 @@ package com.res.hms.clinical;
 
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.put;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
@@ -166,5 +167,118 @@ class ConsultationQueueIntegrationTest {
         .andExpect(jsonPath("$.data.content.length()").value(1))
         .andExpect(jsonPath("$.data.content[0].patientName").value(patient2.getFullName()))
         .andExpect(jsonPath("$.data.content[0].status").value("VITALS_RECORDED"));
+  }
+
+  @Test
+  void startNextConsultationSkipsCompletedAndStartsLowestWaitingToken() throws Exception {
+    com.res.hms.clinical.domain.Patient patient1 = testDataHelper.createTestPatient(hospitalId);
+    com.res.hms.clinical.domain.Patient patient2 = testDataHelper.createTestPatient(hospitalId);
+    com.res.hms.clinical.domain.Patient patient3 = testDataHelper.createTestPatient(hospitalId);
+
+    Appointment completed = new Appointment();
+    completed.setHospitalId(hospitalId);
+    completed.setDoctorId(doctorId);
+    completed.setDoctorName("Dr. Queue");
+    completed.setPatientId(patient1.getId());
+    completed.setPatientName(patient1.getFullName());
+    completed.setAppointmentTime(Instant.now());
+    completed.setTokenNumber(1);
+    completed.setStatus(AppointmentStatus.COMPLETED);
+    appointmentRepository.save(completed);
+
+    Appointment next = new Appointment();
+    next.setHospitalId(hospitalId);
+    next.setDoctorId(doctorId);
+    next.setDoctorName("Dr. Queue");
+    next.setPatientId(patient2.getId());
+    next.setPatientName(patient2.getFullName());
+    next.setAppointmentTime(Instant.now().plusSeconds(60));
+    next.setTokenNumber(2);
+    next.setStatus(AppointmentStatus.VITALS_RECORDED);
+    appointmentRepository.save(next);
+
+    Appointment later = new Appointment();
+    later.setHospitalId(hospitalId);
+    later.setDoctorId(doctorId);
+    later.setDoctorName("Dr. Queue");
+    later.setPatientId(patient3.getId());
+    later.setPatientName(patient3.getFullName());
+    later.setAppointmentTime(Instant.now().plusSeconds(120));
+    later.setTokenNumber(3);
+    later.setStatus(AppointmentStatus.PAID);
+    appointmentRepository.save(later);
+
+    mockMvc
+        .perform(
+            post("/api/v1/appointments/start-next/{doctorId}", doctorId)
+                .session(session)
+                .header("X-Hospital-Id", hospitalId.toString()))
+        .andExpect(status().isOk())
+        .andExpect(jsonPath("$.data.id").value(next.getId().toString()))
+        .andExpect(jsonPath("$.data.tokenNumber").value(2))
+        .andExpect(jsonPath("$.data.status").value("CONSULTATION_STARTED"));
+  }
+
+  @Test
+  void startNextConsultationFailsWhenConsultationAlreadyRunning() throws Exception {
+    com.res.hms.clinical.domain.Patient runningPatient =
+        testDataHelper.createTestPatient(hospitalId);
+    com.res.hms.clinical.domain.Patient waitingPatient =
+        testDataHelper.createTestPatient(hospitalId);
+
+    Appointment running = new Appointment();
+    running.setHospitalId(hospitalId);
+    running.setDoctorId(doctorId);
+    running.setDoctorName("Dr. Queue");
+    running.setPatientId(runningPatient.getId());
+    running.setPatientName(runningPatient.getFullName());
+    running.setAppointmentTime(Instant.now());
+    running.setTokenNumber(1);
+    running.setStatus(AppointmentStatus.CONSULTATION_STARTED);
+    appointmentRepository.save(running);
+
+    Appointment waiting = new Appointment();
+    waiting.setHospitalId(hospitalId);
+    waiting.setDoctorId(doctorId);
+    waiting.setDoctorName("Dr. Queue");
+    waiting.setPatientId(waitingPatient.getId());
+    waiting.setPatientName(waitingPatient.getFullName());
+    waiting.setAppointmentTime(Instant.now().plusSeconds(60));
+    waiting.setTokenNumber(2);
+    waiting.setStatus(AppointmentStatus.VITALS_RECORDED);
+    appointmentRepository.save(waiting);
+
+    mockMvc
+        .perform(
+            post("/api/v1/appointments/start-next/{doctorId}", doctorId)
+                .session(session)
+                .header("X-Hospital-Id", hospitalId.toString()))
+        .andExpect(status().isConflict())
+        .andExpect(jsonPath("$.error.code").value("CONSULTATION_RUNNING"));
+  }
+
+  @Test
+  void completeConsultationMarksStartedAppointmentCompleted() throws Exception {
+    com.res.hms.clinical.domain.Patient patient = testDataHelper.createTestPatient(hospitalId);
+
+    Appointment appointment = new Appointment();
+    appointment.setHospitalId(hospitalId);
+    appointment.setDoctorId(doctorId);
+    appointment.setDoctorName("Dr. Queue");
+    appointment.setPatientId(patient.getId());
+    appointment.setPatientName(patient.getFullName());
+    appointment.setAppointmentTime(Instant.now());
+    appointment.setTokenNumber(1);
+    appointment.setStatus(AppointmentStatus.CONSULTATION_STARTED);
+    appointmentRepository.save(appointment);
+
+    mockMvc
+        .perform(
+            put("/api/v1/appointments/{appointmentId}/complete", appointment.getId())
+                .session(session)
+                .header("X-Hospital-Id", hospitalId.toString()))
+        .andExpect(status().isOk())
+        .andExpect(jsonPath("$.data.id").value(appointment.getId().toString()))
+        .andExpect(jsonPath("$.data.status").value("COMPLETED"));
   }
 }
