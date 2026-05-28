@@ -4,6 +4,8 @@ import com.res.hms.core.domain.HospitalScopedEntity;
 import jakarta.persistence.CascadeType;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
+import jakarta.persistence.EnumType;
+import jakarta.persistence.Enumerated;
 import jakarta.persistence.FetchType;
 import jakarta.persistence.OneToMany;
 import jakarta.persistence.Table;
@@ -43,6 +45,10 @@ public class Prescription extends HospitalScopedEntity {
 
   @Column(nullable = false)
   private boolean deleted = false;
+
+  @Enumerated(EnumType.STRING)
+  @Column(name = "status", nullable = false)
+  private PrescriptionStatus status = PrescriptionStatus.PENDING;
 
   @OneToMany(
       mappedBy = "prescription",

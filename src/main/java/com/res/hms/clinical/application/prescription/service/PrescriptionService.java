@@ -8,6 +8,7 @@ import com.res.hms.clinical.domain.Appointment;
 import com.res.hms.clinical.domain.AppointmentStatus;
 import com.res.hms.clinical.domain.Prescription;
 import com.res.hms.clinical.domain.PrescriptionItem;
+import com.res.hms.clinical.domain.PrescriptionStatus;
 import com.res.hms.clinical.infrastructure.repository.AppointmentRepository;
 import com.res.hms.core.api.PageResponse;
 import com.res.hms.core.exception.ApiException;
@@ -39,11 +40,16 @@ public class PrescriptionService {
   private final AppointmentRepository appointmentRepository;
   private final HospitalContext hospitalContext;
 
-  private Specification<Prescription> getFilterSpec(UUID hospitalId, String search) {
+  private Specification<Prescription> getFilterSpec(
+      UUID hospitalId, String search, PrescriptionStatus status) {
     return (root, query, cb) -> {
       List<Predicate> predicates = new ArrayList<>();
       predicates.add(cb.equal(root.get("hospitalId"), hospitalId));
       predicates.add(cb.equal(root.get("deleted"), false));
+
+      if (status != null) {
+        predicates.add(cb.equal(root.get("status"), status));
+      }
 
       if (search != null && !search.trim().isEmpty()) {
         String pattern = "%" + search.trim().toLowerCase() + "%";
@@ -62,7 +68,8 @@ public class PrescriptionService {
     UUID hospitalId = hospitalContext.requireHospitalId();
     Pageable pageable = PageRequest.of(page, size, Sort.by("createdAt").descending());
 
-    Specification<Prescription> spec = getFilterSpec(hospitalId, search);
+    // Filter for PENDING status by default for pharmacy queue
+    Specification<Prescription> spec = getFilterSpec(hospitalId, search, PrescriptionStatus.PENDING);
     Specification<Prescription> fetchSpec =
         (root, query, cb) -> {
           if (query.getResultType() != Long.class && query.getResultType() != long.class) {
@@ -96,6 +103,7 @@ public class PrescriptionService {
         .doctorName(prescription.getDoctorName())
         .appointmentId(prescription.getAppointmentId())
         .visitId(visitId)
+        .status(prescription.getStatus() != null ? prescription.getStatus().name() : null)
         .createdAt(prescription.getCreatedAt())
         .itemCount(prescription.getItems() != null ? prescription.getItems().size() : 0)
         .build();
@@ -106,7 +114,8 @@ public class PrescriptionService {
     UUID hospitalId = hospitalContext.requireHospitalId();
     Pageable pageable = PageRequest.of(page, size, Sort.by("createdAt").descending());
 
-    Specification<Prescription> spec = getFilterSpec(hospitalId, search);
+    // Filter for PENDING status by default for pharmacy queue
+    Specification<Prescription> spec = getFilterSpec(hospitalId, search, PrescriptionStatus.PENDING);
     Specification<Prescription> fetchSpec =
         (root, query, cb) -> {
           if (query.getResultType() != Long.class && query.getResultType() != long.class) {
@@ -285,6 +294,7 @@ public class PrescriptionService {
             .doctorName(prescription.getDoctorName())
             .appointmentId(prescription.getAppointmentId())
             .visitId(visitId)
+            .status(prescription.getStatus() != null ? prescription.getStatus().name() : null)
             .createdAt(prescription.getCreatedAt());
 
     if (prescription.getItems() != null) {

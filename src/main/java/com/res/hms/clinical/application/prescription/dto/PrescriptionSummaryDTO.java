@@ -19,6 +19,7 @@ public class PrescriptionSummaryDTO {
   private String doctorName;
   private UUID appointmentId;
   private UUID visitId;
+  private String status;
   private java.time.Instant createdAt;
   private Integer itemCount;
 }

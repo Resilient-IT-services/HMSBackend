@@ -15,6 +15,7 @@ import com.res.hms.pharmacy.application.dto.PharmacyReturnResponse;
 import com.res.hms.pharmacy.application.dto.PharmacyStockDTO;
 import com.res.hms.pharmacy.application.dto.QuickPharmacySaleRequest;
 import com.res.hms.pharmacy.application.dto.QuickPharmacySaleResponse;
+import com.res.hms.clinical.domain.PrescriptionStatus;
 import com.res.hms.pharmacy.domain.PharmacyReturn;
 import com.res.hms.pharmacy.domain.PharmacySale;
 import com.res.hms.pharmacy.domain.PharmacySaleItem;
@@ -71,6 +72,17 @@ public class PharmacySaleService {
 
     PaymentReceipt paymentReceipt =
         recordPayment(request, hospitalId, userId, invoice, savedSale.getTotalAmount());
+
+    // Update prescription status to DISPENSED if it exists
+    if (request.getPrescriptionId() != null) {
+      prescriptionRepository
+          .findById(request.getPrescriptionId())
+          .ifPresent(
+              pres -> {
+                pres.setStatus(PrescriptionStatus.DISPENSED);
+                prescriptionRepository.save(pres);
+              });
+    }
 
     var response = toQuickSaleResponse(savedSale);
     response.setInvoiceNumber(invoice.getInvoiceNumber());
