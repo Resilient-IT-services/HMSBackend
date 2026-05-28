@@ -93,7 +93,10 @@ class UserValidationServiceTest {
             ApiException.class,
             () -> userValidationService.validateProfileUniqueness(request, null));
 
-    assertEquals("Doctor license number already exists", ex.getMessage(), "Wrong error message for duplicate license");
+    assertEquals(
+        "Doctor license number already exists",
+        ex.getMessage(),
+        "Wrong error message for duplicate license");
   }
 
   private List<UserDetailsDTO.HospitalMembershipDTO> doctorMemberships() {

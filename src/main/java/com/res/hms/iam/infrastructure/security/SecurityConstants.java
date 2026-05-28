@@ -8,7 +8,8 @@ public final class SecurityConstants {
       "hasAnyRole('ADMIN','PHARMACIST','SUPER_ADMIN')";
   public static final String HAS_ADMIN_OR_DOCTOR = "hasAnyRole('ADMIN','DOCTOR','SUPER_ADMIN')";
 
-  public static final String HAS_CLINICAL_STAFF = "hasAnyRole('ADMIN','DOCTOR','NURSE','SUPER_ADMIN')";
+  public static final String HAS_CLINICAL_STAFF =
+      "hasAnyRole('ADMIN','DOCTOR','NURSE','SUPER_ADMIN')";
   public static final String HAS_PHARMACY_ACCESS =
       "hasAnyRole('ADMIN','PHARMACIST','DOCTOR','NURSE','SUPER_ADMIN')";
   public static final String HAS_RECEPTION_ACCESS =
