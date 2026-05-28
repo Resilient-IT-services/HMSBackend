@@ -37,7 +37,7 @@ public class InventoryService {
     UUID hospitalId = hospitalContext.requireHospitalId();
     PageRequest pageRequest = PageRequest.of(page, size);
 
-    if (search != null && !search.trim().isEmpty()) {
+    if (search != null && !search.isBlank()) {
       return PageResponse.from(
           itemRepository
               .findAllByHospitalIdAndNameContainingIgnoreCase(hospitalId, search, pageRequest)

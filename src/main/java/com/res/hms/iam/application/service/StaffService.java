@@ -18,6 +18,7 @@ import jakarta.persistence.criteria.Predicate;
 import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Locale;
 import java.util.UUID;
 import java.util.stream.Collectors;
 import lombok.RequiredArgsConstructor;
@@ -89,13 +90,16 @@ public class StaffService {
           if (name != null && !name.isBlank()) {
             predicates.add(
                 cb.like(
-                    cb.lower(root.get("user").get("fullName")), "%" + name.toLowerCase() + "%"));
+                    cb.lower(root.get("user").get("fullName")),
+                    "%" + name.toLowerCase(Locale.ROOT) + "%"));
           }
           if (department != null && !department.isBlank()) {
             Join<UserContract, com.res.hms.hospital.domain.Department> deptJoin =
                 root.join("departments");
             predicates.add(
-                cb.like(cb.lower(deptJoin.get("name")), "%" + department.toLowerCase() + "%"));
+                cb.like(
+                    cb.lower(deptJoin.get("name")),
+                    "%" + department.toLowerCase(Locale.ROOT) + "%"));
           }
           if (specialization != null && !specialization.isBlank()) {
             Join<UserContract, UserAccount> userJoin = root.join("user");
@@ -103,7 +107,9 @@ public class StaffService {
             Join<DoctorProfile, com.res.hms.iam.domain.Specialization> specJoin =
                 doctorJoin.join("specializations");
             predicates.add(
-                cb.like(cb.lower(specJoin.get("name")), "%" + specialization.toLowerCase() + "%"));
+                cb.like(
+                    cb.lower(specJoin.get("name")),
+                    "%" + specialization.toLowerCase(Locale.ROOT) + "%"));
           }
           if (minFee != null) {
             Join<UserContract, DoctorHospitalDetails> detailsJoin = root.join("doctorDetails");
@@ -144,13 +150,16 @@ public class StaffService {
           if (name != null && !name.isBlank()) {
             predicates.add(
                 cb.like(
-                    cb.lower(root.get("user").get("fullName")), "%" + name.toLowerCase() + "%"));
+                    cb.lower(root.get("user").get("fullName")),
+                    "%" + name.toLowerCase(Locale.ROOT) + "%"));
           }
           if (department != null && !department.isBlank()) {
             Join<UserContract, com.res.hms.hospital.domain.Department> deptJoin =
                 root.join("departments");
             predicates.add(
-                cb.like(cb.lower(deptJoin.get("name")), "%" + department.toLowerCase() + "%"));
+                cb.like(
+                    cb.lower(deptJoin.get("name")),
+                    "%" + department.toLowerCase(Locale.ROOT) + "%"));
           }
 
           return cb.and(predicates.toArray(new Predicate[0]));

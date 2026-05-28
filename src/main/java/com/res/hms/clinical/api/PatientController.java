@@ -2,13 +2,20 @@ package com.res.hms.clinical.api;
 
 import com.res.hms.clinical.application.patient.dto.PatientDTO;
 import com.res.hms.clinical.application.patient.dto.PatientDashboardStatsDTO;
+import com.res.hms.clinical.application.patient.dto.PatientHistoryDTO;
+import com.res.hms.clinical.application.patient.dto.PatientHistorySummaryDTO;
 import com.res.hms.clinical.application.patient.dto.PatientSummaryDTO;
 import com.res.hms.clinical.application.patient.service.PatientAggregateService;
+import com.res.hms.clinical.application.patient.service.PatientHistoryService;
 import com.res.hms.clinical.application.patient.service.PatientService;
+import com.res.hms.clinical.application.prescription.dto.PrescriptionDTO;
+import com.res.hms.clinical.application.prescription.service.PrescriptionService;
 import com.res.hms.core.api.ApiResponse;
 import com.res.hms.core.api.PageResponse;
+import com.res.hms.iam.infrastructure.security.SecurityConstants;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
+import java.util.List;
 import java.util.UUID;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.access.prepost.PreAuthorize;
@@ -29,19 +36,17 @@ public class PatientController {
 
   private final PatientService patientService;
   private final PatientAggregateService patientAggregateService;
-  private final com.res.hms.clinical.application.prescription.service.PrescriptionService
-      prescriptionService;
-  private final com.res.hms.clinical.application.patient.service.PatientHistoryService
-      patientHistoryService;
+  private final PrescriptionService prescriptionService;
+  private final PatientHistoryService patientHistoryService;
 
   @PostMapping
-  @PreAuthorize("hasAnyRole('ADMIN','RECEPTIONIST','NURSE','SUPER_ADMIN')")
+  @PreAuthorize(SecurityConstants.HAS_ADMIN_RECEPTIONIST_OR_NURSE)
   public ApiResponse<PatientDTO> create(@Valid @RequestBody PatientDTO request) {
     return ApiResponse.success(patientAggregateService.savePatientAggregate(request));
   }
 
   @GetMapping
-  @PreAuthorize("hasAnyRole('ADMIN','RECEPTIONIST','NURSE','DOCTOR','PHARMACIST','SUPER_ADMIN')")
+  @PreAuthorize(SecurityConstants.HAS_ANY_STAFF)
   public ApiResponse<PageResponse<PatientDTO>> list(
       @RequestParam(defaultValue = "0") int page,
       @RequestParam(defaultValue = "20") int size,
@@ -50,7 +55,7 @@ public class PatientController {
   }
 
   @GetMapping("/summary")
-  @PreAuthorize("hasAnyRole('ADMIN','RECEPTIONIST','NURSE','DOCTOR','PHARMACIST','SUPER_ADMIN')")
+  @PreAuthorize(SecurityConstants.HAS_ANY_STAFF)
   public ApiResponse<PageResponse<PatientSummaryDTO>> listSummary(
       @RequestParam(defaultValue = "0") int page,
       @RequestParam(defaultValue = "20") int size,
@@ -59,41 +64,37 @@ public class PatientController {
   }
 
   @GetMapping("/{patientId}")
-  @PreAuthorize("hasAnyRole('ADMIN','RECEPTIONIST','NURSE','DOCTOR','PHARMACIST','SUPER_ADMIN')")
+  @PreAuthorize(SecurityConstants.HAS_ANY_STAFF)
   public ApiResponse<PatientDTO> get(@PathVariable UUID patientId) {
     return ApiResponse.success(patientService.get(patientId));
   }
 
   @GetMapping("/{patientId}/summary")
-  @PreAuthorize("hasAnyRole('ADMIN','RECEPTIONIST','NURSE','DOCTOR','PHARMACIST','SUPER_ADMIN')")
+  @PreAuthorize(SecurityConstants.HAS_ANY_STAFF)
   public ApiResponse<PatientSummaryDTO> getSummary(@PathVariable UUID patientId) {
     return ApiResponse.success(patientService.getSummary(patientId));
   }
 
   @GetMapping("/{patientId}/prescriptions")
-  @PreAuthorize("hasAnyRole('ADMIN','RECEPTIONIST','NURSE','DOCTOR','PHARMACIST','SUPER_ADMIN')")
-  public ApiResponse<
-          java.util.List<com.res.hms.clinical.application.prescription.dto.PrescriptionDTO>>
-      getPrescriptions(@PathVariable UUID patientId) {
+  @PreAuthorize(SecurityConstants.HAS_ANY_STAFF)
+  public ApiResponse<List<PrescriptionDTO>> getPrescriptions(@PathVariable UUID patientId) {
     return ApiResponse.success(prescriptionService.getPatientPrescriptions(patientId));
   }
 
   @GetMapping("/{patientId}/full-history")
-  @PreAuthorize("hasAnyRole('ADMIN','DOCTOR','NURSE','SUPER_ADMIN')")
-  public ApiResponse<com.res.hms.clinical.application.patient.dto.PatientHistoryDTO> getFullHistory(
-      @PathVariable UUID patientId) {
+  @PreAuthorize(SecurityConstants.HAS_ADMIN_DOCTOR_OR_NURSE)
+  public ApiResponse<PatientHistoryDTO> getFullHistory(@PathVariable UUID patientId) {
     return ApiResponse.success(patientHistoryService.getFullHistory(patientId));
   }
 
   @GetMapping("/{patientId}/history-summary")
-  @PreAuthorize("hasAnyRole('ADMIN','DOCTOR','NURSE','SUPER_ADMIN')")
-  public ApiResponse<com.res.hms.clinical.application.patient.dto.PatientHistorySummaryDTO>
-      getHistorySummary(@PathVariable UUID patientId) {
+  @PreAuthorize(SecurityConstants.HAS_ADMIN_DOCTOR_OR_NURSE)
+  public ApiResponse<PatientHistorySummaryDTO> getHistorySummary(@PathVariable UUID patientId) {
     return ApiResponse.success(patientHistoryService.getHistorySummary(patientId));
   }
 
   @PutMapping("/{patientId}")
-  @PreAuthorize("hasAnyRole('ADMIN','RECEPTIONIST','NURSE','SUPER_ADMIN')")
+  @PreAuthorize(SecurityConstants.HAS_ADMIN_RECEPTIONIST_OR_NURSE)
   public ApiResponse<PatientDTO> update(
       @PathVariable UUID patientId, @Valid @RequestBody PatientDTO request) {
     request.setId(patientId);
@@ -101,7 +102,7 @@ public class PatientController {
   }
 
   @GetMapping("/dashboard-stats")
-  @PreAuthorize("hasAnyRole('ADMIN','RECEPTIONIST','DOCTOR','NURSE','SUPER_ADMIN')")
+  @PreAuthorize(SecurityConstants.HAS_RECEPTION_ACCESS)
   public ApiResponse<PatientDashboardStatsDTO> getDashboardStats() {
 
     return ApiResponse.success(patientService.getDashboardStats());

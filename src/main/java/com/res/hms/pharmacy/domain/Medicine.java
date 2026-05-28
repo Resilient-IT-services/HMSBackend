@@ -44,19 +44,10 @@ public class Medicine extends BaseEntity {
   @Enumerated(jakarta.persistence.EnumType.STRING)
   private MedicineSchedule scheduleType;
 
-  private String category;
-
   private String manufacturer;
 
   @Column(nullable = false)
   private boolean deleted = false;
-
-  @Column(name = "storage_temperature")
-  private String storageTemperature;
-
-  @Column(name = "storage_humidity")
-  private String storageHumidity;
-
-  @Column(name = "special_notes")
-  private String specialNotes;
-}
+    @Column(name = "threshold_quantity", nullable = false)
+    private Integer thresholdQuantity = 10;
+  }

@@ -239,6 +239,17 @@ public class PharmacyExcelHelper {
     return null;
   }
 
+  public static int parsAnInt(String s) {
+    try {
+      if (hasText(s)) {
+        return (int) Double.parseDouble(s.replaceAll("[^\\d.]", ""));
+      }
+    } catch (Exception e) {
+      // ignore
+    }
+    return 10;
+  }
+
   public static Integer parseInteger(String s) {
     try {
       if (hasText(s)) {

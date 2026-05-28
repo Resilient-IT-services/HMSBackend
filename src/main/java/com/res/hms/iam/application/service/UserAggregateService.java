@@ -10,11 +10,14 @@ import com.res.hms.hospital.infrastructure.repository.DepartmentRepository;
 import com.res.hms.hospital.infrastructure.repository.HospitalRepository;
 import com.res.hms.iam.application.dto.UserDetailsDTO;
 import com.res.hms.iam.domain.Role;
+import com.res.hms.iam.domain.RoleCode;
 import com.res.hms.iam.domain.UserAccount;
 import com.res.hms.iam.domain.UserContract;
 import com.res.hms.iam.infrastructure.repository.RoleRepository;
 import com.res.hms.iam.infrastructure.repository.UserAccountRepository;
+import java.util.List;
 import java.util.Objects;
+import java.util.Optional;
 import java.util.Set;
 import java.util.UUID;
 import java.util.stream.Collectors;
@@ -30,13 +33,16 @@ import org.springframework.transaction.annotation.Transactional;
 @RequiredArgsConstructor
 public class UserAggregateService {
 
+  private static final String NOT_FOUND_CODE = "NOT_FOUND";
+  private static final String DEPARTMENT_TEXT = "Department ";
+
   private final UserAccountRepository userAccountRepository;
   private final RoleRepository roleRepository;
   private final PasswordEncoder passwordEncoder;
   private final ResourceLookup resourceLookup;
   private final UserRoleUpdateService userRoleUpdateService;
   private final UserValidationService userValidationService;
-  private final com.res.hms.iam.application.service.DoctorScheduleValidator doctorScheduleValidator;
+  private final DoctorScheduleValidator doctorScheduleValidator;
   private final UserMapper userMapper;
   private final HospitalContext hospitalContext;
   private final DepartmentRepository departmentRepository;
@@ -139,7 +145,7 @@ public class UserAggregateService {
       return;
     }
 
-    java.util.List<UserDetailsDTO.RoleAssignmentDTO> incoming =
+    List<UserDetailsDTO.RoleAssignmentDTO> incoming =
         dto.getMemberships().stream()
             .filter(m -> isSuper || Objects.equals(activeId, m.getHospitalId()))
             .flatMap(
@@ -174,10 +180,10 @@ public class UserAggregateService {
     return roleAssignment;
   }
 
-  private java.util.Optional<UUID> findExistingAssignmentId(
+  private Optional<UUID> findExistingAssignmentId(
       UserAccount user, UUID hospitalId, String roleCode) {
     if (roleCode == null) {
-      return java.util.Optional.empty();
+      return Optional.empty();
     }
     return user.getContracts().stream()
         .filter(
@@ -193,9 +199,7 @@ public class UserAggregateService {
       UserAccount user, UserDetailsDTO.RoleAssignmentDTO dto) {
     Role role =
         resourceLookup.findRequired(
-            com.res.hms.iam.domain.RoleCode.valueOf(dto.getRoleCode()),
-            roleRepository::findByCode,
-            "Role");
+            RoleCode.valueOf(dto.getRoleCode()), roleRepository::findByCode, "Role");
 
     UserContract ra = new UserContract();
     ra.setUser(user);
@@ -207,7 +211,8 @@ public class UserAggregateService {
           hospitalRepository
               .findById(dto.getHospitalId())
               .orElseThrow(
-                  () -> new ApiException("NOT_FOUND", "Hospital not found", HttpStatus.NOT_FOUND));
+                  () ->
+                      new ApiException(NOT_FOUND_CODE, "Hospital not found", HttpStatus.NOT_FOUND));
 
       if (dto.getDepartments() != null && !dto.getDepartments().isEmpty()) {
         Set<String> hospitalDeptNames =
@@ -217,7 +222,7 @@ public class UserAggregateService {
           if (!hospitalDeptNames.contains(deptName)) {
             throw new ApiException(
                 "VALIDATION_ERROR",
-                "Department " + deptName + " is not linked to hospital " + hospital.getName(),
+                DEPARTMENT_TEXT + deptName + " is not linked to hospital " + hospital.getName(),
                 HttpStatus.BAD_REQUEST);
           }
         }
@@ -234,8 +239,8 @@ public class UserAggregateService {
                           .orElseThrow(
                               () ->
                                   new ApiException(
-                                      "NOT_FOUND",
-                                      "Department " + name + " not found in catalog",
+                                      NOT_FOUND_CODE,
+                                      DEPARTMENT_TEXT + name + " not found in catalog",
                                       HttpStatus.BAD_REQUEST)))
               .collect(Collectors.toSet()));
     }
@@ -250,7 +255,8 @@ public class UserAggregateService {
           hospitalRepository
               .findById(existing.getHospitalId())
               .orElseThrow(
-                  () -> new ApiException("NOT_FOUND", "Hospital not found", HttpStatus.NOT_FOUND));
+                  () ->
+                      new ApiException(NOT_FOUND_CODE, "Hospital not found", HttpStatus.NOT_FOUND));
 
       if (dto.getDepartments() != null && !dto.getDepartments().isEmpty()) {
         Set<String> hospitalDeptNames =
@@ -260,7 +266,7 @@ public class UserAggregateService {
           if (!hospitalDeptNames.contains(deptName)) {
             throw new ApiException(
                 "VALIDATION_ERROR",
-                "Department " + deptName + " is not linked to hospital " + hospital.getName(),
+                DEPARTMENT_TEXT + deptName + " is not linked to hospital " + hospital.getName(),
                 HttpStatus.BAD_REQUEST);
           }
         }
@@ -277,8 +283,8 @@ public class UserAggregateService {
                           .orElseThrow(
                               () ->
                                   new ApiException(
-                                      "NOT_FOUND",
-                                      "Department " + name + " not found in catalog",
+                                      NOT_FOUND_CODE,
+                                      DEPARTMENT_TEXT + name + " not found in catalog",
                                       HttpStatus.BAD_REQUEST)))
               .collect(Collectors.toSet()));
     }

@@ -6,10 +6,12 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 import com.res.hms.audit.application.dto.AuditDetail;
+import com.res.hms.audit.application.dto.AuditLogResponse;
 import com.res.hms.audit.domain.AuditAction;
 import com.res.hms.audit.domain.AuditLog;
 import com.res.hms.audit.domain.DomainEntity;
 import com.res.hms.audit.infrastructure.repository.AuditLogRepository;
+import com.res.hms.core.api.PageResponse;
 import com.res.hms.core.tenant.HospitalContext;
 import java.time.Instant;
 import java.util.List;
@@ -55,9 +57,9 @@ class AuditLogServiceTest {
             hospitalUuid, PageRequest.of(0, 10)))
         .thenReturn(new PageImpl<>(List.of(auditLog)));
 
-    var response = auditLogService.list(0, 10);
+    PageResponse<AuditLogResponse> response = auditLogService.list(0, 10);
 
-    assertEquals(1, response.content().size());
+    assertEquals(1, response.content().size(), "Should return one audit log");
   }
 
   @Test
@@ -72,9 +74,9 @@ class AuditLogServiceTest {
     when(auditLogRepository.findAllByOrderByCreatedAtDesc(PageRequest.of(0, 10)))
         .thenReturn(new PageImpl<>(List.of(auditLog)));
 
-    var response = auditLogService.list(0, 10);
+    PageResponse<AuditLogResponse> response = auditLogService.list(0, 10);
 
-    assertEquals(1, response.content().size());
+    assertEquals(1, response.content().size(), "Should return one audit log for super admin");
   }
 
   @Test

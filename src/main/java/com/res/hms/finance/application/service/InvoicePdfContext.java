@@ -5,4 +5,5 @@ public record InvoicePdfContext(
     String gstinNumber,
     String receptionistName,
     String patientName,
+    String patientCode,
     String consultingDoctor) {}

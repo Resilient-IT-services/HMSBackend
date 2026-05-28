@@ -2,6 +2,7 @@ package com.res.hms.pharmacy.api;
 
 import com.res.hms.core.api.ApiResponse;
 import com.res.hms.core.api.PageResponse;
+import com.res.hms.iam.infrastructure.security.SecurityConstants;
 import com.res.hms.pharmacy.application.dto.MedicineDTO;
 import com.res.hms.pharmacy.application.dto.MedicineImportResponse;
 import com.res.hms.pharmacy.application.dto.MedicineSummaryDTO;
@@ -15,7 +16,9 @@ import com.res.hms.pharmacy.application.dto.StockRequest;
 import com.res.hms.pharmacy.application.service.MedicineService;
 import com.res.hms.pharmacy.application.service.PharmacySaleService;
 import io.swagger.v3.oas.annotations.tags.Tag;
+import jakarta.servlet.http.HttpServletResponse;
 import jakarta.validation.Valid;
+import java.io.IOException;
 import java.util.List;
 import java.util.UUID;
 import lombok.RequiredArgsConstructor;
@@ -53,7 +56,7 @@ public class MedicineController {
   }
 
   @GetMapping("/medicines")
-  @PreAuthorize("hasAnyRole('ADMIN','PHARMACIST','DOCTOR','NURSE','SUPER_ADMIN')")
+  @PreAuthorize(SecurityConstants.HAS_PHARMACY_ACCESS)
   public ApiResponse<PageResponse<MedicineDTO>> list(
       @RequestParam(defaultValue = "0") int page,
       @RequestParam(defaultValue = "20") int size,
@@ -62,7 +65,7 @@ public class MedicineController {
   }
 
   @GetMapping("/medicines/summary")
-  @PreAuthorize("hasAnyRole('ADMIN','PHARMACIST','DOCTOR','NURSE','SUPER_ADMIN')")
+  @PreAuthorize(SecurityConstants.HAS_PHARMACY_ACCESS)
   public ApiResponse<PageResponse<MedicineSummaryDTO>> listSummary(
       @RequestParam(defaultValue = "0") int page,
       @RequestParam(defaultValue = "20") int size,
@@ -71,13 +74,13 @@ public class MedicineController {
   }
 
   @GetMapping("/medicines/{id}")
-  @PreAuthorize("hasAnyRole('ADMIN','PHARMACIST','DOCTOR','NURSE','SUPER_ADMIN')")
+  @PreAuthorize(SecurityConstants.HAS_PHARMACY_ACCESS)
   public ApiResponse<MedicineDTO> get(@PathVariable UUID id) {
     return ApiResponse.success(medicineService.get(id));
   }
 
   @PutMapping("/medicines/{id}")
-  @PreAuthorize("hasAnyRole('ADMIN','PHARMACIST','SUPER_ADMIN')")
+  @PreAuthorize(SecurityConstants.HAS_ADMIN_OR_PHARMACIST)
   public ApiResponse<MedicineDTO> update(
       @PathVariable UUID id, @Valid @RequestBody MedicineDTO request) {
     return ApiResponse.success(medicineService.update(id, request));
@@ -91,26 +94,25 @@ public class MedicineController {
   }
 
   @PostMapping("/stock/import")
-  @PreAuthorize("hasAnyRole('ADMIN','PHARMACIST','SUPER_ADMIN')")
+  @PreAuthorize(SecurityConstants.HAS_ADMIN_OR_PHARMACIST)
   public ApiResponse<StockImportResponse> importStock(@RequestParam MultipartFile file) {
     return ApiResponse.success(medicineService.importStockExcel(file));
   }
 
   @PostMapping("/stock")
-  @PreAuthorize("hasAnyRole('ADMIN','PHARMACIST','SUPER_ADMIN')")
+  @PreAuthorize(SecurityConstants.HAS_ADMIN_OR_PHARMACIST)
   public ApiResponse<PharmacyStockDTO> addStock(@Valid @RequestBody StockRequest request) {
     return ApiResponse.success(medicineService.addStock(request));
   }
 
   @GetMapping("/stock/export")
-  @PreAuthorize("hasAnyRole('ADMIN','PHARMACIST','SUPER_ADMIN')")
-  public void exportStock(jakarta.servlet.http.HttpServletResponse response)
-      throws java.io.IOException {
+  @PreAuthorize(SecurityConstants.HAS_ADMIN_OR_PHARMACIST)
+  public void exportStock(HttpServletResponse response) throws IOException {
     medicineService.exportStockExcel(response);
   }
 
   @GetMapping("/stock")
-  @PreAuthorize("hasAnyRole('ADMIN','PHARMACIST','DOCTOR','NURSE','SUPER_ADMIN')")
+  @PreAuthorize(SecurityConstants.HAS_PHARMACY_ACCESS)
   public ApiResponse<PageResponse<PharmacyStockDTO>> listStock(
       @RequestParam(defaultValue = "0") int page,
       @RequestParam(defaultValue = "20") int size,
@@ -122,14 +124,14 @@ public class MedicineController {
   }
 
   @PostMapping("/sales")
-  @PreAuthorize("hasAnyRole('ADMIN','PHARMACIST','SUPER_ADMIN')")
+  @PreAuthorize(SecurityConstants.HAS_ADMIN_OR_PHARMACIST)
   public ApiResponse<QuickPharmacySaleResponse> createSale(
       @Valid @RequestBody QuickPharmacySaleRequest request) {
     return ApiResponse.success(pharmacySaleService.createSale(request));
   }
 
   @PostMapping("/prescriptions/{id}/dispense")
-  @PreAuthorize("hasAnyRole('ADMIN','PHARMACIST','SUPER_ADMIN')")
+  @PreAuthorize(SecurityConstants.HAS_ADMIN_OR_PHARMACIST)
   public ApiResponse<QuickPharmacySaleResponse> dispense(
       @PathVariable UUID id, @Valid @RequestBody QuickPharmacySaleRequest request) {
     request.setPrescriptionId(id);
@@ -137,40 +139,40 @@ public class MedicineController {
   }
 
   @GetMapping("/sales/{id}")
-  @PreAuthorize("hasAnyRole('ADMIN','PHARMACIST','SUPER_ADMIN')")
+  @PreAuthorize(SecurityConstants.HAS_ADMIN_OR_PHARMACIST)
   public ApiResponse<QuickPharmacySaleResponse> getSale(@PathVariable UUID id) {
     return ApiResponse.success(pharmacySaleService.getSale(id));
   }
 
   @GetMapping("/sales/prescription/{prescriptionId}")
-  @PreAuthorize("hasAnyRole('ADMIN','PHARMACIST','SUPER_ADMIN')")
+  @PreAuthorize(SecurityConstants.HAS_ADMIN_OR_PHARMACIST)
   public ApiResponse<QuickPharmacySaleResponse> getSaleByPrescription(
       @PathVariable UUID prescriptionId) {
     return ApiResponse.success(pharmacySaleService.getSaleByPrescription(prescriptionId));
   }
 
   @GetMapping("/recent-customers")
-  @PreAuthorize("hasAnyRole('ADMIN','PHARMACIST','SUPER_ADMIN')")
+  @PreAuthorize(SecurityConstants.HAS_ADMIN_OR_PHARMACIST)
   public ApiResponse<List<Object[]>> searchRecentCustomers(@RequestParam String search) {
     return ApiResponse.success(pharmacySaleService.searchRecentCustomers(search));
   }
 
   @PostMapping("/returns")
-  @PreAuthorize("hasAnyRole('ADMIN','PHARMACIST','SUPER_ADMIN')")
+  @PreAuthorize(SecurityConstants.HAS_ADMIN_OR_PHARMACIST)
   public ApiResponse<PharmacyReturnResponse> returnStock(
       @Valid @RequestBody PharmacyReturnRequest request) {
     return ApiResponse.success(pharmacySaleService.returnStock(request));
   }
 
   @GetMapping("/alerts/expiry")
-  @PreAuthorize("hasAnyRole('ADMIN','PHARMACIST','SUPER_ADMIN')")
+  @PreAuthorize(SecurityConstants.HAS_ADMIN_OR_PHARMACIST)
   public ApiResponse<List<PharmacyStockDTO>> expiryAlerts(
       @RequestParam(defaultValue = "30") int days) {
     return ApiResponse.success(pharmacySaleService.expiryAlerts(days));
   }
 
   @GetMapping("/alerts/low-stock")
-  @PreAuthorize("hasAnyRole('ADMIN','PHARMACIST','SUPER_ADMIN')")
+  @PreAuthorize(SecurityConstants.HAS_ADMIN_OR_PHARMACIST)
   public ApiResponse<PageResponse<PharmacyStockDTO>> lowStockAlerts(
       @RequestParam(defaultValue = "0") int page,
       @RequestParam(defaultValue = "20") int size,
