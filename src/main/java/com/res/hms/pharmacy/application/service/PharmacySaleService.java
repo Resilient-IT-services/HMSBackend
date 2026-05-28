@@ -69,7 +69,8 @@ public class PharmacySaleService {
     Invoice invoice = createInvoice(request, hospitalId, savedSale);
     addInvoiceItems(savedSale, invoice);
 
-    PaymentReceipt paymentReceipt = recordPayment(request, hospitalId, userId, invoice);
+    PaymentReceipt paymentReceipt =
+        recordPayment(request, hospitalId, userId, invoice, savedSale.getTotalAmount());
 
     var response = toQuickSaleResponse(savedSale);
     response.setInvoiceNumber(invoice.getInvoiceNumber());
@@ -250,7 +251,11 @@ public class PharmacySaleService {
   }
 
   private PaymentReceipt recordPayment(
-      QuickPharmacySaleRequest request, UUID hospitalId, UUID userId, Invoice invoice) {
+      QuickPharmacySaleRequest request,
+      UUID hospitalId,
+      UUID userId,
+      Invoice invoice,
+      BigDecimal saleAmount) {
 
     if (request.getPayment() != null
         && request.getPayment().getAmount() != null
@@ -263,9 +268,11 @@ public class PharmacySaleService {
       paymentReq.setAmount(request.getPayment().getAmount());
       paymentReq.setPaymentMode(request.getPayment().getMode());
       paymentReq.setReferenceNumber(request.getPayment().getReferenceNumber());
-      if (request.getPayment().getAmount().compareTo(invoice.getTotalAmount()) < 0) {
+
+      // Validate that payment is at least the pharmacy sale amount
+      if (request.getPayment().getAmount().compareTo(saleAmount) < 0) {
         throw new ApiException(
-            "INVALID_PAYMENT", "Paid amount is less than invoice amount", HttpStatus.BAD_REQUEST);
+            "INVALID_PAYMENT", "Paid amount is less than pharmacy bill amount", HttpStatus.BAD_REQUEST);
       }
 
       var paymentDto = paymentService.recordPayment(hospitalId, paymentReq, userId);
