@@ -81,7 +81,18 @@ public class MedicineService {
         request.getName(), request.getGenericName(), request.getStrength(), request.getForm())) {
       throw new ApiException("DUPLICATE_MEDICINE", "Medicine already exists", HttpStatus.CONFLICT);
     }
-
+    if (request.getExpiryDate() != null && request.getExpiryDate().isBefore(LocalDate.now())) {
+      throw new ApiException(
+          "INVALID_EXPIRY", "Initial stock expiry cannot be in the past", HttpStatus.BAD_REQUEST);
+    }
+    if (request.getSellingPrice() != null
+        && request.getPurchasePrice() != null
+        && request.getSellingPrice().compareTo(request.getPurchasePrice()) < 0) {
+      throw new ApiException(
+          "INVALID_PRICE",
+          "Selling price cannot be less than purchase price",
+          HttpStatus.BAD_REQUEST);
+    }
     Medicine medicine = new Medicine();
     updateFields(medicine, request);
 
@@ -139,7 +150,10 @@ public class MedicineService {
   public PharmacyStockDTO addStock(StockRequest request) {
     UUID hospitalId = hospitalContext.requireHospitalId();
     Medicine medicine = requireMedicine(request.getMedicineId());
-
+    if (request.getExpiryDate() != null && request.getExpiryDate().isBefore(LocalDate.now())) {
+      throw new ApiException(
+          "INVALID_EXPIRY", "Expiry date cannot be in the past", HttpStatus.BAD_REQUEST);
+    }
     PharmacyStock stock =
         pharmacyStockRepository
             .findByHospitalIdAndMedicineIdAndBatchNumber(
@@ -297,9 +311,9 @@ public class MedicineService {
   }
 
   private PharmacyStockDTO toStockDtoSimple(PharmacyStock stock) {
-      int threshold = stock.getMedicine().getThresholdQuantity();
+    int threshold = stock.getMedicine().getThresholdQuantity();
 
-      return PharmacyStockDTO.builder()
+    return PharmacyStockDTO.builder()
         .id(stock.getId())
         .medicineId(stock.getMedicine().getId())
         .medicineName(stock.getMedicine().getName())
@@ -313,7 +327,6 @@ public class MedicineService {
         .sellingPrice(stock.getSellingPrice())
         .price(stock.getSellingPrice())
         .build();
-
   }
 
   private PharmacyStockDTO toStockDto(PharmacyStock stock) {
@@ -321,9 +334,9 @@ public class MedicineService {
         pharmacyStockRepository.availableQuantity(
             stock.getHospitalId(), stock.getMedicine().getId(), LocalDate.now());
 
-      int threshold = stock.getMedicine().getThresholdQuantity();
+    int threshold = stock.getMedicine().getThresholdQuantity();
 
-      return PharmacyStockDTO.builder()
+    return PharmacyStockDTO.builder()
         .id(stock.getId())
         .medicineId(stock.getMedicine().getId())
         .medicineName(stock.getMedicine().getName())
@@ -412,7 +425,8 @@ public class MedicineService {
 
     medicine.setManufacturer(dto.getManufacturer());
 
-    medicine.setThresholdQuantity(dto.getThresholdQuantity() != null ? dto.getThresholdQuantity() : 10);
+    medicine.setThresholdQuantity(
+        dto.getThresholdQuantity() != null ? dto.getThresholdQuantity() : 10);
     // Ensure medicine is saved first to have an ID for the catalog association
     medicineRepository.save(medicine);
 

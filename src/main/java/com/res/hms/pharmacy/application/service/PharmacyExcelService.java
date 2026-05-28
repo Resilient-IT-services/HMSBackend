@@ -184,7 +184,9 @@ public class PharmacyExcelService {
         throw new IllegalArgumentException(
             "[Expiry Date] Invalid format: '" + expStr + "'. Use YYYY-MM-DD");
       }
-
+      if (expiryDate.isBefore(LocalDate.now())) {
+        throw new IllegalArgumentException("[Expiry Date] cannot be in the past: " + expStr);
+      }
       saveStock(hId, medicine, batch, expiryDate, qtyStr, pPriceStr, sPriceStr);
       PharmacyExcelHelper.updateCell(statusCell, "SUCCESS", styles[1]);
       return "SUCCESS";

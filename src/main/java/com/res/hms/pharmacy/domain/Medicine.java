@@ -48,6 +48,7 @@ public class Medicine extends BaseEntity {
 
   @Column(nullable = false)
   private boolean deleted = false;
-    @Column(name = "threshold_quantity", nullable = false)
-    private Integer thresholdQuantity = 10;
-  }
+
+  @Column(name = "threshold_quantity", nullable = false)
+  private Integer thresholdQuantity = 10;
+}
