@@ -33,6 +33,8 @@ class InvoicePdfExportIntegrationTest {
         InvoiceItemCategory.CONSULTATION,
         BigDecimal.ONE,
         new BigDecimal("500.00"),
+        null,
+        BigDecimal.ZERO,
         BigDecimal.ZERO,
         BigDecimal.ZERO,
         null,

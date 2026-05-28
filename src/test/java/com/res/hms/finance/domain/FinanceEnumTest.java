@@ -15,7 +15,7 @@ class FinanceEnumTest {
   @Test
   void testInvoiceItemCategoryEnum() {
     assertThat(InvoiceItemCategory.valueOf("PHARMACY")).isEqualTo(InvoiceItemCategory.PHARMACY);
-    assertThat(InvoiceItemCategory.values()).hasSize(4);
+    assertThat(InvoiceItemCategory.values()).hasSize(5);
   }
 
   @Test

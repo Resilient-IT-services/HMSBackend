@@ -15,10 +15,12 @@ import lombok.NoArgsConstructor;
 public class InvoiceItemDTO {
   private UUID id;
   private String itemDescription;
+  private String hsnCode;
   private InvoiceItemCategory category;
   private BigDecimal quantity;
   private BigDecimal unitPrice;
   private BigDecimal subtotal;
+  private BigDecimal taxPercentage;
   private BigDecimal taxAmount;
   private BigDecimal discountAmount;
   private BigDecimal netTotal;

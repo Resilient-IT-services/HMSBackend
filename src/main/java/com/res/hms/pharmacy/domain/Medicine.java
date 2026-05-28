@@ -7,6 +7,7 @@ import jakarta.persistence.Enumerated;
 import jakarta.persistence.Index;
 import jakarta.persistence.Table;
 import jakarta.persistence.UniqueConstraint;
+import java.math.BigDecimal;
 import lombok.Getter;
 import lombok.Setter;
 
@@ -45,6 +46,12 @@ public class Medicine extends BaseEntity {
   private MedicineSchedule scheduleType;
 
   private String manufacturer;
+
+  @Column(name = "hsn_code")
+  private String hsnCode;
+
+  @Column(name = "tax_percentage", precision = 5, scale = 2)
+  private BigDecimal taxPercentage = BigDecimal.ZERO;
 
   @Column(nullable = false)
   private boolean deleted = false;

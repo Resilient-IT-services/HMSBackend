@@ -4,5 +4,6 @@ public enum InvoiceItemCategory {
   CONSULTATION,
   PHARMACY,
   LAB,
-  PROCEDURE
+  PROCEDURE,
+  REGISTRATION
 }

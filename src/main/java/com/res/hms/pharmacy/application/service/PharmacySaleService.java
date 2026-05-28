@@ -247,12 +247,15 @@ public class PharmacySaleService {
 
   private void addInvoiceItems(PharmacySale savedSale, Invoice invoice) {
     for (PharmacySaleItem saleItem : savedSale.getItems()) {
+      com.res.hms.pharmacy.domain.Medicine medicine = saleItem.getMedicine();
       invoiceService.addItem(
           invoice.getId(),
-          saleItem.getMedicine().getName() + " (" + saleItem.getStock().getBatchNumber() + ")",
+          medicine.getName() + " (" + saleItem.getStock().getBatchNumber() + ")",
           InvoiceItemCategory.PHARMACY,
           BigDecimal.valueOf(saleItem.getQuantity()),
           saleItem.getUnitPrice(),
+          medicine.getHsnCode(),
+          medicine.getTaxPercentage(),
           saleItem.getTaxAmount(),
           saleItem.getDiscountAmount(),
           FinanceSourceType.PHARMACY_SALE_ITEM,

@@ -397,6 +397,7 @@ public class MedicineService {
             .strength(medicine.getStrength())
             .form(medicine.getForm())
             .scheduleType(medicine.getScheduleType())
+            .hsnCode(medicine.getHsnCode())
             .thresholdQuantity(medicine.getThresholdQuantity())
             .manufacturer(medicine.getManufacturer());
 
@@ -422,6 +423,7 @@ public class MedicineService {
     medicine.setStrength(dto.getStrength());
     medicine.setForm(dto.getForm());
     medicine.setScheduleType(dto.getScheduleType());
+    medicine.setHsnCode(dto.getHsnCode());
 
     medicine.setManufacturer(dto.getManufacturer());
 
@@ -446,6 +448,14 @@ public class MedicineService {
               catalog.setBaseSellingPrice(dto.getSellingPrice());
               catalog.setTaxPercentage(dto.getTaxPercentage());
               hospitalMedicineCatalogRepository.save(catalog);
+
+              // Also sync tax percentage to medicine master if needed,
+              // but current design uses catalog for per-hospital tax.
+              // I'll update the master as well for global reference.
+              if (dto.getTaxPercentage() != null) {
+                medicine.setTaxPercentage(dto.getTaxPercentage());
+                medicineRepository.save(medicine);
+              }
             });
   }
 
