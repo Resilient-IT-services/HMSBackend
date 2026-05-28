@@ -33,6 +33,8 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
 
+import java.util.Locale;
+
 @Slf4j
 @Service
 @RequiredArgsConstructor
@@ -49,7 +51,7 @@ public class MedicineService {
     return (root, query, cb) -> {
       List<Predicate> predicates = new ArrayList<>();
       if (hasText(search)) {
-        String pattern = "%" + search.trim().toLowerCase() + "%";
+        String pattern = "%" + search.trim().toLowerCase(Locale.ROOT) + "%";
         predicates.add(
             cb.or(
                 cb.like(cb.lower(root.get("name")), pattern),
@@ -463,6 +465,6 @@ public class MedicineService {
   }
 
   private boolean hasText(String value) {
-    return value != null && !value.trim().isEmpty();
+    return value != null && !value.isBlank();
   }
 }

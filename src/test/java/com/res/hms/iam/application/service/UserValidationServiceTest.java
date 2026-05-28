@@ -1,5 +1,6 @@
 package com.res.hms.iam.application.service;
 
+import static org.junit.jupiter.api.Assertions.assertAll;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.Mockito.verify;
@@ -47,9 +48,7 @@ class UserValidationServiceTest {
     UserDetailsDTO request =
         UserDetailsDTO.builder()
             .doctorInfo(
-                UserDetailsDTO.DoctorInfo.builder()
-                    .specializations(java.util.List.of("General"))
-                    .build())
+                UserDetailsDTO.DoctorInfo.builder().specializations(List.of("General")).build())
             .memberships(doctorMemberships())
             .build();
 
@@ -58,8 +57,12 @@ class UserValidationServiceTest {
             ApiException.class,
             () -> userValidationService.validateProfileUniqueness(request, null));
 
-    assertEquals("Doctor license number is required", ex.getMessage());
-    verifyNoInteractions(doctorProfileRepository);
+    assertAll(
+        "Validation for missing doctor license number",
+        () ->
+            assertEquals(
+                "Doctor license number is required", ex.getMessage(), "Wrong error message"),
+        () -> verifyNoInteractions(doctorProfileRepository));
   }
 
   @Test
@@ -90,7 +93,7 @@ class UserValidationServiceTest {
             ApiException.class,
             () -> userValidationService.validateProfileUniqueness(request, null));
 
-    assertEquals("Doctor license number already exists", ex.getMessage());
+    assertEquals("Doctor license number already exists", ex.getMessage(), "Wrong error message for duplicate license");
   }
 
   private List<UserDetailsDTO.HospitalMembershipDTO> doctorMemberships() {

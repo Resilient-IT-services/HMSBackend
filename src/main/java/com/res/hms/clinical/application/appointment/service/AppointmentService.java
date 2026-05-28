@@ -21,6 +21,7 @@ import jakarta.persistence.criteria.Predicate;
 import jakarta.persistence.criteria.Root;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Locale;
 import java.util.UUID;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
@@ -78,8 +79,8 @@ public class AppointmentService {
       if (status != null) {
         predicates.add(cb.equal(root.get("status"), status));
       }
-      if (search != null && !search.trim().isEmpty()) {
-        String pattern = "%" + search.toLowerCase().trim() + "%";
+      if (search != null && !search.isBlank()) {
+        String pattern = "%" + search.toLowerCase(Locale.ROOT).trim() + "%";
         predicates.add(
             cb.or(
                 cb.like(cb.lower(root.get("doctorName")), pattern),
