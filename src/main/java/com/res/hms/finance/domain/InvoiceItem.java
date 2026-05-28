@@ -30,9 +30,6 @@ public class InvoiceItem extends HospitalScopedEntity {
   @Column(name = "item_description", nullable = false)
   private String itemDescription;
 
-  @Column(name = "hsn_code")
-  private String hsnCode;
-
   @Enumerated(EnumType.STRING)
   @Column(name = "category", nullable = false)
   private InvoiceItemCategory category;

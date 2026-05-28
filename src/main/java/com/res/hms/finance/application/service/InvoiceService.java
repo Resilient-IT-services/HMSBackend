@@ -26,8 +26,6 @@ public class InvoiceService {
   private final InvoiceRepository invoiceRepository;
   private final InvoiceItemRepository invoiceItemRepository;
   private final InvoicePdfExportService invoicePdfExportService;
-  private final com.res.hms.finance.infrastructure.repository.HsnMasterRepository
-      hsnMasterRepository;
 
   @Transactional(readOnly = true)
   public List<InvoiceDTO> getInvoicesByPatient(UUID patientId) {
@@ -80,12 +78,10 @@ public class InvoiceService {
     return InvoiceItemDTO.builder()
         .id(item.getId())
         .itemDescription(item.getItemDescription())
-        .hsnCode(item.getHsnCode())
         .category(item.getCategory())
         .quantity(item.getQuantity())
         .unitPrice(item.getUnitPrice())
         .subtotal(item.getSubtotal())
-        .taxPercentage(item.getTaxPercentage())
         .taxAmount(item.getTaxAmount())
         .discountAmount(item.getDiscountAmount())
         .netTotal(item.getNetTotal())
@@ -129,8 +125,6 @@ public class InvoiceService {
       InvoiceItemCategory category,
       BigDecimal quantity,
       BigDecimal unitPrice,
-      String hsnCode,
-      BigDecimal taxPercentage,
       BigDecimal taxAmount,
       BigDecimal discountAmount,
       com.res.hms.finance.domain.FinanceSourceType sourceType,
@@ -146,41 +140,13 @@ public class InvoiceService {
     item.setHospitalId(invoice.getHospitalId());
     item.setInvoiceId(invoiceId);
     item.setItemDescription(description);
-    item.setHsnCode(hsnCode);
     item.setCategory(category);
     item.setQuantity(quantity);
     item.setUnitPrice(unitPrice);
-
-    BigDecimal subtotal = unitPrice.multiply(quantity);
-    item.setSubtotal(subtotal);
-
-    BigDecimal finalTaxPercentage = taxPercentage;
-    if (finalTaxPercentage == null && hsnCode != null) {
-      finalTaxPercentage =
-          hsnMasterRepository
-              .findByHospitalIdAndHsnCodeAndActiveTrue(invoice.getHospitalId(), hsnCode)
-              .map(com.res.hms.finance.domain.HsnMaster::getTaxPercentage)
-              .orElse(BigDecimal.ZERO);
-    }
-    if (finalTaxPercentage == null) {
-      finalTaxPercentage = BigDecimal.ZERO;
-    }
-    item.setTaxPercentage(finalTaxPercentage);
-
-    BigDecimal finalTaxAmount;
-    if (taxAmount != null) {
-      finalTaxAmount = taxAmount;
-    } else if (finalTaxPercentage.compareTo(BigDecimal.ZERO) > 0) {
-      finalTaxAmount =
-          subtotal
-              .multiply(finalTaxPercentage)
-              .divide(new BigDecimal("100"), 2, java.math.RoundingMode.HALF_UP);
-    } else {
-      finalTaxAmount = BigDecimal.ZERO;
-    }
-    item.setTaxAmount(finalTaxAmount);
-
+    item.setTaxPercentage(BigDecimal.ZERO);
+    item.setTaxAmount(taxAmount != null ? taxAmount : BigDecimal.ZERO);
     item.setDiscountAmount(discountAmount != null ? discountAmount : BigDecimal.ZERO);
+    item.setSubtotal(unitPrice.multiply(quantity));
     item.setNetTotal(
         item.getSubtotal().add(item.getTaxAmount()).subtract(item.getDiscountAmount()));
     item.setSourceType(sourceType);

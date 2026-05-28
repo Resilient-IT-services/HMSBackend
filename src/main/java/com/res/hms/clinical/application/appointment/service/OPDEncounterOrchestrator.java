@@ -83,8 +83,6 @@ public class OPDEncounterOrchestrator {
         InvoiceItemCategory.CONSULTATION,
         BigDecimal.ONE,
         fee,
-        "999311",
-        new BigDecimal("18.00"),
         BigDecimal.ZERO,
         BigDecimal.ZERO,
         FinanceSourceType.APPOINTMENT,

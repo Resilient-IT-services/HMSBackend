@@ -38,8 +38,6 @@ public class MedicineDTO {
   @NotBlank(message = "Manufacturer is required")
   private String manufacturer;
 
-  private String hsnCode;
-
   // Inventory & Batch Information (Initial/Default)
   private String batchNumber;
   private LocalDate expiryDate;
