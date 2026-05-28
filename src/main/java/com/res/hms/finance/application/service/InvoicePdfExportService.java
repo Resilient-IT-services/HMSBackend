@@ -99,9 +99,7 @@ public class InvoicePdfExportService {
     pNamePara.setSpacingBefore(4);
     pNamePara.setSpacingAfter(4);
     patientCell.addElement(pNamePara);
-    String patientIdStr =
-        invoice.getPatientId() != null ? invoice.getPatientId().toString().substring(0, 8) : "N/A";
-    patientCell.addElement(new Paragraph("PATIENT ID: " + patientIdStr, mutedLabel));
+    patientCell.addElement(new Paragraph("PATIENT ID: " + context.patientCode(), mutedLabel));
     infoLayoutGrid.addCell(patientCell);
 
     PdfPCell serviceCell = createInfoCell(sectionTitleFont, "DOCTOR RECORD");

@@ -1,6 +1,7 @@
 package com.res.hms.finance.application.service;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.junit.jupiter.api.Assertions.assertAll;
 
 import com.res.hms.TestDataHelper;
 import com.res.hms.finance.domain.Invoice;
@@ -27,15 +28,11 @@ class InvoiceServiceTest {
     UUID patientId = testDataHelper.createTestPatient(hospitalId).getId();
 
     Invoice invoice = invoiceService.createInvoice(hospitalId, patientId, null);
-    assertThat(invoice.getId()).isNotNull();
-    assertThat(invoice.getStatus()).isEqualTo(InvoiceStatus.UNPAID);
+    assertAll(
+        "Invoice creation checks",
+        () -> assertThat(invoice.getId()).isNotNull(),
+        () -> assertThat(invoice.getStatus()).isEqualTo(InvoiceStatus.UNPAID));
 
     invoiceService.cancelInvoice(invoice.getId());
-
-    Invoice cancelled =
-        invoiceService.createInvoice(
-            hospitalId, patientId, null); // Dummy to avoid finding nothing if not saved
-    // We actually need to re-find it
-    // assertThat(invoice.getStatus()).isEqualTo(InvoiceStatus.CANCELLED);
   }
 }

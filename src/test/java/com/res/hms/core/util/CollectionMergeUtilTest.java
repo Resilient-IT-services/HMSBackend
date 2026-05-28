@@ -1,5 +1,6 @@
 package com.res.hms.core.util;
 
+import static org.junit.jupiter.api.Assertions.assertAll;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
@@ -11,41 +12,41 @@ import org.junit.jupiter.api.Test;
 class CollectionMergeUtilTest {
 
   static class Item {
-    private UUID id;
+    private final UUID id;
     private String val;
 
-    Item(UUID id, String val) {
+    /* package */ Item(UUID id, String val) {
       this.id = id;
       this.val = val;
     }
 
-    UUID getId() {
+    /* package */ UUID getId() {
       return id;
     }
 
-    String getVal() {
+    /* package */ String getVal() {
       return val;
     }
 
-    void setVal(String val) {
+    /* package */ void setVal(String val) {
       this.val = val;
     }
   }
 
   static class Dto {
-    private UUID id;
-    private String val;
+    private final UUID id;
+    private final String val;
 
-    Dto(UUID id, String val) {
+    /* package */ Dto(UUID id, String val) {
       this.id = id;
       this.val = val;
     }
 
-    UUID getId() {
+    /* package */ UUID getId() {
       return id;
     }
 
-    String getVal() {
+    /* package */ String getVal() {
       return val;
     }
   }
@@ -67,14 +68,16 @@ class CollectionMergeUtilTest {
         (item, dto) -> item.setVal(dto.getVal()),
         removed::add);
 
-    assertEquals(2, existing.size());
-    assertEquals("new", existing.get(0).getVal());
-    assertEquals("added", existing.get(1).getVal());
-    assertTrue(removed.isEmpty());
+    assertAll(
+        "Basic merge assertions",
+        () -> assertEquals(2, existing.size(), "Should have 2 items"),
+        () -> assertEquals("new", existing.get(0).getVal(), "First item should be updated"),
+        () -> assertEquals("added", existing.get(1).getVal(), "Second item should be added"),
+        () -> assertTrue(removed.isEmpty(), "No items should be removed"));
   }
 
   @Test
-  void testMerge_WithRemoval() {
+  void testMergeWithRemoval() {
     UUID id1 = UUID.randomUUID();
     UUID id2 = UUID.randomUUID();
 
@@ -94,8 +97,10 @@ class CollectionMergeUtilTest {
           removed.add(i);
         });
 
-    assertEquals(1, existing.size());
-    assertEquals(1, removed.size());
-    assertEquals(id2, removed.get(0).getId());
+    assertAll(
+        "Merge with removal assertions",
+        () -> assertEquals(1, existing.size(), "Should have 1 item left"),
+        () -> assertEquals(1, removed.size(), "Should have 1 item removed"),
+        () -> assertEquals(id2, removed.get(0).getId(), "Wrong item removed"));
   }
 }

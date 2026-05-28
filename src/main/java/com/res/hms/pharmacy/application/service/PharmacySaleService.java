@@ -194,8 +194,7 @@ public class PharmacySaleService {
     stock.setQuantity(stock.getQuantity() - quantity);
     pharmacyStockRepository.save(stock);
 
-    BigDecimal unitPrice =
-        itemDto.getUnitPrice() != null ? itemDto.getUnitPrice() : stock.getSellingPrice();
+    BigDecimal unitPrice = stock.getSellingPrice();
 
     PharmacySaleItem saleItem = new PharmacySaleItem();
     saleItem.setSale(sale);
@@ -205,9 +204,7 @@ public class PharmacySaleService {
     saleItem.setUnitPrice(unitPrice);
     saleItem.setDiscountAmount(
         itemDto.getDiscountAmount() != null ? itemDto.getDiscountAmount() : BigDecimal.ZERO);
-    saleItem.setTaxAmount(
-        itemDto.getTaxAmount() != null ? itemDto.getTaxAmount() : BigDecimal.ZERO);
-
+    saleItem.setTaxAmount(BigDecimal.ZERO);
     BigDecimal itemSubtotal = unitPrice.multiply(BigDecimal.valueOf(quantity));
     saleItem.setSubtotal(itemSubtotal);
     if (saleItem.getDiscountAmount().compareTo(itemSubtotal) > 0) {
@@ -266,6 +263,10 @@ public class PharmacySaleService {
       paymentReq.setAmount(request.getPayment().getAmount());
       paymentReq.setPaymentMode(request.getPayment().getMode());
       paymentReq.setReferenceNumber(request.getPayment().getReferenceNumber());
+      if (request.getPayment().getAmount().compareTo(invoice.getTotalAmount()) < 0) {
+        throw new ApiException(
+            "INVALID_PAYMENT", "Paid amount is less than invoice amount", HttpStatus.BAD_REQUEST);
+      }
 
       var paymentDto = paymentService.recordPayment(hospitalId, paymentReq, userId);
 

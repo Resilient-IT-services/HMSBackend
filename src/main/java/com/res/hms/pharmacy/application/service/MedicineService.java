@@ -19,6 +19,7 @@ import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Locale;
 import java.util.Optional;
 import java.util.UUID;
 import lombok.RequiredArgsConstructor;
@@ -49,7 +50,7 @@ public class MedicineService {
     return (root, query, cb) -> {
       List<Predicate> predicates = new ArrayList<>();
       if (hasText(search)) {
-        String pattern = "%" + search.trim().toLowerCase() + "%";
+        String pattern = "%" + search.trim().toLowerCase(Locale.ROOT) + "%";
         predicates.add(
             cb.or(
                 cb.like(cb.lower(root.get("name")), pattern),
@@ -435,6 +436,6 @@ public class MedicineService {
   }
 
   private boolean hasText(String value) {
-    return value != null && !value.trim().isEmpty();
+    return value != null && !value.isBlank();
   }
 }

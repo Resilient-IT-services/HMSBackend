@@ -1,12 +1,19 @@
 package com.res.hms.iam.application.service;
 
+import com.res.hms.clinical.domain.DoctorAvailabilityException;
+import com.res.hms.clinical.domain.DoctorSchedule;
+import com.res.hms.core.tenant.HospitalContext;
+import com.res.hms.hospital.domain.Department;
+import com.res.hms.hospital.domain.HospitalStatus;
 import com.res.hms.hospital.infrastructure.repository.HospitalRepository;
 import com.res.hms.iam.application.dto.AdminHospitalDetailsDTO;
+import com.res.hms.iam.application.dto.AvailabilityExceptionDTO;
 import com.res.hms.iam.application.dto.DoctorHospitalDetailsDTO;
 import com.res.hms.iam.application.dto.HospitalMembershipResponse;
 import com.res.hms.iam.application.dto.NurseHospitalDetailsDTO;
 import com.res.hms.iam.application.dto.PharmacistHospitalDetailsDTO;
 import com.res.hms.iam.application.dto.ReceptionistHospitalDetailsDTO;
+import com.res.hms.iam.application.dto.ScheduleDTO;
 import com.res.hms.iam.application.dto.UserDetailsDTO;
 import com.res.hms.iam.application.dto.UserSummaryDTO;
 import com.res.hms.iam.domain.AdminHospitalDetails;
@@ -20,6 +27,7 @@ import com.res.hms.iam.domain.PharmacistProfile;
 import com.res.hms.iam.domain.ReceptionistHospitalDetails;
 import com.res.hms.iam.domain.ReceptionistProfile;
 import com.res.hms.iam.domain.RoleCode;
+import com.res.hms.iam.domain.Specialization;
 import com.res.hms.iam.domain.UserAccount;
 import com.res.hms.iam.domain.UserContract;
 import java.util.Collections;
@@ -38,8 +46,10 @@ import org.springframework.beans.factory.annotation.Autowired;
     unmappedTargetPolicy = ReportingPolicy.IGNORE,
     injectionStrategy = InjectionStrategy.CONSTRUCTOR)
 public abstract class UserMapper {
+  private static final String GLOBAL_ACCESS = "Global Access";
+
   @Autowired protected HospitalRepository hospitalRepository;
-  @Autowired protected com.res.hms.core.tenant.HospitalContext hospitalContext;
+  @Autowired protected HospitalContext hospitalContext;
 
   @Mapping(target = "memberships", expression = "java(mapSummaryMemberships(user))")
   public abstract UserSummaryDTO toSummaryDTO(UserAccount user);
@@ -62,10 +72,8 @@ public abstract class UserMapper {
             a ->
                 a.isActive()
                     && (a.getHospital() == null
-                        || a.getHospital().getStatus()
-                            == com.res.hms.hospital.domain.HospitalStatus.ACTIVE
-                        || a.getHospital().getStatus()
-                            == com.res.hms.hospital.domain.HospitalStatus.ONBOARDING))
+                        || a.getHospital().getStatus() == HospitalStatus.ACTIVE
+                        || a.getHospital().getStatus() == HospitalStatus.ONBOARDING))
         .collect(Collectors.groupingBy(UserContract::getHospitalId))
         .entrySet()
         .stream()
@@ -83,20 +91,20 @@ public abstract class UserMapper {
               List<String> specializations =
                   user.getDoctorProfile() != null
                       ? user.getDoctorProfile().getSpecializations().stream()
-                          .map(com.res.hms.iam.domain.Specialization::getName)
+                          .map(Specialization::getName)
                           .collect(Collectors.toList())
                       : Collections.emptyList();
 
               List<String> departments =
                   entry.getValue().stream()
                       .flatMap(a -> a.getDepartments().stream())
-                      .map(com.res.hms.hospital.domain.Department::getName)
+                      .map(Department::getName)
                       .distinct()
                       .collect(Collectors.toList());
 
               return new HospitalMembershipResponse(
                   hospitalId,
-                  hospital != null ? hospital.getName() : "Global Access",
+                  hospital != null ? hospital.getName() : GLOBAL_ACCESS,
                   hospital != null ? hospital.getCode() : "GLOBAL",
                   roles,
                   specializations,
@@ -105,23 +113,18 @@ public abstract class UserMapper {
         .collect(Collectors.toList());
   }
 
-  protected List<String> mapDepartments(Set<com.res.hms.hospital.domain.Department> departments) {
+  protected List<String> mapDepartments(Set<Department> departments) {
     if (departments == null) {
-      return java.util.Collections.emptyList();
+      return Collections.emptyList();
     }
-    return departments.stream()
-        .map(com.res.hms.hospital.domain.Department::getName)
-        .collect(Collectors.toList());
+    return departments.stream().map(Department::getName).collect(Collectors.toList());
   }
 
-  protected List<String> mapSpecializations(
-      Set<com.res.hms.iam.domain.Specialization> specializations) {
+  protected List<String> mapSpecializations(Set<Specialization> specializations) {
     if (specializations == null) {
-      return java.util.Collections.emptyList();
+      return Collections.emptyList();
     }
-    return specializations.stream()
-        .map(com.res.hms.iam.domain.Specialization::getName)
-        .collect(Collectors.toList());
+    return specializations.stream().map(Specialization::getName).collect(Collectors.toList());
   }
 
   @Mapping(target = "assignmentId", source = "id")
@@ -145,12 +148,10 @@ public abstract class UserMapper {
 
   public abstract UserDetailsDTO.ReceptionistInfo toReceptionistInfo(ReceptionistProfile profile);
 
-  public abstract com.res.hms.iam.application.dto.ScheduleDTO toScheduleDTO(
-      com.res.hms.clinical.domain.DoctorSchedule schedule);
+  public abstract ScheduleDTO toScheduleDTO(DoctorSchedule schedule);
 
-  public abstract com.res.hms.iam.application.dto.AvailabilityExceptionDTO
-      toAvailabilityExceptionDTO(
-          com.res.hms.clinical.domain.DoctorAvailabilityException unavailability);
+  public abstract AvailabilityExceptionDTO toAvailabilityExceptionDTO(
+      DoctorAvailabilityException unavailability);
 
   public abstract DoctorHospitalDetailsDTO toDoctorHospitalDetailsDTO(
       DoctorHospitalDetails details);
@@ -175,10 +176,8 @@ public abstract class UserMapper {
             a ->
                 a.isActive()
                     && (a.getHospital() == null
-                        || a.getHospital().getStatus()
-                            == com.res.hms.hospital.domain.HospitalStatus.ACTIVE
-                        || a.getHospital().getStatus()
-                            == com.res.hms.hospital.domain.HospitalStatus.ONBOARDING))
+                        || a.getHospital().getStatus() == HospitalStatus.ACTIVE
+                        || a.getHospital().getStatus() == HospitalStatus.ONBOARDING))
         .collect(Collectors.groupingBy(UserContract::getHospitalId))
         .entrySet()
         .stream()
@@ -194,20 +193,20 @@ public abstract class UserMapper {
               List<String> specializations =
                   user.getDoctorProfile() != null
                       ? user.getDoctorProfile().getSpecializations().stream()
-                          .map(com.res.hms.iam.domain.Specialization::getName)
+                          .map(Specialization::getName)
                           .collect(Collectors.toList())
                       : Collections.emptyList();
 
-              String hospitalName = "Global Access";
+              String hospitalName = GLOBAL_ACCESS;
               if (hospitalId != null) {
                 hospitalName =
-                    first.getHospital() != null ? first.getHospital().getName() : "Global Access";
+                    first.getHospital() != null ? first.getHospital().getName() : GLOBAL_ACCESS;
               }
 
               List<String> departments =
                   hospitalAssignments.stream()
                       .flatMap(a -> a.getDepartments().stream())
-                      .map(com.res.hms.hospital.domain.Department::getName)
+                      .map(Department::getName)
                       .distinct()
                       .collect(Collectors.toList());
 
@@ -227,10 +226,8 @@ public abstract class UserMapper {
             a ->
                 a.isActive()
                     && (a.getHospital() == null
-                        || a.getHospital().getStatus()
-                            == com.res.hms.hospital.domain.HospitalStatus.ACTIVE
-                        || a.getHospital().getStatus()
-                            == com.res.hms.hospital.domain.HospitalStatus.ONBOARDING))
+                        || a.getHospital().getStatus() == HospitalStatus.ACTIVE
+                        || a.getHospital().getStatus() == HospitalStatus.ONBOARDING))
         .collect(Collectors.groupingBy(UserContract::getHospitalId))
         .entrySet()
         .stream()
@@ -240,7 +237,7 @@ public abstract class UserMapper {
               UserContract first = entry.getValue().getFirst();
               var hospital = first.getHospital();
 
-              String hospitalName = hospital != null ? hospital.getName() : "Global Access";
+              String hospitalName = hospital != null ? hospital.getName() : GLOBAL_ACCESS;
               String hospitalCode = hospital != null ? hospital.getCode() : "GLOBAL";
 
               List<UserDetailsDTO.RoleAssignmentDTO> roleAssignments =
