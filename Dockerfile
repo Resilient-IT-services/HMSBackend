@@ -7,16 +7,8 @@ COPY . .
 RUN sed -i 's/\r$//' gradlew
 RUN chmod +x gradlew
 
-RUN chmod +x gradlew
-RUN ./gradlew clean bootJar -x test --no-daemon \
-    -Dorg.gradle.internal.http.connectionTimeout=120000 \
-    -Dorg.gradle.internal.http.socketTimeout=120000
-FROM eclipse-temurin:21-jdk-jammy
+ENV JAVA_TOOL_OPTIONS="-Djava.net.preferIPv4Stack=true"
 
-WORKDIR /app
+RUN ./gradlew --version
 
-COPY --from=builder /app/build/libs/*.jar app.jar
-
-EXPOSE 8070
-
-ENTRYPOINT ["java","-jar","app.jar"]
+RUN ./gradlew clean bootJar -x test --no-daemon
