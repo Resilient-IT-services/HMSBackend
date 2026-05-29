@@ -8,7 +8,9 @@ RUN sed -i 's/\r$//' gradlew
 RUN chmod +x gradlew
 
 RUN chmod +x gradlew
-RUN ./gradlew clean bootJar -x test --no-daemon
+RUN ./gradlew clean bootJar -x test --no-daemon \
+    -Dorg.gradle.internal.http.connectionTimeout=120000 \
+    -Dorg.gradle.internal.http.socketTimeout=120000
 FROM eclipse-temurin:21-jdk-jammy
 
 WORKDIR /app
