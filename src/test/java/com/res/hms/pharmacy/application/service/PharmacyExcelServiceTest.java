@@ -89,8 +89,21 @@ class PharmacyExcelServiceTest {
   void testImportStock_MedicineNotFound() throws IOException {
     var workbook = new XSSFWorkbook();
     var sheet = workbook.createSheet();
-    sheet.createRow(0).createCell(0).setCellValue("Name");
-    sheet.createRow(1).createCell(0).setCellValue("Unknown");
+    var header = sheet.createRow(0);
+    header.createCell(0).setCellValue("Name");
+    header.createCell(1).setCellValue("Batch");
+    header.createCell(2).setCellValue("Expiry");
+    header.createCell(3).setCellValue("Qty");
+    header.createCell(4).setCellValue("PPrice");
+    header.createCell(5).setCellValue("SPrice");
+
+    var row = sheet.createRow(1);
+    row.createCell(0).setCellValue("Unknown");
+    row.createCell(1).setCellValue("B1");
+    row.createCell(2).setCellValue("2026-12-31");
+    row.createCell(3).setCellValue(10);
+    row.createCell(4).setCellValue(5.0);
+    row.createCell(5).setCellValue(10.0);
 
     var out = new ByteArrayOutputStream();
     workbook.write(out);

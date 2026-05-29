@@ -85,9 +85,17 @@ public class MedicineService {
       throw new ApiException(
           "INVALID_EXPIRY", "Initial stock expiry cannot be in the past", HttpStatus.BAD_REQUEST);
     }
-    if (request.getSellingPrice() != null
-        && request.getPurchasePrice() != null
-        && request.getSellingPrice().compareTo(request.getPurchasePrice()) < 0) {
+    if (request.getPurchasePrice() == null
+        || request.getPurchasePrice().compareTo(java.math.BigDecimal.ZERO) <= 0) {
+      throw new ApiException(
+          "INVALID_PRICE", "Purchase price must be greater than zero", HttpStatus.BAD_REQUEST);
+    }
+    if (request.getSellingPrice() == null
+        || request.getSellingPrice().compareTo(java.math.BigDecimal.ZERO) <= 0) {
+      throw new ApiException(
+          "INVALID_PRICE", "Selling price must be greater than zero", HttpStatus.BAD_REQUEST);
+    }
+    if (request.getSellingPrice().compareTo(request.getPurchasePrice()) < 0) {
       throw new ApiException(
           "INVALID_PRICE",
           "Selling price cannot be less than purchase price",
@@ -153,6 +161,23 @@ public class MedicineService {
     if (request.getExpiryDate() != null && request.getExpiryDate().isBefore(LocalDate.now())) {
       throw new ApiException(
           "INVALID_EXPIRY", "Expiry date cannot be in the past", HttpStatus.BAD_REQUEST);
+    }
+
+    if (request.getPurchasePrice() == null
+        || request.getPurchasePrice().compareTo(java.math.BigDecimal.ZERO) <= 0) {
+      throw new ApiException(
+          "INVALID_PRICE", "Purchase price must be greater than zero", HttpStatus.BAD_REQUEST);
+    }
+    if (request.getSellingPrice() == null
+        || request.getSellingPrice().compareTo(java.math.BigDecimal.ZERO) <= 0) {
+      throw new ApiException(
+          "INVALID_PRICE", "Selling price must be greater than zero", HttpStatus.BAD_REQUEST);
+    }
+    if (request.getSellingPrice().compareTo(request.getPurchasePrice()) < 0) {
+      throw new ApiException(
+          "INVALID_PRICE",
+          "Selling price cannot be less than purchase price",
+          HttpStatus.BAD_REQUEST);
     }
     PharmacyStock stock =
         pharmacyStockRepository

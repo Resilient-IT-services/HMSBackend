@@ -67,11 +67,45 @@ public class PharmacyExcelHelper {
     }
     if (!hasText(pp)) {
       errors.add("[Purchase Price] is missing");
+    } else {
+      java.math.BigDecimal purchasePrice = parseBigDecimal(pp);
+      if (purchasePrice.compareTo(java.math.BigDecimal.ZERO) <= 0) {
+        errors.add("[Purchase Price] must be greater than zero");
+      }
     }
     if (!hasText(sp)) {
       errors.add("[Selling Price] is missing");
+    } else {
+      java.math.BigDecimal sellingPrice = parseBigDecimal(sp);
+      if (sellingPrice.compareTo(java.math.BigDecimal.ZERO) <= 0) {
+        errors.add("[Selling Price] must be greater than zero");
+      }
+    }
+
+    if (hasText(pp) && hasText(sp)) {
+      try {
+        java.math.BigDecimal purchasePrice = parseBigDecimal(pp);
+        java.math.BigDecimal sellingPrice = parseBigDecimal(sp);
+        if (sellingPrice.compareTo(purchasePrice) < 0) {
+          errors.add("selling price is less than purchase price");
+        }
+      } catch (Exception e) {
+        // Ignore parsing errors here, they will be handled by parseBigDecimal returning ZERO
+      }
     }
     return errors;
+  }
+
+  public static boolean isRowEmpty(Row row) {
+    if (row == null) {
+      return true;
+    }
+    for (int i = 0; i < row.getLastCellNum(); i++) {
+      if (hasText(text(row, i))) {
+        return false;
+      }
+    }
+    return true;
   }
 
   public static MedicineForm parseMedicineForm(String val) {

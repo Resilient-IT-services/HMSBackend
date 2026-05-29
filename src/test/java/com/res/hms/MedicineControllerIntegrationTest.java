@@ -78,6 +78,8 @@ class MedicineControllerIntegrationTest {
             + "\"composition\": \"Azithromycin 250mg\","
             + "\"strength\": \"250mg\","
             + "\"form\": \"TABLET\","
+            + "\"purchasePrice\": 10.0,"
+            + "\"sellingPrice\": 15.0,"
             + "\"manufacturer\": \"Generic Pharma\""
             + "}";
 
@@ -177,6 +179,7 @@ class MedicineControllerIntegrationTest {
                         + "\"manufacturer\": \"Generic Pharma\","
                         + "\"batchNumber\": \"AMOX-01\","
                         + "\"currentStock\": 50,"
+                        + "\"purchasePrice\": 5.0,"
                         + "\"sellingPrice\": 10.0"
                         + "}"))
         .andExpect(status().isOk());

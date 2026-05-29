@@ -53,7 +53,7 @@ public class PharmacyExcelService {
 
       for (int i = 1; i <= sheet.getLastRowNum(); i++) {
         Row row = sheet.getRow(i);
-        if (row == null || PharmacyExcelHelper.isBlank(row, 0)) {
+        if (row == null || PharmacyExcelHelper.isRowEmpty(row)) {
           continue;
         }
         totalRows++;
@@ -97,7 +97,7 @@ public class PharmacyExcelService {
 
       for (int i = 1; i <= sheet.getLastRowNum(); i++) {
         Row row = sheet.getRow(i);
-        if (row == null || PharmacyExcelHelper.isBlank(row, 0)) {
+        if (row == null || PharmacyExcelHelper.isRowEmpty(row)) {
           continue;
         }
         totalRows++;
@@ -150,17 +150,17 @@ public class PharmacyExcelService {
       String pPriceStr = PharmacyExcelHelper.text(row, 4);
       String sPriceStr = PharmacyExcelHelper.text(row, 5);
 
-      Medicine medicine = findMedicine(name, statusCell, styles[3]);
-      if (medicine == null) {
-        return "NOT_FOUND";
-      }
-
       List<String> errors =
           PharmacyExcelHelper.validateStockData(name, batch, qtyStr, sPriceStr, pPriceStr, expStr);
       if (!errors.isEmpty()) {
         String errorMsg = String.join(" | ", errors);
         PharmacyExcelHelper.updateCell(statusCell, "ERROR: " + errorMsg, styles[3]);
         return "ERROR";
+      }
+
+      Medicine medicine = findMedicine(name, statusCell, styles[3]);
+      if (medicine == null) {
+        return "NOT_FOUND";
       }
 
       if (batches.containsKey(batch)) {
