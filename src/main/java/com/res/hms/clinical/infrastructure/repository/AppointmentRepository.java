@@ -21,7 +21,7 @@ public interface AppointmentRepository
   @Query(
       "SELECT a FROM Appointment a "
           + "WHERE a.doctorId = :doctorId "
-          + "AND CAST(a.appointmentTime AS date) = :date "
+          + "AND a.appointmentDate = :date "
           + "AND a.status NOT IN (com.res.hms.clinical.domain.AppointmentStatus.CANCELLED)")
   java.util.List<Appointment> findByDoctorIdAndDate(
       @Param("doctorId") UUID doctorId, @Param("date") java.time.LocalDate date);
@@ -29,14 +29,14 @@ public interface AppointmentRepository
   @Query(
       "SELECT MAX(a.tokenNumber) FROM Appointment a "
           + "WHERE a.doctorId = :doctorId "
-          + "AND CAST(a.appointmentTime AS date) = :date")
+          + "AND a.appointmentDate = :date")
   Integer findMaxTokenByDoctorAndDate(
       @Param("doctorId") UUID doctorId, @Param("date") java.time.LocalDate date);
 
   @Query(
       "SELECT COUNT(a) > 0 FROM Appointment a "
           + "WHERE a.patientId = :patientId AND a.doctorId = :doctorId "
-          + "AND CAST(a.appointmentTime AS date) = :date "
+          + "AND a.appointmentDate = :date "
           + "AND a.status <> :status")
   boolean existsByPatientIdAndDoctorIdAndDateAndStatusNot(
       @Param("patientId") UUID patientId,
@@ -47,7 +47,7 @@ public interface AppointmentRepository
   @Query(
       "SELECT COUNT(a) > 0 FROM Appointment a "
           + "WHERE a.patientId = :patientId AND a.doctorId = :doctorId "
-          + "AND CAST(a.appointmentTime AS date) = :date "
+          + "AND a.appointmentDate = :date "
           + "AND a.id <> :id AND a.status <> :status")
   boolean existsByPatientIdAndDoctorIdAndDateAndIdNotAndStatusNot(
       @Param("patientId") UUID patientId,
@@ -58,6 +58,21 @@ public interface AppointmentRepository
 
   java.util.List<Appointment> findByPatientIdAndHospitalIdOrderByAppointmentTimeDesc(
       UUID patientId, UUID hospitalId);
+
+  boolean existsByHospitalIdAndDoctorIdAndAppointmentDateAndAppointmentSlotTimeAndStatusNotAndDeletedFalse(
+      UUID hospitalId,
+      UUID doctorId,
+      java.time.LocalDate appointmentDate,
+      java.time.LocalTime appointmentSlotTime,
+      com.res.hms.clinical.domain.AppointmentStatus status);
+
+  boolean existsByHospitalIdAndDoctorIdAndAppointmentDateAndAppointmentSlotTimeAndIdNotAndStatusNotAndDeletedFalse(
+      UUID hospitalId,
+      UUID doctorId,
+      java.time.LocalDate appointmentDate,
+      java.time.LocalTime appointmentSlotTime,
+      UUID id,
+      com.res.hms.clinical.domain.AppointmentStatus status);
 
   Page<Appointment> findByPatientIdAndHospitalIdOrderByAppointmentTimeDesc(
       UUID patientId, UUID hospitalId, Pageable pageable);
@@ -75,7 +90,7 @@ public interface AppointmentRepository
       "SELECT a FROM Appointment a "
           + "WHERE a.hospitalId = :hospitalId "
           + "AND a.doctorId = :doctorId "
-          + "AND CAST(a.appointmentTime AS date) = :date "
+          + "AND a.appointmentDate = :date "
           + "AND a.deleted = false "
           + "AND a.status = com.res.hms.clinical.domain.AppointmentStatus.CONSULTATION_STARTED "
           + "ORDER BY a.tokenNumber ASC, a.appointmentTime ASC")
@@ -89,7 +104,7 @@ public interface AppointmentRepository
       "SELECT a FROM Appointment a "
           + "WHERE a.hospitalId = :hospitalId "
           + "AND a.doctorId = :doctorId "
-          + "AND CAST(a.appointmentTime AS date) = :date "
+          + "AND a.appointmentDate = :date "
           + "AND a.deleted = false "
           + "AND a.status IN ("
           + "com.res.hms.clinical.domain.AppointmentStatus.PAID, "

@@ -59,4 +59,4 @@ volumes:
     pgdata:
 networks:
     shared-network:
-        external: true
+
