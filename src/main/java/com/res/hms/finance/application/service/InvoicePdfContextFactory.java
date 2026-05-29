@@ -47,8 +47,12 @@ public class InvoicePdfContextFactory {
               .orElse("N/A");
     }
 
-    String patientName =
-        invoice.getPatient() != null ? invoice.getPatient().getFullName() : "Unknown Patient";
+    String patientName = "Unknown Patient";
+    if (invoice.getPatient() != null) {
+      patientName = invoice.getPatient().getFullName();
+    } else if (invoice.getCustomerName() != null) {
+      patientName = invoice.getCustomerName();
+    }
 
     String patientCode =
         (invoice.getPatient() != null && invoice.getPatient().getPatientCode() != null)

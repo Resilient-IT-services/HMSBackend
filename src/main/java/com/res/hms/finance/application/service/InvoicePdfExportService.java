@@ -20,10 +20,14 @@ import com.lowagie.text.pdf.PdfPTable;
 import com.lowagie.text.pdf.PdfWriter;
 import com.res.hms.finance.domain.Invoice;
 import com.res.hms.finance.domain.InvoiceItem;
+import com.res.hms.finance.domain.InvoiceItemCategory;
 import java.awt.Color;
 import java.io.ByteArrayOutputStream;
+import java.math.BigDecimal;
 import java.time.ZoneId;
 import java.time.format.DateTimeFormatter;
+import java.util.List;
+import java.util.stream.Collectors;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -36,19 +40,42 @@ public class InvoicePdfExportService {
   private final InvoicePdfContextFactory contextFactory;
 
   public byte[] exportInvoicePdf(Invoice invoice) {
+    return exportInvoicePdf(invoice, null);
+  }
+
+  public byte[] exportInvoicePdf(Invoice invoice, InvoiceItemCategory filterCategory) {
     try (ByteArrayOutputStream baos = new ByteArrayOutputStream()) {
       Document document = new Document(PageSize.A4, 36, 36, 40, 90);
       PdfWriter writer = PdfWriter.getInstance(document, baos);
       InvoicePdfContext context = contextFactory.create(invoice);
       writer.setPageEvent(new PdfHeaderFooter(context.hospitalName()));
       document.open();
-      addBranding(document, context);
+
+      // If filtering by category, we only want those items and their specific totals
+      List<InvoiceItem> items = invoice.getItems();
+      BigDecimal subtotal = invoice.getSubtotalAmount();
+      BigDecimal discount = invoice.getDiscountAmount();
+      BigDecimal tax = invoice.getTaxAmount();
+      BigDecimal total = invoice.getTotalAmount();
+
+      if (filterCategory != null) {
+        items = items.stream()
+            .filter(item -> filterCategory.equals(item.getCategory()))
+            .collect(Collectors.toList());
+        
+        subtotal = items.stream().map(InvoiceItem::getSubtotal).reduce(BigDecimal.ZERO, BigDecimal::add);
+        discount = items.stream().map(InvoiceItem::getDiscountAmount).reduce(BigDecimal.ZERO, BigDecimal::add);
+        tax = items.stream().map(InvoiceItem::getTaxAmount).reduce(BigDecimal.ZERO, BigDecimal::add);
+        total = subtotal.add(tax).subtract(discount);
+      }
+
+      addBranding(document, context, invoice, filterCategory);
       addInfoGrid(document, invoice, context);
       addDivider(document);
-      addSummaryMetrics(document, invoice);
+      addSummaryMetrics(document, invoice, total);
       addDivider(document);
-      addItemsGrid(document, invoice);
-      addFinancialSummary(document, invoice);
+      addItemsGrid(document, items);
+      addFinancialSummary(document, subtotal, discount, tax, total);
       document.close();
       return baos.toByteArray();
     } catch (Exception e) {
@@ -57,7 +84,7 @@ public class InvoicePdfExportService {
     }
   }
 
-  private void addBranding(Document document, InvoicePdfContext context) throws Exception {
+  private void addBranding(Document document, InvoicePdfContext context, Invoice invoice, InvoiceItemCategory filterCategory) throws Exception {
     Font brandFont = FontFactory.getFont(FontFactory.HELVETICA_BOLD, 26, UI_ORANGE);
     Font mainTitleFont = FontFactory.getFont(FontFactory.HELVETICA_BOLD, 15, Color.BLACK);
     Font textBold = FontFactory.getFont(FontFactory.HELVETICA_BOLD, 10, Color.BLACK);
@@ -70,7 +97,19 @@ public class InvoicePdfExportService {
     document.add(bTitle);
 
     addCenteredText(document, "GSTIN: " + context.gstinNumber(), textBold, 15);
-    addCenteredText(document, "CONSULTATION BILLING INVOICE", mainTitleFont, 5);
+
+    String invoiceTitle = "CONSULTATION BILLING INVOICE";
+    if (InvoiceItemCategory.PHARMACY.equals(filterCategory)) {
+        invoiceTitle = "PHARMACY BILLING RECEIPT";
+    } else if (invoice.getItems() != null && !invoice.getItems().isEmpty()) {
+      boolean allPharmacy = invoice.getItems().stream()
+          .allMatch(item -> com.res.hms.finance.domain.InvoiceItemCategory.PHARMACY.equals(item.getCategory()));
+      if (allPharmacy) {
+        invoiceTitle = "PHARMACY BILLING INVOICE";
+      }
+    }
+
+    addCenteredText(document, invoiceTitle, mainTitleFont, 5);
     addCenteredText(document, "Billed By: " + context.receptionistName(), mutedLabel, 20);
   }
 
@@ -153,7 +192,7 @@ public class InvoicePdfExportService {
     document.add(separatorLine);
   }
 
-  private void addSummaryMetrics(Document document, Invoice invoice) throws Exception {
+  private void addSummaryMetrics(Document document, Invoice invoice, BigDecimal totalAmount) throws Exception {
     Font metaValueFont = FontFactory.getFont(FontFactory.HELVETICA_BOLD, 20, Color.BLACK);
     Font textBold = FontFactory.getFont(FontFactory.HELVETICA_BOLD, 10, Color.BLACK);
 
@@ -173,7 +212,7 @@ public class InvoicePdfExportService {
     rCell3.setBackgroundColor(SOFT_ORANGE_BG);
     rCell3.setPadding(12);
     rCell3.addElement(new Paragraph("TOTAL AMOUNT PAID", textBold));
-    Paragraph balanceStr = new Paragraph("₹ " + invoice.getTotalAmount(), metaValueFont);
+    Paragraph balanceStr = new Paragraph("₹ " + totalAmount, metaValueFont);
     balanceStr.setSpacingBefore(2);
     rCell3.addElement(balanceStr);
     metaRowTable.addCell(rCell3);
@@ -181,7 +220,7 @@ public class InvoicePdfExportService {
     document.add(metaRowTable);
   }
 
-  private void addItemsGrid(Document document, Invoice invoice) throws Exception {
+  private void addItemsGrid(Document document, List<InvoiceItem> items) throws Exception {
     Font thFont = FontFactory.getFont(FontFactory.HELVETICA_BOLD, 11, Color.BLACK);
     Font textNormal = FontFactory.getFont(FontFactory.HELVETICA, 10, new Color(50, 50, 50));
 
@@ -192,17 +231,11 @@ public class InvoicePdfExportService {
     detailsGrid.addCell(getTableHeaderSetup("DESCRIPTION", thFont));
     detailsGrid.addCell(getTableHeaderSetup("TOTAL AMOUNT", thFont));
 
-    if (invoice.getItems() != null && !invoice.getItems().isEmpty()) {
-      for (InvoiceItem item : invoice.getItems()) {
+    if (items != null && !items.isEmpty()) {
+      for (InvoiceItem item : items) {
         populateGridRow(
             detailsGrid, item.getItemDescription(), "₹ " + item.getNetTotal(), textNormal);
       }
-    } else {
-      populateGridRow(
-          detailsGrid,
-          "Consultation Base Fee Services",
-          "₹ " + invoice.getSubtotalAmount(),
-          textNormal);
     }
 
     PdfPCell structuralSpacer = new PdfPCell(new Phrase(" "));
@@ -217,7 +250,7 @@ public class InvoicePdfExportService {
     document.add(detailsGrid);
   }
 
-  private void addFinancialSummary(Document document, Invoice invoice) throws Exception {
+  private void addFinancialSummary(Document document, BigDecimal subtotal, BigDecimal discount, BigDecimal tax, BigDecimal total) throws Exception {
     Font textBold = FontFactory.getFont(FontFactory.HELVETICA_BOLD, 10, Color.BLACK);
     PdfPTable financialSummaryTable = new PdfPTable(2);
     financialSummaryTable.setWidthPercentage(100);
@@ -233,12 +266,12 @@ public class InvoicePdfExportService {
     addCalculatedRow(
         mathematicalSubGrid,
         "Gross Base Fee Charges",
-        "₹ " + invoice.getSubtotalAmount(),
+        "₹ " + subtotal,
         textBold);
     addCalculatedRow(
-        mathematicalSubGrid, "Discount Deductions", "- ₹ " + invoice.getDiscountAmount(), textBold);
+        mathematicalSubGrid, "Discount Deductions", "- ₹ " + discount, textBold);
     addCalculatedRow(
-        mathematicalSubGrid, "Tax Component Values", "₹ " + invoice.getTaxAmount(), textBold);
+        mathematicalSubGrid, "Tax Component Values", "₹ " + tax, textBold);
     PdfPCell finalFooterLabel =
         new PdfPCell(
             new Phrase(
@@ -251,7 +284,7 @@ public class InvoicePdfExportService {
     PdfPCell finalFooterValue =
         new PdfPCell(
             new Phrase(
-                "₹ " + invoice.getTotalAmount(),
+                "₹ " + total,
                 FontFactory.getFont(FontFactory.HELVETICA_BOLD, 13, UI_ORANGE)));
     finalFooterValue.setBorder(Rectangle.NO_BORDER);
     finalFooterValue.setBackgroundColor(SOFT_ORANGE_BG);

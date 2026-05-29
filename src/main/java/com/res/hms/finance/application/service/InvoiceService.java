@@ -58,7 +58,7 @@ public class InvoiceService {
     return InvoiceDTO.builder()
         .id(invoice.getId())
         .patientId(invoice.getPatientId())
-        .patientName(invoice.getPatient() != null ? invoice.getPatient().getFullName() : null)
+        .patientName(invoice.getPatient() != null ? invoice.getPatient().getFullName() : invoice.getCustomerName())
         .visitId(invoice.getVisitId())
         .invoiceNumber(invoice.getInvoiceNumber())
         .status(invoice.getStatus())
@@ -92,20 +92,31 @@ public class InvoiceService {
 
   @Transactional
   public Invoice getOrCreateInvoice(UUID hospitalId, UUID patientId, UUID visitId) {
+    return getOrCreateInvoice(hospitalId, patientId, visitId, null);
+  }
+
+  @Transactional
+  public Invoice getOrCreateInvoice(UUID hospitalId, UUID patientId, UUID visitId, String customerName) {
     if (visitId != null) {
       return invoiceRepository
           .findByVisitId(visitId)
           .filter(i -> i.getStatus() != InvoiceStatus.CANCELLED)
-          .orElseGet(() -> createInvoice(hospitalId, patientId, visitId));
+          .orElseGet(() -> createInvoice(hospitalId, patientId, visitId, customerName));
     }
-    return createInvoice(hospitalId, patientId, null);
+    return createInvoice(hospitalId, patientId, null, customerName);
   }
 
   @Transactional
   public Invoice createInvoice(UUID hospitalId, UUID patientId, UUID visitId) {
+    return createInvoice(hospitalId, patientId, visitId, null);
+  }
+
+  @Transactional
+  public Invoice createInvoice(UUID hospitalId, UUID patientId, UUID visitId, String customerName) {
     Invoice invoice = new Invoice();
     invoice.setHospitalId(hospitalId);
     invoice.setPatientId(patientId);
+    invoice.setCustomerName(customerName);
     invoice.setVisitId(visitId);
     invoice.setInvoiceNumber("INV-" + System.currentTimeMillis());
     invoice.setStatus(InvoiceStatus.UNPAID);
@@ -199,10 +210,15 @@ public class InvoiceService {
 
   @Transactional(readOnly = true)
   public byte[] exportInvoicePdf(UUID invoiceId) {
+    return exportInvoicePdf(invoiceId, null);
+  }
+
+  @Transactional(readOnly = true)
+  public byte[] exportInvoicePdf(UUID invoiceId, InvoiceItemCategory category) {
     Invoice invoice =
         invoiceRepository
             .findById(invoiceId)
             .orElseThrow(() -> new RuntimeException("Invoice not found"));
-    return invoicePdfExportService.exportInvoicePdf(invoice);
+    return invoicePdfExportService.exportInvoicePdf(invoice, category);
   }
 }

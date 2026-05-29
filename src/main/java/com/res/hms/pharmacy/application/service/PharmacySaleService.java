@@ -239,7 +239,7 @@ public class PharmacySaleService {
       QuickPharmacySaleRequest request, UUID hospitalId, PharmacySale savedSale) {
     Invoice invoice =
         invoiceService.getOrCreateInvoice(
-            hospitalId, request.getPatientId(), savedSale.getVisitId());
+            hospitalId, request.getPatientId(), savedSale.getVisitId(), savedSale.getCustomerName());
     savedSale.setInvoiceId(invoice.getId());
     savedSale.setSaleNumber(invoice.getInvoiceNumber());
     return invoice;
