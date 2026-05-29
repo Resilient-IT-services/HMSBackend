@@ -11,6 +11,4 @@ ALTER TABLE appointment
     ALTER COLUMN appointment_date SET NOT NULL,
     ALTER COLUMN appointment_slot_time SET NOT NULL;
 
-CREATE UNIQUE INDEX IF NOT EXISTS uq_appointment_active_doctor_slot
-    ON appointment (hospital_id, doctor_id, appointment_date, appointment_slot_time)
-    WHERE deleted = false AND status <> 'CANCELLED';
+
