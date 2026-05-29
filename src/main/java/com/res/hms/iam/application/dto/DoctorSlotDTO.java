@@ -13,9 +13,6 @@ import lombok.NoArgsConstructor;
 @AllArgsConstructor
 public class DoctorSlotDTO {
   @JsonFormat(pattern = "HH:mm")
-  private LocalTime time;
-
-  @JsonFormat(pattern = "HH:mm")
   private LocalTime startTime;
 
   @JsonFormat(pattern = "HH:mm")

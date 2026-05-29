@@ -33,7 +33,6 @@ public class AppointmentAggregateService {
   private final com.res.hms.clinical.application.vital.service.VitalValidationService
       vitalValidationService;
   private final com.res.hms.clinical.application.service.PatientVisitService patientVisitService;
-  private final AppointmentSlotService appointmentSlotService;
 
   private final com.res.hms.core.service.DomainEventPublisher eventPublisher;
 
@@ -69,13 +68,9 @@ public class AppointmentAggregateService {
             HttpStatus.BAD_REQUEST);
       }
     }
-
-    doctorProfileService.requireDoctor(dto.getDoctorId(), hospitalId);
-
     // New Constraint: Prevent multiple appointments with same doctor on same day
     java.time.LocalDate appointmentDate =
-        resolveAppointmentDate(dto);
-    java.time.LocalTime appointmentSlotTime = resolveAppointmentSlotTime(dto);
+        dto.getAppointmentTime().atZoneSameInstant(java.time.ZoneId.systemDefault()).toLocalDate();
 
     boolean doctorOverlap;
     if (dto.getId() == null) {
@@ -99,8 +94,6 @@ public class AppointmentAggregateService {
           HttpStatus.BAD_REQUEST);
     }
 
-    validateAppointmentSlot(dto, existing, hospitalId, appointmentDate, appointmentSlotTime);
-
     if (dto.getVitals() != null) {
       vitalValidationService.validate(dto.getVitals());
     }
@@ -119,14 +112,7 @@ public class AppointmentAggregateService {
       updateAppointment(appointment, dto, hospitalId);
     }
 
-    try {
-      appointmentRepository.saveAndFlush(appointment);
-    } catch (org.springframework.dao.DataIntegrityViolationException ex) {
-      throw new ApiException(
-          "APPOINTMENT_SLOT_UNAVAILABLE",
-          "Selected appointment slot is already booked",
-          HttpStatus.CONFLICT);
-    }
+    appointmentRepository.saveAndFlush(appointment);
 
     if (isNew) {
       eventPublisher.publish(
@@ -301,7 +287,7 @@ public class AppointmentAggregateService {
     appointment.setDoctorName(profile.getFullName());
     appointment.setStatus(dto.getStatus() != null ? dto.getStatus() : AppointmentStatus.SCHEDULED);
     appointment.setTokenNumber(
-        generateNextToken(profile.getId(), resolveAppointmentDate(dto)));
+        generateNextToken(profile.getId(), dto.getAppointmentTime().toInstant()));
 
     if (dto.getVisitId() != null) {
       appointment.setVisitId(dto.getVisitId());
@@ -319,9 +305,11 @@ public class AppointmentAggregateService {
   private void updateAppointment(Appointment appointment, AppointmentDTO dto, UUID hospitalId) {
     boolean doctorChanged = !appointment.getDoctorId().equals(dto.getDoctorId());
     boolean dateChanged =
-        !appointment.getAppointmentDate().equals(resolveAppointmentDate(dto));
-    boolean timeChanged =
-        !appointment.getAppointmentSlotTime().equals(resolveAppointmentSlotTime(dto));
+        !appointment
+            .getAppointmentTime()
+            .atZone(java.time.ZoneOffset.UTC)
+            .toLocalDate()
+            .equals(dto.getAppointmentTime().toLocalDate());
 
     if (doctorChanged) {
       DoctorProfile profile = doctorProfileService.requireDoctor(dto.getDoctorId(), hospitalId);
@@ -337,15 +325,16 @@ public class AppointmentAggregateService {
       appointment.setStatus(dto.getStatus());
     }
 
-    if (doctorChanged || dateChanged || timeChanged) {
+    if (doctorChanged || dateChanged) {
       appointment.setTokenNumber(
-          generateNextToken(appointment.getDoctorId(), resolveAppointmentDate(dto)));
+          generateNextToken(appointment.getDoctorId(), dto.getAppointmentTime().toInstant()));
     }
 
     updateAppointmentFields(appointment, dto, hospitalId);
   }
 
-  private Integer generateNextToken(UUID doctorId, java.time.LocalDate date) {
+  private Integer generateNextToken(UUID doctorId, java.time.Instant appointmentTime) {
+    java.time.LocalDate date = appointmentTime.atZone(java.time.ZoneOffset.UTC).toLocalDate();
     Integer lastToken = appointmentRepository.findMaxTokenByDoctorAndDate(doctorId, date);
 
     if (lastToken == null) {
@@ -357,12 +346,7 @@ public class AppointmentAggregateService {
 
   private void updateAppointmentFields(
       Appointment appointment, AppointmentDTO dto, UUID hospitalId) {
-    java.time.LocalDate appointmentDate = resolveAppointmentDate(dto);
-    java.time.LocalTime appointmentSlotTime = resolveAppointmentSlotTime(dto);
-
     appointment.setAppointmentTime(dto.getAppointmentTime().toInstant());
-    appointment.setAppointmentDate(appointmentDate);
-    appointment.setAppointmentSlotTime(appointmentSlotTime);
     appointment.setNotes(dto.getNotes());
 
     if (dto.getVitals() != null) {
@@ -379,67 +363,6 @@ public class AppointmentAggregateService {
       vitals.setWeight(dto.getVitals().getWeight());
       vitals.setOxygenLevel(dto.getVitals().getOxygenLevel());
     }
-  }
-
-  private void validateAppointmentSlot(
-      AppointmentDTO dto,
-      Appointment existing,
-      UUID hospitalId,
-      java.time.LocalDate appointmentDate,
-      java.time.LocalTime appointmentSlotTime) {
-    if (!appointmentSlotService.isAlignedToSlot(appointmentSlotTime)) {
-      throw new ApiException(
-          "INVALID_APPOINTMENT_SLOT",
-          "Appointments must be booked on 15-minute slots",
-          HttpStatus.BAD_REQUEST);
-    }
-
-    if (appointmentSlotService.isPastSlot(appointmentDate, appointmentSlotTime)) {
-      throw new ApiException(
-          "PAST_APPOINTMENT_SLOT",
-          "Past appointment slots cannot be booked",
-          HttpStatus.BAD_REQUEST);
-    }
-
-    boolean slotChanged =
-        existing == null
-            || !existing.getDoctorId().equals(dto.getDoctorId())
-            || !appointmentDate.equals(existing.getAppointmentDate())
-            || !appointmentSlotTime.equals(existing.getAppointmentSlotTime());
-
-    if (!slotChanged) {
-      return;
-    }
-
-    boolean unavailable =
-        appointmentRepository
-            .existsByHospitalIdAndDoctorIdAndAppointmentDateAndAppointmentSlotTimeAndStatusNotAndDeletedFalse(
-                hospitalId,
-                dto.getDoctorId(),
-                appointmentDate,
-                appointmentSlotTime,
-                AppointmentStatus.CANCELLED);
-    if (unavailable) {
-      throw new ApiException(
-          "APPOINTMENT_SLOT_UNAVAILABLE",
-          "Selected appointment slot is already booked",
-          HttpStatus.CONFLICT);
-    }
-  }
-
-  private java.time.LocalDate resolveAppointmentDate(AppointmentDTO dto) {
-    if (dto.getAppointmentDate() != null) {
-      return dto.getAppointmentDate();
-    }
-    return dto.getAppointmentTime().toLocalDate();
-  }
-
-  private java.time.LocalTime resolveAppointmentSlotTime(AppointmentDTO dto) {
-    java.time.LocalTime slotTime =
-        dto.getAppointmentSlotTime() != null
-            ? dto.getAppointmentSlotTime()
-            : dto.getAppointmentTime().toLocalTime();
-    return slotTime.withSecond(0).withNano(0);
   }
 
   @Transactional

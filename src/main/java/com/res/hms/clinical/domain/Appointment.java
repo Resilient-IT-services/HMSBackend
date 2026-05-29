@@ -6,8 +6,6 @@ import jakarta.persistence.Entity;
 import jakarta.persistence.EnumType;
 import jakarta.persistence.Enumerated;
 import jakarta.persistence.JoinColumn;
-import jakarta.persistence.PrePersist;
-import jakarta.persistence.PreUpdate;
 import jakarta.persistence.Table;
 import lombok.Getter;
 import lombok.Setter;
@@ -48,12 +46,6 @@ public class Appointment extends HospitalScopedEntity {
   @Column(name = "appointment_time", nullable = false)
   private java.time.Instant appointmentTime;
 
-  @Column(name = "appointment_date", nullable = false)
-  private java.time.LocalDate appointmentDate;
-
-  @Column(name = "appointment_slot_time", nullable = false)
-  private java.time.LocalTime appointmentSlotTime;
-
   @Enumerated(EnumType.STRING)
   @Column(nullable = false)
   private AppointmentStatus status;
@@ -87,18 +79,4 @@ public class Appointment extends HospitalScopedEntity {
       cascade = jakarta.persistence.CascadeType.ALL,
       fetch = jakarta.persistence.FetchType.LAZY)
   private Vitals vitals;
-
-  @PrePersist
-  @PreUpdate
-  private void syncAppointmentDateAndTime() {
-    if (appointmentTime != null) {
-      java.time.ZonedDateTime serverTime = appointmentTime.atZone(java.time.ZoneId.systemDefault());
-      if (appointmentDate == null) {
-        appointmentDate = serverTime.toLocalDate();
-      }
-      if (appointmentSlotTime == null) {
-        appointmentSlotTime = serverTime.toLocalTime().withSecond(0).withNano(0);
-      }
-    }
-  }
 }
