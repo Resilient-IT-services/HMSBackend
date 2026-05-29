@@ -30,6 +30,9 @@ services:
         depends_on:
             - frontend
             - backend
+        networks:
+            - default
+            - shared-network
     postgres:
         image: postgres:15
         container_name: hms-postgres
@@ -54,3 +57,6 @@ services:
 
 volumes:
     pgdata:
+networks:
+    shared-network:
+        external: true
