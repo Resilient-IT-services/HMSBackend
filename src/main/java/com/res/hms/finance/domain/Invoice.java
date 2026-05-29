@@ -34,6 +34,9 @@ public class Invoice extends HospitalScopedEntity {
   @JoinColumn(name = "patient_id", insertable = false, updatable = false)
   private Patient patient;
 
+  @Column(name = "customer_name")
+  private String customerName;
+
   @Column(name = "visit_id")
   private UUID visitId;
 
