@@ -89,6 +89,8 @@ class StockImportIntegrationTest {
                         + "\"composition\": \"ExcelMedicine 500mg\","
                         + "\"strength\": \"500mg\","
                         + "\"form\": \"TABLET\","
+                        + "\"purchasePrice\": 5.0,"
+                        + "\"sellingPrice\": 10.0,"
                         + "\"manufacturer\": \"Generic Pharma\""
                         + "}"))
         .andExpect(status().isOk());
@@ -115,6 +117,10 @@ class StockImportIntegrationTest {
     var row2 = sheet.createRow(2);
     row2.createCell(0).setCellValue("UnknownMedicine");
     row2.createCell(1).setCellValue("B456");
+    row2.createCell(2).setCellValue("2026-12-31");
+    row2.createCell(3).setCellValue(50);
+    row2.createCell(4).setCellValue(5.0);
+    row2.createCell(5).setCellValue(10.0);
 
     ByteArrayOutputStream bos = new ByteArrayOutputStream();
     workbook.write(bos);
@@ -157,6 +163,8 @@ class StockImportIntegrationTest {
                         + "\"composition\": \"CompA\","
                         + "\"strength\": \"500mg\","
                         + "\"form\": \"TABLET\","
+                        + "\"purchasePrice\": 5.0,"
+                        + "\"sellingPrice\": 10.0,"
                         + "\"manufacturer\": \"MfA\""
                         + "}"))
         .andExpect(status().isOk());
@@ -174,6 +182,8 @@ class StockImportIntegrationTest {
                         + "\"composition\": \"CompB\","
                         + "\"strength\": \"500mg\","
                         + "\"form\": \"TABLET\","
+                        + "\"purchasePrice\": 5.0,"
+                        + "\"sellingPrice\": 10.0,"
                         + "\"manufacturer\": \"MfB\""
                         + "}"))
         .andExpect(status().isOk());
