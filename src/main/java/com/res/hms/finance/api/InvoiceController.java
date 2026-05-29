@@ -3,6 +3,7 @@ package com.res.hms.finance.api;
 import com.res.hms.core.api.ApiResponse;
 import com.res.hms.finance.application.dto.InvoiceDTO;
 import com.res.hms.finance.application.service.InvoiceService;
+import com.res.hms.finance.domain.InvoiceItemCategory;
 import java.util.UUID;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpHeaders;
@@ -11,6 +12,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 @RestController
@@ -31,9 +33,11 @@ public class InvoiceController {
   }
 
   @GetMapping("/{id}/export")
-  public ResponseEntity<byte[]> exportInvoice(@PathVariable UUID id) {
+  public ResponseEntity<byte[]> exportInvoice(
+      @PathVariable UUID id,
+      @RequestParam(required = false) InvoiceItemCategory category) {
 
-    byte[] pdf = invoiceService.exportInvoicePdf(id);
+    byte[] pdf = invoiceService.exportInvoicePdf(id, category);
 
     return ResponseEntity.ok()
         .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=invoice.pdf")
