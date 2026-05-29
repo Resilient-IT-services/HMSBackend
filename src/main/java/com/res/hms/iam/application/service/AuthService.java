@@ -40,7 +40,7 @@ public class AuthService {
       Authentication authentication =
           authenticationManager.authenticate(
               UsernamePasswordAuthenticationToken.unauthenticated(
-                  request.username(), request.password()));
+                  request.username().toLowerCase(), request.password()));
 
       SecurityContext context = SecurityContextHolder.createEmptyContext();
       context.setAuthentication(authentication);

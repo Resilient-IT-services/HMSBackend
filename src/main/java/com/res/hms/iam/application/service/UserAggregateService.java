@@ -65,7 +65,7 @@ public class UserAggregateService {
   }
 
   private void validateCreate(UserDetailsDTO dto) {
-    if (userAccountRepository.existsByUsername(dto.getUsername())) {
+    if (userAccountRepository.existsByUsername(dto.getUsername().toLowerCase())) {
       throw new ApiException("ALREADY_EXISTS", "Username already taken", HttpStatus.CONFLICT);
     }
     if (dto.getEmail() != null && userAccountRepository.existsByEmail(dto.getEmail())) {
@@ -80,7 +80,7 @@ public class UserAggregateService {
 
   private UserAccount createBaseUser(UserDetailsDTO dto) {
     UserAccount user = new UserAccount();
-    user.setUsername(dto.getUsername());
+    user.setUsername(dto.getUsername().toLowerCase());
     user.setPasswordHash(
         passwordEncoder.encode(dto.getPassword() != null ? dto.getPassword() : "Pass@123"));
     user.setActive(true);

@@ -53,9 +53,10 @@ public class BootstrapDataConfig {
       UserAccountRepository userAccountRepository,
       RoleRepository roleRepository,
       PasswordEncoder passwordEncoder) {
-    if (!userAccountRepository.existsByUsername(properties.adminUsername())) {
+    String adminUsername = properties.adminUsername().toLowerCase();
+    if (!userAccountRepository.existsByUsername(adminUsername)) {
       UserAccount admin = new UserAccount();
-      admin.setUsername(properties.adminUsername());
+      admin.setUsername(adminUsername);
       admin.setPasswordHash(passwordEncoder.encode(properties.adminPassword()));
       admin.setActive(true);
       admin.setSuperuser(true);

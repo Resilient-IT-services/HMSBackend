@@ -34,7 +34,7 @@ public class HospitalUserDetailsService implements UserDetailsService {
   public UserDetails loadUserByUsername(String username) {
     UserAccount userAccount =
         userAccountRepository
-            .findByUsername(username)
+            .findByUsername(username.toLowerCase())
             .orElseThrow(() -> new UsernameNotFoundException("User not found"));
 
     if (!userAccount.isActive()) {
