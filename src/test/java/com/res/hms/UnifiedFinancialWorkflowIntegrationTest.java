@@ -60,6 +60,12 @@ class UnifiedFinancialWorkflowIntegrationTest {
   @Autowired private DoctorHospitalDetailsRepository doctorHospitalDetailsRepository;
   @Autowired private MedicineRepository medicineRepository;
   @Autowired private PharmacyStockRepository pharmacyStockRepository;
+  @Autowired
+  private com.res.hms.clinical.infrastructure.repository.DoctorScheduleRepository
+      doctorScheduleRepository;
+  @Autowired
+  private com.res.hms.clinical.infrastructure.repository.DoctorAvailabilityOverrideRepository
+      doctorAvailabilityOverrideRepository;
 
   @Autowired
   private com.res.hms.clinical.infrastructure.repository.PatientVisitRepository
@@ -85,6 +91,8 @@ class UnifiedFinancialWorkflowIntegrationTest {
     paymentRepository.deleteAll();
     appointmentRepository.deleteAll();
     patientVisitRepository.deleteAll();
+    doctorAvailabilityOverrideRepository.deleteAll();
+    doctorScheduleRepository.deleteAll();
     doctorHospitalDetailsRepository.deleteAll();
     userAccountRepository.deleteAll();
   }
@@ -139,6 +147,24 @@ class UnifiedFinancialWorkflowIntegrationTest {
     drAccount = userAccountRepository.save(drAccount);
     doctorId = drAccount.getDoctorProfile().getId();
 
+    com.res.hms.clinical.domain.DoctorSchedule schedule =
+        new com.res.hms.clinical.domain.DoctorSchedule();
+    schedule.setAssignmentId(drAccount.getContracts().iterator().next().getId());
+    schedule.setDayOfWeek(java.time.LocalDate.now().plusDays(1).getDayOfWeek());
+    schedule.setStartTime(java.time.LocalTime.of(9, 0));
+    schedule.setEndTime(java.time.LocalTime.of(11, 0));
+    doctorScheduleRepository.save(schedule);
+
+    com.res.hms.clinical.domain.DoctorAvailabilityOverride override =
+        new com.res.hms.clinical.domain.DoctorAvailabilityOverride();
+    override.setDoctorId(doctorId);
+    override.setHospitalId(hospitalId);
+    override.setDate(java.time.LocalDate.now().plusDays(1));
+    override.setType(com.res.hms.clinical.domain.ExceptionType.ADDED);
+    override.setStartTime(java.time.LocalTime.of(9, 0));
+    override.setEndTime(java.time.LocalTime.of(11, 0));
+    doctorAvailabilityOverrideRepository.save(override);
+
     DoctorHospitalDetails drDetails = new DoctorHospitalDetails();
     drDetails.setAssignment(drAccount.getContracts().iterator().next());
     drDetails.setConsultationFee(new BigDecimal("500.00"));
@@ -162,7 +188,13 @@ class UnifiedFinancialWorkflowIntegrationTest {
     OPDEncounterRequest request = new OPDEncounterRequest();
     request.setPatientId(patientId);
     request.setDoctorId(doctorId);
-    request.setAppointmentTime(java.time.OffsetDateTime.now().plusDays(1));
+    request.setAppointmentTime(
+        java.time.OffsetDateTime.now()
+            .plusDays(1)
+            .withHour(9)
+            .withMinute(0)
+            .withSecond(0)
+            .withNano(0));
 
     OPDEncounterRequest.PaymentInfo paymentInfo = new OPDEncounterRequest.PaymentInfo();
     paymentInfo.setAmount(new BigDecimal("500.00"));
