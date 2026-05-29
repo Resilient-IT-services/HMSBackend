@@ -289,6 +289,8 @@ public class AppointmentService {
         AppointmentDTO.builder()
             .id(appointment.getId())
             .appointmentTime(appointment.getAppointmentTime().atOffset(java.time.ZoneOffset.UTC))
+            .appointmentDate(appointment.getAppointmentDate())
+            .appointmentSlotTime(appointment.getAppointmentSlotTime())
             .status(appointment.getStatus())
             .tokenNumber(appointment.getTokenNumber())
             .sessionPeriod(appointment.getSessionPeriod())

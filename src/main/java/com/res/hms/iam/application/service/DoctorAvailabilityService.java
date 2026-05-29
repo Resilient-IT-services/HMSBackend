@@ -4,6 +4,7 @@ import com.res.hms.clinical.domain.Appointment;
 import com.res.hms.clinical.domain.DoctorAvailabilityOverride;
 import com.res.hms.clinical.domain.DoctorSchedule;
 import com.res.hms.clinical.domain.ExceptionType;
+import com.res.hms.clinical.application.appointment.service.AppointmentSlotService;
 import com.res.hms.clinical.infrastructure.repository.AppointmentRepository;
 import com.res.hms.clinical.infrastructure.repository.DoctorAvailabilityOverrideRepository;
 import com.res.hms.clinical.infrastructure.repository.DoctorScheduleRepository;
@@ -14,7 +15,6 @@ import com.res.hms.iam.domain.UserContract;
 import java.time.LocalDate;
 import java.time.LocalTime;
 import java.time.ZoneId;
-import java.time.ZonedDateTime;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
@@ -33,6 +33,7 @@ public class DoctorAvailabilityService {
   private final DoctorScheduleRepository scheduleRepository;
   private final DoctorAvailabilityOverrideRepository availabilityOverrideRepository;
   private final AppointmentRepository appointmentRepository;
+  private final AppointmentSlotService appointmentSlotService;
 
   @Transactional(readOnly = true)
   public DoctorAvailabilityResponse getAvailableSlots(
@@ -47,9 +48,8 @@ public class DoctorAvailabilityService {
 
     List<Appointment> appointments =
         appointmentRepository.findByDoctorIdAndDate(doctorProfile.getId(), date);
-    ZonedDateTime nowHospital = ZonedDateTime.now(zoneId);
-    LocalDate today = nowHospital.toLocalDate();
-    LocalTime now = nowHospital.toLocalTime();
+    LocalDate today = LocalDate.now();
+    LocalTime now = LocalTime.now();
 
     if (date.isBefore(today)) {
       return new DoctorAvailabilityResponse(Collections.emptyList());
@@ -152,12 +152,11 @@ public class DoctorAvailabilityService {
         appointmentRepository.findByDoctorIdAndDate(doctorProfile.getId(), date);
     Set<LocalTime> bookedTimes =
         appointments.stream()
-            .map(a -> a.getAppointmentTime().atZone(zoneId).toLocalTime())
+            .map(Appointment::getAppointmentSlotTime)
             .collect(Collectors.toSet());
 
-    ZonedDateTime nowHospital = ZonedDateTime.now(zoneId);
-    LocalDate today = nowHospital.toLocalDate();
-    LocalTime now = nowHospital.toLocalTime();
+    LocalDate today = LocalDate.now();
+    LocalTime now = LocalTime.now();
 
     List<DoctorSlotDTO> allSlots = new ArrayList<>();
     Optional<DoctorAvailabilityOverride> availabilityOverride =
@@ -172,9 +171,6 @@ public class DoctorAvailabilityService {
       generateSlots(
           availabilityOverride.get().getStartTime(),
           availabilityOverride.get().getEndTime(),
-          availabilityOverride.get().getSlotDurationMinutes() != null
-              ? availabilityOverride.get().getSlotDurationMinutes()
-              : 15,
           bookedTimes,
           date,
           today,
@@ -189,7 +185,6 @@ public class DoctorAvailabilityService {
         generateSlots(
             s.getStartTime(),
             s.getEndTime(),
-            s.getSlotDurationMinutes() != null ? s.getSlotDurationMinutes() : 15,
             bookedTimes,
             date,
             today,
@@ -203,34 +198,20 @@ public class DoctorAvailabilityService {
   private void generateSlots(
       LocalTime start,
       LocalTime end,
-      int duration,
       Set<LocalTime> bookedTimes,
       LocalDate date,
       LocalDate today,
       LocalTime now,
       List<DoctorSlotDTO> allSlots) {
-    LocalTime current = start;
-    while (true) {
-      LocalTime slotEnd = current.plusMinutes(duration);
-      boolean wrapped = slotEnd.isBefore(current);
-      if (wrapped && !end.equals(LocalTime.MIDNIGHT)) {
-        break;
-      }
-      if (!wrapped && !end.equals(LocalTime.MIDNIGHT) && slotEnd.isAfter(end)) {
-        break;
-      }
-      if (wrapped && slotEnd.equals(LocalTime.MIDNIGHT) && end.equals(LocalTime.MIDNIGHT)) {
-        addSlot(current, slotEnd, bookedTimes, date, today, now, allSlots);
-        break;
-      }
-      if (wrapped && !slotEnd.equals(LocalTime.MIDNIGHT) && end.equals(LocalTime.MIDNIGHT)) {
-        break;
-      }
-      addSlot(current, slotEnd, bookedTimes, date, today, now, allSlots);
-      if (slotEnd.equals(end)) {
-        break;
-      }
-      current = slotEnd;
+    for (LocalTime current : appointmentSlotService.generateSlots(start, end)) {
+      addSlot(
+          current,
+          current.plusMinutes(AppointmentSlotService.SLOT_DURATION_MINUTES),
+          bookedTimes,
+          date,
+          today,
+          now,
+          allSlots);
     }
   }
 
@@ -242,12 +223,13 @@ public class DoctorAvailabilityService {
       LocalDate today,
       LocalTime now,
       List<DoctorSlotDTO> allSlots) {
-    boolean isPast = date.isBefore(today) || (date.equals(today) && current.isBefore(now));
+    boolean isPast = date.isBefore(today) || (date.equals(today) && !current.isAfter(now));
     boolean isBooked = bookedTimes.contains(current);
     String status = isPast ? "SESSION_EXPIRED" : (isBooked ? "BOOKED" : "AVAILABLE");
 
     allSlots.add(
         DoctorSlotDTO.builder()
+            .time(current)
             .startTime(current)
             .endTime(slotEnd)
             .available(!isPast && !isBooked)
@@ -259,7 +241,7 @@ public class DoctorAvailabilityService {
       List<Appointment> appointments, LocalTime start, LocalTime end, ZoneId zoneId) {
     return (int)
         appointments.stream()
-            .map(a -> a.getAppointmentTime().atZone(zoneId).toLocalTime())
+            .map(Appointment::getAppointmentSlotTime)
             .filter(t -> (t.equals(start) || t.isAfter(start)) && t.isBefore(end))
             .count();
   }
