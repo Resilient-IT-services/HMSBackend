@@ -16,6 +16,7 @@ import com.res.hms.core.util.ResourceLookup;
 import jakarta.persistence.EntityManager;
 import jakarta.persistence.criteria.CriteriaBuilder;
 import jakarta.persistence.criteria.CriteriaQuery;
+import jakarta.persistence.criteria.Join;
 import jakarta.persistence.criteria.JoinType;
 import jakarta.persistence.criteria.Predicate;
 import jakarta.persistence.criteria.Root;
@@ -63,7 +64,10 @@ public class AppointmentService {
       java.time.Instant to,
       UUID patientId,
       UUID doctorId,
-      com.res.hms.clinical.domain.AppointmentStatus status) {
+      com.res.hms.clinical.domain.AppointmentStatus status,
+      String token,
+      String patientName,
+      String doctor) {
 
     return (root, query, cb) -> {
       List<Predicate> predicates = new ArrayList<>();
@@ -85,6 +89,21 @@ public class AppointmentService {
             cb.or(
                 cb.like(cb.lower(root.get("doctorName")), pattern),
                 cb.like(cb.lower(root.get("patientName")), pattern)));
+      }
+      if (token != null && !token.isBlank()) {
+        predicates.add(cb.like(root.get("tokenNumber").as(String.class), "%" + token.trim() + "%"));
+      }
+      if (patientName != null && !patientName.isBlank()) {
+        predicates.add(
+            cb.like(
+                cb.lower(root.get("patientName")),
+                "%" + patientName.toLowerCase(Locale.ROOT).trim() + "%"));
+      }
+      if (doctor != null && !doctor.isBlank()) {
+        predicates.add(
+            cb.like(
+                cb.lower(root.get("doctorName")),
+                "%" + doctor.toLowerCase(Locale.ROOT).trim() + "%"));
       }
       if (from != null) {
         predicates.add(cb.greaterThanOrEqualTo(root.get("appointmentTime"), from));
@@ -110,7 +129,7 @@ public class AppointmentService {
     Pageable pageable = PageRequest.of(page, size, Sort.by("appointmentTime").descending());
 
     Specification<Appointment> spec =
-        getFilterSpec(hospitalId, search, from, to, patientId, doctorId, status);
+        getFilterSpec(hospitalId, search, from, to, patientId, doctorId, status, null, null, null);
 
     Specification<Appointment> fetchSpec =
         (root, query, cb) -> {
@@ -142,7 +161,7 @@ public class AppointmentService {
     Root<Appointment> root = query.from(Appointment.class);
 
     Specification<Appointment> spec =
-        getFilterSpec(hospitalId, search, from, to, patientId, doctorId, status);
+        getFilterSpec(hospitalId, search, from, to, patientId, doctorId, status, null, null, null);
     Predicate predicate = spec.toPredicate(root, query, cb);
     if (predicate != null) {
       query.where(predicate);
@@ -167,7 +186,8 @@ public class AppointmentService {
     CriteriaQuery<Long> countQuery = cb.createQuery(Long.class);
     Root<Appointment> countRoot = countQuery.from(Appointment.class);
     Predicate baseCountPredicate =
-        getFilterSpec(hospitalId, search, from, null, patientId, doctorId, status)
+        getFilterSpec(
+                hospitalId, search, from, null, patientId, doctorId, status, null, null, null)
             .toPredicate(countRoot, countQuery, cb);
 
     java.time.Instant now = java.time.Instant.now();
@@ -198,12 +218,29 @@ public class AppointmentService {
       java.time.Instant to,
       UUID patientId,
       UUID doctorId,
-      com.res.hms.clinical.domain.AppointmentStatus status) {
+      com.res.hms.clinical.domain.AppointmentStatus status,
+      String token,
+      String patientName,
+      String doctor,
+      String sort) {
     UUID hospitalId = hospitalContext.requireHospitalId();
-    Pageable pageable = PageRequest.of(page, size, Sort.by("appointmentTime").descending());
+
+    Sort parsedSort = Sort.by("appointmentTime").descending();
+    if (sort != null && !sort.isBlank()) {
+      String[] parts = sort.split(",");
+      String property = parts[0].trim();
+      Sort.Direction direction = Sort.Direction.ASC;
+      if (parts.length > 1 && parts[1].trim().equalsIgnoreCase("desc")) {
+        direction = Sort.Direction.DESC;
+      }
+      parsedSort = Sort.by(direction, property);
+    }
+
+    Pageable pageable = PageRequest.of(page, size, parsedSort);
 
     Specification<Appointment> spec =
-        getFilterSpec(hospitalId, search, from, to, patientId, doctorId, status);
+        getFilterSpec(
+            hospitalId, search, from, to, patientId, doctorId, status, token, patientName, doctor);
 
     Specification<Appointment> fetchSpec =
         (root, query, cb) -> {

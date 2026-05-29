@@ -88,10 +88,25 @@ public class AppointmentController {
           Instant to,
       @RequestParam(required = false) UUID patientId,
       @RequestParam(required = false) UUID doctorId,
-      @RequestParam(required = false) AppointmentStatus status) {
+      @RequestParam(required = false) AppointmentStatus status,
+      @RequestParam(required = false) String token,
+      @RequestParam(required = false) String patientName,
+      @RequestParam(required = false) String doctor,
+      @RequestParam(required = false) String sort) {
     return ApiResponse.success(
         appointmentService.listSummary(
-            page, Math.min(size, 100), search, from, to, patientId, doctorId, status));
+            page,
+            Math.min(size, 100),
+            search,
+            from,
+            to,
+            patientId,
+            doctorId,
+            status,
+            token,
+            patientName,
+            doctor,
+            sort));
   }
 
   @GetMapping("/stats")
