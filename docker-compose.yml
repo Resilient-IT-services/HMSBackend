@@ -59,4 +59,5 @@ volumes:
     pgdata:
 networks:
     shared-network:
+        name: shared-network
 
