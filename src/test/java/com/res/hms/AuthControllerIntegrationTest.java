@@ -122,4 +122,52 @@ class AuthControllerIntegrationTest {
                 .content("{\"oldPassword\": \"newAdminPass\", \"newPassword\": \"admin123\"}"))
         .andExpect(status().isOk());
   }
+
+  @Test
+  void loginShouldBeCaseInsensitive() throws Exception {
+    // 1. Login with uppercase "ADMIN" -> should succeed
+    mockMvc
+        .perform(
+            post("/api/v1/auth/login")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(
+                    """
+                        {
+                          "username": "ADMIN",
+                          "password": "admin123"
+                        }
+                        """))
+        .andExpect(status().isOk())
+        .andExpect(jsonPath("$.success").value(true));
+
+    // 2. Login with mixed case "aDmIn" -> should succeed
+    mockMvc
+        .perform(
+            post("/api/v1/auth/login")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(
+                    """
+                        {
+                          "username": "aDmIn",
+                          "password": "admin123"
+                        }
+                        """))
+        .andExpect(status().isOk())
+        .andExpect(jsonPath("$.success").value(true));
+
+    // 3. Login with leading/trailing spaces " admin " -> should succeed
+    mockMvc
+        .perform(
+            post("/api/v1/auth/login")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(
+                    """
+                        {
+                          "username": " admin ",
+                          "password": "admin123"
+                        }
+                        """))
+        .andExpect(status().isOk())
+        .andExpect(jsonPath("$.success").value(true));
+  }
 }

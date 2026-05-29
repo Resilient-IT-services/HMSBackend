@@ -20,14 +20,17 @@ public interface UserAccountRepository
           + "LEFT JOIN FETCH a.role r "
           + "LEFT JOIN FETCH a.hospital h "
           + "LEFT JOIN FETCH u.doctorProfile d "
-          + "WHERE u.username = :username AND u.deleted = false")
+          + "WHERE LOWER(TRIM(u.username)) = LOWER(TRIM(:username)) AND u.deleted = false")
   Optional<UserAccount> findByUsername(@Param("username") String username);
 
-  boolean existsByUsername(String username);
+  @Query("SELECT COUNT(u) > 0 FROM UserAccount u WHERE LOWER(TRIM(u.username)) = LOWER(TRIM(:username))")
+  boolean existsByUsername(@Param("username") String username);
 
-  boolean existsByEmail(String email);
+  @Query("SELECT COUNT(u) > 0 FROM UserAccount u WHERE LOWER(TRIM(u.email)) = LOWER(TRIM(:email))")
+  boolean existsByEmail(@Param("email") String email);
 
-  boolean existsByEmailAndIdNot(String email, UUID id);
+  @Query("SELECT COUNT(u) > 0 FROM UserAccount u WHERE LOWER(TRIM(u.email)) = LOWER(TRIM(:email)) AND u.id <> :id")
+  boolean existsByEmailAndIdNot(@Param("email") String email, @Param("id") UUID id);
 
   List<UserAccount> findAllByDeletedFalse();
 
