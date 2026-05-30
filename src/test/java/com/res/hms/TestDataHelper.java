@@ -21,6 +21,8 @@ import com.res.hms.iam.domain.UserContract;
 import com.res.hms.iam.infrastructure.repository.RoleRepository;
 import com.res.hms.iam.infrastructure.repository.UserAccountRepository;
 import java.math.BigDecimal;
+import java.util.List;
+import java.util.Optional;
 import java.util.UUID;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.crypto.password.PasswordEncoder;
@@ -166,6 +168,11 @@ public class TestDataHelper {
 
   @Transactional(propagation = Propagation.REQUIRES_NEW)
   public UUID createTestDoctor(UUID hospitalId, String username) {
+    Optional<UserAccount> existing = userAccountRepository.findByUsername(username);
+    if (existing.isPresent()) {
+      return existing.get().getDoctorProfile().getId();
+    }
+
     UserAccount drUser = new UserAccount();
     drUser.setUsername(username);
     drUser.setFullName("Dr. " + username);
@@ -191,19 +198,68 @@ public class TestDataHelper {
   @Autowired
   private com.res.hms.iam.infrastructure.repository.DoctorHospitalDetailsRepository doctorHospitalDetailsRepository;
 
+  @Autowired private com.res.hms.iam.application.repository.DoctorProfileRepository doctorProfileRepository;
+
   @Transactional(propagation = Propagation.REQUIRES_NEW)
-  public void setConsultationFee(UUID userId, UUID hospitalId, BigDecimal fee) {
-    UserAccount user = userAccountRepository.findById(userId).orElseThrow();
+  public void setConsultationFee(UUID doctorProfileId, UUID hospitalId, BigDecimal fee) {
+    com.res.hms.iam.domain.DoctorProfile profile = doctorProfileRepository.findById(doctorProfileId).orElseThrow();
+    UserAccount user = profile.getUser();
+    
     UserContract contract = user.getContracts().stream()
         .filter(c -> c.getHospitalId().equals(hospitalId))
         .findFirst()
         .orElseThrow();
 
-    com.res.hms.iam.domain.DoctorHospitalDetails details = new com.res.hms.iam.domain.DoctorHospitalDetails();
+    com.res.hms.iam.domain.DoctorHospitalDetails details = 
+        doctorHospitalDetailsRepository.findById(contract.getId()).orElse(new com.res.hms.iam.domain.DoctorHospitalDetails());
+    
     details.setAssignment(contract);
     details.setConsultationFee(fee);
-    doctorHospitalDetailsRepository.save(details);
+    doctorHospitalDetailsRepository.saveAndFlush(details);
   }
+
+  @Autowired
+  private com.res.hms.tax.infrastructure.repository.TaxMasterRepository taxMasterRepository;
+  @Autowired
+  private com.res.hms.tax.infrastructure.repository.TaxGroupRepository taxGroupRepository;
+  @Autowired
+  private com.res.hms.tax.infrastructure.repository.TaxRuleRepository taxRuleRepository;
+
+  @Transactional(propagation = Propagation.REQUIRES_NEW)
+  public void setupTaxRule(String itemType, List<TaxComponentData> components) {
+    com.res.hms.tax.domain.TaxGroup tg = new com.res.hms.tax.domain.TaxGroup();
+    tg.setName(itemType + " Tax Group");
+    tg.setActive(true);
+
+    for (TaxComponentData comp : components) {
+      com.res.hms.tax.domain.TaxMaster tm = taxMasterRepository.findByCode(comp.code()).orElseGet(() -> {
+        com.res.hms.tax.domain.TaxMaster m = new com.res.hms.tax.domain.TaxMaster();
+        m.setCode(comp.code());
+        m.setName(comp.name());
+        m.setTaxType(comp.type());
+        m.setRate(comp.rate());
+        m.setActive(true);
+        m.setEffectiveFrom(java.time.Instant.now().minus(java.time.Duration.ofDays(1)));
+        return taxMasterRepository.save(m);
+      });
+
+      com.res.hms.tax.domain.TaxGroupDetail tgd = new com.res.hms.tax.domain.TaxGroupDetail();
+      tgd.setGroup(tg);
+      tgd.setTaxMaster(tm);
+      tg.getDetails().add(tgd);
+    }
+    
+    taxGroupRepository.save(tg);
+
+    com.res.hms.tax.domain.TaxRule tr = new com.res.hms.tax.domain.TaxRule();
+    tr.setItemType(itemType);
+    tr.setTaxGroup(tg);
+    tr.setEffectiveFrom(java.time.Instant.now().minus(java.time.Duration.ofDays(1)));
+    tr.setPriority(1);
+    taxRuleRepository.save(tr);
+  }
+
+  public record TaxComponentData(String code, String name, String type, BigDecimal rate) {}
 
   @Transactional(propagation = Propagation.REQUIRES_NEW)
   public Appointment createTestAppointment(

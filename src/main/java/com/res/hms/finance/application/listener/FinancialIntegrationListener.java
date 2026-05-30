@@ -17,6 +17,12 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.event.EventListener;
 import org.springframework.stereotype.Component;
 
+import com.res.hms.tax.application.dto.TaxCalculationRequest;
+import com.res.hms.tax.application.dto.TaxCalculationResult;
+import com.res.hms.tax.application.service.TaxEngineService;
+import com.res.hms.clinical.domain.AppointmentChargeTax;
+import java.time.Instant;
+
 @Slf4j
 @Component
 @RequiredArgsConstructor
@@ -32,6 +38,7 @@ public class FinancialIntegrationListener {
   private final com.res.hms.finance.infrastructure.repository.InvoiceItemRepository
       invoiceItemRepository;
   private final AppointmentChargeRepository appointmentChargeRepository;
+  private final TaxEngineService taxEngineService;
 
   @org.springframework.transaction.event.TransactionalEventListener(
       phase = org.springframework.transaction.event.TransactionPhase.AFTER_COMMIT)
@@ -51,7 +58,7 @@ public class FinancialIntegrationListener {
         return;
       }
 
-      // Legacy deduplication check (still useful if OPDOrchestrator or other sync logic existed)
+      // Legacy deduplication check
       if (invoiceItemRepository.existsBySourceTypeAndSourceId(
           FinanceSourceType.APPOINTMENT, event.appointmentId())) {
         log.info(
@@ -75,7 +82,20 @@ public class FinancialIntegrationListener {
               .map(DoctorHospitalDetails::getConsultationFee)
               .orElse(BigDecimal.ZERO);
 
-      // 3. Create AppointmentCharge (Business side)
+      // 3. Tax Calculation
+      TaxCalculationRequest taxRequest = TaxCalculationRequest.builder()
+          .hospitalId(event.hospitalId())
+          .itemType("CONSULTATION")
+          .itemCode("CONS-" + appointment.getDoctorId())
+          .taxableAmount(fee)
+          .quantity(BigDecimal.ONE)
+          .unitPrice(fee)
+          .invoiceDate(Instant.now())
+          .build();
+          
+      TaxCalculationResult taxResult = taxEngineService.calculate(taxRequest);
+
+      // 4. Create AppointmentCharge (Business side)
       AppointmentCharge charge = new AppointmentCharge();
       charge.setHospitalId(event.hospitalId());
       charge.setPatientId(event.patientId());
@@ -84,7 +104,9 @@ public class FinancialIntegrationListener {
       charge.setDoctorName(appointment.getDoctorName());
       charge.setSourceType("CONSULTATION");
       charge.setStatus("COMPLETED");
-      charge.setTotalAmount(fee);
+      charge.setTaxableAmount(taxResult.taxableAmount());
+      charge.setTaxAmount(taxResult.totalTax());
+      charge.setTotalAmount(taxResult.grandTotal());
 
       AppointmentChargeItem chargeItem = new AppointmentChargeItem();
       chargeItem.setHospitalId(event.hospitalId());
@@ -96,26 +118,40 @@ public class FinancialIntegrationListener {
 
       charge.getItems().add(chargeItem);
 
-      // 4. Get or Create Invoice (Finance side)
+      // Save snapshots
+      if (taxResult.components() != null) {
+        taxResult.components().forEach(c -> {
+          AppointmentChargeTax act = new AppointmentChargeTax();
+          act.setCharge(charge);
+          act.setTaxCode(c.taxCode());
+          act.setTaxName(c.taxName());
+          act.setTaxRate(c.taxRate());
+          act.setTaxAmount(c.taxAmount());
+          act.setTaxableAmount(taxResult.taxableAmount());
+          charge.getTaxes().add(act);
+        });
+      }
+
+      // 5. Get or Create Invoice (Finance side)
       Invoice invoice =
           invoiceService.getOrCreateInvoice(
               event.hospitalId(), event.patientId(), appointment.getVisitId());
 
-      // 5. Add Consultation Item to Invoice
+      // 6. Add Consultation Item to Invoice with Tax Snapshot
       invoiceService.addItem(
           invoice.getId(),
           chargeItem.getItemName(),
           InvoiceItemCategory.CONSULTATION,
           BigDecimal.ONE,
           fee,
-          BigDecimal.ZERO,
-          BigDecimal.ZERO,
+          BigDecimal.ZERO, // discount
           FinanceSourceType.APPOINTMENT,
           event.appointmentId(),
           appointment.getDoctorId(),
-          appointment.getDoctorName());
+          appointment.getDoctorName(),
+          taxResult.components());
 
-      // 6. Link charge to invoice
+      // 7. Link charge to invoice
       charge.setInvoiceId(invoice.getId());
       appointmentChargeRepository.save(charge);
 
@@ -158,12 +194,12 @@ public class FinancialIntegrationListener {
                     InvoiceItemCategory.PHARMACY,
                     BigDecimal.valueOf(item.getQuantity()),
                     item.getUnitPrice(),
-                    item.getTaxAmount(),
                     item.getDiscountAmount(),
                     FinanceSourceType.PHARMACY_SALE_ITEM,
                     item.getId(),
                     null,
-                    null);
+                    null,
+                    null); // Skipping pharmacy taxes for now to focus on Appointment
               });
 
       log.info(
@@ -176,3 +212,4 @@ public class FinancialIntegrationListener {
     }
   }
 }
+

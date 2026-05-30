@@ -37,6 +37,12 @@ import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import com.res.hms.tax.application.dto.TaxCalculationRequest;
+import com.res.hms.tax.application.dto.TaxCalculationResult;
+import com.res.hms.tax.application.service.TaxEngineService;
+import com.res.hms.pharmacy.domain.PharmacySaleItemTax;
+import java.time.Instant;
+
 @Slf4j
 @Service
 @RequiredArgsConstructor
@@ -53,6 +59,7 @@ public class PharmacySaleService {
   private final PaymentService paymentService;
   private final HospitalContext hospitalContext;
   private final com.res.hms.clinical.application.service.PatientVisitService patientVisitService;
+  private final TaxEngineService taxEngineService;
 
   @Transactional
   public QuickPharmacySaleResponse createSale(QuickPharmacySaleRequest request) {
@@ -67,6 +74,46 @@ public class PharmacySaleService {
     sale.setTotalAmount(processItems(hospitalId, request.getItems(), sale));
 
     PharmacySale savedSale = pharmacySaleRepository.save(sale);
+    
+    // Calculate and Save Taxes for each item
+    for (PharmacySaleItem item : savedSale.getItems()) {
+      TaxCalculationRequest taxRequest = TaxCalculationRequest.builder()
+          .hospitalId(hospitalId)
+          .itemType("PHARMACY")
+          .itemCode(item.getMedicine().getId().toString())
+          .hsnOrSacCode(item.getMedicine().getHsnCode())
+          .taxableAmount(item.getTaxableAmount())
+          .quantity(BigDecimal.valueOf(item.getQuantity()))
+          .unitPrice(item.getUnitPrice())
+          .invoiceDate(Instant.now())
+          .build();
+      
+      TaxCalculationResult taxResult = taxEngineService.calculate(taxRequest);
+      
+      item.setTaxAmount(taxResult.totalTax());
+      item.setNetAmount(item.getTaxableAmount().add(taxResult.totalTax()));
+      
+      if (taxResult.components() != null) {
+        for (com.res.hms.tax.application.dto.TaxComponent tc : taxResult.components()) {
+          PharmacySaleItemTax pit = new PharmacySaleItemTax();
+          pit.setPharmacySaleItem(item);
+          pit.setTaxCode(tc.taxCode());
+          pit.setTaxName(tc.taxName());
+          pit.setTaxRate(tc.taxRate());
+          pit.setTaxAmount(tc.taxAmount());
+          pit.setTaxableAmount(item.getTaxableAmount());
+          item.getTaxes().add(pit);
+        }
+      }
+    }
+    
+    // Update total sale amount with taxes
+    BigDecimal grandTotal = savedSale.getItems().stream()
+        .map(PharmacySaleItem::getNetAmount)
+        .reduce(BigDecimal.ZERO, BigDecimal::add);
+    savedSale.setTotalAmount(grandTotal);
+    pharmacySaleRepository.save(savedSale);
+
     Invoice invoice = createInvoice(request, hospitalId, savedSale);
     addInvoiceItems(savedSale, invoice);
 
@@ -229,6 +276,7 @@ public class PharmacySaleService {
 
     BigDecimal itemNet =
         itemSubtotal.add(saleItem.getTaxAmount()).subtract(saleItem.getDiscountAmount());
+    saleItem.setTaxableAmount(itemSubtotal.subtract(saleItem.getDiscountAmount()));
     saleItem.setNetAmount(itemNet);
 
     sale.getItems().add(saleItem);
@@ -247,18 +295,24 @@ public class PharmacySaleService {
 
   private void addInvoiceItems(PharmacySale savedSale, Invoice invoice) {
     for (PharmacySaleItem saleItem : savedSale.getItems()) {
+      List<com.res.hms.tax.application.dto.TaxComponent> taxComponents = 
+          saleItem.getTaxes().stream()
+              .map(t -> new com.res.hms.tax.application.dto.TaxComponent(
+                  t.getTaxCode(), t.getTaxName(), t.getTaxRate(), t.getTaxAmount()))
+              .toList();
+
       invoiceService.addItem(
           invoice.getId(),
           saleItem.getMedicine().getName() + " (" + saleItem.getStock().getBatchNumber() + ")",
           InvoiceItemCategory.PHARMACY,
           BigDecimal.valueOf(saleItem.getQuantity()),
           saleItem.getUnitPrice(),
-          saleItem.getTaxAmount(),
           saleItem.getDiscountAmount(),
           FinanceSourceType.PHARMACY_SALE_ITEM,
           saleItem.getId(),
           savedSale.getDoctorId(),
-          savedSale.getExternalDoctorName());
+          savedSale.getExternalDoctorName(),
+          taxComponents);
     }
   }
 

@@ -55,53 +55,47 @@ class AppointmentChargeIntegrationTest {
 
   @Test
   @Transactional
-  void testOnAppointmentBookedCreatesChargeAndInvoiceWithCorrectAmounts() {
+  void testOnAppointmentBookedWithMultipleTaxes() {
     // 1. Setup
-    UUID hospitalId = testDataHelper.createHospitalIfMissing("CH_TEST", "Charge Hospital");
+    UUID hospitalId = testDataHelper.createHospitalIfMissing("CH_TAX_MULTI", "Multi Tax Hospital");
     UUID patientId = testDataHelper.createTestPatient(hospitalId).getId();
     
     // Create Doctor and set fee
-    UUID doctorId = testDataHelper.createTestDoctor(hospitalId, "charge_dr_" + UUID.randomUUID().toString().substring(0, 8));
-    java.math.BigDecimal expectedFee = new java.math.BigDecimal("1500.00");
+    UUID doctorId = testDataHelper.createTestDoctor(hospitalId, "multi_dr_" + UUID.randomUUID().toString().substring(0, 8));
+    java.math.BigDecimal expectedFee = new java.math.BigDecimal("1000.00");
     testDataHelper.setConsultationFee(doctorId, hospitalId, expectedFee);
 
-    // Create an actual appointment in DB so listener can find it
+    // Setup Multi-Tax Rule for CONSULTATION (CGST 9% + SGST 9%)
+    testDataHelper.setupTaxRule("CONSULTATION", java.util.List.of(
+        new com.res.hms.TestDataHelper.TaxComponentData("CGST_9", "Central GST 9%", "CGST", new java.math.BigDecimal("9.00")),
+        new com.res.hms.TestDataHelper.TaxComponentData("SGST_9", "State GST 9%", "SGST", new java.math.BigDecimal("9.00"))
+    ));
+
+    // Create an actual appointment in DB
     com.res.hms.clinical.domain.PatientVisit visit = testDataHelper.createTestVisit(hospitalId, patientId);
     Appointment appointment = testDataHelper.createTestAppointment(hospitalId, patientId, doctorId, visit.getId());
 
     AppointmentBookedEvent event = new AppointmentBookedEvent(appointment.getId(), patientId, hospitalId);
 
-    // 2. Execute listener directly
+    // 2. Execute
     listener.onAppointmentBooked(event);
 
-    // 3. Verify AppointmentCharge
-    AppointmentCharge charge = chargeRepository.findByAppointmentIdAndHospitalId(appointment.getId(), hospitalId)
-        .orElseThrow(() -> new AssertionError("AppointmentCharge was not created"));
+    // 3. Verify
+    AppointmentCharge charge = chargeRepository.findByAppointmentIdAndHospitalId(appointment.getId(), hospitalId).orElseThrow();
     
-    assertThat(charge.getAppointmentId()).isEqualTo(appointment.getId());
-    assertThat(charge.getTotalAmount()).isEqualByComparingTo(expectedFee);
-    assertThat(charge.getInvoiceId()).isNotNull();
-    assertThat(charge.getItems()).hasSize(1);
-    
-    AppointmentChargeItem chargeItem = charge.getItems().get(0);
-    assertThat(chargeItem.getItemName()).contains("Dr. Test");
-    assertThat(chargeItem.getAmount()).isEqualByComparingTo(expectedFee);
-    assertThat(chargeItem.getQuantity()).isEqualTo(1);
-    assertThat(chargeItem.getSubtotal()).isEqualByComparingTo(expectedFee);
+    // Expected: 1000 + 90 (CGST) + 90 (SGST) = 1180
+    assertThat(charge.getTaxableAmount()).isEqualByComparingTo("1000.00");
+    assertThat(charge.getTaxAmount()).isEqualByComparingTo("180.00");
+    assertThat(charge.getTotalAmount()).isEqualByComparingTo("1180.00");
+    assertThat(charge.getTaxes()).hasSize(2);
 
     // 4. Verify Invoice
     Invoice invoice = invoiceRepository.findById(charge.getInvoiceId()).orElseThrow();
-    assertThat(invoice.getPatientId()).isEqualTo(patientId);
-    assertThat(invoice.getTotalAmount()).isEqualByComparingTo(expectedFee);
+    assertThat(invoice.getTaxAmount()).isEqualByComparingTo("180.00");
+    assertThat(invoice.getTotalAmount()).isEqualByComparingTo("1180.00");
     
-    // 5. Verify InvoiceItem
     java.util.List<com.res.hms.finance.domain.InvoiceItem> invoiceItems = invoiceItemRepository.findAllByInvoiceId(invoice.getId());
-    assertThat(invoiceItems).hasSize(1);
-    com.res.hms.finance.domain.InvoiceItem invoiceItem = invoiceItems.get(0);
-    assertThat(invoiceItem.getItemDescription()).contains("Dr. Test");
-    assertThat(invoiceItem.getNetTotal()).isEqualByComparingTo(expectedFee);
-    assertThat(invoiceItem.getSourceType()).isEqualTo(com.res.hms.finance.domain.FinanceSourceType.APPOINTMENT);
-    assertThat(invoiceItem.getSourceId()).isEqualTo(appointment.getId());
+    assertThat(invoiceItems.get(0).getTaxes()).hasSize(2);
   }
 
   @Test

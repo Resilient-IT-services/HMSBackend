@@ -84,11 +84,11 @@ public class OPDEncounterOrchestrator {
         BigDecimal.ONE,
         fee,
         BigDecimal.ZERO,
-        BigDecimal.ZERO,
         FinanceSourceType.APPOINTMENT,
         savedAppointment.getId(),
-        request.getDoctorId(),
-        savedAppointment.getDoctorName());
+        savedAppointment.getDoctorId(),
+        savedAppointment.getDoctorName(),
+        null); // Tax components to be handled later
 
     // 4. Record Payment if provided
     if (request.getPayment() != null) {

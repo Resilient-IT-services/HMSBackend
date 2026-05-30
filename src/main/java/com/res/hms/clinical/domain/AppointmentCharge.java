@@ -46,9 +46,18 @@ public class AppointmentCharge extends HospitalScopedEntity {
   @Column(name = "discount", precision = 12, scale = 2)
   private BigDecimal discount = BigDecimal.ZERO;
 
+  @Column(name = "taxable_amount", nullable = false, precision = 12, scale = 2)
+  private BigDecimal taxableAmount = BigDecimal.ZERO;
+
+  @Column(name = "tax_amount", nullable = false, precision = 12, scale = 2)
+  private BigDecimal taxAmount = BigDecimal.ZERO;
+
   @Column(name = "payment_method")
   private String paymentMethod;
 
   @OneToMany(mappedBy = "charge", cascade = CascadeType.ALL, orphanRemoval = true)
   private List<AppointmentChargeItem> items = new ArrayList<>();
+
+  @OneToMany(mappedBy = "charge", cascade = CascadeType.ALL, orphanRemoval = true)
+  private List<AppointmentChargeTax> taxes = new ArrayList<>();
 }
