@@ -22,7 +22,7 @@ import lombok.Setter;
 @Getter
 @Setter
 @Entity
-@Table(name = "doctor_profile")
+@Table(name = "doctor_profile", schema = "staff")
 public class DoctorProfile extends AuditableEntity {
 
   @Id
@@ -39,6 +39,7 @@ public class DoctorProfile extends AuditableEntity {
       cascade = {CascadeType.PERSIST, CascadeType.MERGE})
   @JoinTable(
       name = "doctor_specialization",
+      schema = "staff",
       joinColumns = @JoinColumn(name = "doctor_profile_id"),
       inverseJoinColumns = @JoinColumn(name = "specialization_id"))
   private Set<Specialization> specializations = new HashSet<>();

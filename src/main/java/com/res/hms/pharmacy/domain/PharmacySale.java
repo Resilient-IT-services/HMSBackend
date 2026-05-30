@@ -19,7 +19,7 @@ import lombok.Setter;
 @Getter
 @Setter
 @Entity
-@Table(name = "pharmacy_sale")
+@Table(name = "pharmacy_sale", schema = "pharmacy")
 public class PharmacySale extends HospitalScopedEntity {
 
   @Column(name = "sale_number")

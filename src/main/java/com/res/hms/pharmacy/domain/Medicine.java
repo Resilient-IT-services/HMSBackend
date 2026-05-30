@@ -15,6 +15,7 @@ import lombok.Setter;
 @Entity
 @Table(
     name = "medicine",
+    schema = "pharmacy",
     uniqueConstraints = {
       @UniqueConstraint(
           name = "uk_medicine_name_strength_form",

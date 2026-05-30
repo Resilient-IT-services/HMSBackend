@@ -10,7 +10,7 @@ import lombok.Setter;
 @Getter
 @Setter
 @Entity
-@Table(name = "specialization")
+@Table(name = "specialization", schema = "core")
 public class Specialization extends BaseEntity {
 
   @Column(nullable = false, unique = true)

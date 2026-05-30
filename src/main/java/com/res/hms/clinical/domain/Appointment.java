@@ -13,7 +13,7 @@ import lombok.Setter;
 @Getter
 @Setter
 @Entity
-@Table(name = "appointment")
+@Table(name = "appointment", schema = "appointment")
 public class Appointment extends HospitalScopedEntity {
 
   @Column(name = "patient_id", nullable = false)

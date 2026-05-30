@@ -16,7 +16,7 @@ import org.hibernate.annotations.Type;
 @Getter
 @Setter
 @Entity
-@Table(name = "audit_log")
+@Table(name = "audit_log", schema = "platform")
 public class AuditLog extends BaseEntity {
 
   @Column(name = "hospital_id")

@@ -14,7 +14,7 @@ import lombok.Setter;
 @Getter
 @Setter
 @Entity
-@Table(name = "hospital_medicine_catalog")
+@Table(name = "hospital_medicine_catalog", schema = "pharmacy")
 public class HospitalMedicineCatalog extends HospitalScopedEntity {
 
   @ManyToOne(fetch = FetchType.LAZY, optional = false)

@@ -16,7 +16,7 @@ import lombok.Setter;
 @Getter
 @Setter
 @Entity
-@Table(name = "receptionist_hospital_details")
+@Table(name = "receptionist_hospital_details", schema = "staff")
 public class ReceptionistHospitalDetails extends AuditableEntity {
 
   @Id

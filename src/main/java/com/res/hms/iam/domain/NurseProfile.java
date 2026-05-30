@@ -19,7 +19,7 @@ import lombok.Setter;
 @Getter
 @Setter
 @Entity
-@Table(name = "nurse_profile")
+@Table(name = "nurse_profile", schema = "staff")
 public class NurseProfile extends AuditableEntity {
 
   @Id private UUID id;

@@ -20,7 +20,7 @@ import lombok.Setter;
 @Getter
 @Setter
 @Entity
-@Table(name = "hospital")
+@Table(name = "hospital", schema = "core")
 public class Hospital extends BaseEntity {
 
   @Column(nullable = false)
@@ -59,6 +59,7 @@ public class Hospital extends BaseEntity {
       cascade = {CascadeType.PERSIST, CascadeType.MERGE})
   @JoinTable(
       name = "hospital_departments",
+      schema = "core",
       joinColumns = @JoinColumn(name = "hospital_id"),
       inverseJoinColumns = @JoinColumn(name = "department_id"))
   private Set<Department> departments = new HashSet<>();

@@ -19,6 +19,7 @@ import lombok.Setter;
 @Entity
 @Table(
     name = "pharmacy_stock",
+    schema = "pharmacy",
     indexes = {
       @Index(
           name = "idx_pharmacy_stock_hospital_medicine",

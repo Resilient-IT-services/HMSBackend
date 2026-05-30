@@ -21,7 +21,7 @@ import lombok.Setter;
 @Getter
 @Setter
 @Entity
-@Table(name = "user_contract")
+@Table(name = "user_contract", schema = "iam")
 public class UserContract extends BaseEntity {
 
   @ManyToOne(fetch = FetchType.LAZY, optional = false)
@@ -40,6 +40,7 @@ public class UserContract extends BaseEntity {
       cascade = {CascadeType.PERSIST, CascadeType.MERGE})
   @JoinTable(
       name = "user_contract_department",
+      schema = "iam",
       joinColumns = @JoinColumn(name = "user_contract_id"),
       inverseJoinColumns = @JoinColumn(name = "department_id"))
   private Set<Department> departments = new HashSet<>();

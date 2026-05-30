@@ -14,7 +14,7 @@ import lombok.Setter;
 @Getter
 @Setter
 @Entity
-@Table(name = "doctor_availability_exception")
+@Table(name = "doctor_availability_exception", schema = "staff")
 public class DoctorAvailabilityOverride extends BaseEntity {
 
   @Column(name = "doctor_id", nullable = false)

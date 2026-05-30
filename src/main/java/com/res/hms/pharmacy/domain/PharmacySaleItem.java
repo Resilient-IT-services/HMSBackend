@@ -14,7 +14,7 @@ import lombok.Setter;
 @Getter
 @Setter
 @Entity
-@Table(name = "pharmacy_sale_item")
+@Table(name = "pharmacy_sale_item", schema = "pharmacy")
 public class PharmacySaleItem extends BaseEntity {
 
   @ManyToOne(fetch = FetchType.LAZY, optional = false)
