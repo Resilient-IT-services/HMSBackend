@@ -188,6 +188,9 @@ public class InvoiceService {
     item.setDoctorName(doctorName);
     item.setInvoice(invoice);
 
+    log.info("Invoice Item Added: Subtotal={}, Discount={}, Taxable={}, Tax={}, Net={}", 
+        subtotal, discount, taxableAmount, totalTax, item.getNetTotal());
+
     invoiceItemRepository.save(item);
     invoice.getItems().add(item);
 
@@ -201,15 +204,18 @@ public class InvoiceService {
             .map(InvoiceItem::getSubtotal)
             .reduce(BigDecimal.ZERO, BigDecimal::add);
 
+    BigDecimal discount =
+        invoice.getItems().stream()
+            .map(InvoiceItem::getDiscountAmount)
+            .reduce(BigDecimal.ZERO, BigDecimal::add);
+
     BigDecimal tax =
         invoice.getItems().stream()
             .map(InvoiceItem::getTaxAmount)
             .reduce(BigDecimal.ZERO, BigDecimal::add);
 
-    BigDecimal discount =
-        invoice.getItems().stream()
-            .map(InvoiceItem::getDiscountAmount)
-            .reduce(BigDecimal.ZERO, BigDecimal::add);
+    log.info("Updating Invoice Totals: Subtotal={}, Discount={}, Tax={}, Total={}", 
+        subtotal, discount, tax, subtotal.add(tax).subtract(discount));
 
     invoice.setSubtotalAmount(subtotal);
     invoice.setTaxAmount(tax);

@@ -43,6 +43,11 @@ class AppointmentChargeIntegrationTest {
 
   @Autowired private com.res.hms.finance.infrastructure.repository.InvoiceItemRepository invoiceItemRepository;
 
+  @org.junit.jupiter.api.BeforeEach
+  void setup() {
+    testDataHelper.clearTaxRules();
+  }
+
   @org.junit.jupiter.api.AfterEach
   void tearDown() {
     invoiceItemRepository.deleteAll();

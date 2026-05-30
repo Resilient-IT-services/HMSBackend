@@ -18,15 +18,11 @@ import org.springframework.transaction.annotation.Transactional;
 
 @SpringBootTest
 @ActiveProfiles("test")
+@Transactional
 class AppointmentValidationIntegrationTest {
 
   @Autowired private AppointmentAggregateService appointmentAggregateService;
   @Autowired private TestDataHelper testDataHelper;
-  @Autowired private com.res.hms.core.tenant.HospitalContext hospitalContext;
-  @Autowired private com.res.hms.clinical.infrastructure.repository.AppointmentRepository appointmentRepository;
-  @Autowired private com.res.hms.clinical.infrastructure.repository.PatientVisitRepository visitRepository;
-  @Autowired private com.res.hms.iam.infrastructure.repository.UserAccountRepository userAccountRepository;
-  @Autowired private com.res.hms.iam.infrastructure.repository.DoctorHospitalDetailsRepository doctorHospitalDetailsRepository;
 
   private UUID hospitalId;
   private UUID patientId;
@@ -40,14 +36,6 @@ class AppointmentValidationIntegrationTest {
     String username = "val_dr_" + UUID.randomUUID().toString().substring(0, 8);
     doctorId = testDataHelper.createTestDoctor(hospitalId, username);
     testDataHelper.setConsultationFee(doctorId, hospitalId, java.math.BigDecimal.ZERO);
-  }
-
-  @org.junit.jupiter.api.AfterEach
-  void tearDown() {
-    appointmentRepository.deleteAll();
-    visitRepository.deleteAll();
-    doctorHospitalDetailsRepository.deleteAll();
-    userAccountRepository.deleteAll();
   }
 
   @Test

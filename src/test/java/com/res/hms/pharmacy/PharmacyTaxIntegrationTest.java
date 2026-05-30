@@ -43,6 +43,11 @@ class PharmacyTaxIntegrationTest {
   @Autowired private TestDataHelper testDataHelper;
   @Autowired private com.res.hms.core.tenant.HospitalContext hospitalContext;
 
+  @org.junit.jupiter.api.BeforeEach
+  void setup() {
+    testDataHelper.clearTaxRules();
+  }
+
   @Test
   @Transactional
   void testPharmacySaleWithMultipleTaxes() {

@@ -11,7 +11,7 @@ import org.springframework.stereotype.Repository;
 @Repository
 public interface TaxRuleRepository extends JpaRepository<TaxRule, UUID> {
   @Query("SELECT r FROM TaxRule r WHERE r.itemType = :itemType " +
-         "AND (:hsnCode IS NULL OR r.hsnCode = :hsnCode) " +
+         "AND (r.hsnCode IS NULL OR r.hsnCode = :hsnCode) " +
          "AND r.effectiveFrom <= CURRENT_TIMESTAMP " +
          "AND (r.effectiveTo IS NULL OR r.effectiveTo >= CURRENT_TIMESTAMP) " +
          "ORDER BY r.priority DESC")

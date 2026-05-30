@@ -225,6 +225,16 @@ public class TestDataHelper {
   @Autowired
   private com.res.hms.tax.infrastructure.repository.TaxRuleRepository taxRuleRepository;
 
+  @Autowired private com.res.hms.tax.infrastructure.repository.TaxGroupDetailRepository taxGroupDetailRepository;
+
+  @Transactional(propagation = Propagation.REQUIRES_NEW)
+  public void clearTaxRules() {
+    taxRuleRepository.deleteAll();
+    taxGroupDetailRepository.deleteAll();
+    taxGroupRepository.deleteAll();
+    taxMasterRepository.deleteAll();
+  }
+
   @Transactional(propagation = Propagation.REQUIRES_NEW)
   public void setupTaxRule(String itemType, List<TaxComponentData> components) {
     com.res.hms.tax.domain.TaxGroup tg = new com.res.hms.tax.domain.TaxGroup();
