@@ -1,5 +1,6 @@
 package com.res.hms;
 
+import com.res.hms.clinical.domain.Appointment;
 import com.res.hms.clinical.domain.Patient;
 import com.res.hms.clinical.domain.PatientVisit;
 import com.res.hms.clinical.domain.VisitStatus;
@@ -37,6 +38,9 @@ public class TestDataHelper {
   @Autowired private PatientVisitRepository patientVisitRepository;
 
   @Autowired private InvoiceRepository invoiceRepository;
+
+  @Autowired
+  private com.res.hms.clinical.infrastructure.repository.AppointmentRepository appointmentRepository;
 
   @Transactional(propagation = Propagation.REQUIRES_NEW)
   public PatientVisit createTestVisit(UUID hospitalId, UUID patientId) {
@@ -154,5 +158,64 @@ public class TestDataHelper {
     s.setBatchNumber(batch);
     s.setExpiryDate(java.time.LocalDate.now().plusYears(1));
     return pharmacyStockRepository.save(s);
+  }
+
+  @Autowired private RoleRepository roleRepository;
+  @Autowired private UserAccountRepository userAccountRepository;
+  @Autowired private PasswordEncoder passwordEncoder;
+
+  @Transactional(propagation = Propagation.REQUIRES_NEW)
+  public UUID createTestDoctor(UUID hospitalId, String username) {
+    UserAccount drUser = new UserAccount();
+    drUser.setUsername(username);
+    drUser.setFullName("Dr. " + username);
+    drUser.setPasswordHash(passwordEncoder.encode("password"));
+    drUser.setActive(true);
+    drUser.setGender(Gender.MALE);
+    drUser.setDob(java.time.LocalDate.of(1980, 1, 1));
+
+    com.res.hms.iam.domain.DoctorProfile drProfile = new com.res.hms.iam.domain.DoctorProfile();
+    drProfile.setUser(drUser);
+    drUser.setDoctorProfile(drProfile);
+
+    UserContract drAssign = new UserContract();
+    drAssign.setUser(drUser);
+    drAssign.setHospitalId(hospitalId);
+    drAssign.setRole(roleRepository.findByCode(RoleCode.DOCTOR).orElseThrow());
+
+    drUser.getContracts().add(drAssign);
+    UserAccount saved = userAccountRepository.save(drUser);
+    return saved.getDoctorProfile().getId();
+  }
+
+  @Autowired
+  private com.res.hms.iam.infrastructure.repository.DoctorHospitalDetailsRepository doctorHospitalDetailsRepository;
+
+  @Transactional(propagation = Propagation.REQUIRES_NEW)
+  public void setConsultationFee(UUID userId, UUID hospitalId, BigDecimal fee) {
+    UserAccount user = userAccountRepository.findById(userId).orElseThrow();
+    UserContract contract = user.getContracts().stream()
+        .filter(c -> c.getHospitalId().equals(hospitalId))
+        .findFirst()
+        .orElseThrow();
+
+    com.res.hms.iam.domain.DoctorHospitalDetails details = new com.res.hms.iam.domain.DoctorHospitalDetails();
+    details.setAssignment(contract);
+    details.setConsultationFee(fee);
+    doctorHospitalDetailsRepository.save(details);
+  }
+
+  @Transactional(propagation = Propagation.REQUIRES_NEW)
+  public Appointment createTestAppointment(
+      UUID hospitalId, UUID patientId, UUID doctorId, UUID visitId) {
+    Appointment a = new Appointment();
+    a.setHospitalId(hospitalId);
+    a.setPatientId(patientId);
+    a.setDoctorId(doctorId);
+    a.setDoctorName("Dr. Test");
+    a.setVisitId(visitId);
+    a.setAppointmentTime(java.time.Instant.now());
+    a.setStatus(com.res.hms.clinical.domain.AppointmentStatus.SCHEDULED);
+    return appointmentRepository.save(a);
   }
 }

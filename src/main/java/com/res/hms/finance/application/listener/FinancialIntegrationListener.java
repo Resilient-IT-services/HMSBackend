@@ -2,6 +2,9 @@ package com.res.hms.finance.application.listener;
 
 import com.res.hms.clinical.application.event.AppointmentBookedEvent;
 import com.res.hms.clinical.domain.Appointment;
+import com.res.hms.clinical.domain.AppointmentCharge;
+import com.res.hms.clinical.domain.AppointmentChargeItem;
+import com.res.hms.clinical.infrastructure.repository.AppointmentChargeRepository;
 import com.res.hms.finance.domain.FinanceSourceType;
 import com.res.hms.finance.domain.Invoice;
 import com.res.hms.finance.domain.InvoiceItemCategory;
@@ -28,6 +31,7 @@ public class FinancialIntegrationListener {
       pharmacySaleRepository;
   private final com.res.hms.finance.infrastructure.repository.InvoiceItemRepository
       invoiceItemRepository;
+  private final AppointmentChargeRepository appointmentChargeRepository;
 
   @org.springframework.transaction.event.TransactionalEventListener(
       phase = org.springframework.transaction.event.TransactionPhase.AFTER_COMMIT)
@@ -37,8 +41,17 @@ public class FinancialIntegrationListener {
     log.info("RECEIVED AppointmentBookedEvent for appointment: {}", event.appointmentId());
 
     try {
-      // Deduplication: If an invoice item already exists for this appointment, skip.
-      // This happens when the OPDOrchestrator already created the invoice synchronously.
+      // 1. Deduplication: Check if charge already exists
+      if (appointmentChargeRepository
+          .findByAppointmentIdAndHospitalId(event.appointmentId(), event.hospitalId())
+          .isPresent()) {
+        log.info(
+            "DEDUPLICATION: Charge already exists for appointment {}, skipping.",
+            event.appointmentId());
+        return;
+      }
+
+      // Legacy deduplication check (still useful if OPDOrchestrator or other sync logic existed)
       if (invoiceItemRepository.existsBySourceTypeAndSourceId(
           FinanceSourceType.APPOINTMENT, event.appointmentId())) {
         log.info(
@@ -47,23 +60,13 @@ public class FinancialIntegrationListener {
         return;
       }
 
-      log.info("NO DEDUPLICATION: Generating invoice for appointment {}...", event.appointmentId());
+      log.info("NO DEDUPLICATION: Generating charge for appointment {}...", event.appointmentId());
 
       Appointment appointment =
           appointmentRepository
               .findById(event.appointmentId())
               .orElseThrow(
                   () -> new RuntimeException("Appointment not found: " + event.appointmentId()));
-
-      log.info(
-          "Found appointment {}, visitId: {}, generating invoice...",
-          appointment.getId(),
-          appointment.getVisitId());
-
-      // 1. Get or Create Invoice
-      Invoice invoice =
-          invoiceService.getOrCreateInvoice(
-              event.hospitalId(), event.patientId(), appointment.getVisitId());
 
       // 2. Get Consultation Fee
       BigDecimal fee =
@@ -72,10 +75,36 @@ public class FinancialIntegrationListener {
               .map(DoctorHospitalDetails::getConsultationFee)
               .orElse(BigDecimal.ZERO);
 
-      // 3. Add Consultation Item
+      // 3. Create AppointmentCharge (Business side)
+      AppointmentCharge charge = new AppointmentCharge();
+      charge.setHospitalId(event.hospitalId());
+      charge.setPatientId(event.patientId());
+      charge.setAppointmentId(event.appointmentId());
+      charge.setDoctorId(appointment.getDoctorId());
+      charge.setDoctorName(appointment.getDoctorName());
+      charge.setSourceType("CONSULTATION");
+      charge.setStatus("COMPLETED");
+      charge.setTotalAmount(fee);
+
+      AppointmentChargeItem chargeItem = new AppointmentChargeItem();
+      chargeItem.setHospitalId(event.hospitalId());
+      chargeItem.setCharge(charge);
+      chargeItem.setItemName("Consultation - " + appointment.getDoctorName());
+      chargeItem.setAmount(fee);
+      chargeItem.setQuantity(1);
+      chargeItem.setSubtotal(fee);
+
+      charge.getItems().add(chargeItem);
+
+      // 4. Get or Create Invoice (Finance side)
+      Invoice invoice =
+          invoiceService.getOrCreateInvoice(
+              event.hospitalId(), event.patientId(), appointment.getVisitId());
+
+      // 5. Add Consultation Item to Invoice
       invoiceService.addItem(
           invoice.getId(),
-          "Consultation - " + appointment.getDoctorName(),
+          chargeItem.getItemName(),
           InvoiceItemCategory.CONSULTATION,
           BigDecimal.ONE,
           fee,
@@ -86,13 +115,17 @@ public class FinancialIntegrationListener {
           appointment.getDoctorId(),
           appointment.getDoctorName());
 
+      // 6. Link charge to invoice
+      charge.setInvoiceId(invoice.getId());
+      appointmentChargeRepository.save(charge);
+
       log.info(
-          "Evolved Finance: Invoice {} created for appointment {}",
+          "Evolved Finance: Charge and Invoice {} created for appointment {}",
           invoice.getInvoiceNumber(),
           event.appointmentId());
     } catch (Exception e) {
       log.error(
-          "Evolved Finance: Failed to generate invoice for appointment {}",
+          "Evolved Finance: Failed to generate charge/invoice for appointment {}",
           event.appointmentId(),
           e);
     }
