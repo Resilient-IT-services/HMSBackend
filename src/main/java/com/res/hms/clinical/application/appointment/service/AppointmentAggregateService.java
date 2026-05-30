@@ -68,12 +68,21 @@ public class AppointmentAggregateService {
             HttpStatus.BAD_REQUEST);
       }
     }
-    // New Constraint: Prevent multiple appointments with same doctor on same day
+    // Validation: Prevent multiple appointments with same doctor on same day
     java.time.LocalDate appointmentDate =
         dto.getAppointmentTime().atZoneSameInstant(java.time.ZoneId.systemDefault()).toLocalDate();
 
+    // Validation: Prevent past bookings
+    boolean isNew = dto.getId() == null;
+    if (isNew && dto.getAppointmentTime().isBefore(java.time.OffsetDateTime.now().minusMinutes(1))) {
+      throw new ApiException(
+          "PAST_BOOKING_DISALLOWED",
+          "Cannot book an appointment in the past.",
+          HttpStatus.BAD_REQUEST);
+    }
+
     boolean doctorOverlap;
-    if (dto.getId() == null) {
+    if (isNew) {
       doctorOverlap =
           appointmentRepository.existsByPatientIdAndDoctorIdAndDateAndStatusNot(
               dto.getPatientId(), dto.getDoctorId(), appointmentDate, AppointmentStatus.CANCELLED);
@@ -99,7 +108,6 @@ public class AppointmentAggregateService {
     }
 
     Appointment appointment;
-    boolean isNew = dto.getId() == null;
     if (isNew) {
       appointment = createAppointment(dto, hospitalId);
     } else {

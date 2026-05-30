@@ -19,6 +19,7 @@ public class InvoiceItemDTO {
   private BigDecimal quantity;
   private BigDecimal unitPrice;
   private BigDecimal subtotal;
+  private BigDecimal taxableAmount;
   private BigDecimal taxAmount;
   private BigDecimal discountAmount;
   private BigDecimal netTotal;
