@@ -393,8 +393,22 @@ public class PharmacySaleService {
                         .quantity(item.getQuantity())
                         .unitPrice(item.getUnitPrice())
                         .subtotal(item.getSubtotal())
+                        .taxableAmount(item.getTaxableAmount())
+                        .taxAmount(item.getTaxAmount())
                         .discountAmount(item.getDiscountAmount())
                         .netAmount(item.getNetAmount())
+                        .appliedTaxes(
+                            item.getTaxes() != null
+                                ? item.getTaxes().stream()
+                                    .map(
+                                        t ->
+                                            new com.res.hms.tax.application.dto.TaxComponent(
+                                                t.getTaxCode(),
+                                                t.getTaxName(),
+                                                t.getTaxRate(),
+                                                t.getTaxAmount()))
+                                    .toList()
+                                : null)
                         .build())
             .toList();
 

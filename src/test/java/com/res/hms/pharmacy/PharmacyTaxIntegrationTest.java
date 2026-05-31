@@ -97,6 +97,12 @@ class PharmacyTaxIntegrationTest {
     // 5. Execute
     var response = pharmacySaleService.createSale(request);
 
+    // Verify DTO response has appliedTaxes mapped
+    assertThat(response.getItems()).hasSize(1);
+    assertThat(response.getItems().get(0).getAppliedTaxes()).isNotNull();
+    assertThat(response.getItems().get(0).getAppliedTaxes()).hasSize(4);
+    assertThat(response.getItems().get(0).getAppliedTaxes().get(0).taxCode()).isNotNull();
+
     // 6. Verify Sale Snapshots
     PharmacySale sale = saleRepository.findById(response.getSaleId()).orElseThrow();
     assertThat(sale.getItems()).hasSize(1);

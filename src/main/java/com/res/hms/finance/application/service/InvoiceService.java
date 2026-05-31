@@ -88,6 +88,7 @@ public class InvoiceService {
         .netTotal(item.getNetTotal())
         .sourceType(item.getSourceType())
         .sourceId(item.getSourceId())
+        .appliedTaxes(item.getTaxes() != null ? item.getTaxes().stream().map(t -> new com.res.hms.tax.application.dto.TaxComponent(t.getTaxCode(), t.getTaxName(), t.getTaxRate(), t.getTaxAmount())).collect(java.util.stream.Collectors.toList()) : null)
         .build();
   }
 
