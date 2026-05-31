@@ -39,22 +39,35 @@ public class AuditLogService {
     auditLogRepository.save(auditLog);
   }
 
-  public PageResponse<AuditLogResponse> list(int page, int size) {
+  @org.springframework.transaction.annotation.Transactional(readOnly = true)
+  public PageResponse<AuditLogResponse> list(
+      org.springframework.data.domain.Pageable pageable,
+      String search,
+      java.util.Map<String, String> filters) {
     UUID hospitalId = hospitalContext.getHospitalIdOrNull();
-    Page<AuditLog> auditLogs;
-
-    if (hospitalId != null) {
-      auditLogs =
-          auditLogRepository.findAllByHospitalIdOrderByCreatedAtDesc(
-              hospitalId, PageRequest.of(page, size));
-    } else if (hospitalContext.isSuperAdmin()) {
-      auditLogs = auditLogRepository.findAllByOrderByCreatedAtDesc(PageRequest.of(page, size));
-    } else {
+    if (hospitalId == null && !hospitalContext.isSuperAdmin()) {
       throw new ApiException(
           "BUSINESS_RULE_VIOLATION", "Please select a hospital first", HttpStatus.BAD_REQUEST);
     }
 
-    return PageResponse.from(auditLogs.map(this::toResponse));
+    com.res.hms.core.util.SpecificationBuilder<AuditLog> builder =
+        new com.res.hms.core.util.SpecificationBuilder<>(
+            filters, search, java.util.List.of("entityName", "action"));
+
+    org.springframework.data.jpa.domain.Specification<AuditLog> spec = builder.build();
+    org.springframework.data.jpa.domain.Specification<AuditLog> fixedSpec = (root, query, cb) -> {
+      if (hospitalId != null) {
+        return cb.equal(root.get("hospitalId"), hospitalId);
+      }
+      return null;
+    };
+
+    return PageResponse.from(
+        auditLogRepository
+            .findAll(
+                org.springframework.data.jpa.domain.Specification.where(spec).and(fixedSpec),
+                pageable)
+            .map(this::toResponse));
   }
 
   private AuditLogResponse toResponse(AuditLog auditLog) {

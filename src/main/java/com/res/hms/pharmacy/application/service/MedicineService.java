@@ -46,28 +46,12 @@ public class MedicineService {
   private final PharmacyExcelService pharmacyExcelService;
   private final PharmacySaleService pharmacySaleService;
 
-  private Specification<Medicine> getFilterSpec(String search) {
-    return (root, query, cb) -> {
-      List<Predicate> predicates = new ArrayList<>();
-      if (hasText(search)) {
-        String pattern = "%" + search.trim().toLowerCase(Locale.ROOT) + "%";
-        predicates.add(
-            cb.or(
-                cb.like(cb.lower(root.get("name")), pattern),
-                cb.like(cb.lower(root.get("genericName")), pattern),
-                cb.like(cb.lower(root.get("composition")), pattern)));
-      }
-      return predicates.isEmpty() ? null : cb.and(predicates.toArray(new Predicate[0]));
-    };
-  }
-
   @Transactional(readOnly = true)
-  public PageResponse<MedicineDTO> list(int page, int size, String search) {
-    Sort sort = hasText(search) ? Sort.by("name").ascending() : Sort.by("createdAt").descending();
-    Pageable pageable = PageRequest.of(page, size, sort);
-    Specification<Medicine> spec = getFilterSpec(search);
-    Page<Medicine> results = medicineRepository.findAll(spec, pageable);
-    return PageResponse.from(results.map(this::toDto));
+  public PageResponse<MedicineDTO> list(org.springframework.data.domain.Pageable pageable, String search, java.util.Map<String, String> filters) {
+    com.res.hms.core.util.SpecificationBuilder<Medicine> builder =
+        new com.res.hms.core.util.SpecificationBuilder<>(
+            filters, search, java.util.List.of("name", "genericName", "composition", "manufacturer"));
+    return PageResponse.from(medicineRepository.findAll(builder.build(), pageable).map(this::toDto));
   }
 
   @Transactional
@@ -268,12 +252,12 @@ public class MedicineService {
   }
 
   @Transactional(readOnly = true)
-  public PageResponse<MedicineSummaryDTO> listSummary(int page, int size, String search) {
-    Sort sort = hasText(search) ? Sort.by("name").ascending() : Sort.by("createdAt").descending();
-    Pageable pageable = PageRequest.of(page, size, sort);
-    Specification<Medicine> spec = getFilterSpec(search);
+  public PageResponse<MedicineSummaryDTO> listSummary(org.springframework.data.domain.Pageable pageable, String search, java.util.Map<String, String> filters) {
+    com.res.hms.core.util.SpecificationBuilder<Medicine> builder =
+        new com.res.hms.core.util.SpecificationBuilder<>(
+            filters, search, java.util.List.of("name", "genericName", "composition", "manufacturer"));
     org.springframework.data.domain.Page<Medicine> medicinesPage =
-        medicineRepository.findAll(spec, pageable);
+        medicineRepository.findAll(builder.build(), pageable);
 
     UUID hospitalId = hospitalContext.getHospitalIdOrNull();
     java.util.Map<UUID, Integer> stockMap = new java.util.HashMap<>();
@@ -306,32 +290,41 @@ public class MedicineService {
 
   @Transactional(readOnly = true)
   public PageResponse<PharmacyStockDTO> listStock(
-      int page, int size, String search, boolean lowStock, UUID medicineId) {
+      org.springframework.data.domain.Pageable pageable, String search, java.util.Map<String, String> filters) {
     UUID hospitalId = hospitalContext.requireHospitalId();
-    PageRequest pageRequest = PageRequest.of(page, size);
 
-    if (medicineId != null) {
-      return PageResponse.from(
-          pharmacyStockRepository
-              .findAllByHospitalIdAndMedicineId(hospitalId, medicineId, pageRequest)
-              .map(this::toStockDtoSimple));
+    // Map frontend 'medicineName' filter to 'medicine.name'
+    if (filters.containsKey("medicineName")) {
+      filters.put("medicine.name", filters.get("medicineName"));
     }
 
-    if (lowStock) {
-      return PageResponse.from(
-          pharmacyStockRepository
-              .findLowStock(hospitalId, pageRequest)
-              .map(this::toStockDtoSimple));
-    }
-    if (hasText(search)) {
-      return PageResponse.from(
-          pharmacyStockRepository
-              .searchDetailedStock(hospitalId, search.trim(), pageRequest)
-              .map(this::toStockDtoSimple));
-    }
+    com.res.hms.core.util.SpecificationBuilder<PharmacyStock> builder =
+        new com.res.hms.core.util.SpecificationBuilder<>(
+            filters, search, java.util.List.of("medicine.name", "batchNumber"));
+
+    Specification<PharmacyStock> spec = builder.build();
+    Specification<PharmacyStock> fixedSpec = (root, query, cb) -> {
+      List<Predicate> predicates = new ArrayList<>();
+      predicates.add(cb.equal(root.get("hospitalId"), hospitalId));
+
+      String status = filters.get("status");
+      if ("LOW_STOCK".equalsIgnoreCase(status)) {
+        predicates.add(cb.lessThan(root.get("quantity"), root.get("medicine").get("thresholdQuantity")));
+      } else if ("EXPIRED".equalsIgnoreCase(status)) {
+        predicates.add(cb.lessThan(root.get("expiryDate"), LocalDate.now()));
+      }
+      
+      if (filters.containsKey("medicineId")) {
+        try {
+          predicates.add(cb.equal(root.get("medicine").get("id"), UUID.fromString(filters.get("medicineId"))));
+        } catch (Exception ignored) {}
+      }
+
+      return predicates.isEmpty() ? null : cb.and(predicates.toArray(new Predicate[0]));
+    };
+
     return PageResponse.from(
-        pharmacyStockRepository
-            .findDetailedStock(hospitalId, pageRequest)
+        pharmacyStockRepository.findAll(Specification.where(spec).and(fixedSpec), pageable)
             .map(this::toStockDtoSimple));
   }
 

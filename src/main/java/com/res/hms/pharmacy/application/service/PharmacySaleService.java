@@ -479,13 +479,35 @@ public class PharmacySaleService {
 
   @Transactional(readOnly = true)
   public com.res.hms.core.api.PageResponse<PharmacyStockDTO> lowStockAlerts(
-      int page, int size, int threshold) {
+      org.springframework.data.domain.Pageable pageable,
+      String search,
+      java.util.Map<String, String> filters) {
     UUID hospitalId = hospitalContext.requireHospitalId();
+
+    int threshold = 20;
+    if (filters.containsKey("threshold")) {
+      try {
+        threshold = Integer.parseInt(filters.get("threshold"));
+      } catch (Exception ignored) {}
+    }
+
+    com.res.hms.core.util.SpecificationBuilder<PharmacyStock> builder =
+        new com.res.hms.core.util.SpecificationBuilder<>(
+            filters, search, java.util.List.of("medicine.name", "batchNumber"));
+
+    final int finalThreshold = threshold;
+    org.springframework.data.jpa.domain.Specification<PharmacyStock> spec = builder.build();
+    org.springframework.data.jpa.domain.Specification<PharmacyStock> fixedSpec = (root, query, cb) -> {
+      return cb.and(
+          cb.equal(root.get("hospitalId"), hospitalId),
+          cb.lessThan(root.get("quantity"), finalThreshold)
+      );
+    };
+
     return com.res.hms.core.api.PageResponse.from(
-        pharmacyStockRepository
-            .findAllByHospitalIdAndQuantityLessThan(
-                hospitalId, threshold, PageRequest.of(page, size))
-            .map(this::toStockDto));
+        pharmacyStockRepository.findAll(
+            org.springframework.data.jpa.domain.Specification.where(spec).and(fixedSpec), 
+            pageable).map(this::toStockDto));
   }
 
   private PharmacyStockDTO toStockDto(PharmacyStock stock) {

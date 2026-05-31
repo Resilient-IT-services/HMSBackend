@@ -70,6 +70,81 @@ class MedicineControllerIntegrationTest {
   }
 
   @Test
+  void testMedicineListingWithFilteringAndSorting() throws Exception {
+    // 1. Create multiple medicines
+    createMedicine("Alpha", "Generic A", "Manufacturer X", 10.0, 15.0);
+    createMedicine("Beta", "Generic B", "Manufacturer Y", 20.0, 25.0);
+    createMedicine("Gamma", "Generic A", "Manufacturer X", 30.0, 35.0);
+
+    // 2. Filter by genericName=Generic A
+    mockMvc
+        .perform(
+            get("/api/v1/pharmacy/medicines")
+                .session(session)
+                .header("X-Hospital-Id", testHospitalId.toString())
+                .param("genericName", "Generic A"))
+        .andExpect(status().isOk())
+        .andExpect(jsonPath("$.data.totalElements").value(2));
+
+    // 3. Filter by manufacturer=Manufacturer Y
+    mockMvc
+        .perform(
+            get("/api/v1/pharmacy/medicines")
+                .session(session)
+                .header("X-Hospital-Id", testHospitalId.toString())
+                .param("manufacturer", "Manufacturer Y"))
+        .andExpect(status().isOk())
+        .andExpect(jsonPath("$.data.totalElements").value(1))
+        .andExpect(jsonPath("$.data.content[0].name").value("Beta"));
+
+    // 4. Search by name
+    mockMvc
+        .perform(
+            get("/api/v1/pharmacy/medicines")
+                .session(session)
+                .header("X-Hospital-Id", testHospitalId.toString())
+                .param("search", "Gamma"))
+        .andExpect(status().isOk())
+        .andExpect(jsonPath("$.data.totalElements").value(1))
+        .andExpect(jsonPath("$.data.content[0].name").value("Gamma"));
+
+    // 5. Sort by name desc
+    mockMvc
+        .perform(
+            get("/api/v1/pharmacy/medicines")
+                .session(session)
+                .header("X-Hospital-Id", testHospitalId.toString())
+                .param("sort", "name,desc"))
+        .andExpect(status().isOk())
+        .andExpect(jsonPath("$.data.content[0].name").value("Gamma"))
+        .andExpect(jsonPath("$.data.content[1].name").value("Beta"))
+        .andExpect(jsonPath("$.data.content[2].name").value("Alpha"));
+  }
+
+  private void createMedicine(String name, String genericName, String manufacturer, double purchasePrice, double sellingPrice) throws Exception {
+    String medicineJson =
+        "{"
+            + "\"name\": \"" + name + "\","
+            + "\"genericName\": \"" + genericName + "\","
+            + "\"composition\": \"test\","
+            + "\"strength\": \"test\","
+            + "\"form\": \"TABLET\","
+            + "\"purchasePrice\": " + purchasePrice + ","
+            + "\"sellingPrice\": " + sellingPrice + ","
+            + "\"manufacturer\": \"" + manufacturer + "\""
+            + "}";
+
+    mockMvc
+        .perform(
+            post("/api/v1/pharmacy/medicines")
+                .session(session)
+                .header("X-Hospital-Id", testHospitalId.toString())
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(medicineJson))
+        .andExpect(status().isOk());
+  }
+
+  @Test
   void testDuplicateMedicineValidation() throws Exception {
     String medicineJson =
         "{"
@@ -201,7 +276,7 @@ class MedicineControllerIntegrationTest {
             get("/api/v1/pharmacy/stock")
                 .session(session)
                 .header("X-Hospital-Id", testHospitalId.toString())
-                .param("lowStock", "true"))
+                .param("status", "LOW_STOCK"))
         .andExpect(status().isOk())
         .andExpect(jsonPath("$.data.totalElements").value(0));
   }

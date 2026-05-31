@@ -58,19 +58,21 @@ public class MedicineController {
   @GetMapping("/medicines")
   @PreAuthorize(SecurityConstants.HAS_PHARMACY_ACCESS)
   public ApiResponse<PageResponse<MedicineDTO>> list(
-      @RequestParam(defaultValue = "0") int page,
-      @RequestParam(defaultValue = "20") int size,
-      @RequestParam(required = false) String search) {
-    return ApiResponse.success(medicineService.list(page, Math.min(size, 100), search));
+      @org.springframework.data.web.PageableDefault(sort = "createdAt", direction = org.springframework.data.domain.Sort.Direction.DESC)
+          org.springframework.data.domain.Pageable pageable,
+      @RequestParam(required = false) String search,
+      @RequestParam java.util.Map<String, String> allParams) {
+    return ApiResponse.success(medicineService.list(pageable, search, allParams));
   }
 
   @GetMapping("/medicines/summary")
   @PreAuthorize(SecurityConstants.HAS_PHARMACY_ACCESS)
   public ApiResponse<PageResponse<MedicineSummaryDTO>> listSummary(
-      @RequestParam(defaultValue = "0") int page,
-      @RequestParam(defaultValue = "20") int size,
-      @RequestParam(required = false) String search) {
-    return ApiResponse.success(medicineService.listSummary(page, Math.min(size, 100), search));
+      @org.springframework.data.web.PageableDefault(sort = "createdAt", direction = org.springframework.data.domain.Sort.Direction.DESC)
+          org.springframework.data.domain.Pageable pageable,
+      @RequestParam(required = false) String search,
+      @RequestParam java.util.Map<String, String> allParams) {
+    return ApiResponse.success(medicineService.listSummary(pageable, search, allParams));
   }
 
   @GetMapping("/medicines/{id}")
@@ -114,13 +116,11 @@ public class MedicineController {
   @GetMapping("/stock")
   @PreAuthorize(SecurityConstants.HAS_PHARMACY_ACCESS)
   public ApiResponse<PageResponse<PharmacyStockDTO>> listStock(
-      @RequestParam(defaultValue = "0") int page,
-      @RequestParam(defaultValue = "20") int size,
+      @org.springframework.data.web.PageableDefault(sort = "medicine.name", direction = org.springframework.data.domain.Sort.Direction.ASC)
+          org.springframework.data.domain.Pageable pageable,
       @RequestParam(required = false) String search,
-      @RequestParam(defaultValue = "false") boolean lowStock,
-      @RequestParam(required = false) UUID medicineId) {
-    return ApiResponse.success(
-        medicineService.listStock(page, Math.min(size, 100), search, lowStock, medicineId));
+      @RequestParam java.util.Map<String, String> allParams) {
+    return ApiResponse.success(medicineService.listStock(pageable, search, allParams));
   }
 
   @PostMapping("/sales")
@@ -174,10 +174,10 @@ public class MedicineController {
   @GetMapping("/alerts/low-stock")
   @PreAuthorize(SecurityConstants.HAS_ADMIN_OR_PHARMACIST)
   public ApiResponse<PageResponse<PharmacyStockDTO>> lowStockAlerts(
-      @RequestParam(defaultValue = "0") int page,
-      @RequestParam(defaultValue = "20") int size,
-      @RequestParam(defaultValue = "20") int threshold) {
-    return ApiResponse.success(
-        pharmacySaleService.lowStockAlerts(page, Math.min(size, 100), threshold));
+      @org.springframework.data.web.PageableDefault(sort = "medicine.name", direction = org.springframework.data.domain.Sort.Direction.ASC)
+          org.springframework.data.domain.Pageable pageable,
+      @RequestParam(required = false) String search,
+      @RequestParam java.util.Map<String, String> allParams) {
+    return ApiResponse.success(pharmacySaleService.lowStockAlerts(pageable, search, allParams));
   }
 }

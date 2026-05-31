@@ -31,28 +31,15 @@ public class HospitalService {
   }
 
   @Transactional(readOnly = true)
-  public PageResponse<HospitalDTO> list(int page, int size, String name, String status) {
-    Specification<Hospital> spec = Specification.where(null);
-    if (name != null && !name.isBlank()) {
-      spec =
-          spec.and(
-              (root, query, cb) ->
-                  cb.or(
-                      cb.like(cb.lower(root.get("name")), "%" + name.toLowerCase() + "%"),
-                      cb.like(cb.lower(root.get("code")), "%" + name.toLowerCase() + "%")));
-    }
-    if (status != null && !status.isBlank()) {
-      try {
-        HospitalStatus hospitalStatus = HospitalStatus.valueOf(status.toUpperCase());
-        spec = spec.and((root, query, cb) -> cb.equal(root.get("status"), hospitalStatus));
-      } catch (IllegalArgumentException e) {
-        throw new ApiException(
-            "VALIDATION_ERROR", "Invalid hospital status: " + status, HttpStatus.BAD_REQUEST);
-      }
-    }
+  public PageResponse<HospitalDTO> list(
+      org.springframework.data.domain.Pageable pageable,
+      String search,
+      java.util.Map<String, String> filters) {
+    com.res.hms.core.util.SpecificationBuilder<Hospital> builder =
+        new com.res.hms.core.util.SpecificationBuilder<>(
+            filters, search, java.util.List.of("name", "code"));
 
-    return PageResponse.from(
-        hospitalRepository.findAll(spec, PageRequest.of(page, size)).map(this::toDto));
+    return PageResponse.from(hospitalRepository.findAll(builder.build(), pageable).map(this::toDto));
   }
 
   @Transactional(readOnly = true)

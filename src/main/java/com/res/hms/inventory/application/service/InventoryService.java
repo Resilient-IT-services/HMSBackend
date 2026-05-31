@@ -19,6 +19,7 @@ import java.util.UUID;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.PageRequest;
+import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -33,20 +34,22 @@ public class InventoryService {
   private final HospitalContext hospitalContext;
   private final ResourceLookup resourceLookup;
 
-  public PageResponse<ItemDTO> listItems(int page, int size, String search) {
+  @Transactional(readOnly = true)
+  public PageResponse<ItemDTO> listItems(
+      org.springframework.data.domain.Pageable pageable, String search, java.util.Map<String, String> filters) {
     UUID hospitalId = hospitalContext.requireHospitalId();
-    PageRequest pageRequest = PageRequest.of(page, size);
 
-    if (search != null && !search.isBlank()) {
-      return PageResponse.from(
-          itemRepository
-              .findAllByHospitalIdAndNameContainingIgnoreCase(hospitalId, search, pageRequest)
-              .map(this::toDto));
-    }
+    com.res.hms.core.util.SpecificationBuilder<Item> builder =
+        new com.res.hms.core.util.SpecificationBuilder<>(
+            filters, search, java.util.List.of("name", "category"));
+
+    Specification<Item> spec = builder.build();
+    Specification<Item> fixedSpec = (root, query, cb) -> {
+      return cb.equal(root.get("hospitalId"), hospitalId);
+    };
 
     return PageResponse.from(
-        itemRepository
-            .findAllByHospitalIdOrderByCreatedAtDesc(hospitalId, pageRequest)
+        itemRepository.findAll(org.springframework.data.jpa.domain.Specification.where(spec).and(fixedSpec), pageable)
             .map(this::toDto));
   }
 

@@ -34,10 +34,11 @@ public class InventoryController {
   @GetMapping("/items")
   @PreAuthorize("hasAnyRole('ADMIN','SUPER_ADMIN')")
   public ApiResponse<PageResponse<ItemDTO>> listItems(
-      @RequestParam(defaultValue = "0") int page,
-      @RequestParam(defaultValue = "20") int size,
-      @RequestParam(required = false) String search) {
-    return ApiResponse.success(inventoryService.listItems(page, size, search));
+      @org.springframework.data.web.PageableDefault(sort = "createdAt", direction = org.springframework.data.domain.Sort.Direction.DESC)
+          org.springframework.data.domain.Pageable pageable,
+      @RequestParam(required = false) String search,
+      @RequestParam java.util.Map<String, String> allParams) {
+    return ApiResponse.success(inventoryService.listItems(pageable, search, allParams));
   }
 
   @PostMapping("/stock")

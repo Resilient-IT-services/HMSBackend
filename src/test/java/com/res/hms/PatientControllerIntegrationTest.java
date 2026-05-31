@@ -22,6 +22,7 @@ import org.springframework.mock.web.MockHttpSession;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.web.servlet.MockMvc;
+import org.springframework.transaction.annotation.Transactional;
 
 @SpringBootTest
 @AutoConfigureMockMvc
@@ -36,17 +37,17 @@ class PatientControllerIntegrationTest {
   @Autowired private TestDataHelper testDataHelper;
 
   private UUID testHospitalId;
+  private String hospitalCode;
+  private String adminUsername;
 
   @BeforeEach
-  void ensureHospitalAdminExists() {
-    testHospitalId = testDataHelper.createHospitalIfMissing("TEST", "Test Hospital");
-
-    if (userAccountRepository.existsByUsername("hospital_admin")) {
-      return;
-    }
+  void setup() {
+    hospitalCode = "PAT_TEST_" + UUID.randomUUID().toString().substring(0, 8);
+    adminUsername = "pat_admin_" + UUID.randomUUID().toString().substring(0, 8);
+    testHospitalId = testDataHelper.createHospitalIfMissing(hospitalCode, "Patient Test Hospital");
 
     UserAccount hospitalAdmin = new UserAccount();
-    hospitalAdmin.setUsername("hospital_admin");
+    hospitalAdmin.setUsername(adminUsername);
     hospitalAdmin.setPasswordHash(passwordEncoder.encode("admin123"));
     hospitalAdmin.setActive(true);
 
@@ -70,12 +71,9 @@ class PatientControllerIntegrationTest {
                     post("/api/v1/auth/login")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(
-                            """
-                                {
-                                  "username": "hospital_admin",
-                                  "password": "admin123"
-                                }
-                                """))
+                            String.format(
+                                "{ \"username\": \"%s\", \"password\": \"admin123\" }",
+                                adminUsername)))
                 .andExpect(status().isOk())
                 .andReturn()
                 .getRequest()
@@ -85,7 +83,7 @@ class PatientControllerIntegrationTest {
     mockMvc
         .perform(get("/api/v1/auth/me").session(session))
         .andExpect(status().isOk())
-        .andExpect(jsonPath("$.data.memberships[0].hospitalCode").value("TEST"));
+        .andExpect(jsonPath("$.data.memberships[0].hospitalCode").value(hospitalCode));
 
     // Try to access patients without selecting hospital -> should fail with 400
     mockMvc
@@ -123,6 +121,78 @@ class PatientControllerIntegrationTest {
   }
 
   @Test
+  void testPatientListingWithFilteringAndSorting() throws Exception {
+    MockHttpSession session =
+        (MockHttpSession)
+            mockMvc
+                .perform(
+                    post("/api/v1/auth/login")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(
+                            String.format(
+                                "{ \"username\": \"%s\", \"password\": \"admin123\" }",
+                                adminUsername)))
+                .andExpect(status().isOk())
+                .andReturn()
+                .getRequest()
+                .getSession(false);
+
+    // 1. Setup multiple patients
+    createPatient(session, "Alice Smith", "9000000001", "FEMALE", "1990-01-01");
+    createPatient(session, "Bob Jones", "9000000002", "MALE", "1985-05-05");
+    createPatient(session, "Charlie Brown", "9000000003", "MALE", "2000-10-10");
+
+    // 2. Filter by gender=FEMALE
+    mockMvc.perform(get("/api/v1/patients")
+            .session(session)
+            .header("X-Hospital-Id", testHospitalId.toString())
+            .param("gender", "FEMALE"))
+        .andExpect(status().isOk())
+        .andExpect(jsonPath("$.data.totalElements").value(1))
+        .andExpect(jsonPath("$.data.content[0].fullName").value("Alice Smith"));
+
+    // 3. Search by name
+    mockMvc.perform(get("/api/v1/patients")
+            .session(session)
+            .header("X-Hospital-Id", testHospitalId.toString())
+            .param("search", "Jones"))
+        .andExpect(status().isOk())
+        .andExpect(jsonPath("$.data.totalElements").value(1))
+        .andExpect(jsonPath("$.data.content[0].fullName").value("Bob Jones"));
+
+    // 4. Sort by fullName asc
+    mockMvc.perform(get("/api/v1/patients")
+            .session(session)
+            .header("X-Hospital-Id", testHospitalId.toString())
+            .param("sort", "fullName,asc"))
+        .andExpect(status().isOk())
+        .andExpect(jsonPath("$.data.content[0].fullName").value("Alice Smith"))
+        .andExpect(jsonPath("$.data.content[1].fullName").value("Bob Jones"))
+        .andExpect(jsonPath("$.data.content[2].fullName").value("Charlie Brown"));
+  }
+
+  private void createPatient(MockHttpSession session, String fullName, String phone, String gender, String dob) throws Exception {
+    String patientJson = String.format(
+        """
+            {
+              "fullName": "%s",
+              "phone": "%s",
+              "gender": "%s",
+              "dob": "%s"
+            }
+            """, fullName, phone, gender, dob);
+
+    mockMvc
+        .perform(
+            post("/api/v1/patients")
+                .session(session)
+                .header("X-Hospital-Id", testHospitalId.toString())
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(patientJson))
+        .andExpect(status().isOk());
+  }
+
+  @Test
   void duplicatePatientRegistrationFails() throws Exception {
     MockHttpSession session =
         (MockHttpSession)
@@ -131,12 +201,9 @@ class PatientControllerIntegrationTest {
                     post("/api/v1/auth/login")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(
-                            """
-                                {
-                                  "username": "hospital_admin",
-                                  "password": "admin123"
-                                }
-                                """))
+                            String.format(
+                                "{ \"username\": \"%s\", \"password\": \"admin123\" }",
+                                adminUsername)))
                 .andExpect(status().isOk())
                 .andReturn()
                 .getRequest()

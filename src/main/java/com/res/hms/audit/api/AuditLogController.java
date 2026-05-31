@@ -23,7 +23,10 @@ public class AuditLogController {
   @GetMapping
   @PreAuthorize("hasAnyRole('ADMIN','SUPER_ADMIN')")
   public ApiResponse<PageResponse<AuditLogResponse>> list(
-      @RequestParam(defaultValue = "0") int page, @RequestParam(defaultValue = "20") int size) {
-    return ApiResponse.success(auditLogService.list(page, Math.min(size, 100)));
+      @org.springframework.data.web.PageableDefault(sort = "createdAt", direction = org.springframework.data.domain.Sort.Direction.DESC)
+          org.springframework.data.domain.Pageable pageable,
+      @RequestParam(required = false) String search,
+      @RequestParam java.util.Map<String, String> allParams) {
+    return ApiResponse.success(auditLogService.list(pageable, search, allParams));
   }
 }

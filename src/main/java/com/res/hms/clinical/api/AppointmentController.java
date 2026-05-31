@@ -61,67 +61,29 @@ public class AppointmentController {
   @GetMapping
   @PreAuthorize(SecurityConstants.HAS_RECEPTION_ACCESS)
   public ApiResponse<PageResponse<AppointmentDTO>> list(
-      @RequestParam(defaultValue = "0") int page,
-      @RequestParam(defaultValue = "20") int size,
+      @org.springframework.data.web.PageableDefault(sort = "appointmentTime", direction = org.springframework.data.domain.Sort.Direction.DESC)
+          org.springframework.data.domain.Pageable pageable,
       @RequestParam(required = false) String search,
-      @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME)
-          Instant from,
-      @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME)
-          Instant to,
-      @RequestParam(required = false) UUID patientId,
-      @RequestParam(required = false) UUID doctorId,
-      @RequestParam(required = false) AppointmentStatus status) {
-    return ApiResponse.success(
-        appointmentService.list(
-            page, Math.min(size, 100), search, from, to, patientId, doctorId, status));
+      @RequestParam java.util.Map<String, String> allParams) {
+    return ApiResponse.success(appointmentService.list(pageable, search, allParams));
   }
 
   @GetMapping("/summary")
   @PreAuthorize(SecurityConstants.HAS_RECEPTION_ACCESS)
   public ApiResponse<PageResponse<AppointmentSummaryDTO>> listSummary(
-      @RequestParam(defaultValue = "0") int page,
-      @RequestParam(defaultValue = "20") int size,
+      @org.springframework.data.web.PageableDefault(sort = "appointmentTime", direction = org.springframework.data.domain.Sort.Direction.DESC)
+          org.springframework.data.domain.Pageable pageable,
       @RequestParam(required = false) String search,
-      @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME)
-          Instant from,
-      @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME)
-          Instant to,
-      @RequestParam(required = false) UUID patientId,
-      @RequestParam(required = false) UUID doctorId,
-      @RequestParam(required = false) AppointmentStatus status,
-      @RequestParam(required = false) String token,
-      @RequestParam(required = false) String patientName,
-      @RequestParam(required = false) String doctor,
-      @RequestParam(required = false) String sort) {
-    return ApiResponse.success(
-        appointmentService.listSummary(
-            page,
-            Math.min(size, 100),
-            search,
-            from,
-            to,
-            patientId,
-            doctorId,
-            status,
-            token,
-            patientName,
-            doctor,
-            sort));
+      @RequestParam java.util.Map<String, String> allParams) {
+    return ApiResponse.success(appointmentService.listSummary(pageable, search, allParams));
   }
 
   @GetMapping("/stats")
   @PreAuthorize(SecurityConstants.HAS_RECEPTION_ACCESS)
   public ApiResponse<AppointmentStatsDTO> getStats(
       @RequestParam(required = false) String search,
-      @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME)
-          Instant from,
-      @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME)
-          Instant to,
-      @RequestParam(required = false) UUID patientId,
-      @RequestParam(required = false) UUID doctorId,
-      @RequestParam(required = false) AppointmentStatus status) {
-    return ApiResponse.success(
-        appointmentService.getStats(search, from, to, patientId, doctorId, status));
+      @RequestParam java.util.Map<String, String> allParams) {
+    return ApiResponse.success(appointmentService.getStats(search, allParams));
   }
 
   @GetMapping("/{appointmentId}")

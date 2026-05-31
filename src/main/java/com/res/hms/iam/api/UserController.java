@@ -40,14 +40,11 @@ public class UserController {
   @GetMapping
   @PreAuthorize("hasAnyRole('SUPER_ADMIN', 'ADMIN')")
   public ApiResponse<PageResponse<UserSummaryDTO>> list(
-      @RequestParam(defaultValue = "0") int page,
-      @RequestParam(defaultValue = "20") int size,
+      @org.springframework.data.web.PageableDefault(sort = "createdAt", direction = org.springframework.data.domain.Sort.Direction.DESC)
+          org.springframework.data.domain.Pageable pageable,
       @RequestParam(required = false) String search,
-      @RequestParam(required = false) String role,
-      @RequestParam(required = false) Boolean active,
-      @RequestParam(defaultValue = "false") boolean includeDeleted) {
-    return ApiResponse.success(
-        userService.listUsers(page, Math.min(size, 100), search, role, active, includeDeleted));
+      @RequestParam java.util.Map<String, String> allParams) {
+    return ApiResponse.success(userService.listUsers(pageable, search, allParams));
   }
 
   @GetMapping("/{userId}/full-profile")

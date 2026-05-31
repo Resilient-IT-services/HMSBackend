@@ -44,24 +44,20 @@ public class StaffController {
   @GetMapping("/doctors")
   @PreAuthorize("isAuthenticated()")
   public ApiResponse<PageResponse<DoctorStaffResponse>> getDoctors(
-      @RequestParam(required = false) String name,
-      @RequestParam(required = false) String department,
-      @RequestParam(required = false) String specialization,
-      @RequestParam(required = false) BigDecimal minFee,
-      @RequestParam(required = false) BigDecimal maxFee,
-      @RequestParam(defaultValue = "0") int page,
-      @RequestParam(defaultValue = "20") int size) {
-    return ApiResponse.success(
-        staffService.getDoctors(name, department, specialization, minFee, maxFee, page, size));
+      @org.springframework.data.web.PageableDefault(sort = "user.fullName", direction = org.springframework.data.domain.Sort.Direction.ASC)
+          org.springframework.data.domain.Pageable pageable,
+      @RequestParam(required = false) String search,
+      @RequestParam java.util.Map<String, String> allParams) {
+    return ApiResponse.success(staffService.getDoctors(pageable, search, allParams));
   }
 
   @GetMapping("/nurses")
   @PreAuthorize("isAuthenticated()")
   public ApiResponse<PageResponse<NurseStaffResponse>> getNurses(
-      @RequestParam(required = false) String name,
-      @RequestParam(required = false) String department,
-      @RequestParam(defaultValue = "0") int page,
-      @RequestParam(defaultValue = "20") int size) {
-    return ApiResponse.success(staffService.getNurses(name, department, page, size));
+      @org.springframework.data.web.PageableDefault(sort = "user.fullName", direction = org.springframework.data.domain.Sort.Direction.ASC)
+          org.springframework.data.domain.Pageable pageable,
+      @RequestParam(required = false) String search,
+      @RequestParam java.util.Map<String, String> allParams) {
+    return ApiResponse.success(staffService.getNurses(pageable, search, allParams));
   }
 }

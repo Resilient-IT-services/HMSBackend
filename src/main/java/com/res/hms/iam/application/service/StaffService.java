@@ -63,109 +63,92 @@ public class StaffService {
 
   @Transactional(readOnly = true)
   public PageResponse<DoctorStaffResponse> getDoctors(
-      String name,
-      String department,
-      String specialization,
-      BigDecimal minFee,
-      BigDecimal maxFee,
-      int page,
-      int size) {
+      org.springframework.data.domain.Pageable pageable, String search, java.util.Map<String, String> filters) {
 
     UUID hospitalId = hospitalContext.requireHospitalId();
-    Pageable pageable = PageRequest.of(page, size, Sort.by("createdAt").descending());
 
-    Specification<UserContract> spec =
-        (root, query, cb) -> {
-          if (query.getResultType() != Long.class && query.getResultType() != long.class) {
-            root.fetch("user", JoinType.INNER).fetch("doctorProfile", JoinType.LEFT);
-            root.fetch("doctorDetails", JoinType.LEFT);
-          }
+    // Map frontend filters to entity paths
+    if (filters.containsKey("fullName")) {
+      filters.put("user.fullName", filters.get("fullName"));
+    }
+    if (filters.containsKey("department")) {
+      filters.put("departments.name", filters.get("department"));
+    }
+    if (filters.containsKey("specialization")) {
+      filters.put("user.doctorProfile.specializations.name", filters.get("specialization"));
+    }
 
-          List<Predicate> predicates = new ArrayList<>();
-          predicates.add(cb.equal(root.get("hospitalId"), hospitalId));
-          predicates.add(cb.equal(root.get("role").get("code"), RoleCode.DOCTOR));
-          predicates.add(cb.equal(root.get("active"), true));
-          predicates.add(cb.equal(root.get("user").get("active"), true));
+    com.res.hms.core.util.SpecificationBuilder<UserContract> builder =
+        new com.res.hms.core.util.SpecificationBuilder<>(
+            filters, search, java.util.List.of("user.fullName", "user.email", "user.phone"));
 
-          if (name != null && !name.isBlank()) {
-            predicates.add(
-                cb.like(
-                    cb.lower(root.get("user").get("fullName")),
-                    "%" + name.toLowerCase(Locale.ROOT) + "%"));
-          }
-          if (department != null && !department.isBlank()) {
-            Join<UserContract, com.res.hms.hospital.domain.Department> deptJoin =
-                root.join("departments");
-            predicates.add(
-                cb.like(
-                    cb.lower(deptJoin.get("name")),
-                    "%" + department.toLowerCase(Locale.ROOT) + "%"));
-          }
-          if (specialization != null && !specialization.isBlank()) {
-            Join<UserContract, UserAccount> userJoin = root.join("user");
-            Join<UserAccount, DoctorProfile> doctorJoin = userJoin.join("doctorProfile");
-            Join<DoctorProfile, com.res.hms.iam.domain.Specialization> specJoin =
-                doctorJoin.join("specializations");
-            predicates.add(
-                cb.like(
-                    cb.lower(specJoin.get("name")),
-                    "%" + specialization.toLowerCase(Locale.ROOT) + "%"));
-          }
-          if (minFee != null) {
-            Join<UserContract, DoctorHospitalDetails> detailsJoin = root.join("doctorDetails");
-            predicates.add(cb.greaterThanOrEqualTo(detailsJoin.get("consultationFee"), minFee));
-          }
-          if (maxFee != null) {
-            Join<UserContract, DoctorHospitalDetails> detailsJoin = root.join("doctorDetails");
-            predicates.add(cb.lessThanOrEqualTo(detailsJoin.get("consultationFee"), maxFee));
-          }
+    Specification<UserContract> spec = builder.build();
+    Specification<UserContract> fixedSpec = (root, query, cb) -> {
+      if (query.getResultType() != Long.class && query.getResultType() != long.class) {
+        root.fetch("user", JoinType.INNER).fetch("doctorProfile", JoinType.LEFT);
+        root.fetch("doctorDetails", JoinType.LEFT);
+      }
 
-          return cb.and(predicates.toArray(new Predicate[0]));
-        };
+      List<Predicate> predicates = new ArrayList<>();
+      predicates.add(cb.equal(root.get("hospitalId"), hospitalId));
+      predicates.add(cb.equal(root.get("role").get("code"), RoleCode.DOCTOR));
+      predicates.add(cb.equal(root.get("active"), true));
+      predicates.add(cb.equal(root.get("user").get("active"), true));
 
-    Page<UserContract> assignments = assignmentRepository.findAll(spec, pageable);
+      if (filters.containsKey("minFee")) {
+        try {
+          predicates.add(cb.greaterThanOrEqualTo(root.get("doctorDetails").get("consultationFee"), 
+              new java.math.BigDecimal(filters.get("minFee"))));
+        } catch (Exception ignored) {}
+      }
+      if (filters.containsKey("maxFee")) {
+        try {
+          predicates.add(cb.lessThanOrEqualTo(root.get("doctorDetails").get("consultationFee"), 
+              new java.math.BigDecimal(filters.get("maxFee"))));
+        } catch (Exception ignored) {}
+      }
+
+      return predicates.isEmpty() ? null : cb.and(predicates.toArray(new Predicate[0]));
+    };
+
+    Page<UserContract> assignments = assignmentRepository.findAll(Specification.where(spec).and(fixedSpec), pageable);
     return PageResponse.from(assignments.map(this::mapToDoctorResponse));
   }
 
   @Transactional(readOnly = true)
   public PageResponse<NurseStaffResponse> getNurses(
-      String name, String department, int page, int size) {
+      org.springframework.data.domain.Pageable pageable, String search, java.util.Map<String, String> filters) {
 
     UUID hospitalId = hospitalContext.requireHospitalId();
-    Pageable pageable = PageRequest.of(page, size, Sort.by("createdAt").descending());
 
-    Specification<UserContract> spec =
-        (root, query, cb) -> {
-          if (query.getResultType() != Long.class && query.getResultType() != long.class) {
-            root.fetch("user", JoinType.INNER).fetch("nurseProfile", JoinType.LEFT);
-            root.fetch("nurseDetails", JoinType.LEFT);
-          }
+    if (filters.containsKey("fullName")) {
+      filters.put("user.fullName", filters.get("fullName"));
+    }
+    if (filters.containsKey("department")) {
+      filters.put("departments.name", filters.get("department"));
+    }
 
-          List<Predicate> predicates = new ArrayList<>();
-          predicates.add(cb.equal(root.get("hospitalId"), hospitalId));
-          predicates.add(cb.equal(root.get("role").get("code"), RoleCode.NURSE));
-          predicates.add(cb.equal(root.get("active"), true));
-          predicates.add(cb.equal(root.get("user").get("active"), true));
+    com.res.hms.core.util.SpecificationBuilder<UserContract> builder =
+        new com.res.hms.core.util.SpecificationBuilder<>(
+            filters, search, java.util.List.of("user.fullName", "user.email", "user.phone"));
 
-          if (name != null && !name.isBlank()) {
-            predicates.add(
-                cb.like(
-                    cb.lower(root.get("user").get("fullName")),
-                    "%" + name.toLowerCase(Locale.ROOT) + "%"));
-          }
-          if (department != null && !department.isBlank()) {
-            Join<UserContract, com.res.hms.hospital.domain.Department> deptJoin =
-                root.join("departments");
-            predicates.add(
-                cb.like(
-                    cb.lower(deptJoin.get("name")),
-                    "%" + department.toLowerCase(Locale.ROOT) + "%"));
-          }
+    Specification<UserContract> spec = builder.build();
+    Specification<UserContract> fixedSpec = (root, query, cb) -> {
+      if (query.getResultType() != Long.class && query.getResultType() != long.class) {
+        root.fetch("user", JoinType.INNER).fetch("nurseProfile", JoinType.LEFT);
+        root.fetch("nurseDetails", JoinType.LEFT);
+      }
 
-          return cb.and(predicates.toArray(new Predicate[0]));
-        };
+      List<Predicate> predicates = new ArrayList<>();
+      predicates.add(cb.equal(root.get("hospitalId"), hospitalId));
+      predicates.add(cb.equal(root.get("role").get("code"), RoleCode.NURSE));
+      predicates.add(cb.equal(root.get("active"), true));
+      predicates.add(cb.equal(root.get("user").get("active"), true));
 
-    Page<UserContract> assignments = assignmentRepository.findAll(spec, pageable);
+      return predicates.isEmpty() ? null : cb.and(predicates.toArray(new Predicate[0]));
+    };
+
+    Page<UserContract> assignments = assignmentRepository.findAll(Specification.where(spec).and(fixedSpec), pageable);
     return PageResponse.from(assignments.map(this::mapToNurseResponse));
   }
 

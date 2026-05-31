@@ -50,25 +50,43 @@ public class UserService {
 
   @Transactional(readOnly = true)
   public PageResponse<UserSummaryDTO> listUsers(
-      int page, int size, String search, String role, Boolean active, boolean includeDeleted) {
+      org.springframework.data.domain.Pageable pageable, String search, java.util.Map<String, String> filters) {
     UUID hospitalId = hospitalContext.getHospitalIdOrNull();
     if (hospitalId == null && !hospitalContext.isSuperAdmin()) {
       throw new ApiException(
           "BUSINESS_RULE_VIOLATION", "Please select a hospital first", HttpStatus.BAD_REQUEST);
     }
-    RoleCode roleCode =
-        (role != null && !role.isBlank()) ? RoleCode.valueOf(role.toUpperCase()) : null;
-    String searchPattern =
-        (search != null && !search.isBlank()) ? "%" + search.trim().toLowerCase() + "%" : null;
+
+    boolean includeDeleted = Boolean.parseBoolean(filters.getOrDefault("includeDeleted", "false"));
+    
+    com.res.hms.core.util.SpecificationBuilder<UserAccount> builder =
+        new com.res.hms.core.util.SpecificationBuilder<>(
+            filters, search, java.util.List.of("fullName", "email", "username"));
+    builder.useDistinct(true);
+
+    org.springframework.data.jpa.domain.Specification<UserAccount> spec = builder.build();
+
+    // Add hospital filter and deleted filter
+    org.springframework.data.jpa.domain.Specification<UserAccount> fixedSpec = (root, query, cb) -> {
+      java.util.List<jakarta.persistence.criteria.Predicate> predicates = new java.util.ArrayList<>();
+      if (hospitalId != null) {
+        predicates.add(cb.equal(root.join("contracts").get("hospitalId"), hospitalId));
+      }
+      if (!includeDeleted) {
+        predicates.add(cb.equal(root.get("deleted"), false));
+      }
+      
+      // Handle role filter specifically if it exists in filters map
+      if (filters.containsKey("role") && !filters.get("role").isBlank()) {
+        predicates.add(cb.equal(root.join("contracts").join("role").get("code"), 
+            RoleCode.valueOf(filters.get("role").toUpperCase())));
+      }
+
+      return predicates.isEmpty() ? null : cb.and(predicates.toArray(new jakarta.persistence.criteria.Predicate[0]));
+    };
+
     return PageResponse.from(
-        userAccountRepository
-            .searchUsers(
-                hospitalId,
-                active,
-                includeDeleted ? null : false,
-                roleCode,
-                searchPattern,
-                PageRequest.of(page, size))
+        userAccountRepository.findAll(org.springframework.data.jpa.domain.Specification.where(spec).and(fixedSpec), pageable)
             .map(userMapper::toSummaryDTO));
   }
 

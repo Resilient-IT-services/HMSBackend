@@ -154,7 +154,6 @@ class PrescriptionControllerIntegrationTest {
     String content = response.getResponse().getContentAsString();
     UUID prescriptionId = UUID.fromString(com.jayway.jsonpath.JsonPath.read(content, "$.data.id"));
 
-    // 3. Get Prescription by its actual ID
     mockMvc
         .perform(
             get("/api/v1/pharmacy/prescriptions/" + prescriptionId)
@@ -163,6 +162,62 @@ class PrescriptionControllerIntegrationTest {
         .andExpect(status().isOk())
         .andExpect(jsonPath("$.data.id").value(prescriptionId.toString()))
         .andExpect(jsonPath("$.data.items[0].dosage").value("500mg"));
+  }
+
+  @Test
+  void testPrescriptionListingWithFilteringAndSorting() throws Exception {
+    // 1. Setup multiple prescriptions (Business rule: need separate appointments with recorded vitals)
+    UUID patientId = testDataHelper.createTestPatient(hospitalId).getId();
+    
+    createPrescription("Alice Smith", patientId);
+    createPrescription("Bob Jones", patientId);
+
+    // 2. Filter by patientName
+    mockMvc.perform(get("/api/v1/pharmacy/prescriptions")
+            .session(session)
+            .header("X-Hospital-Id", hospitalId.toString())
+            .param("patientName", "Alice"))
+        .andExpect(status().isOk())
+        .andExpect(jsonPath("$.data.totalElements").value(1))
+        .andExpect(jsonPath("$.data.content[0].patientName").value("Alice Smith"));
+
+    // 3. Search by doctorName
+    mockMvc.perform(get("/api/v1/pharmacy/prescriptions")
+            .session(session)
+            .header("X-Hospital-Id", hospitalId.toString())
+            .param("search", "Prescriber"))
+        .andExpect(status().isOk())
+        .andExpect(jsonPath("$.data.totalElements").value(2));
+
+    // 4. Sort by patientName asc
+    mockMvc.perform(get("/api/v1/pharmacy/prescriptions")
+            .session(session)
+            .header("X-Hospital-Id", hospitalId.toString())
+            .param("sort", "patientName,asc"))
+        .andExpect(status().isOk())
+        .andExpect(jsonPath("$.data.content[0].patientName").value("Alice Smith"))
+        .andExpect(jsonPath("$.data.content[1].patientName").value("Bob Jones"));
+  }
+
+  private void createPrescription(String patientName, UUID patientId) throws Exception {
+    Appointment apt = new Appointment();
+    apt.setHospitalId(hospitalId);
+    apt.setDoctorId(appointmentRepository.findById(appointmentId).get().getDoctorId());
+    apt.setDoctorName("Dr. Prescriber");
+    apt.setPatientId(patientId);
+    apt.setPatientName(patientName);
+    apt.setAppointmentTime(Instant.now().plus(1, ChronoUnit.DAYS));
+    apt.setStatus(AppointmentStatus.VITALS_RECORDED);
+    UUID aptId = appointmentRepository.save(apt).getId();
+
+    PrescriptionDTO dto = PrescriptionDTO.builder().appointmentId(aptId).items(List.of()).build();
+
+    mockMvc.perform(post("/api/v1/pharmacy/prescriptions")
+            .session(session)
+            .header("X-Hospital-Id", hospitalId.toString())
+            .contentType(MediaType.APPLICATION_JSON)
+            .content(objectMapper.writeValueAsString(dto)))
+        .andExpect(status().isOk());
   }
 
   @Test

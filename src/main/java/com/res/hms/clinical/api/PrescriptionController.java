@@ -30,21 +30,21 @@ public class PrescriptionController {
   @GetMapping
   @PreAuthorize("hasAnyRole('ADMIN','DOCTOR','NURSE','PHARMACIST','SUPER_ADMIN')")
   public ApiResponse<PageResponse<PrescriptionDTO>> list(
-      @RequestParam(defaultValue = "0") int page,
-      @RequestParam(defaultValue = "20") int size,
+      @org.springframework.data.web.PageableDefault(sort = "createdAt", direction = org.springframework.data.domain.Sort.Direction.DESC)
+          org.springframework.data.domain.Pageable pageable,
       @RequestParam(required = false) String search,
-      @RequestParam(required = false) PrescriptionStatus status) {
-    return ApiResponse.success(prescriptionService.list(page, size, search, status));
+      @RequestParam java.util.Map<String, String> allParams) {
+    return ApiResponse.success(prescriptionService.list(pageable, search, allParams));
   }
 
   @GetMapping("/summary")
   @PreAuthorize("hasAnyRole('ADMIN','DOCTOR','NURSE','PHARMACIST','SUPER_ADMIN')")
   public ApiResponse<PageResponse<PrescriptionSummaryDTO>> listSummary(
-      @RequestParam(defaultValue = "0") int page,
-      @RequestParam(defaultValue = "20") int size,
+      @org.springframework.data.web.PageableDefault(sort = "createdAt", direction = org.springframework.data.domain.Sort.Direction.DESC)
+          org.springframework.data.domain.Pageable pageable,
       @RequestParam(required = false) String search,
-      @RequestParam(required = false) PrescriptionStatus status) {
-    return ApiResponse.success(prescriptionService.listSummary(page, size, search, status));
+      @RequestParam java.util.Map<String, String> allParams) {
+    return ApiResponse.success(prescriptionService.listSummary(pageable, search, allParams));
   }
 
   @PostMapping

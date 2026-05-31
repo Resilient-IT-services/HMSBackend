@@ -53,11 +53,10 @@ class AuditLogServiceTest {
     auditLog.setAction(AuditAction.CREATE);
 
     when(hospitalContext.getHospitalIdOrNull()).thenReturn(hospitalUuid);
-    when(auditLogRepository.findAllByHospitalIdOrderByCreatedAtDesc(
-            hospitalUuid, PageRequest.of(0, 10)))
+    when(auditLogRepository.findAll(any(org.springframework.data.jpa.domain.Specification.class), any(org.springframework.data.domain.Pageable.class)))
         .thenReturn(new PageImpl<>(List.of(auditLog)));
 
-    PageResponse<AuditLogResponse> response = auditLogService.list(0, 10);
+    PageResponse<AuditLogResponse> response = auditLogService.list(PageRequest.of(0, 10), null, Map.of());
 
     assertEquals(1, response.content().size(), "Should return one audit log");
   }
@@ -71,10 +70,10 @@ class AuditLogServiceTest {
 
     when(hospitalContext.getHospitalIdOrNull()).thenReturn(null);
     when(hospitalContext.isSuperAdmin()).thenReturn(true);
-    when(auditLogRepository.findAllByOrderByCreatedAtDesc(PageRequest.of(0, 10)))
+    when(auditLogRepository.findAll(any(org.springframework.data.jpa.domain.Specification.class), any(org.springframework.data.domain.Pageable.class)))
         .thenReturn(new PageImpl<>(List.of(auditLog)));
 
-    PageResponse<AuditLogResponse> response = auditLogService.list(0, 10);
+    PageResponse<AuditLogResponse> response = auditLogService.list(PageRequest.of(0, 10), null, Map.of());
 
     assertEquals(1, response.content().size(), "Should return one audit log for super admin");
   }
@@ -85,6 +84,6 @@ class AuditLogServiceTest {
     when(hospitalContext.isSuperAdmin()).thenReturn(false);
 
     org.junit.jupiter.api.Assertions.assertThrows(
-        com.res.hms.core.exception.ApiException.class, () -> auditLogService.list(0, 10));
+        com.res.hms.core.exception.ApiException.class, () -> auditLogService.list(PageRequest.of(0, 10), null, Map.of()));
   }
 }
