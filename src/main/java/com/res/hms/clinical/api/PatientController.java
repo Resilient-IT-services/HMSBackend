@@ -48,19 +48,21 @@ public class PatientController {
   @GetMapping
   @PreAuthorize(SecurityConstants.HAS_ANY_STAFF)
   public ApiResponse<PageResponse<PatientDTO>> list(
-      @RequestParam(defaultValue = "0") int page,
-      @RequestParam(defaultValue = "20") int size,
-      @RequestParam(required = false) String search) {
-    return ApiResponse.success(patientService.list(page, Math.min(size, 100), search));
+      @org.springframework.data.web.PageableDefault(sort = "createdAt", direction = org.springframework.data.domain.Sort.Direction.DESC)
+          org.springframework.data.domain.Pageable pageable,
+      @RequestParam(required = false) String search,
+      @RequestParam java.util.Map<String, String> allParams) {
+    return ApiResponse.success(patientService.list(pageable, search, allParams));
   }
 
   @GetMapping("/summary")
   @PreAuthorize(SecurityConstants.HAS_ANY_STAFF)
   public ApiResponse<PageResponse<PatientSummaryDTO>> listSummary(
-      @RequestParam(defaultValue = "0") int page,
-      @RequestParam(defaultValue = "20") int size,
-      @RequestParam(required = false) String search) {
-    return ApiResponse.success(patientService.listSummary(page, Math.min(size, 100), search));
+      @org.springframework.data.web.PageableDefault(sort = "createdAt", direction = org.springframework.data.domain.Sort.Direction.DESC)
+          org.springframework.data.domain.Pageable pageable,
+      @RequestParam(required = false) String search,
+      @RequestParam java.util.Map<String, String> allParams) {
+    return ApiResponse.success(patientService.listSummary(pageable, search, allParams));
   }
 
   @GetMapping("/{patientId}")

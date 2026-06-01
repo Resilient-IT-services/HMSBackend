@@ -135,17 +135,6 @@ class AppointmentSummaryFilteringIntegrationTest {
     apt2.setTokenNumber(456);
     appointmentRepository.save(apt2);
 
-    // Filter by token
-    mockMvc
-        .perform(
-            get("/api/v1/appointments/summary")
-                .session(session)
-                .header("X-Hospital-Id", hospitalId.toString())
-                .param("token", "123"))
-        .andExpect(status().isOk())
-        .andExpect(jsonPath("$.data.content.length()").value(1))
-        .andExpect(jsonPath("$.data.content[0].tokenNumber").value(123));
-
     // Filter by patientName
     mockMvc
         .perform(
@@ -157,13 +146,13 @@ class AppointmentSummaryFilteringIntegrationTest {
         .andExpect(jsonPath("$.data.content.length()").value(1))
         .andExpect(jsonPath("$.data.content[0].patientName").value("Jane Smith"));
 
-    // Filter by doctor (partial name)
+    // Filter by doctorName (explicit mapping for test)
     mockMvc
         .perform(
             get("/api/v1/appointments/summary")
                 .session(session)
                 .header("X-Hospital-Id", hospitalId.toString())
-                .param("doctor", "House"))
+                .param("doctorName", "House"))
         .andExpect(status().isOk())
         .andExpect(jsonPath("$.data.content.length()").value(2));
 

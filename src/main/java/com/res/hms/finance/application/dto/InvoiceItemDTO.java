@@ -19,9 +19,11 @@ public class InvoiceItemDTO {
   private BigDecimal quantity;
   private BigDecimal unitPrice;
   private BigDecimal subtotal;
+  private BigDecimal taxableAmount;
   private BigDecimal taxAmount;
   private BigDecimal discountAmount;
   private BigDecimal netTotal;
   private com.res.hms.finance.domain.FinanceSourceType sourceType;
   private UUID sourceId;
+  private java.util.List<com.res.hms.tax.application.dto.TaxComponent> appliedTaxes;
 }

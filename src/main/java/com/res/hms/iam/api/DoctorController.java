@@ -29,11 +29,12 @@ public class DoctorController {
   @GetMapping
   @PreAuthorize("hasAnyRole('SUPER_ADMIN','ADMIN','RECEPTIONIST')")
   public ApiResponse<PageResponse<UserSummaryDTO>> list(
-      @RequestParam(defaultValue = "0") int page,
-      @RequestParam(defaultValue = "20") int size,
+      org.springframework.data.domain.Pageable pageable,
       @RequestParam(required = false) String search) {
-    return ApiResponse.success(
-        userService.listUsers(page, Math.min(size, 100), search, "DOCTOR", true, false));
+    java.util.Map<String, String> filters = new java.util.HashMap<>();
+    filters.put("role", "DOCTOR");
+    filters.put("active", "true");
+    return ApiResponse.success(userService.listUsers(pageable, search, filters));
   }
 
   @GetMapping("/{doctorId}/availability")

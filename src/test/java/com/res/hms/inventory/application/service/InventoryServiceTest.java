@@ -39,26 +39,14 @@ class InventoryServiceTest {
   }
 
   @Test
-  void testListItems_WithSearch() {
-    when(itemRepository.findAllByHospitalIdAndNameContainingIgnoreCase(
-            eq(hospitalId), anyString(), any()))
+  void testListItems() {
+    when(itemRepository.findAll(any(org.springframework.data.jpa.domain.Specification.class), any(org.springframework.data.domain.Pageable.class)))
         .thenReturn(new PageImpl<>(java.util.List.of()));
 
-    var result = inventoryService.listItems(0, 10, "test");
+    var result = inventoryService.listItems(org.springframework.data.domain.PageRequest.of(0, 10), "test", java.util.Map.of());
 
     assertNotNull(result);
     verify(itemRepository)
-        .findAllByHospitalIdAndNameContainingIgnoreCase(eq(hospitalId), eq("test"), any());
-  }
-
-  @Test
-  void testListItems_WithoutSearch() {
-    when(itemRepository.findAllByHospitalIdOrderByCreatedAtDesc(eq(hospitalId), any()))
-        .thenReturn(new PageImpl<>(java.util.List.of()));
-
-    var result = inventoryService.listItems(0, 10, null);
-
-    assertNotNull(result);
-    verify(itemRepository).findAllByHospitalIdOrderByCreatedAtDesc(eq(hospitalId), any());
+        .findAll(any(org.springframework.data.jpa.domain.Specification.class), any(org.springframework.data.domain.Pageable.class));
   }
 }

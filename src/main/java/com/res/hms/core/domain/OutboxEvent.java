@@ -14,7 +14,7 @@ import org.hibernate.annotations.JdbcTypeCode;
 import org.hibernate.type.SqlTypes;
 
 @Entity
-@Table(name = "outbox_event")
+@Table(name = "outbox_event", schema = "platform")
 @Getter
 @Setter
 public class OutboxEvent {

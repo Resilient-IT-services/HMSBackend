@@ -38,7 +38,10 @@ public class QuickPharmacySaleResponse {
     private Integer quantity;
     private BigDecimal unitPrice;
     private BigDecimal subtotal;
+    private BigDecimal taxableAmount;
+    private BigDecimal taxAmount;
     private BigDecimal discountAmount;
     private BigDecimal netAmount;
+    private List<com.res.hms.tax.application.dto.TaxComponent> appliedTaxes;
   }
 }

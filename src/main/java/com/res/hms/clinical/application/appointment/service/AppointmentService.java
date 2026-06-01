@@ -56,79 +56,16 @@ public class AppointmentService {
             () -> new ApiException("NOT_FOUND", "Appointment not found", HttpStatus.NOT_FOUND));
   }
 
-  private Specification<Appointment> getFilterSpec(
-      UUID hospitalId,
-      String search,
-      java.time.Instant from,
-      java.time.Instant to,
-      UUID patientId,
-      UUID doctorId,
-      com.res.hms.clinical.domain.AppointmentStatus status,
-      String token,
-      String patientName,
-      String doctor) {
-
-    return (root, query, cb) -> {
-      List<Predicate> predicates = new ArrayList<>();
-      predicates.add(cb.equal(root.get("hospitalId"), hospitalId));
-      predicates.add(cb.equal(root.get("deleted"), false));
-
-      if (patientId != null) {
-        predicates.add(cb.equal(root.get("patientId"), patientId));
-      }
-      if (doctorId != null) {
-        predicates.add(cb.equal(root.get("doctorId"), doctorId));
-      }
-      if (status != null) {
-        predicates.add(cb.equal(root.get("status"), status));
-      }
-      if (search != null && !search.isBlank()) {
-        String pattern = "%" + search.toLowerCase(Locale.ROOT).trim() + "%";
-        predicates.add(
-            cb.or(
-                cb.like(cb.lower(root.get("doctorName")), pattern),
-                cb.like(cb.lower(root.get("patientName")), pattern)));
-      }
-      if (token != null && !token.isBlank()) {
-        predicates.add(cb.like(root.get("tokenNumber").as(String.class), "%" + token.trim() + "%"));
-      }
-      if (patientName != null && !patientName.isBlank()) {
-        predicates.add(
-            cb.like(
-                cb.lower(root.get("patientName")),
-                "%" + patientName.toLowerCase(Locale.ROOT).trim() + "%"));
-      }
-      if (doctor != null && !doctor.isBlank()) {
-        predicates.add(
-            cb.like(
-                cb.lower(root.get("doctorName")),
-                "%" + doctor.toLowerCase(Locale.ROOT).trim() + "%"));
-      }
-      if (from != null) {
-        predicates.add(cb.greaterThanOrEqualTo(root.get("appointmentTime"), from));
-      }
-      if (to != null) {
-        predicates.add(cb.lessThanOrEqualTo(root.get("appointmentTime"), to));
-      }
-      return cb.and(predicates.toArray(new Predicate[0]));
-    };
-  }
-
   @Transactional(readOnly = true)
-  public PageResponse<AppointmentDTO> list(
-      int page,
-      int size,
-      String search,
-      java.time.Instant from,
-      java.time.Instant to,
-      UUID patientId,
-      UUID doctorId,
-      com.res.hms.clinical.domain.AppointmentStatus status) {
+  public PageResponse<AppointmentDTO> list(org.springframework.data.domain.Pageable pageable, String search, java.util.Map<String, String> filters) {
     UUID hospitalId = hospitalContext.requireHospitalId();
-    Pageable pageable = PageRequest.of(page, size, Sort.by("appointmentTime").descending());
 
-    Specification<Appointment> spec =
-        getFilterSpec(hospitalId, search, from, to, patientId, doctorId, status, null, null, null);
+    com.res.hms.core.util.SpecificationBuilder<Appointment> builder =
+        new com.res.hms.core.util.SpecificationBuilder<>(
+            filters, search, java.util.List.of("patientName", "doctorName", "tokenNumber"));
+
+    Specification<Appointment> spec = builder.build();
+    Specification<Appointment> fixedSpec = getFixedSpec(hospitalId, filters);
 
     Specification<Appointment> fetchSpec =
         (root, query, cb) -> {
@@ -141,27 +78,27 @@ public class AppointmentService {
         };
 
     Page<Appointment> assignments =
-        appointmentRepository.findAll(Specification.where(spec).and(fetchSpec), pageable);
+        appointmentRepository.findAll(Specification.where(spec).and(fixedSpec).and(fetchSpec), pageable);
     return PageResponse.from(assignments.map(this::toDto));
   }
 
   @Transactional(readOnly = true)
   public com.res.hms.clinical.application.appointment.dto.AppointmentStatsDTO getStats(
-      String search,
-      java.time.Instant from,
-      java.time.Instant to,
-      UUID patientId,
-      UUID doctorId,
-      com.res.hms.clinical.domain.AppointmentStatus status) {
+      String search, java.util.Map<String, String> filters) {
     UUID hospitalId = hospitalContext.requireHospitalId();
 
     CriteriaBuilder cb = entityManager.getCriteriaBuilder();
     CriteriaQuery<Object[]> query = cb.createQuery(Object[].class);
     Root<Appointment> root = query.from(Appointment.class);
 
-    Specification<Appointment> spec =
-        getFilterSpec(hospitalId, search, from, to, patientId, doctorId, status, null, null, null);
-    Predicate predicate = spec.toPredicate(root, query, cb);
+    com.res.hms.core.util.SpecificationBuilder<Appointment> builder =
+        new com.res.hms.core.util.SpecificationBuilder<>(
+            filters, search, java.util.List.of("patientName", "doctorName", "tokenNumber"));
+
+    Specification<Appointment> spec = builder.build();
+    Specification<Appointment> fixedSpec = getFixedSpec(hospitalId, filters);
+    
+    Predicate predicate = Specification.where(spec).and(fixedSpec).toPredicate(root, query, cb);
     if (predicate != null) {
       query.where(predicate);
     }
@@ -181,13 +118,10 @@ public class AppointmentService {
       total += count;
     }
 
-    // Upcoming count logic (reuses the same filter but only looks at future appointments)
+    // Upcoming count logic
     CriteriaQuery<Long> countQuery = cb.createQuery(Long.class);
     Root<Appointment> countRoot = countQuery.from(Appointment.class);
-    Predicate baseCountPredicate =
-        getFilterSpec(
-                hospitalId, search, from, null, patientId, doctorId, status, null, null, null)
-            .toPredicate(countRoot, countQuery, cb);
+    Predicate baseCountPredicate = Specification.where(spec).and(fixedSpec).toPredicate(countRoot, countQuery, cb);
 
     java.time.Instant now = java.time.Instant.now();
     Predicate futurePredicate = cb.greaterThan(countRoot.get("appointmentTime"), now);
@@ -209,37 +143,20 @@ public class AppointmentService {
   }
 
   @Transactional(readOnly = true)
-  public PageResponse<AppointmentSummaryDTO> listSummary(
-      int page,
-      int size,
-      String search,
-      java.time.Instant from,
-      java.time.Instant to,
-      UUID patientId,
-      UUID doctorId,
-      com.res.hms.clinical.domain.AppointmentStatus status,
-      String token,
-      String patientName,
-      String doctor,
-      String sort) {
+  public PageResponse<AppointmentSummaryDTO> listSummary(org.springframework.data.domain.Pageable pageable, String search, java.util.Map<String, String> filters) {
     UUID hospitalId = hospitalContext.requireHospitalId();
 
-    Sort parsedSort = Sort.by("appointmentTime").descending();
-    if (sort != null && !sort.isBlank()) {
-      String[] parts = sort.split(",");
-      String property = parts[0].trim();
-      Sort.Direction direction = Sort.Direction.ASC;
-      if (parts.length > 1 && parts[1].trim().equalsIgnoreCase("desc")) {
-        direction = Sort.Direction.DESC;
-      }
-      parsedSort = Sort.by(direction, property);
+    // Map legacy 'doctor' param to 'doctorName' for SpecificationBuilder
+    if (filters.containsKey("doctor") && !filters.containsKey("doctorName")) {
+      filters.put("doctorName", filters.get("doctor"));
     }
 
-    Pageable pageable = PageRequest.of(page, size, parsedSort);
+    com.res.hms.core.util.SpecificationBuilder<Appointment> builder =
+        new com.res.hms.core.util.SpecificationBuilder<>(
+            filters, search, java.util.List.of("patientName", "doctorName", "tokenNumber"));
 
-    Specification<Appointment> spec =
-        getFilterSpec(
-            hospitalId, search, from, to, patientId, doctorId, status, token, patientName, doctor);
+    Specification<Appointment> spec = builder.build();
+    Specification<Appointment> fixedSpec = getFixedSpec(hospitalId, filters);
 
     Specification<Appointment> fetchSpec =
         (root, query, cb) -> {
@@ -251,8 +168,44 @@ public class AppointmentService {
         };
 
     Page<Appointment> results =
-        appointmentRepository.findAll(Specification.where(spec).and(fetchSpec), pageable);
+        appointmentRepository.findAll(Specification.where(spec).and(fixedSpec).and(fetchSpec), pageable);
     return PageResponse.from(results.map(this::toSummaryDto));
+  }
+
+  private Specification<Appointment> getFixedSpec(UUID hospitalId, java.util.Map<String, String> filters) {
+    return (root, query, cb) -> {
+      List<Predicate> predicates = new ArrayList<>();
+      predicates.add(cb.equal(root.get("hospitalId"), hospitalId));
+      predicates.add(cb.equal(root.get("deleted"), false));
+
+      if (filters.containsKey("from")) {
+        try {
+          predicates.add(cb.greaterThanOrEqualTo(root.get("appointmentTime"), 
+              java.time.Instant.parse(filters.get("from"))));
+        } catch (Exception ignored) {}
+      }
+      if (filters.containsKey("to")) {
+        try {
+          predicates.add(cb.lessThanOrEqualTo(root.get("appointmentTime"), 
+              java.time.Instant.parse(filters.get("to"))));
+        } catch (Exception ignored) {}
+      }
+      if (filters.containsKey("patientId")) {
+        try {
+          predicates.add(cb.equal(root.get("patientId"), UUID.fromString(filters.get("patientId"))));
+        } catch (Exception ignored) {}
+      }
+      if (filters.containsKey("doctorId")) {
+        try {
+          predicates.add(cb.equal(root.get("doctorId"), UUID.fromString(filters.get("doctorId"))));
+        } catch (Exception ignored) {}
+      }
+      if (filters.containsKey("token")) {
+        predicates.add(cb.like(root.get("tokenNumber").as(String.class), "%" + filters.get("token").trim() + "%"));
+      }
+
+      return cb.and(predicates.toArray(new Predicate[0]));
+    };
   }
 
   @Transactional

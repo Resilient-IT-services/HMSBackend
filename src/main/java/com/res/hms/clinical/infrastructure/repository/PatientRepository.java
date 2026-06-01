@@ -27,7 +27,7 @@ public interface PatientRepository
 
   @Query(
       value =
-          "SELECT p.patient_code FROM patient p WHERE p.hospital_id = :hospitalId AND p.patient_code LIKE :prefix ORDER BY p.patient_code DESC LIMIT 1",
+          "SELECT p.patient_code FROM patient.patient  p WHERE p.hospital_id = :hospitalId AND p.patient_code LIKE :prefix ORDER BY p.patient_code DESC LIMIT 1",
       nativeQuery = true)
   Optional<String> findLastPatientCode(
       @Param("hospitalId") UUID hospitalId, @Param("prefix") String prefix);
@@ -36,7 +36,7 @@ public interface PatientRepository
       value =
           """
         SELECT p.patient_code
-        FROM patient p
+        FROM patient.patient p
         WHERE p.patient_code LIKE :prefix
         ORDER BY p.patient_code DESC
         LIMIT 1

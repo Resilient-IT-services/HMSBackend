@@ -17,7 +17,7 @@ import lombok.Setter;
 @Getter
 @Setter
 @Entity
-@Table(name = "refund")
+@Table(name = "refund", schema = "billing")
 public class Refund extends HospitalScopedEntity {
 
   @Column(name = "payment_id", nullable = false)

@@ -43,6 +43,11 @@ class PharmacyDiscountPropagationTest {
   @Autowired private com.res.hms.iam.infrastructure.repository.RoleRepository roleRepository;
   @Autowired private org.springframework.security.crypto.password.PasswordEncoder passwordEncoder;
 
+  @org.junit.jupiter.api.BeforeEach
+  void setup() {
+    testDataHelper.clearTaxRules();
+  }
+
   @Test
   void shouldPropagateDiscountToInvoice() throws Exception {
     UUID hospitalId = testDataHelper.createHospitalIfMissing("DISC_TEST", "Discount Test Hospital");

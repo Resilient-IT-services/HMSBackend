@@ -15,6 +15,7 @@ import lombok.Setter;
 @Entity
 @Table(
     name = "medicine",
+    schema = "pharmacy",
     uniqueConstraints = {
       @UniqueConstraint(
           name = "uk_medicine_name_strength_form",
@@ -51,4 +52,7 @@ public class Medicine extends BaseEntity {
 
   @Column(name = "threshold_quantity", nullable = false)
   private Integer thresholdQuantity = 10;
+
+  @Column(name = "hsn_code")
+  private String hsnCode;
 }

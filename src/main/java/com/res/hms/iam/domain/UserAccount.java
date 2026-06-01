@@ -21,7 +21,7 @@ import lombok.Setter;
 @Getter
 @Setter
 @Entity
-@Table(name = "user_account")
+@Table(name = "user_account", schema = "iam")
 public class UserAccount extends BaseEntity {
 
   @Column(nullable = false, unique = true)

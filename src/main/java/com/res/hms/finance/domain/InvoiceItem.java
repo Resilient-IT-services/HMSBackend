@@ -17,7 +17,7 @@ import lombok.Setter;
 @Getter
 @Setter
 @Entity
-@Table(name = "invoice_item")
+@Table(name = "invoice_item", schema = "billing")
 public class InvoiceItem extends HospitalScopedEntity {
 
   @Column(name = "invoice_id", nullable = false)
@@ -46,6 +46,9 @@ public class InvoiceItem extends HospitalScopedEntity {
   @Column(name = "tax_amount", precision = 12, scale = 2)
   private BigDecimal taxAmount = BigDecimal.ZERO;
 
+  @Column(name = "taxable_amount", nullable = false, precision = 12, scale = 2)
+  private BigDecimal taxableAmount = BigDecimal.ZERO;
+
   @Column(name = "discount_amount", precision = 12, scale = 2)
   private BigDecimal discountAmount = BigDecimal.ZERO;
 
@@ -67,4 +70,7 @@ public class InvoiceItem extends HospitalScopedEntity {
 
   @Column(name = "doctor_name")
   private String doctorName;
+
+  @jakarta.persistence.OneToMany(mappedBy = "invoiceItem", cascade = jakarta.persistence.CascadeType.ALL, orphanRemoval = true)
+  private java.util.List<InvoiceItemTax> taxes = new java.util.ArrayList<>();
 }

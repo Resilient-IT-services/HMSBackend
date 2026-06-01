@@ -263,7 +263,7 @@ class StaffControllerIntegrationTest {
             get("/api/v1/staff/doctors")
                 .session(session)
                 .header("X-Hospital-Id", testHospitalId.toString())
-                .param("name", "Indiana"))
+                .param("fullName", "Indiana"))
         .andExpect(status().isOk())
         .andExpect(jsonPath("$.data.totalElements").value(1))
         .andExpect(jsonPath("$.data.content[0].fullName").value("Dr. Indiana Jones"));
@@ -288,6 +288,17 @@ class StaffControllerIntegrationTest {
                 .param("minFee", "1100"))
         .andExpect(status().isOk())
         .andExpect(jsonPath("$.data.totalElements").value(0));
+
+    // Sort by fullName desc
+    mockMvc
+        .perform(
+            get("/api/v1/staff/doctors")
+                .session(session)
+                .header("X-Hospital-Id", testHospitalId.toString())
+                .param("sort", "user.fullName,desc"))
+        .andExpect(status().isOk())
+        .andExpect(jsonPath("$.data.content[0].fullName").value("Dr. Multi Role"))
+        .andExpect(jsonPath("$.data.content[1].fullName").value("Dr. Indiana Jones"));
   }
 
   @Test

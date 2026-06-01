@@ -15,7 +15,7 @@ import lombok.Setter;
 @Getter
 @Setter
 @Entity
-@Table(name = "payment_allocation")
+@Table(name = "payment_allocation", schema = "billing")
 public class PaymentAllocation extends BaseEntity {
 
   @Column(name = "payment_id", nullable = false)

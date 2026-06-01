@@ -20,6 +20,7 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 @Service
 @RequiredArgsConstructor
@@ -29,39 +30,41 @@ public class PatientService {
   private final HospitalContext hospitalContext;
   private final ResourceLookup resourceLookup;
 
-  private Specification<Patient> getFilterSpec(UUID hospitalId, String search) {
-    return (root, query, cb) -> {
+  @Transactional(readOnly = true)
+  public PageResponse<PatientDTO> list(org.springframework.data.domain.Pageable pageable, String search, java.util.Map<String, String> filters) {
+    UUID hospitalId = hospitalContext.requireHospitalId();
+    com.res.hms.core.util.SpecificationBuilder<Patient> builder =
+        new com.res.hms.core.util.SpecificationBuilder<>(
+            filters, search, java.util.List.of("fullName", "patientCode", "phone"));
+
+    Specification<Patient> spec = builder.build();
+    Specification<Patient> fixedSpec = (root, query, cb) -> {
       List<Predicate> predicates = new ArrayList<>();
       predicates.add(cb.equal(root.get("hospitalId"), hospitalId));
       predicates.add(cb.equal(root.get("deleted"), false));
-
-      if (search != null && !search.trim().isEmpty()) {
-        String pattern = "%" + search.trim().toLowerCase() + "%";
-        predicates.add(
-            cb.or(
-                cb.like(cb.lower(root.get("fullName")), pattern),
-                cb.like(cb.lower(root.get("patientCode")), pattern),
-                cb.like(root.get("phone"), pattern)));
-      }
       return cb.and(predicates.toArray(new Predicate[0]));
     };
-  }
 
-  public PageResponse<PatientDTO> list(int page, int size, String search) {
-    UUID hospitalId = hospitalContext.requireHospitalId();
-    Pageable pageable = PageRequest.of(page, size, Sort.by("createdAt").descending());
-
-    Specification<Patient> spec = getFilterSpec(hospitalId, search);
-    Page<Patient> results = patientRepository.findAll(spec, pageable);
+    Page<Patient> results = patientRepository.findAll(Specification.where(spec).and(fixedSpec), pageable);
     return PageResponse.from(results.map(this::toDto));
   }
 
-  public PageResponse<PatientSummaryDTO> listSummary(int page, int size, String search) {
+  @Transactional(readOnly = true)
+  public PageResponse<PatientSummaryDTO> listSummary(org.springframework.data.domain.Pageable pageable, String search, java.util.Map<String, String> filters) {
     UUID hospitalId = hospitalContext.requireHospitalId();
-    Pageable pageable = PageRequest.of(page, size, Sort.by("createdAt").descending());
+    com.res.hms.core.util.SpecificationBuilder<Patient> builder =
+        new com.res.hms.core.util.SpecificationBuilder<>(
+            filters, search, java.util.List.of("fullName", "patientCode", "phone"));
 
-    Specification<Patient> spec = getFilterSpec(hospitalId, search);
-    Page<Patient> results = patientRepository.findAll(spec, pageable);
+    Specification<Patient> spec = builder.build();
+    Specification<Patient> fixedSpec = (root, query, cb) -> {
+      List<Predicate> predicates = new ArrayList<>();
+      predicates.add(cb.equal(root.get("hospitalId"), hospitalId));
+      predicates.add(cb.equal(root.get("deleted"), false));
+      return cb.and(predicates.toArray(new Predicate[0]));
+    };
+
+    Page<Patient> results = patientRepository.findAll(Specification.where(spec).and(fixedSpec), pageable);
     return PageResponse.from(results.map(this::toSummaryDto));
   }
 

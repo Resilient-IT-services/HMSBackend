@@ -34,11 +34,11 @@ class InvoicePdfExportIntegrationTest {
         BigDecimal.ONE,
         new BigDecimal("500.00"),
         BigDecimal.ZERO,
-        BigDecimal.ZERO,
+        com.res.hms.finance.domain.FinanceSourceType.TEST,
+        UUID.randomUUID(),
         null,
-        null,
-        null,
-        "Dr. Test");
+        "Dr. Test",
+        null);
 
     byte[] pdfContent = invoiceService.exportInvoicePdf(invoice.getId());
 

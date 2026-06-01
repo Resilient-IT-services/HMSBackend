@@ -12,7 +12,7 @@ import lombok.Setter;
 @Getter
 @Setter
 @Entity
-@Table(name = "vital_range_configs")
+@Table(name = "vital_range_configs", schema = "platform")
 public class VitalRangeConfig extends com.res.hms.core.domain.BaseEntity {
 
   @Enumerated(EnumType.STRING)

@@ -12,7 +12,7 @@ import lombok.Setter;
 @Getter
 @Setter
 @Entity
-@Table(name = "role")
+@Table(name = "role", schema = "iam")
 public class Role extends BaseEntity {
 
   @Enumerated(EnumType.STRING)

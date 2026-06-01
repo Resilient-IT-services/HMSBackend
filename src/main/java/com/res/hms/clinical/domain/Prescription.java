@@ -17,7 +17,7 @@ import lombok.Setter;
 @Getter
 @Setter
 @Entity
-@Table(name = "prescription")
+@Table(name = "prescription", schema = "clinical")
 public class Prescription extends HospitalScopedEntity {
 
   @Column(name = "appointment_id", nullable = false)

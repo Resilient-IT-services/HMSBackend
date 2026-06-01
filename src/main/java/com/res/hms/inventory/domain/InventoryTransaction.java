@@ -14,7 +14,7 @@ import lombok.Setter;
 @Getter
 @Setter
 @Entity
-@Table(name = "inventory_transaction")
+@Table(name = "inventory_transaction", schema = "inventory")
 public class InventoryTransaction extends HospitalScopedEntity {
 
   @jakarta.persistence.ManyToOne(fetch = jakarta.persistence.FetchType.LAZY)

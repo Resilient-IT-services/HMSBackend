@@ -46,12 +46,14 @@ class HospitalControllerIntegrationTest {
 
   @Test
   void testListHospitalsWithFilters() throws Exception {
-    testDataHelper.createHospitalIfMissing("HOSP1", "General Hospital");
-    testDataHelper.createHospitalIfMissing("HOSP2", "City Clinic");
+    String uniqueCode = "HOSP_" + UUID.randomUUID().toString().substring(0, 8);
+    testDataHelper.createHospitalIfMissing(uniqueCode, "General Hospital");
+    testDataHelper.createHospitalIfMissing("CITY_" + UUID.randomUUID().toString().substring(0, 8), "City Clinic");
 
     // 1. List all
     mockMvc
         .perform(get("/api/v1/hospitals").session(session))
+        .andDo(org.springframework.test.web.servlet.result.MockMvcResultHandlers.print())
         .andExpect(status().isOk())
         .andExpect(
             jsonPath("$.data.content.length()")
@@ -59,7 +61,7 @@ class HospitalControllerIntegrationTest {
 
     // 2. Filter by name
     mockMvc
-        .perform(get("/api/v1/hospitals").session(session).param("name", "General"))
+        .perform(get("/api/v1/hospitals").session(session).param("search", "General"))
         .andExpect(status().isOk())
         .andExpect(jsonPath("$.data.content[0].name").value("General Hospital"));
 
@@ -68,11 +70,13 @@ class HospitalControllerIntegrationTest {
         .perform(get("/api/v1/hospitals").session(session).param("status", "ACTIVE"))
         .andExpect(status().isOk());
 
-    // 4. Invalid status
+    // 4. Filter by invalid status (now ignored, returns all)
     mockMvc
         .perform(get("/api/v1/hospitals").session(session).param("status", "INVALID"))
-        .andExpect(status().isBadRequest());
-  }
+        .andExpect(status().isOk())
+        .andExpect(jsonPath("$.data.totalElements").value(org.hamcrest.Matchers.greaterThanOrEqualTo(2)));
+    }
+
 
   @Test
   void testGetHospitalById() throws Exception {

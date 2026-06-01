@@ -82,11 +82,13 @@ public class InvoiceService {
         .quantity(item.getQuantity())
         .unitPrice(item.getUnitPrice())
         .subtotal(item.getSubtotal())
+        .taxableAmount(item.getTaxableAmount())
         .taxAmount(item.getTaxAmount())
         .discountAmount(item.getDiscountAmount())
         .netTotal(item.getNetTotal())
         .sourceType(item.getSourceType())
         .sourceId(item.getSourceId())
+        .appliedTaxes(item.getTaxes() != null ? item.getTaxes().stream().map(t -> new com.res.hms.tax.application.dto.TaxComponent(t.getTaxCode(), t.getTaxName(), t.getTaxRate(), t.getTaxAmount())).collect(java.util.stream.Collectors.toList()) : null)
         .build();
   }
 
@@ -136,12 +138,12 @@ public class InvoiceService {
       InvoiceItemCategory category,
       BigDecimal quantity,
       BigDecimal unitPrice,
-      BigDecimal taxAmount,
       BigDecimal discountAmount,
       com.res.hms.finance.domain.FinanceSourceType sourceType,
       UUID sourceId,
       UUID doctorId,
-      String doctorName) {
+      String doctorName,
+      List<com.res.hms.tax.application.dto.TaxComponent> taxComponents) {
     Invoice invoice =
         invoiceRepository
             .findById(invoiceId)
@@ -155,16 +157,40 @@ public class InvoiceService {
     item.setQuantity(quantity);
     item.setUnitPrice(unitPrice);
     item.setTaxPercentage(BigDecimal.ZERO);
-    item.setTaxAmount(taxAmount != null ? taxAmount : BigDecimal.ZERO);
-    item.setDiscountAmount(discountAmount != null ? discountAmount : BigDecimal.ZERO);
-    item.setSubtotal(unitPrice.multiply(quantity));
-    item.setNetTotal(
-        item.getSubtotal().add(item.getTaxAmount()).subtract(item.getDiscountAmount()));
+    
+    BigDecimal subtotal = unitPrice.multiply(quantity);
+    BigDecimal discount = discountAmount != null ? discountAmount : BigDecimal.ZERO;
+    BigDecimal taxableAmount = subtotal.subtract(discount);
+    
+    BigDecimal totalTax = BigDecimal.ZERO;
+    if (taxComponents != null) {
+      for (com.res.hms.tax.application.dto.TaxComponent tc : taxComponents) {
+        totalTax = totalTax.add(tc.taxAmount());
+        
+        com.res.hms.finance.domain.InvoiceItemTax itemTax = new com.res.hms.finance.domain.InvoiceItemTax();
+        itemTax.setInvoiceItem(item);
+        itemTax.setTaxCode(tc.taxCode());
+        itemTax.setTaxName(tc.taxName());
+        itemTax.setTaxRate(tc.taxRate());
+        itemTax.setTaxAmount(tc.taxAmount());
+        itemTax.setTaxableAmount(taxableAmount);
+        item.getTaxes().add(itemTax);
+      }
+    }
+    
+    item.setTaxableAmount(taxableAmount);
+    item.setTaxAmount(totalTax);
+    item.setDiscountAmount(discount);
+    item.setSubtotal(subtotal);
+    item.setNetTotal(taxableAmount.add(totalTax));
     item.setSourceType(sourceType);
     item.setSourceId(sourceId);
     item.setDoctorId(doctorId);
     item.setDoctorName(doctorName);
     item.setInvoice(invoice);
+
+    log.info("Invoice Item Added: Subtotal={}, Discount={}, Taxable={}, Tax={}, Net={}", 
+        subtotal, discount, taxableAmount, totalTax, item.getNetTotal());
 
     invoiceItemRepository.save(item);
     invoice.getItems().add(item);
@@ -179,15 +205,18 @@ public class InvoiceService {
             .map(InvoiceItem::getSubtotal)
             .reduce(BigDecimal.ZERO, BigDecimal::add);
 
+    BigDecimal discount =
+        invoice.getItems().stream()
+            .map(InvoiceItem::getDiscountAmount)
+            .reduce(BigDecimal.ZERO, BigDecimal::add);
+
     BigDecimal tax =
         invoice.getItems().stream()
             .map(InvoiceItem::getTaxAmount)
             .reduce(BigDecimal.ZERO, BigDecimal::add);
 
-    BigDecimal discount =
-        invoice.getItems().stream()
-            .map(InvoiceItem::getDiscountAmount)
-            .reduce(BigDecimal.ZERO, BigDecimal::add);
+    log.info("Updating Invoice Totals: Subtotal={}, Discount={}, Tax={}, Total={}", 
+        subtotal, discount, tax, subtotal.add(tax).subtract(discount));
 
     invoice.setSubtotalAmount(subtotal);
     invoice.setTaxAmount(tax);

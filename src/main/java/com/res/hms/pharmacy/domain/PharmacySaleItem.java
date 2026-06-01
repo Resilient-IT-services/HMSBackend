@@ -14,7 +14,7 @@ import lombok.Setter;
 @Getter
 @Setter
 @Entity
-@Table(name = "pharmacy_sale_item")
+@Table(name = "pharmacy_sale_item", schema = "pharmacy")
 public class PharmacySaleItem extends BaseEntity {
 
   @ManyToOne(fetch = FetchType.LAZY, optional = false)
@@ -41,9 +41,15 @@ public class PharmacySaleItem extends BaseEntity {
   @Column(name = "tax_amount", precision = 12, scale = 2)
   private BigDecimal taxAmount = BigDecimal.ZERO;
 
+  @Column(name = "taxable_amount", nullable = false, precision = 12, scale = 2)
+  private BigDecimal taxableAmount = BigDecimal.ZERO;
+
   @Column(nullable = false, precision = 12, scale = 2)
   private BigDecimal subtotal = BigDecimal.ZERO;
 
   @Column(name = "net_amount", nullable = false, precision = 12, scale = 2)
   private BigDecimal netAmount = BigDecimal.ZERO;
+
+  @jakarta.persistence.OneToMany(mappedBy = "pharmacySaleItem", cascade = jakarta.persistence.CascadeType.ALL, orphanRemoval = true)
+  private java.util.List<PharmacySaleItemTax> taxes = new java.util.ArrayList<>();
 }
