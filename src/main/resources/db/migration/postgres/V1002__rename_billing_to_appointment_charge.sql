@@ -16,15 +16,15 @@ ALTER TABLE appointment.appointment_charge ADD COLUMN invoice_id UUID;
 ALTER TABLE appointment.appointment_charge_item RENAME COLUMN billing_id TO charge_id;
 
 -- 5. Drop and recreate constraints to ensure correct schema references (especially for H2/Postgres compatibility)
--- Drop existing constraints
+-- Drop existing constraints (Drop child table constraints first)
+ALTER TABLE appointment.appointment_charge_item DROP CONSTRAINT IF EXISTS billing_item_pkey;
+ALTER TABLE appointment.appointment_charge_item DROP CONSTRAINT IF EXISTS fk_billi_bill;
+ALTER TABLE appointment.appointment_charge_item DROP CONSTRAINT IF EXISTS fk_billi_hosp;
+
 ALTER TABLE appointment.appointment_charge DROP CONSTRAINT IF EXISTS billing_pkey;
 ALTER TABLE appointment.appointment_charge DROP CONSTRAINT IF EXISTS billing_appointment_id_fkey;
 ALTER TABLE appointment.appointment_charge DROP CONSTRAINT IF EXISTS fk_bill_hosp;
 ALTER TABLE appointment.appointment_charge DROP CONSTRAINT IF EXISTS fk_bill_pat;
-
-ALTER TABLE appointment.appointment_charge_item DROP CONSTRAINT IF EXISTS billing_item_pkey;
-ALTER TABLE appointment.appointment_charge_item DROP CONSTRAINT IF EXISTS fk_billi_bill;
-ALTER TABLE appointment.appointment_charge_item DROP CONSTRAINT IF EXISTS fk_billi_hosp;
 
 -- Recreate constraints with correct schema references
 ALTER TABLE appointment.appointment_charge ADD CONSTRAINT appointment_charge_pkey PRIMARY KEY (id);

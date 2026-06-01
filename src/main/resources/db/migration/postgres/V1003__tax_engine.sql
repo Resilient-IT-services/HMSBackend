@@ -59,8 +59,6 @@ ALTER TABLE appointment.appointment_charge ADD COLUMN tax_amount NUMERIC(12, 2) 
 ALTER TABLE billing.invoice_item ADD COLUMN taxable_amount NUMERIC(12, 2) DEFAULT 0 NOT NULL;
 ALTER TABLE pharmacy.pharmacy_sale_item ADD COLUMN taxable_amount NUMERIC(12, 2) DEFAULT 0 NOT NULL;
 
-ALTER TABLE pharmacy.medicine ADD COLUMN hsn_code VARCHAR(50);
-
 -- Appointment Charge Tax Snapshot
 CREATE TABLE appointment.appointment_charge_tax (
     id UUID PRIMARY KEY,
