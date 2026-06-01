@@ -1,6 +1,7 @@
 package com.res.hms.tax.api;
 
 import com.res.hms.core.api.ApiResponse;
+import com.res.hms.iam.infrastructure.security.SecurityConstants;
 import com.res.hms.tax.application.dto.TaxGroupDTO;
 import com.res.hms.tax.application.dto.TaxMasterDTO;
 import com.res.hms.tax.application.dto.TaxRuleDTO;
@@ -25,37 +26,37 @@ public class TaxConfigController {
     private final TaxConfigurationService configService;
 
     @GetMapping("/masters")
-    @PreAuthorize("hasRole('ADMIN')")
+    @PreAuthorize("isAuthenticated()")
     public ApiResponse<List<TaxMasterDTO>> getAllMasters() {
         return ApiResponse.success(configService.getAllMasters());
     }
 
     @PostMapping("/masters")
-    @PreAuthorize("hasRole('ADMIN')")
+    @PreAuthorize(SecurityConstants.HAS_ADMIN)
     public ApiResponse<TaxMasterDTO> createMaster(@Valid @RequestBody TaxMasterDTO request) {
         return ApiResponse.success(configService.createMaster(request));
     }
 
     @GetMapping("/groups")
-    @PreAuthorize("hasRole('ADMIN')")
+    @PreAuthorize("isAuthenticated()")
     public ApiResponse<List<TaxGroupDTO>> getAllGroups() {
         return ApiResponse.success(configService.getAllGroups());
     }
 
     @PostMapping("/groups")
-    @PreAuthorize("hasRole('ADMIN')")
+    @PreAuthorize(SecurityConstants.HAS_ADMIN)
     public ApiResponse<TaxGroupDTO> createGroup(@Valid @RequestBody TaxGroupDTO request) {
         return ApiResponse.success(configService.createGroup(request));
     }
 
     @GetMapping("/rules")
-    @PreAuthorize("hasRole('ADMIN')")
+    @PreAuthorize("isAuthenticated()")
     public ApiResponse<List<TaxRuleDTO>> getAllRules() {
         return ApiResponse.success(configService.getAllRules());
     }
 
     @PostMapping("/rules")
-    @PreAuthorize("hasRole('ADMIN')")
+    @PreAuthorize(SecurityConstants.HAS_ADMIN)
     public ApiResponse<TaxRuleDTO> createRule(@Valid @RequestBody TaxRuleDTO request) {
         return ApiResponse.success(configService.createRule(request));
     }
