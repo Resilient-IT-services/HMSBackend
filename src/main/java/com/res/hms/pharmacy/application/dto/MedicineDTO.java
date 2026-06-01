@@ -47,6 +47,7 @@ public class MedicineDTO {
   // Pricing & Tax
   private BigDecimal purchasePrice;
   private BigDecimal sellingPrice;
+  private String hsnCode;
   private BigDecimal taxPercentage;
 
   // Storage Instructions
