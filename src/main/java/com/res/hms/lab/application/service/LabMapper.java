@@ -1,10 +1,12 @@
 package com.res.hms.lab.application.service;
 
 import com.res.hms.lab.application.dto.LabDepartmentDTO;
+import com.res.hms.lab.application.dto.LabPriceDTO;
 import com.res.hms.lab.application.dto.LabReferenceRangeDTO;
 import com.res.hms.lab.application.dto.LabTestDTO;
 import com.res.hms.lab.application.dto.LabTestParameterDTO;
 import com.res.hms.lab.domain.LabDepartment;
+import com.res.hms.lab.domain.LabPrice;
 import com.res.hms.lab.domain.LabReferenceRange;
 import com.res.hms.lab.domain.LabTest;
 import com.res.hms.lab.domain.LabTestParameter;
@@ -29,4 +31,7 @@ public interface LabMapper {
 
     LabReferenceRangeDTO toDto(LabReferenceRange entity);
     LabReferenceRange toEntity(LabReferenceRangeDTO dto);
+
+    LabPriceDTO toDto(LabPrice entity);
+    LabPrice toEntity(LabPriceDTO dto);
 }
