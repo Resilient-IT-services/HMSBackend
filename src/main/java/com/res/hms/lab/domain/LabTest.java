@@ -1,0 +1,55 @@
+package com.res.hms.lab.domain;
+
+import jakarta.persistence.*;
+import java.time.Instant;
+import java.util.UUID;
+import lombok.*;
+
+@Entity
+@Table(name = "lab_test", schema = "lab")
+@Getter
+@Setter
+@NoArgsConstructor
+@AllArgsConstructor
+@Builder
+public class LabTest {
+    @Id
+    @GeneratedValue(strategy = GenerationType.UUID)
+    private UUID id;
+
+    @Column(name = "hospital_id")
+    private UUID hospitalId;
+
+    @Column(name = "test_code")
+    private String testCode;
+
+    @Column(name = "test_name")
+    private String testName;
+
+    @Column(name = "short_name")
+    private String shortName;
+
+    @Column(name = "alias_name")
+    private String aliasName;
+
+    @Column(name = "department_id")
+    private UUID departmentId;
+
+    @Column(name = "result_type")
+    private String resultType;
+
+    @Column(name = "tat_value")
+    private Integer tatValue;
+
+    @Column(name = "tat_unit")
+    private String tatUnit;
+
+    @Column(name = "active")
+    private Boolean active;
+
+    @Column(name = "created_at")
+    private Instant createdAt;
+
+    @Column(name = "updated_at")
+    private Instant updatedAt;
+}

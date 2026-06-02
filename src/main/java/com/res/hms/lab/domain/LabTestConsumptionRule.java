@@ -1,0 +1,28 @@
+package com.res.hms.lab.domain;
+
+import jakarta.persistence.*;
+import java.math.BigDecimal;
+import java.util.UUID;
+import lombok.*;
+
+@Entity
+@Table(name = "lab_test_consumption_rule", schema = "lab")
+@Getter
+@Setter
+@NoArgsConstructor
+@AllArgsConstructor
+@Builder
+public class LabTestConsumptionRule {
+    @Id
+    @GeneratedValue(strategy = GenerationType.UUID)
+    private UUID id;
+
+    @Column(name = "test_id")
+    private UUID testId;
+
+    @Column(name = "item_id")
+    private UUID itemId;
+
+    @Column(name = "quantity")
+    private BigDecimal quantity;
+}
