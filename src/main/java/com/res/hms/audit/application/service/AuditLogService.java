@@ -45,6 +45,7 @@ public class AuditLogService {
       String search,
       java.util.Map<String, String> filters) {
     UUID hospitalId = hospitalContext.getHospitalIdOrNull();
+
     if (hospitalId == null && !hospitalContext.isSuperAdmin()) {
       throw new ApiException(
           "BUSINESS_RULE_VIOLATION", "Please select a hospital first", HttpStatus.BAD_REQUEST);
