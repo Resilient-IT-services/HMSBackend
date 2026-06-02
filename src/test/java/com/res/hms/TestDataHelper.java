@@ -42,7 +42,8 @@ public class TestDataHelper {
   @Autowired private InvoiceRepository invoiceRepository;
 
   @Autowired
-  private com.res.hms.clinical.infrastructure.repository.AppointmentRepository appointmentRepository;
+  private com.res.hms.clinical.infrastructure.repository.AppointmentRepository
+      appointmentRepository;
 
   @Transactional(propagation = Propagation.REQUIRES_NEW)
   public PatientVisit createTestVisit(UUID hospitalId, UUID patientId) {
@@ -196,23 +197,29 @@ public class TestDataHelper {
   }
 
   @Autowired
-  private com.res.hms.iam.infrastructure.repository.DoctorHospitalDetailsRepository doctorHospitalDetailsRepository;
+  private com.res.hms.iam.infrastructure.repository.DoctorHospitalDetailsRepository
+      doctorHospitalDetailsRepository;
 
-  @Autowired private com.res.hms.iam.application.repository.DoctorProfileRepository doctorProfileRepository;
+  @Autowired
+  private com.res.hms.iam.application.repository.DoctorProfileRepository doctorProfileRepository;
 
   @Transactional(propagation = Propagation.REQUIRES_NEW)
   public void setConsultationFee(UUID doctorProfileId, UUID hospitalId, BigDecimal fee) {
-    com.res.hms.iam.domain.DoctorProfile profile = doctorProfileRepository.findById(doctorProfileId).orElseThrow();
+    com.res.hms.iam.domain.DoctorProfile profile =
+        doctorProfileRepository.findById(doctorProfileId).orElseThrow();
     UserAccount user = profile.getUser();
-    
-    UserContract contract = user.getContracts().stream()
-        .filter(c -> c.getHospitalId().equals(hospitalId))
-        .findFirst()
-        .orElseThrow();
 
-    com.res.hms.iam.domain.DoctorHospitalDetails details = 
-        doctorHospitalDetailsRepository.findById(contract.getId()).orElse(new com.res.hms.iam.domain.DoctorHospitalDetails());
-    
+    UserContract contract =
+        user.getContracts().stream()
+            .filter(c -> c.getHospitalId().equals(hospitalId))
+            .findFirst()
+            .orElseThrow();
+
+    com.res.hms.iam.domain.DoctorHospitalDetails details =
+        doctorHospitalDetailsRepository
+            .findById(contract.getId())
+            .orElse(new com.res.hms.iam.domain.DoctorHospitalDetails());
+
     details.setAssignment(contract);
     details.setConsultationFee(fee);
     doctorHospitalDetailsRepository.saveAndFlush(details);
@@ -220,12 +227,15 @@ public class TestDataHelper {
 
   @Autowired
   private com.res.hms.tax.infrastructure.repository.TaxMasterRepository taxMasterRepository;
+
   @Autowired
   private com.res.hms.tax.infrastructure.repository.TaxGroupRepository taxGroupRepository;
-  @Autowired
-  private com.res.hms.tax.infrastructure.repository.TaxRuleRepository taxRuleRepository;
 
-  @Autowired private com.res.hms.tax.infrastructure.repository.TaxGroupDetailRepository taxGroupDetailRepository;
+  @Autowired private com.res.hms.tax.infrastructure.repository.TaxRuleRepository taxRuleRepository;
+
+  @Autowired
+  private com.res.hms.tax.infrastructure.repository.TaxGroupDetailRepository
+      taxGroupDetailRepository;
 
   @Transactional(propagation = Propagation.REQUIRES_NEW)
   public void clearTaxRules() {
@@ -242,23 +252,27 @@ public class TestDataHelper {
     tg.setActive(true);
 
     for (TaxComponentData comp : components) {
-      com.res.hms.tax.domain.TaxMaster tm = taxMasterRepository.findByCode(comp.code()).orElseGet(() -> {
-        com.res.hms.tax.domain.TaxMaster m = new com.res.hms.tax.domain.TaxMaster();
-        m.setCode(comp.code());
-        m.setName(comp.name());
-        m.setTaxType(comp.type());
-        m.setRate(comp.rate());
-        m.setActive(true);
-        m.setEffectiveFrom(java.time.Instant.now().minus(java.time.Duration.ofDays(1)));
-        return taxMasterRepository.save(m);
-      });
+      com.res.hms.tax.domain.TaxMaster tm =
+          taxMasterRepository
+              .findByCode(comp.code())
+              .orElseGet(
+                  () -> {
+                    com.res.hms.tax.domain.TaxMaster m = new com.res.hms.tax.domain.TaxMaster();
+                    m.setCode(comp.code());
+                    m.setName(comp.name());
+                    m.setTaxType(comp.type());
+                    m.setRate(comp.rate());
+                    m.setActive(true);
+                    m.setEffectiveFrom(java.time.Instant.now().minus(java.time.Duration.ofDays(1)));
+                    return taxMasterRepository.save(m);
+                  });
 
       com.res.hms.tax.domain.TaxGroupDetail tgd = new com.res.hms.tax.domain.TaxGroupDetail();
       tgd.setGroup(tg);
       tgd.setTaxMaster(tm);
       tg.getDetails().add(tgd);
     }
-    
+
     taxGroupRepository.save(tg);
 
     com.res.hms.tax.domain.TaxRule tr = new com.res.hms.tax.domain.TaxRule();

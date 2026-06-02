@@ -9,7 +9,6 @@ import com.res.hms.clinical.application.appointment.dto.VitalsDTO;
 import com.res.hms.clinical.application.appointment.service.AppointmentAggregateService;
 import com.res.hms.clinical.application.appointment.service.AppointmentService;
 import com.res.hms.clinical.application.appointment.service.OPDEncounterOrchestrator;
-import com.res.hms.clinical.domain.AppointmentStatus;
 import com.res.hms.core.api.ApiResponse;
 import com.res.hms.core.api.PageResponse;
 import com.res.hms.core.validation.OnUpdate;
@@ -17,10 +16,8 @@ import com.res.hms.iam.application.service.AuthService;
 import com.res.hms.iam.infrastructure.security.SecurityConstants;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
-import java.time.Instant;
 import java.util.UUID;
 import lombok.RequiredArgsConstructor;
-import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -61,7 +58,9 @@ public class AppointmentController {
   @GetMapping
   @PreAuthorize(SecurityConstants.HAS_RECEPTION_ACCESS)
   public ApiResponse<PageResponse<AppointmentDTO>> list(
-      @org.springframework.data.web.PageableDefault(sort = "appointmentTime", direction = org.springframework.data.domain.Sort.Direction.DESC)
+      @org.springframework.data.web.PageableDefault(
+              sort = "appointmentTime",
+              direction = org.springframework.data.domain.Sort.Direction.DESC)
           org.springframework.data.domain.Pageable pageable,
       @RequestParam(required = false) String search,
       @RequestParam java.util.Map<String, String> allParams) {
@@ -71,7 +70,9 @@ public class AppointmentController {
   @GetMapping("/summary")
   @PreAuthorize(SecurityConstants.HAS_RECEPTION_ACCESS)
   public ApiResponse<PageResponse<AppointmentSummaryDTO>> listSummary(
-      @org.springframework.data.web.PageableDefault(sort = "appointmentTime", direction = org.springframework.data.domain.Sort.Direction.DESC)
+      @org.springframework.data.web.PageableDefault(
+              sort = "appointmentTime",
+              direction = org.springframework.data.domain.Sort.Direction.DESC)
           org.springframework.data.domain.Pageable pageable,
       @RequestParam(required = false) String search,
       @RequestParam java.util.Map<String, String> allParams) {

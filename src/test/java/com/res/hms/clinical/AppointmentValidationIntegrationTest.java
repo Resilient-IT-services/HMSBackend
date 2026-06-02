@@ -6,7 +6,6 @@ import com.res.hms.TestDataHelper;
 import com.res.hms.clinical.application.appointment.dto.AppointmentDTO;
 import com.res.hms.clinical.application.appointment.service.AppointmentAggregateService;
 import com.res.hms.core.exception.ApiException;
-import com.res.hms.core.tenant.HospitalContext;
 import java.time.OffsetDateTime;
 import java.util.UUID;
 import org.junit.jupiter.api.BeforeEach;
@@ -40,24 +39,29 @@ class AppointmentValidationIntegrationTest {
 
   @Test
   void testCreateAppointmentInPastFails() {
-    AppointmentDTO request = AppointmentDTO.builder()
-        .patientId(patientId)
-        .doctorId(doctorId)
-        .appointmentTime(OffsetDateTime.now().minusHours(2)) // 2 hours in the past
-        .build();
+    AppointmentDTO request =
+        AppointmentDTO.builder()
+            .patientId(patientId)
+            .doctorId(doctorId)
+            .appointmentTime(OffsetDateTime.now().minusHours(2)) // 2 hours in the past
+            .build();
 
-    assertThrows(ApiException.class, () -> {
-      appointmentAggregateService.saveAppointmentAggregate(request);
-    }, "Should not allow booking an appointment in the past");
+    assertThrows(
+        ApiException.class,
+        () -> {
+          appointmentAggregateService.saveAppointmentAggregate(request);
+        },
+        "Should not allow booking an appointment in the past");
   }
 
   @Test
   void testCreateAppointmentInFutureSucceeds() {
-    AppointmentDTO request = AppointmentDTO.builder()
-        .patientId(patientId)
-        .doctorId(doctorId)
-        .appointmentTime(OffsetDateTime.now().plusHours(2)) // 2 hours in the future
-        .build();
+    AppointmentDTO request =
+        AppointmentDTO.builder()
+            .patientId(patientId)
+            .doctorId(doctorId)
+            .appointmentTime(OffsetDateTime.now().plusHours(2)) // 2 hours in the future
+            .build();
 
     appointmentAggregateService.saveAppointmentAggregate(request);
     // Should not throw exception

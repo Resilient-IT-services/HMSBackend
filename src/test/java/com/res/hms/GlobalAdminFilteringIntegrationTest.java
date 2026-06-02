@@ -30,10 +30,16 @@ class GlobalAdminFilteringIntegrationTest {
   @Autowired private MockMvc mockMvc;
   @Autowired private HospitalRepository hospitalRepository;
   @Autowired private ItemRepository itemRepository;
-  @Autowired private com.res.hms.audit.infrastructure.repository.AuditLogRepository auditLogRepository;
+
+  @Autowired
+  private com.res.hms.audit.infrastructure.repository.AuditLogRepository auditLogRepository;
+
   @Autowired private TestDataHelper testDataHelper;
   @Autowired private org.springframework.security.crypto.password.PasswordEncoder passwordEncoder;
-  @Autowired private com.res.hms.iam.infrastructure.repository.UserAccountRepository userAccountRepository;
+
+  @Autowired
+  private com.res.hms.iam.infrastructure.repository.UserAccountRepository userAccountRepository;
+
   @Autowired private com.res.hms.iam.infrastructure.repository.RoleRepository roleRepository;
 
   private MockHttpSession adminSession;
@@ -43,23 +49,29 @@ class GlobalAdminFilteringIntegrationTest {
   @BeforeEach
   void setUp() throws Exception {
     hospitalId = testDataHelper.createHospitalIfMissing("ADMIN_TEST", "Admin Test Hospital");
-    
+
     // Login as super admin
-    var loginResponse = mockMvc
-        .perform(post("/api/v1/auth/login")
-            .contentType(MediaType.APPLICATION_JSON)
-            .content("{\"username\": \"admin\", \"password\": \"admin123\"}"))
-        .andExpect(status().isOk())
-        .andReturn();
-    
+    var loginResponse =
+        mockMvc
+            .perform(
+                post("/api/v1/auth/login")
+                    .contentType(MediaType.APPLICATION_JSON)
+                    .content("{\"username\": \"admin\", \"password\": \"admin123\"}"))
+            .andExpect(status().isOk())
+            .andReturn();
+
     adminSession = (MockHttpSession) loginResponse.getRequest().getSession();
-    
-    var meResponse = mockMvc
-        .perform(get("/api/v1/auth/me").session(adminSession))
-        .andExpect(status().isOk())
-        .andReturn();
-    
-    adminUserId = UUID.fromString(com.jayway.jsonpath.JsonPath.read(meResponse.getResponse().getContentAsString(), "$.data.id"));
+
+    var meResponse =
+        mockMvc
+            .perform(get("/api/v1/auth/me").session(adminSession))
+            .andExpect(status().isOk())
+            .andReturn();
+
+    adminUserId =
+        UUID.fromString(
+            com.jayway.jsonpath.JsonPath.read(
+                meResponse.getResponse().getContentAsString(), "$.data.id"));
   }
 
   @Test
@@ -69,18 +81,20 @@ class GlobalAdminFilteringIntegrationTest {
     createHospital("General Hospital", "GENERAL");
 
     // Filter by search
-    mockMvc.perform(get("/api/v1/hospitals")
-            .session(adminSession)
-            .param("search", "General"))
+    mockMvc
+        .perform(get("/api/v1/hospitals").session(adminSession).param("search", "General"))
         .andExpect(status().isOk())
         .andExpect(jsonPath("$.data.content[0].name").value("General Hospital"));
 
     // Sort by name desc
-    mockMvc.perform(get("/api/v1/hospitals")
-            .session(adminSession)
-            .param("sort", "name,desc"))
+    mockMvc
+        .perform(get("/api/v1/hospitals").session(adminSession).param("sort", "name,desc"))
         .andExpect(status().isOk())
-        .andExpect(jsonPath("$.data.content[*].name", org.hamcrest.Matchers.hasItems("General Hospital", "Beta Hospital", "Alpha Clinic")));
+        .andExpect(
+            jsonPath(
+                "$.data.content[*].name",
+                org.hamcrest.Matchers.hasItems(
+                    "General Hospital", "Beta Hospital", "Alpha Clinic")));
   }
 
   @Test
@@ -89,19 +103,23 @@ class GlobalAdminFilteringIntegrationTest {
     createItem("Gauze", "Surgical");
 
     // Filter by category
-    mockMvc.perform(get("/api/v1/inventory/items")
-            .session(adminSession)
-            .header("X-Hospital-Id", hospitalId.toString())
-            .param("category", "Medical"))
+    mockMvc
+        .perform(
+            get("/api/v1/inventory/items")
+                .session(adminSession)
+                .header("X-Hospital-Id", hospitalId.toString())
+                .param("category", "Medical"))
         .andExpect(status().isOk())
         .andExpect(jsonPath("$.data.totalElements").value(1))
         .andExpect(jsonPath("$.data.content[0].name").value("Syringe"));
 
     // Sort by name asc
-    mockMvc.perform(get("/api/v1/inventory/items")
-            .session(adminSession)
-            .header("X-Hospital-Id", hospitalId.toString())
-            .param("sort", "name,asc"))
+    mockMvc
+        .perform(
+            get("/api/v1/inventory/items")
+                .session(adminSession)
+                .header("X-Hospital-Id", hospitalId.toString())
+                .param("sort", "name,asc"))
         .andExpect(status().isOk())
         .andExpect(jsonPath("$.data.content[0].name").value("Gauze"))
         .andExpect(jsonPath("$.data.content[1].name").value("Syringe"));
@@ -113,19 +131,23 @@ class GlobalAdminFilteringIntegrationTest {
     createAuditLog("PATIENT", "UPDATE");
 
     // Filter by entityName
-    mockMvc.perform(get("/api/v1/audit-logs")
-            .session(adminSession)
-            .header("X-Hospital-Id", hospitalId.toString())
-            .param("entityName", "USER_ACCOUNT"))
+    mockMvc
+        .perform(
+            get("/api/v1/audit-logs")
+                .session(adminSession)
+                .header("X-Hospital-Id", hospitalId.toString())
+                .param("entityName", "USER_ACCOUNT"))
         .andExpect(status().isOk())
         .andExpect(jsonPath("$.data.totalElements").value(1))
         .andExpect(jsonPath("$.data.content[0].entityName").value("USER_ACCOUNT"));
 
     // Sort by entityName desc
-    mockMvc.perform(get("/api/v1/audit-logs")
-            .session(adminSession)
-            .header("X-Hospital-Id", hospitalId.toString())
-            .param("sort", "entityName,desc"))
+    mockMvc
+        .perform(
+            get("/api/v1/audit-logs")
+                .session(adminSession)
+                .header("X-Hospital-Id", hospitalId.toString())
+                .param("sort", "entityName,desc"))
         .andExpect(status().isOk())
         .andExpect(jsonPath("$.data.content[0].entityName").value("USER_ACCOUNT"))
         .andExpect(jsonPath("$.data.content[1].entityName").value("PATIENT"));

@@ -18,5 +18,4 @@ public record TaxCalculationRequest(
     String hospitalState,
     Instant invoiceDate,
     String patientCategory,
-    String insuranceProvider
-) {}
+    String insuranceProvider) {}

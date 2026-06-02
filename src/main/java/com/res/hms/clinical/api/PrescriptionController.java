@@ -3,7 +3,6 @@ package com.res.hms.clinical.api;
 import com.res.hms.clinical.application.prescription.dto.PrescriptionDTO;
 import com.res.hms.clinical.application.prescription.dto.PrescriptionSummaryDTO;
 import com.res.hms.clinical.application.prescription.service.PrescriptionService;
-import com.res.hms.clinical.domain.PrescriptionStatus;
 import com.res.hms.core.api.ApiResponse;
 import com.res.hms.core.api.PageResponse;
 import io.swagger.v3.oas.annotations.tags.Tag;
@@ -30,7 +29,9 @@ public class PrescriptionController {
   @GetMapping
   @PreAuthorize("hasAnyRole('ADMIN','DOCTOR','NURSE','PHARMACIST','SUPER_ADMIN')")
   public ApiResponse<PageResponse<PrescriptionDTO>> list(
-      @org.springframework.data.web.PageableDefault(sort = "createdAt", direction = org.springframework.data.domain.Sort.Direction.DESC)
+      @org.springframework.data.web.PageableDefault(
+              sort = "createdAt",
+              direction = org.springframework.data.domain.Sort.Direction.DESC)
           org.springframework.data.domain.Pageable pageable,
       @RequestParam(required = false) String search,
       @RequestParam java.util.Map<String, String> allParams) {
@@ -40,7 +41,9 @@ public class PrescriptionController {
   @GetMapping("/summary")
   @PreAuthorize("hasAnyRole('ADMIN','DOCTOR','NURSE','PHARMACIST','SUPER_ADMIN')")
   public ApiResponse<PageResponse<PrescriptionSummaryDTO>> listSummary(
-      @org.springframework.data.web.PageableDefault(sort = "createdAt", direction = org.springframework.data.domain.Sort.Direction.DESC)
+      @org.springframework.data.web.PageableDefault(
+              sort = "createdAt",
+              direction = org.springframework.data.domain.Sort.Direction.DESC)
           org.springframework.data.domain.Pageable pageable,
       @RequestParam(required = false) String search,
       @RequestParam java.util.Map<String, String> allParams) {

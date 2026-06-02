@@ -50,6 +50,9 @@ public class PharmacySaleItem extends BaseEntity {
   @Column(name = "net_amount", nullable = false, precision = 12, scale = 2)
   private BigDecimal netAmount = BigDecimal.ZERO;
 
-  @jakarta.persistence.OneToMany(mappedBy = "pharmacySaleItem", cascade = jakarta.persistence.CascadeType.ALL, orphanRemoval = true)
+  @jakarta.persistence.OneToMany(
+      mappedBy = "pharmacySaleItem",
+      cascade = jakarta.persistence.CascadeType.ALL,
+      orphanRemoval = true)
   private java.util.List<PharmacySaleItemTax> taxes = new java.util.ArrayList<>();
 }

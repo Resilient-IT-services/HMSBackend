@@ -31,10 +31,7 @@ public class HospitalContext {
     }
 
     if (principal.isSuperAdmin()) {
-      throw new ApiException(
-          "BUSINESS_RULE_VIOLATION",
-          "A hospital must be selected even for Super Admin to perform operational tasks",
-          HttpStatus.BAD_REQUEST);
+      return null;
     }
 
     throw new ApiException(

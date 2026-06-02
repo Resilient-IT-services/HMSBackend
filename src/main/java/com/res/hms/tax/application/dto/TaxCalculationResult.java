@@ -7,5 +7,4 @@ public record TaxCalculationResult(
     BigDecimal taxableAmount,
     BigDecimal totalTax,
     BigDecimal grandTotal,
-    List<TaxComponent> components
-) {}
+    List<TaxComponent> components) {}

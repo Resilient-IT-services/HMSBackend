@@ -99,8 +99,9 @@ class DepartmentServiceTest {
   void update_ThrowsNotFound() {
     UUID id = UUID.randomUUID();
     when(departmentRepository.findById(id)).thenReturn(Optional.empty());
-    
-    ApiException ex = assertThrows(ApiException.class, () -> departmentService.update(id, new Department()));
+
+    ApiException ex =
+        assertThrows(ApiException.class, () -> departmentService.update(id, new Department()));
     assertEquals("NOT_FOUND", ex.getCode());
     assertEquals(HttpStatus.NOT_FOUND, ex.getStatus());
   }

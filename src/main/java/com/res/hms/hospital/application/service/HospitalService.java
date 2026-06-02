@@ -4,13 +4,10 @@ import com.res.hms.core.api.PageResponse;
 import com.res.hms.core.exception.ApiException;
 import com.res.hms.hospital.application.dto.HospitalDTO;
 import com.res.hms.hospital.domain.Hospital;
-import com.res.hms.hospital.domain.HospitalStatus;
 import com.res.hms.hospital.infrastructure.repository.HospitalRepository;
 import java.util.UUID;
 import java.util.stream.Collectors;
 import lombok.RequiredArgsConstructor;
-import org.springframework.data.domain.PageRequest;
-import org.springframework.data.jpa.domain.Specification;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -39,7 +36,8 @@ public class HospitalService {
         new com.res.hms.core.util.SpecificationBuilder<>(
             filters, search, java.util.List.of("name", "code"));
 
-    return PageResponse.from(hospitalRepository.findAll(builder.build(), pageable).map(this::toDto));
+    return PageResponse.from(
+        hospitalRepository.findAll(builder.build(), pageable).map(this::toDto));
   }
 
   @Transactional(readOnly = true)

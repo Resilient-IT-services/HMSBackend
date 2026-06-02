@@ -48,7 +48,8 @@ class HospitalControllerIntegrationTest {
   void testListHospitalsWithFilters() throws Exception {
     String uniqueCode = "HOSP_" + UUID.randomUUID().toString().substring(0, 8);
     testDataHelper.createHospitalIfMissing(uniqueCode, "General Hospital");
-    testDataHelper.createHospitalIfMissing("CITY_" + UUID.randomUUID().toString().substring(0, 8), "City Clinic");
+    testDataHelper.createHospitalIfMissing(
+        "CITY_" + UUID.randomUUID().toString().substring(0, 8), "City Clinic");
 
     // 1. List all
     mockMvc
@@ -74,9 +75,9 @@ class HospitalControllerIntegrationTest {
     mockMvc
         .perform(get("/api/v1/hospitals").session(session).param("status", "INVALID"))
         .andExpect(status().isOk())
-        .andExpect(jsonPath("$.data.totalElements").value(org.hamcrest.Matchers.greaterThanOrEqualTo(2)));
-    }
-
+        .andExpect(
+            jsonPath("$.data.totalElements").value(org.hamcrest.Matchers.greaterThanOrEqualTo(2)));
+  }
 
   @Test
   void testGetHospitalById() throws Exception {

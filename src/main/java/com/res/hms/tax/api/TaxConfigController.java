@@ -22,41 +22,41 @@ import org.springframework.web.bind.annotation.RestController;
 @RequiredArgsConstructor
 public class TaxConfigController {
 
-    private final TaxConfigurationService configService;
+  private final TaxConfigurationService configService;
 
-    @GetMapping("/masters")
-    @PreAuthorize("hasRole('ADMIN')")
-    public ApiResponse<List<TaxMasterDTO>> getAllMasters() {
-        return ApiResponse.success(configService.getAllMasters());
-    }
+  @GetMapping("/masters")
+  @PreAuthorize("hasRole('ADMIN')")
+  public ApiResponse<List<TaxMasterDTO>> getAllMasters() {
+    return ApiResponse.success(configService.getAllMasters());
+  }
 
-    @PostMapping("/masters")
-    @PreAuthorize("hasRole('ADMIN')")
-    public ApiResponse<TaxMasterDTO> createMaster(@Valid @RequestBody TaxMasterDTO request) {
-        return ApiResponse.success(configService.createMaster(request));
-    }
+  @PostMapping("/masters")
+  @PreAuthorize("hasRole('ADMIN')")
+  public ApiResponse<TaxMasterDTO> createMaster(@Valid @RequestBody TaxMasterDTO request) {
+    return ApiResponse.success(configService.createMaster(request));
+  }
 
-    @GetMapping("/groups")
-    @PreAuthorize("hasRole('ADMIN')")
-    public ApiResponse<List<TaxGroupDTO>> getAllGroups() {
-        return ApiResponse.success(configService.getAllGroups());
-    }
+  @GetMapping("/groups")
+  @PreAuthorize("hasRole('ADMIN')")
+  public ApiResponse<List<TaxGroupDTO>> getAllGroups() {
+    return ApiResponse.success(configService.getAllGroups());
+  }
 
-    @PostMapping("/groups")
-    @PreAuthorize("hasRole('ADMIN')")
-    public ApiResponse<TaxGroupDTO> createGroup(@Valid @RequestBody TaxGroupDTO request) {
-        return ApiResponse.success(configService.createGroup(request));
-    }
+  @PostMapping("/groups")
+  @PreAuthorize("hasRole('ADMIN')")
+  public ApiResponse<TaxGroupDTO> createGroup(@Valid @RequestBody TaxGroupDTO request) {
+    return ApiResponse.success(configService.createGroup(request));
+  }
 
-    @GetMapping("/rules")
-    @PreAuthorize("hasRole('ADMIN')")
-    public ApiResponse<List<TaxRuleDTO>> getAllRules() {
-        return ApiResponse.success(configService.getAllRules());
-    }
+  @GetMapping("/rules")
+  @PreAuthorize("hasRole('ADMIN')")
+  public ApiResponse<List<TaxRuleDTO>> getAllRules() {
+    return ApiResponse.success(configService.getAllRules());
+  }
 
-    @PostMapping("/rules")
-    @PreAuthorize("hasRole('ADMIN')")
-    public ApiResponse<TaxRuleDTO> createRule(@Valid @RequestBody TaxRuleDTO request) {
-        return ApiResponse.success(configService.createRule(request));
-    }
+  @PostMapping("/rules")
+  @PreAuthorize("hasRole('ADMIN')")
+  public ApiResponse<TaxRuleDTO> createRule(@Valid @RequestBody TaxRuleDTO request) {
+    return ApiResponse.success(configService.createRule(request));
+  }
 }

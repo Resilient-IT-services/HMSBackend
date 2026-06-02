@@ -12,9 +12,7 @@ import com.res.hms.tax.infrastructure.repository.TaxGroupDetailRepository;
 import com.res.hms.tax.infrastructure.repository.TaxGroupRepository;
 import com.res.hms.tax.infrastructure.repository.TaxMasterRepository;
 import com.res.hms.tax.infrastructure.repository.TaxRuleRepository;
-import java.util.ArrayList;
 import java.util.List;
-import java.util.UUID;
 import java.util.stream.Collectors;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
@@ -25,117 +23,126 @@ import org.springframework.transaction.annotation.Transactional;
 @RequiredArgsConstructor
 public class TaxConfigurationService {
 
-    private final TaxMasterRepository masterRepository;
-    private final TaxGroupRepository groupRepository;
-    private final TaxGroupDetailRepository detailRepository;
-    private final TaxRuleRepository ruleRepository;
+  private final TaxMasterRepository masterRepository;
+  private final TaxGroupRepository groupRepository;
+  private final TaxGroupDetailRepository detailRepository;
+  private final TaxRuleRepository ruleRepository;
 
-    @Transactional(readOnly = true)
-    public List<TaxMasterDTO> getAllMasters() {
-        return masterRepository.findAll().stream().map(this::toMasterDto).collect(Collectors.toList());
+  @Transactional(readOnly = true)
+  public List<TaxMasterDTO> getAllMasters() {
+    return masterRepository.findAll().stream().map(this::toMasterDto).collect(Collectors.toList());
+  }
+
+  @Transactional
+  public TaxMasterDTO createMaster(TaxMasterDTO dto) {
+    TaxMaster master = new TaxMaster();
+    updateMasterFields(master, dto);
+    return toMasterDto(masterRepository.save(master));
+  }
+
+  @Transactional(readOnly = true)
+  public List<TaxGroupDTO> getAllGroups() {
+    return groupRepository.findAll().stream().map(this::toGroupDto).collect(Collectors.toList());
+  }
+
+  @Transactional
+  public TaxGroupDTO createGroup(TaxGroupDTO dto) {
+    TaxGroup group = new TaxGroup();
+    group.setName(dto.getName());
+    group.setActive(dto.isActive());
+    group = groupRepository.save(group);
+
+    if (dto.getTaxes() != null) {
+      for (TaxMasterDTO masterDto : dto.getTaxes()) {
+        TaxMaster master =
+            masterRepository
+                .findById(masterDto.getId())
+                .orElseThrow(
+                    () ->
+                        new ApiException(
+                            "NOT_FOUND", "Tax Master not found", HttpStatus.NOT_FOUND));
+        TaxGroupDetail detail = new TaxGroupDetail();
+        detail.setGroup(group);
+        detail.setTaxMaster(master);
+        detailRepository.save(detail);
+      }
     }
+    return toGroupDto(groupRepository.findById(group.getId()).get());
+  }
 
-    @Transactional
-    public TaxMasterDTO createMaster(TaxMasterDTO dto) {
-        TaxMaster master = new TaxMaster();
-        updateMasterFields(master, dto);
-        return toMasterDto(masterRepository.save(master));
-    }
+  @Transactional(readOnly = true)
+  public List<TaxRuleDTO> getAllRules() {
+    return ruleRepository.findAll().stream().map(this::toRuleDto).collect(Collectors.toList());
+  }
 
-    @Transactional(readOnly = true)
-    public List<TaxGroupDTO> getAllGroups() {
-        return groupRepository.findAll().stream().map(this::toGroupDto).collect(Collectors.toList());
-    }
+  @Transactional
+  public TaxRuleDTO createRule(TaxRuleDTO dto) {
+    TaxGroup group =
+        groupRepository
+            .findById(dto.getTaxGroupId())
+            .orElseThrow(
+                () -> new ApiException("NOT_FOUND", "Tax Group not found", HttpStatus.NOT_FOUND));
 
-    @Transactional
-    public TaxGroupDTO createGroup(TaxGroupDTO dto) {
-        TaxGroup group = new TaxGroup();
-        group.setName(dto.getName());
-        group.setActive(dto.isActive());
-        group = groupRepository.save(group);
+    TaxRule rule = new TaxRule();
+    rule.setPriority(dto.getPriority());
+    rule.setItemType(dto.getItemType());
+    rule.setHsnCode(dto.getHsnCode());
+    rule.setSacCode(dto.getSacCode());
+    rule.setPatientCategory(dto.getPatientCategory());
+    rule.setTaxGroup(group);
+    rule.setEffectiveFrom(dto.getEffectiveFrom());
+    rule.setEffectiveTo(dto.getEffectiveTo());
 
-        if (dto.getTaxes() != null) {
-            for (TaxMasterDTO masterDto : dto.getTaxes()) {
-                TaxMaster master = masterRepository.findById(masterDto.getId())
-                    .orElseThrow(() -> new ApiException("NOT_FOUND", "Tax Master not found", HttpStatus.NOT_FOUND));
-                TaxGroupDetail detail = new TaxGroupDetail();
-                detail.setGroup(group);
-                detail.setTaxMaster(master);
-                detailRepository.save(detail);
-            }
-        }
-        return toGroupDto(groupRepository.findById(group.getId()).get());
-    }
+    return toRuleDto(ruleRepository.save(rule));
+  }
 
-    @Transactional(readOnly = true)
-    public List<TaxRuleDTO> getAllRules() {
-        return ruleRepository.findAll().stream().map(this::toRuleDto).collect(Collectors.toList());
-    }
+  private TaxMasterDTO toMasterDto(TaxMaster master) {
+    TaxMasterDTO dto = new TaxMasterDTO();
+    dto.setId(master.getId());
+    dto.setCode(master.getCode());
+    dto.setName(master.getName());
+    dto.setTaxType(master.getTaxType());
+    dto.setRate(master.getRate());
+    dto.setActive(master.isActive());
+    dto.setEffectiveFrom(master.getEffectiveFrom());
+    dto.setEffectiveTo(master.getEffectiveTo());
+    return dto;
+  }
 
-    @Transactional
-    public TaxRuleDTO createRule(TaxRuleDTO dto) {
-        TaxGroup group = groupRepository.findById(dto.getTaxGroupId())
-            .orElseThrow(() -> new ApiException("NOT_FOUND", "Tax Group not found", HttpStatus.NOT_FOUND));
-
-        TaxRule rule = new TaxRule();
-        rule.setPriority(dto.getPriority());
-        rule.setItemType(dto.getItemType());
-        rule.setHsnCode(dto.getHsnCode());
-        rule.setSacCode(dto.getSacCode());
-        rule.setPatientCategory(dto.getPatientCategory());
-        rule.setTaxGroup(group);
-        rule.setEffectiveFrom(dto.getEffectiveFrom());
-        rule.setEffectiveTo(dto.getEffectiveTo());
-
-        return toRuleDto(ruleRepository.save(rule));
-    }
-
-    private TaxMasterDTO toMasterDto(TaxMaster master) {
-        TaxMasterDTO dto = new TaxMasterDTO();
-        dto.setId(master.getId());
-        dto.setCode(master.getCode());
-        dto.setName(master.getName());
-        dto.setTaxType(master.getTaxType());
-        dto.setRate(master.getRate());
-        dto.setActive(master.isActive());
-        dto.setEffectiveFrom(master.getEffectiveFrom());
-        dto.setEffectiveTo(master.getEffectiveTo());
-        return dto;
-    }
-
-    private TaxGroupDTO toGroupDto(TaxGroup group) {
-        TaxGroupDTO dto = new TaxGroupDTO();
-        dto.setId(group.getId());
-        dto.setName(group.getName());
-        dto.setActive(group.isActive());
-        dto.setTaxes(group.getDetails().stream()
+  private TaxGroupDTO toGroupDto(TaxGroup group) {
+    TaxGroupDTO dto = new TaxGroupDTO();
+    dto.setId(group.getId());
+    dto.setName(group.getName());
+    dto.setActive(group.isActive());
+    dto.setTaxes(
+        group.getDetails().stream()
             .map(d -> toMasterDto(d.getTaxMaster()))
             .collect(Collectors.toList()));
-        return dto;
-    }
+    return dto;
+  }
 
-    private TaxRuleDTO toRuleDto(TaxRule rule) {
-        TaxRuleDTO dto = new TaxRuleDTO();
-        dto.setId(rule.getId());
-        dto.setPriority(rule.getPriority());
-        dto.setItemType(rule.getItemType());
-        dto.setHsnCode(rule.getHsnCode());
-        dto.setSacCode(rule.getSacCode());
-        dto.setPatientCategory(rule.getPatientCategory());
-        dto.setTaxGroupId(rule.getTaxGroup().getId());
-        dto.setTaxGroupName(rule.getTaxGroup().getName());
-        dto.setEffectiveFrom(rule.getEffectiveFrom());
-        dto.setEffectiveTo(rule.getEffectiveTo());
-        return dto;
-    }
+  private TaxRuleDTO toRuleDto(TaxRule rule) {
+    TaxRuleDTO dto = new TaxRuleDTO();
+    dto.setId(rule.getId());
+    dto.setPriority(rule.getPriority());
+    dto.setItemType(rule.getItemType());
+    dto.setHsnCode(rule.getHsnCode());
+    dto.setSacCode(rule.getSacCode());
+    dto.setPatientCategory(rule.getPatientCategory());
+    dto.setTaxGroupId(rule.getTaxGroup().getId());
+    dto.setTaxGroupName(rule.getTaxGroup().getName());
+    dto.setEffectiveFrom(rule.getEffectiveFrom());
+    dto.setEffectiveTo(rule.getEffectiveTo());
+    return dto;
+  }
 
-    private void updateMasterFields(TaxMaster master, TaxMasterDTO dto) {
-        master.setCode(dto.getCode());
-        master.setName(dto.getName());
-        master.setTaxType(dto.getTaxType());
-        master.setRate(dto.getRate());
-        master.setActive(dto.isActive());
-        master.setEffectiveFrom(dto.getEffectiveFrom());
-        master.setEffectiveTo(dto.getEffectiveTo());
-    }
+  private void updateMasterFields(TaxMaster master, TaxMasterDTO dto) {
+    master.setCode(dto.getCode());
+    master.setName(dto.getName());
+    master.setTaxType(dto.getTaxType());
+    master.setRate(dto.getRate());
+    master.setActive(dto.isActive());
+    master.setEffectiveFrom(dto.getEffectiveFrom());
+    master.setEffectiveTo(dto.getEffectiveTo());
+  }
 }

@@ -40,7 +40,9 @@ public class UserController {
   @GetMapping
   @PreAuthorize("hasAnyRole('SUPER_ADMIN', 'ADMIN')")
   public ApiResponse<PageResponse<UserSummaryDTO>> list(
-      @org.springframework.data.web.PageableDefault(sort = "createdAt", direction = org.springframework.data.domain.Sort.Direction.DESC)
+      @org.springframework.data.web.PageableDefault(
+              sort = "createdAt",
+              direction = org.springframework.data.domain.Sort.Direction.DESC)
           org.springframework.data.domain.Pageable pageable,
       @RequestParam(required = false) String search,
       @RequestParam java.util.Map<String, String> allParams) {

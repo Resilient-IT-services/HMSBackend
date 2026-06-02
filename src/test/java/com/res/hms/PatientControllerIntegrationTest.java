@@ -22,7 +22,6 @@ import org.springframework.mock.web.MockHttpSession;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.web.servlet.MockMvc;
-import org.springframework.transaction.annotation.Transactional;
 
 @SpringBootTest
 @AutoConfigureMockMvc
@@ -143,44 +142,54 @@ class PatientControllerIntegrationTest {
     createPatient(session, "Charlie Brown", "9000000003", "MALE", "2000-10-10");
 
     // 2. Filter by gender=FEMALE
-    mockMvc.perform(get("/api/v1/patients")
-            .session(session)
-            .header("X-Hospital-Id", testHospitalId.toString())
-            .param("gender", "FEMALE"))
+    mockMvc
+        .perform(
+            get("/api/v1/patients")
+                .session(session)
+                .header("X-Hospital-Id", testHospitalId.toString())
+                .param("gender", "FEMALE"))
         .andExpect(status().isOk())
         .andExpect(jsonPath("$.data.totalElements").value(1))
         .andExpect(jsonPath("$.data.content[0].fullName").value("Alice Smith"));
 
     // 3. Search by name
-    mockMvc.perform(get("/api/v1/patients")
-            .session(session)
-            .header("X-Hospital-Id", testHospitalId.toString())
-            .param("search", "Jones"))
+    mockMvc
+        .perform(
+            get("/api/v1/patients")
+                .session(session)
+                .header("X-Hospital-Id", testHospitalId.toString())
+                .param("search", "Jones"))
         .andExpect(status().isOk())
         .andExpect(jsonPath("$.data.totalElements").value(1))
         .andExpect(jsonPath("$.data.content[0].fullName").value("Bob Jones"));
 
     // 4. Sort by fullName asc
-    mockMvc.perform(get("/api/v1/patients")
-            .session(session)
-            .header("X-Hospital-Id", testHospitalId.toString())
-            .param("sort", "fullName,asc"))
+    mockMvc
+        .perform(
+            get("/api/v1/patients")
+                .session(session)
+                .header("X-Hospital-Id", testHospitalId.toString())
+                .param("sort", "fullName,asc"))
         .andExpect(status().isOk())
         .andExpect(jsonPath("$.data.content[0].fullName").value("Alice Smith"))
         .andExpect(jsonPath("$.data.content[1].fullName").value("Bob Jones"))
         .andExpect(jsonPath("$.data.content[2].fullName").value("Charlie Brown"));
   }
 
-  private void createPatient(MockHttpSession session, String fullName, String phone, String gender, String dob) throws Exception {
-    String patientJson = String.format(
-        """
+  private void createPatient(
+      MockHttpSession session, String fullName, String phone, String gender, String dob)
+      throws Exception {
+    String patientJson =
+        String.format(
+            """
             {
               "fullName": "%s",
               "phone": "%s",
               "gender": "%s",
               "dob": "%s"
             }
-            """, fullName, phone, gender, dob);
+            """,
+            fullName, phone, gender, dob);
 
     mockMvc
         .perform(

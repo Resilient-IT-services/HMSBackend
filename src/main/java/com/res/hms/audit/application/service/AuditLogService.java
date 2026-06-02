@@ -11,8 +11,6 @@ import com.res.hms.core.exception.ApiException;
 import com.res.hms.core.tenant.HospitalContext;
 import java.util.UUID;
 import lombok.RequiredArgsConstructor;
-import org.springframework.data.domain.Page;
-import org.springframework.data.domain.PageRequest;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 
@@ -55,12 +53,13 @@ public class AuditLogService {
             filters, search, java.util.List.of("entityName", "action"));
 
     org.springframework.data.jpa.domain.Specification<AuditLog> spec = builder.build();
-    org.springframework.data.jpa.domain.Specification<AuditLog> fixedSpec = (root, query, cb) -> {
-      if (hospitalId != null) {
-        return cb.equal(root.get("hospitalId"), hospitalId);
-      }
-      return null;
-    };
+    org.springframework.data.jpa.domain.Specification<AuditLog> fixedSpec =
+        (root, query, cb) -> {
+          if (hospitalId != null) {
+            return cb.equal(root.get("hospitalId"), hospitalId);
+          }
+          return null;
+        };
 
     return PageResponse.from(
         auditLogRepository
