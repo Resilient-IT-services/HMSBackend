@@ -55,6 +55,7 @@ public class PharmacySaleService {
   private final PharmacyReturnRepository pharmacyReturnRepository;
   private final PrescriptionRepository prescriptionRepository;
   private final AppointmentRepository appointmentRepository;
+  private final com.res.hms.hospital.infrastructure.repository.HospitalRepository hospitalRepository;
   private final InvoiceService invoiceService;
   private final PaymentService paymentService;
   private final HospitalContext hospitalContext;
@@ -74,6 +75,8 @@ public class PharmacySaleService {
     sale.setTotalAmount(processItems(hospitalId, request.getItems(), sale));
 
     PharmacySale savedSale = pharmacySaleRepository.save(sale);
+    com.res.hms.hospital.domain.Hospital hospital = hospitalRepository.findById(hospitalId)
+        .orElseThrow(() -> new ApiException("NOT_FOUND", "Hospital not found", HttpStatus.NOT_FOUND));
     
     // Calculate and Save Taxes for each item
     for (PharmacySaleItem item : savedSale.getItems()) {
@@ -85,6 +88,8 @@ public class PharmacySaleService {
           .taxableAmount(item.getTaxableAmount())
           .quantity(BigDecimal.valueOf(item.getQuantity()))
           .unitPrice(item.getUnitPrice())
+          .hospitalState(hospital.getState())
+          .billingState(hospital.getState()) // Default to intra-state for pharmacy sales
           .invoiceDate(Instant.now())
           .build();
       

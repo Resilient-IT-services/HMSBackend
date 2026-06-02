@@ -40,35 +40,42 @@ public class TaxEngineService {
       isInterstate = !request.hospitalState().equalsIgnoreCase(request.billingState());
     }
 
-    List<TaxComponent> components = new ArrayList<>();
-    BigDecimal totalTax = BigDecimal.ZERO;
+    BigDecimal totalRate = BigDecimal.ZERO;
+    List<TaxMaster> applicableMasters = new ArrayList<>();
 
     for (TaxGroupDetail detail : group.getDetails()) {
       TaxMaster master = detail.getTaxMaster();
-      if (!master.isActive()) {
-        log.debug("Skipping inactive tax master: {}", master.getCode());
-        continue;
-      }
-      
-      boolean applied = shouldApply(master.getTaxType(), isInterstate);
-      log.info("Tax Component: {}, Type: {}, Interstate: {}, Applied: {}", 
-          master.getCode(), master.getTaxType(), isInterstate, applied);
-
-      if (applied) {
-        BigDecimal amount = request.taxableAmount()
-            .multiply(master.getRate())
-            .divide(new BigDecimal("100"), 2, RoundingMode.HALF_UP);
-        
-        components.add(new TaxComponent(
-            master.getCode(), master.getName(), master.getRate(), amount));
-        totalTax = totalTax.add(amount);
+      if (master.isActive() && shouldApply(master.getTaxType(), isInterstate)) {
+        totalRate = totalRate.add(master.getRate());
+        applicableMasters.add(master);
       }
     }
 
+    BigDecimal effectiveTaxableAmount = request.taxableAmount();
+    if (request.isTaxInclusive() && totalRate.compareTo(BigDecimal.ZERO) > 0) {
+      // taxableAmount = totalAmount / (1 + (totalRate / 100))
+      BigDecimal divisor = BigDecimal.ONE.add(
+          totalRate.divide(new BigDecimal("100"), 4, RoundingMode.HALF_UP));
+      effectiveTaxableAmount = request.taxableAmount().divide(divisor, 2, RoundingMode.HALF_UP);
+    }
+
+    List<TaxComponent> components = new ArrayList<>();
+    BigDecimal totalTax = BigDecimal.ZERO;
+
+    for (TaxMaster master : applicableMasters) {
+      BigDecimal amount = effectiveTaxableAmount
+          .multiply(master.getRate())
+          .divide(new BigDecimal("100"), 2, RoundingMode.HALF_UP);
+      
+      components.add(new TaxComponent(
+          master.getCode(), master.getName(), master.getRate(), amount));
+      totalTax = totalTax.add(amount);
+    }
+
     return new TaxCalculationResult(
-        request.taxableAmount(),
+        effectiveTaxableAmount,
         totalTax,
-        request.taxableAmount().add(totalTax),
+        effectiveTaxableAmount.add(totalTax),
         components
     );
   }

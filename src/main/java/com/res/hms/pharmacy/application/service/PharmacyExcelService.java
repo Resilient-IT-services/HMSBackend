@@ -4,6 +4,7 @@ import com.res.hms.core.exception.ApiException;
 import com.res.hms.core.tenant.HospitalContext;
 import com.res.hms.pharmacy.application.dto.MedicineImportResponse;
 import com.res.hms.pharmacy.application.dto.StockImportResponse;
+import com.res.hms.pharmacy.application.dto.StockRequest;
 import com.res.hms.pharmacy.domain.Medicine;
 import com.res.hms.pharmacy.domain.MedicineForm;
 import com.res.hms.pharmacy.domain.PharmacyStock;
@@ -38,6 +39,7 @@ public class PharmacyExcelService {
   private final MedicineRepository medicineRepository;
   private final HospitalMedicineCatalogRepository hospitalMedicineCatalogRepository;
   private final PharmacyStockRepository pharmacyStockRepository;
+  private final PharmacyStockService pharmacyStockService;
   private final HospitalContext hospitalContext;
   private final jakarta.persistence.EntityManager entityManager;
 
@@ -149,6 +151,9 @@ public class PharmacyExcelService {
       String qtyStr = PharmacyExcelHelper.text(row, 3);
       String pPriceStr = PharmacyExcelHelper.text(row, 4);
       String sPriceStr = PharmacyExcelHelper.text(row, 5);
+      String hsn = PharmacyExcelHelper.text(row, 6);
+      String supplierState = PharmacyExcelHelper.text(row, 7);
+      String taxIncStr = PharmacyExcelHelper.text(row, 8);
 
       List<String> errors =
           PharmacyExcelHelper.validateStockData(name, batch, qtyStr, sPriceStr, pPriceStr, expStr);
@@ -197,7 +202,23 @@ public class PharmacyExcelService {
             statusCell, "ERROR: [Expiry Date] cannot be in the past: " + expStr, styles[3]);
         return "ERROR";
       }
-      saveStock(hId, medicine, batch, expiryDate, qtyStr, pPriceStr, sPriceStr);
+      
+      boolean taxInclusive = "Y".equalsIgnoreCase(taxIncStr) || "YES".equalsIgnoreCase(taxIncStr) || "TRUE".equalsIgnoreCase(taxIncStr);
+      
+      StockRequest stockRequest = StockRequest.builder()
+          .medicineId(medicine.getId())
+          .batchNumber(batch)
+          .expiryDate(expiryDate)
+          .quantity(PharmacyExcelHelper.parseQuantity(qtyStr))
+          .purchasePrice(PharmacyExcelHelper.parseBigDecimal(pPriceStr))
+          .sellingPrice(PharmacyExcelHelper.parseBigDecimal(sPriceStr))
+          .hsnCode(hsn)
+          .supplierState(supplierState)
+          .taxInclusive(taxInclusive)
+          .build();
+          
+      pharmacyStockService.stockIn(stockRequest);
+      
       PharmacyExcelHelper.updateCell(statusCell, "SUCCESS", styles[1]);
       return "SUCCESS";
     } catch (Exception e) {
@@ -260,28 +281,6 @@ public class PharmacyExcelService {
       msg = e.getMessage();
     }
     return (msg != null && msg.length() > 150) ? msg.substring(0, 150) : msg;
-  }
-
-  private void saveStock(
-      UUID hId, Medicine m, String b, LocalDate exp, String q, String p, String s) {
-    String batch = b.trim().toUpperCase();
-    PharmacyStock stock =
-        pharmacyStockRepository
-            .findByHospitalIdAndMedicineIdAndBatchNumber(hId, m.getId(), batch)
-            .orElseGet(
-                () -> {
-                  PharmacyStock ps = new PharmacyStock();
-                  ps.setHospitalId(hId);
-                  ps.setMedicine(m);
-                  ps.setBatchNumber(batch);
-                  ps.setQuantity(0);
-                  return ps;
-                });
-    stock.setExpiryDate(exp);
-    stock.setQuantity(stock.getQuantity() + PharmacyExcelHelper.parseQuantity(q));
-    stock.setPurchasePrice(PharmacyExcelHelper.parseBigDecimal(p));
-    stock.setSellingPrice(PharmacyExcelHelper.parseBigDecimal(s));
-    pharmacyStockRepository.saveAndFlush(stock);
   }
 
   private Medicine findMedicine(String name, Cell cell, CellStyle style) {

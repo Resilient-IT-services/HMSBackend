@@ -45,6 +45,7 @@ public class MedicineService {
   private final HospitalContext hospitalContext;
   private final PharmacyExcelService pharmacyExcelService;
   private final PharmacySaleService pharmacySaleService;
+  private final PharmacyStockService pharmacyStockService;
 
   @Transactional(readOnly = true)
   public PageResponse<MedicineDTO> list(org.springframework.data.domain.Pageable pageable, String search, java.util.Map<String, String> filters) {
@@ -87,6 +88,7 @@ public class MedicineService {
     }
     Medicine medicine = new Medicine();
     updateFields(medicine, request);
+    Medicine savedMedicine = medicineRepository.save(medicine);
 
     if (request.getCurrentStock() != null
         && request.getCurrentStock() > 0
@@ -94,25 +96,20 @@ public class MedicineService {
       Optional.ofNullable(hospitalContext.getHospitalIdOrNull())
           .ifPresent(
               hospitalId -> {
-                PharmacyStock stock = new PharmacyStock();
-                stock.setHospitalId(hospitalId);
-                stock.setMedicine(medicine);
-                stock.setBatchNumber(request.getBatchNumber());
-                stock.setQuantity(request.getCurrentStock());
-                stock.setExpiryDate(request.getExpiryDate());
-                stock.setPurchasePrice(
-                    request.getPurchasePrice() != null
-                        ? request.getPurchasePrice()
-                        : BigDecimal.ZERO);
-                stock.setSellingPrice(
-                    request.getSellingPrice() != null
-                        ? request.getSellingPrice()
-                        : BigDecimal.ZERO);
-                pharmacyStockRepository.save(stock);
+                StockRequest stockRequest = StockRequest.builder()
+                    .medicineId(savedMedicine.getId())
+                    .batchNumber(request.getBatchNumber())
+                    .expiryDate(request.getExpiryDate())
+                    .quantity(request.getCurrentStock())
+                    .purchasePrice(request.getPurchasePrice() != null ? request.getPurchasePrice() : BigDecimal.ZERO)
+                    .sellingPrice(request.getSellingPrice() != null ? request.getSellingPrice() : BigDecimal.ZERO)
+                    .hsnCode(request.getHsnCode())
+                    .build();
+                pharmacyStockService.stockIn(stockRequest);
               });
     }
 
-    return toDto(medicineRepository.save(medicine));
+    return toDto(savedMedicine);
   }
 
   @Transactional(readOnly = true)
@@ -140,49 +137,7 @@ public class MedicineService {
 
   @Transactional
   public PharmacyStockDTO addStock(StockRequest request) {
-    UUID hospitalId = hospitalContext.requireHospitalId();
-    Medicine medicine = requireMedicine(request.getMedicineId());
-    if (request.getExpiryDate() != null && request.getExpiryDate().isBefore(LocalDate.now())) {
-      throw new ApiException(
-          "INVALID_EXPIRY", "Expiry date cannot be in the past", HttpStatus.BAD_REQUEST);
-    }
-
-    if (request.getPurchasePrice() == null
-        || request.getPurchasePrice().compareTo(java.math.BigDecimal.ZERO) <= 0) {
-      throw new ApiException(
-          "INVALID_PRICE", "Purchase price must be greater than zero", HttpStatus.BAD_REQUEST);
-    }
-    if (request.getSellingPrice() == null
-        || request.getSellingPrice().compareTo(java.math.BigDecimal.ZERO) <= 0) {
-      throw new ApiException(
-          "INVALID_PRICE", "Selling price must be greater than zero", HttpStatus.BAD_REQUEST);
-    }
-    if (request.getSellingPrice().compareTo(request.getPurchasePrice()) < 0) {
-      throw new ApiException(
-          "INVALID_PRICE",
-          "Selling price cannot be less than purchase price",
-          HttpStatus.BAD_REQUEST);
-    }
-    PharmacyStock stock =
-        pharmacyStockRepository
-            .findByHospitalIdAndMedicineIdAndBatchNumber(
-                hospitalId, medicine.getId(), request.getBatchNumber())
-            .orElseGet(
-                () -> {
-                  PharmacyStock s = new PharmacyStock();
-                  s.setHospitalId(hospitalId);
-                  s.setMedicine(medicine);
-                  s.setBatchNumber(request.getBatchNumber());
-                  s.setQuantity(0);
-                  return s;
-                });
-
-    stock.setExpiryDate(request.getExpiryDate());
-    stock.setQuantity(stock.getQuantity() + request.getQuantity());
-    stock.setPurchasePrice(request.getPurchasePrice());
-    stock.setSellingPrice(request.getSellingPrice());
-    PharmacyStock saved = pharmacyStockRepository.save(stock);
-
+    PharmacyStock saved = pharmacyStockService.stockIn(request);
     return toStockDto(saved);
   }
 

@@ -42,6 +42,22 @@ public class TaxConfigurationService {
         return toMasterDto(masterRepository.save(master));
     }
 
+    @Transactional
+    public TaxMasterDTO updateMaster(UUID id, TaxMasterDTO dto) {
+        TaxMaster master = masterRepository.findById(id)
+            .orElseThrow(() -> new ApiException("NOT_FOUND", "Tax Master not found", HttpStatus.NOT_FOUND));
+        updateMasterFields(master, dto);
+        return toMasterDto(masterRepository.save(master));
+    }
+
+    @Transactional
+    public void deleteMaster(UUID id) {
+        if (!masterRepository.existsById(id)) {
+            throw new ApiException("NOT_FOUND", "Tax Master not found", HttpStatus.NOT_FOUND);
+        }
+        masterRepository.deleteById(id);
+    }
+
     @Transactional(readOnly = true)
     public List<TaxGroupDTO> getAllGroups() {
         return groupRepository.findAll().stream().map(this::toGroupDto).collect(Collectors.toList());
@@ -67,6 +83,35 @@ public class TaxConfigurationService {
         return toGroupDto(groupRepository.findById(group.getId()).get());
     }
 
+    @Transactional
+    public TaxGroupDTO updateGroup(UUID id, TaxGroupDTO dto) {
+        TaxGroup group = groupRepository.findById(id)
+            .orElseThrow(() -> new ApiException("NOT_FOUND", "Tax Group not found", HttpStatus.NOT_FOUND));
+        group.setName(dto.getName());
+        group.setActive(dto.isActive());
+        
+        detailRepository.deleteByGroup(group);
+        if (dto.getTaxes() != null) {
+            for (TaxMasterDTO masterDto : dto.getTaxes()) {
+                TaxMaster master = masterRepository.findById(masterDto.getId())
+                    .orElseThrow(() -> new ApiException("NOT_FOUND", "Tax Master not found", HttpStatus.NOT_FOUND));
+                TaxGroupDetail detail = new TaxGroupDetail();
+                detail.setGroup(group);
+                detail.setTaxMaster(master);
+                detailRepository.save(detail);
+            }
+        }
+        return toGroupDto(groupRepository.save(group));
+    }
+
+    @Transactional
+    public void deleteGroup(UUID id) {
+        TaxGroup group = groupRepository.findById(id)
+            .orElseThrow(() -> new ApiException("NOT_FOUND", "Tax Group not found", HttpStatus.NOT_FOUND));
+        detailRepository.deleteByGroup(group);
+        groupRepository.delete(group);
+    }
+
     @Transactional(readOnly = true)
     public List<TaxRuleDTO> getAllRules() {
         return ruleRepository.findAll().stream().map(this::toRuleDto).collect(Collectors.toList());
@@ -88,6 +133,34 @@ public class TaxConfigurationService {
         rule.setEffectiveTo(dto.getEffectiveTo());
 
         return toRuleDto(ruleRepository.save(rule));
+    }
+
+    @Transactional
+    public TaxRuleDTO updateRule(UUID id, TaxRuleDTO dto) {
+        TaxRule rule = ruleRepository.findById(id)
+            .orElseThrow(() -> new ApiException("NOT_FOUND", "Tax Rule not found", HttpStatus.NOT_FOUND));
+        
+        TaxGroup group = groupRepository.findById(dto.getTaxGroupId())
+            .orElseThrow(() -> new ApiException("NOT_FOUND", "Tax Group not found", HttpStatus.NOT_FOUND));
+
+        rule.setPriority(dto.getPriority());
+        rule.setItemType(dto.getItemType());
+        rule.setHsnCode(dto.getHsnCode());
+        rule.setSacCode(dto.getSacCode());
+        rule.setPatientCategory(dto.getPatientCategory());
+        rule.setTaxGroup(group);
+        rule.setEffectiveFrom(dto.getEffectiveFrom());
+        rule.setEffectiveTo(dto.getEffectiveTo());
+
+        return toRuleDto(ruleRepository.save(rule));
+    }
+
+    @Transactional
+    public void deleteRule(UUID id) {
+        if (!ruleRepository.existsById(id)) {
+            throw new ApiException("NOT_FOUND", "Tax Rule not found", HttpStatus.NOT_FOUND);
+        }
+        ruleRepository.deleteById(id);
     }
 
     private TaxMasterDTO toMasterDto(TaxMaster master) {

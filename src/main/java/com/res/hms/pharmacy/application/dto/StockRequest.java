@@ -27,4 +27,7 @@ public class StockRequest {
   @NotNull private BigDecimal purchasePrice;
   @NotNull private BigDecimal sellingPrice;
   private Integer reorderLevel;
+  private String hsnCode;
+  private String supplierState;
+  @Builder.Default private boolean taxInclusive = false;
 }
