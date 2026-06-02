@@ -32,6 +32,10 @@ public class LabTest {
     @Column(name = "alias_name")
     private String aliasName;
 
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "department_id", insertable = false, updatable = false)
+    private LabDepartment department;
+
     @Column(name = "department_id")
     private UUID departmentId;
 
