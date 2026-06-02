@@ -37,6 +37,8 @@ public class AppointmentDTO {
       groups = OnCreate.class)
   private java.time.OffsetDateTime appointmentTime;
 
+  private java.time.LocalDate appointmentDate;
+
   private AppointmentStatus status;
   private Integer tokenNumber;
   private SessionPeriod sessionPeriod;

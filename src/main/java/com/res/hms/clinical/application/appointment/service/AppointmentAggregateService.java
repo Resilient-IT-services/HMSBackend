@@ -354,7 +354,10 @@ public class AppointmentAggregateService {
 
   private void updateAppointmentFields(
       Appointment appointment, AppointmentDTO dto, UUID hospitalId) {
-    appointment.setAppointmentTime(dto.getAppointmentTime().toInstant());
+    java.time.OffsetDateTime appointmentTime = dto.getAppointmentTime();
+    appointment.setAppointmentTime(appointmentTime.toInstant());
+    appointment.setAppointmentDate(appointmentTime.toLocalDate());
+    appointment.setAppointmentSlotTime(appointmentTime.toLocalTime());
     appointment.setNotes(dto.getNotes());
 
     if (dto.getVitals() != null) {

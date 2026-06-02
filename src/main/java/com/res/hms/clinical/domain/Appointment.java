@@ -46,6 +46,12 @@ public class Appointment extends HospitalScopedEntity {
   @Column(name = "appointment_time", nullable = false)
   private java.time.Instant appointmentTime;
 
+  @Column(name = "appointment_date", nullable = false)
+  private java.time.LocalDate appointmentDate;
+
+  @Column(name = "appointment_slot_time", nullable = false)
+  private java.time.LocalTime appointmentSlotTime;
+
   @Enumerated(EnumType.STRING)
   @Column(nullable = false)
   private AppointmentStatus status;
@@ -79,4 +85,21 @@ public class Appointment extends HospitalScopedEntity {
       cascade = jakarta.persistence.CascadeType.ALL,
       fetch = jakarta.persistence.FetchType.LAZY)
   private Vitals vitals;
+
+  @jakarta.persistence.PrePersist
+  @jakarta.persistence.PreUpdate
+  private void populateDerivedAppointmentFields() {
+    if (appointmentTime == null) {
+      return;
+    }
+
+    java.time.OffsetDateTime utcAppointmentTime =
+        appointmentTime.atOffset(java.time.ZoneOffset.UTC);
+    if (appointmentDate == null) {
+      appointmentDate = utcAppointmentTime.toLocalDate();
+    }
+    if (appointmentSlotTime == null) {
+      appointmentSlotTime = utcAppointmentTime.toLocalTime();
+    }
+  }
 }

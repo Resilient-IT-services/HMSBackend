@@ -6,7 +6,6 @@ import com.res.hms.TestDataHelper;
 import com.res.hms.clinical.application.appointment.dto.AppointmentDTO;
 import com.res.hms.clinical.application.appointment.service.AppointmentAggregateService;
 import com.res.hms.core.exception.ApiException;
-import com.res.hms.core.tenant.HospitalContext;
 import java.time.OffsetDateTime;
 import java.util.UUID;
 import org.junit.jupiter.api.BeforeEach;
