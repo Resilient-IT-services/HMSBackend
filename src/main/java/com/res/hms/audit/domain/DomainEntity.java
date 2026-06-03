@@ -9,5 +9,6 @@ public enum DomainEntity {
   MEDICINE,
   HOSPITAL,
   USER_ACCOUNT,
-  USER_CONTRACT
+  USER_CONTRACT,
+  LAB_TEST
 }

@@ -1,5 +1,10 @@
 package com.res.hms.lab.application.service;
 
+import com.res.hms.audit.application.dto.AuditDetail;
+import com.res.hms.audit.application.service.AuditLogService;
+import com.res.hms.audit.domain.AuditAction;
+import com.res.hms.audit.domain.DomainEntity;
+import com.res.hms.core.exception.ApiException;
 import com.res.hms.core.tenant.HospitalContext;
 import com.res.hms.lab.application.dto.LabTestDTO;
 import com.res.hms.lab.domain.LabTest;
@@ -8,6 +13,7 @@ import java.util.List;
 import java.util.UUID;
 import java.util.stream.Collectors;
 import lombok.RequiredArgsConstructor;
+import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -18,6 +24,7 @@ public class LabTestService {
   private final LabTestRepository repository;
   private final LabMapper mapper;
   private final HospitalContext hospitalContext;
+  private final AuditLogService auditLogService;
 
   @Transactional(readOnly = true)
   public List<LabTestDTO> listAll() {
@@ -30,15 +37,49 @@ public class LabTestService {
 
   @Transactional
   public LabTestDTO create(LabTestDTO dto) {
+    UUID hospitalId = hospitalContext.requireHospitalId();
+
+    if (repository.existsByHospitalIdAndTestCodeIgnoreCase(hospitalId, dto.getTestCode())) {
+      throw new ApiException(
+          "VALIDATION_ERROR", "Test code must be unique", HttpStatus.BAD_REQUEST);
+    }
+    if (repository.existsByHospitalIdAndTestNameIgnoreCase(hospitalId, dto.getTestName())) {
+      throw new ApiException(
+          "VALIDATION_ERROR", "Test name must be unique", HttpStatus.BAD_REQUEST);
+    }
+
     LabTest entity = mapper.toEntity(dto);
-    entity.setHospitalId(hospitalContext.requireHospitalId());
-    return mapper.toDto(repository.save(entity));
+    entity.setHospitalId(hospitalId);
+    LabTest saved = repository.save(entity);
+
+    auditLogService.record(
+        hospitalId,
+        DomainEntity.LAB_TEST,
+        saved.getId(),
+        AuditAction.CREATE,
+        new AuditDetail(
+            null, java.util.Map.of("message", "Created new Lab Test: " + saved.getTestName())));
+
+    return mapper.toDto(saved);
   }
 
   @Transactional
   public LabTestDTO update(UUID id, LabTestDTO dto) {
     LabTest entity =
         repository.findById(id).orElseThrow(() -> new RuntimeException("Test not found"));
+
+    UUID hospitalId = hospitalContext.requireHospitalId();
+
+    if (!entity.getTestCode().equalsIgnoreCase(dto.getTestCode())
+        && repository.existsByHospitalIdAndTestCodeIgnoreCase(hospitalId, dto.getTestCode())) {
+      throw new ApiException(
+          "VALIDATION_ERROR", "Test code must be unique", HttpStatus.BAD_REQUEST);
+    }
+    if (!entity.getTestName().equalsIgnoreCase(dto.getTestName())
+        && repository.existsByHospitalIdAndTestNameIgnoreCase(hospitalId, dto.getTestName())) {
+      throw new ApiException(
+          "VALIDATION_ERROR", "Test name must be unique", HttpStatus.BAD_REQUEST);
+    }
 
     entity.setTestName(dto.getTestName());
     entity.setTestCode(dto.getTestCode());
@@ -50,11 +91,34 @@ public class LabTestService {
     entity.setTatUnit(dto.getTatUnit());
     entity.setActive(dto.isActive());
 
-    return mapper.toDto(repository.save(entity));
+    LabTest saved = repository.save(entity);
+
+    auditLogService.record(
+        hospitalId,
+        DomainEntity.LAB_TEST,
+        saved.getId(),
+        AuditAction.UPDATE,
+        new AuditDetail(
+            null, java.util.Map.of("message", "Updated Lab Test: " + saved.getTestName())));
+
+    return mapper.toDto(saved);
   }
 
   @Transactional
   public void delete(UUID id) {
-    repository.deleteById(id);
+    repository
+        .findById(id)
+        .ifPresent(
+            entity -> {
+              repository.delete(entity);
+              auditLogService.record(
+                  entity.getHospitalId(),
+                  DomainEntity.LAB_TEST,
+                  entity.getId(),
+                  AuditAction.DELETE,
+                  new AuditDetail(
+                      null,
+                      java.util.Map.of("message", "Deleted Lab Test: " + entity.getTestName())));
+            });
   }
 }
