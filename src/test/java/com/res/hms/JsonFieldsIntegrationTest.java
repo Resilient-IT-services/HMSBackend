@@ -21,9 +21,12 @@ import com.res.hms.iam.domain.ReceptionistProfile;
 import com.res.hms.iam.domain.UserAccount;
 import com.res.hms.iam.infrastructure.repository.ReceptionistProfileRepository;
 import com.res.hms.iam.infrastructure.repository.UserAccountRepository;
+import com.res.hms.lab.domain.LabReportTemplate;
+import com.res.hms.lab.infrastructure.repository.LabReportTemplateRepository;
 import java.time.Instant;
 import java.util.List;
 import java.util.Map;
+import java.util.UUID;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
@@ -40,6 +43,7 @@ class JsonFieldsIntegrationTest {
   @Autowired private HospitalRepository hospitalRepository;
   @Autowired private ReceptionistProfileRepository receptionistProfileRepository;
   @Autowired private UserAccountRepository userAccountRepository;
+  @Autowired private LabReportTemplateRepository labReportTemplateRepository;
 
   @Test
   void auditLogDetailsJsonMapping() {
@@ -147,5 +151,22 @@ class JsonFieldsIntegrationTest {
 
     assertEquals(2, fetched.getLanguagesSpoken().getFluencies().size());
     assertEquals("English", fetched.getLanguagesSpoken().getFluencies().get(0).getLanguage());
+  }
+
+  @Test
+  void labReportTemplateJsonMapping() {
+    LabReportTemplate template = new LabReportTemplate();
+    template.setTestId(UUID.randomUUID());
+    template.setTemplateName("Blood Test Template");
+    template.setTemplateJson(
+        "{\"sections\": [{\"name\": \"Hematology\", \"parameters\": [\"WBC\", \"RBC\"]}]}");
+
+    LabReportTemplate saved = labReportTemplateRepository.save(template);
+    assertNotNull(saved.getId());
+
+    LabReportTemplate fetched = labReportTemplateRepository.findById(saved.getId()).orElseThrow();
+    assertEquals("Blood Test Template", fetched.getTemplateName());
+    assertNotNull(fetched.getTemplateJson());
+    assertEquals(template.getTemplateJson(), fetched.getTemplateJson());
   }
 }
