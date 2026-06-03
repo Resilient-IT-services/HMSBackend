@@ -50,6 +50,7 @@ public class Appointment extends HospitalScopedEntity {
   private java.time.LocalDate appointmentDate;
 
   @Column(name = "appointment_slot_time", nullable = false)
+  @org.hibernate.annotations.JdbcTypeCode(org.hibernate.type.SqlTypes.TIME)
   private java.time.LocalTime appointmentSlotTime;
 
   @Enumerated(EnumType.STRING)
@@ -95,11 +96,9 @@ public class Appointment extends HospitalScopedEntity {
 
     java.time.OffsetDateTime utcAppointmentTime =
         appointmentTime.atOffset(java.time.ZoneOffset.UTC);
-    if (appointmentDate == null) {
-      appointmentDate = utcAppointmentTime.toLocalDate();
-    }
-    if (appointmentSlotTime == null) {
-      appointmentSlotTime = utcAppointmentTime.toLocalTime();
-    }
+    
+    // Always derive and truncate to avoid precision issues in some timezones/drivers
+    this.appointmentDate = utcAppointmentTime.toLocalDate();
+    this.appointmentSlotTime = utcAppointmentTime.toLocalTime().truncatedTo(java.time.temporal.ChronoUnit.SECONDS);
   }
 }
