@@ -12,19 +12,19 @@ import lombok.*;
 @AllArgsConstructor
 @Builder
 public class LabTestParameter {
-    @Id
-    @GeneratedValue(strategy = GenerationType.UUID)
-    private UUID id;
+  @Id
+  @GeneratedValue(strategy = GenerationType.UUID)
+  private UUID id;
 
-    @Column(name = "test_id")
-    private UUID testId;
+  @Column(name = "test_id")
+  private UUID testId;
 
-    @Column(name = "parameter_name")
-    private String parameterName;
+  @Column(name = "parameter_name")
+  private String parameterName;
 
-    @Column(name = "unit")
-    private String unit;
+  @Column(name = "unit")
+  private String unit;
 
-    @Column(name = "display_order")
-    private Integer displayOrder;
+  @Column(name = "display_order")
+  private Integer displayOrder;
 }

@@ -18,7 +18,6 @@ import java.time.LocalDateTime;
 import java.util.UUID;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.data.domain.PageRequest;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -36,7 +35,9 @@ public class InventoryService {
 
   @Transactional(readOnly = true)
   public PageResponse<ItemDTO> listItems(
-      org.springframework.data.domain.Pageable pageable, String search, java.util.Map<String, String> filters) {
+      org.springframework.data.domain.Pageable pageable,
+      String search,
+      java.util.Map<String, String> filters) {
     UUID hospitalId = hospitalContext.requireHospitalId();
 
     com.res.hms.core.util.SpecificationBuilder<Item> builder =
@@ -44,12 +45,16 @@ public class InventoryService {
             filters, search, java.util.List.of("name", "category"));
 
     Specification<Item> spec = builder.build();
-    Specification<Item> fixedSpec = (root, query, cb) -> {
-      return cb.equal(root.get("hospitalId"), hospitalId);
-    };
+    Specification<Item> fixedSpec =
+        (root, query, cb) -> {
+          return cb.equal(root.get("hospitalId"), hospitalId);
+        };
 
     return PageResponse.from(
-        itemRepository.findAll(org.springframework.data.jpa.domain.Specification.where(spec).and(fixedSpec), pageable)
+        itemRepository
+            .findAll(
+                org.springframework.data.jpa.domain.Specification.where(spec).and(fixedSpec),
+                pageable)
             .map(this::toDto));
   }
 

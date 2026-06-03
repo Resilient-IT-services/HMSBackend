@@ -15,46 +15,46 @@ import org.springframework.transaction.annotation.Transactional;
 @RequiredArgsConstructor
 public class LabTestService {
 
-    private final LabTestRepository repository;
-    private final LabMapper mapper;
-    private final HospitalContext hospitalContext;
+  private final LabTestRepository repository;
+  private final LabMapper mapper;
+  private final HospitalContext hospitalContext;
 
-    @Transactional(readOnly = true)
-    public List<LabTestDTO> listAll() {
-        UUID hospitalId = hospitalContext.requireHospitalId();
-        return repository.findAll().stream()
-                .filter(t -> t.getHospitalId().equals(hospitalId))
-                .map(mapper::toDto)
-                .collect(Collectors.toList());
-    }
+  @Transactional(readOnly = true)
+  public List<LabTestDTO> listAll() {
+    UUID hospitalId = hospitalContext.requireHospitalId();
+    return repository.findAll().stream()
+        .filter(t -> t.getHospitalId().equals(hospitalId))
+        .map(mapper::toDto)
+        .collect(Collectors.toList());
+  }
 
-    @Transactional
-    public LabTestDTO create(LabTestDTO dto) {
-        LabTest entity = mapper.toEntity(dto);
-        entity.setHospitalId(hospitalContext.requireHospitalId());
-        return mapper.toDto(repository.save(entity));
-    }
+  @Transactional
+  public LabTestDTO create(LabTestDTO dto) {
+    LabTest entity = mapper.toEntity(dto);
+    entity.setHospitalId(hospitalContext.requireHospitalId());
+    return mapper.toDto(repository.save(entity));
+  }
 
-    @Transactional
-    public LabTestDTO update(UUID id, LabTestDTO dto) {
-        LabTest entity = repository.findById(id)
-                .orElseThrow(() -> new RuntimeException("Test not found"));
-        
-        entity.setTestName(dto.getTestName());
-        entity.setTestCode(dto.getTestCode());
-        entity.setShortName(dto.getShortName());
-        entity.setAliasName(dto.getAliasName());
-        entity.setDepartmentId(dto.getDepartmentId());
-        entity.setResultType(dto.getResultType());
-        entity.setTatValue(dto.getTatValue());
-        entity.setTatUnit(dto.getTatUnit());
-        entity.setActive(dto.isActive());
-        
-        return mapper.toDto(repository.save(entity));
-    }
+  @Transactional
+  public LabTestDTO update(UUID id, LabTestDTO dto) {
+    LabTest entity =
+        repository.findById(id).orElseThrow(() -> new RuntimeException("Test not found"));
 
-    @Transactional
-    public void delete(UUID id) {
-        repository.deleteById(id);
-    }
+    entity.setTestName(dto.getTestName());
+    entity.setTestCode(dto.getTestCode());
+    entity.setShortName(dto.getShortName());
+    entity.setAliasName(dto.getAliasName());
+    entity.setDepartmentId(dto.getDepartmentId());
+    entity.setResultType(dto.getResultType());
+    entity.setTatValue(dto.getTatValue());
+    entity.setTatUnit(dto.getTatUnit());
+    entity.setActive(dto.isActive());
+
+    return mapper.toDto(repository.save(entity));
+  }
+
+  @Transactional
+  public void delete(UUID id) {
+    repository.deleteById(id);
+  }
 }

@@ -22,28 +22,28 @@ import lombok.Setter;
 @AllArgsConstructor
 @Builder
 public class LabSample {
-    @Id
-    @GeneratedValue(strategy = GenerationType.UUID)
-    private UUID id;
+  @Id
+  @GeneratedValue(strategy = GenerationType.UUID)
+  private UUID id;
 
-    @Column(name = "hospital_id")
-    private UUID hospitalId;
+  @Column(name = "hospital_id")
+  private UUID hospitalId;
 
-    @Column(name = "order_test_id")
-    private UUID orderTestId;
+  @Column(name = "order_test_id")
+  private UUID orderTestId;
 
-    @Column(name = "sample_number")
-    private String sampleNumber;
+  @Column(name = "sample_number")
+  private String sampleNumber;
 
-    @Column(name = "specimen_type_id")
-    private UUID specimenTypeId;
+  @Column(name = "specimen_type_id")
+  private UUID specimenTypeId;
 
-    @Column(name = "collected_at")
-    private Instant collectedAt;
+  @Column(name = "collected_at")
+  private Instant collectedAt;
 
-    @Column(name = "collected_by")
-    private UUID collectedBy;
+  @Column(name = "collected_by")
+  private UUID collectedBy;
 
-    @Column(name = "status")
-    private String status;
+  @Column(name = "status")
+  private String status;
 }

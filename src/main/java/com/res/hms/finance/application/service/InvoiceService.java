@@ -58,7 +58,10 @@ public class InvoiceService {
     return InvoiceDTO.builder()
         .id(invoice.getId())
         .patientId(invoice.getPatientId())
-        .patientName(invoice.getPatient() != null ? invoice.getPatient().getFullName() : invoice.getCustomerName())
+        .patientName(
+            invoice.getPatient() != null
+                ? invoice.getPatient().getFullName()
+                : invoice.getCustomerName())
         .visitId(invoice.getVisitId())
         .invoiceNumber(invoice.getInvoiceNumber())
         .status(invoice.getStatus())
@@ -88,7 +91,15 @@ public class InvoiceService {
         .netTotal(item.getNetTotal())
         .sourceType(item.getSourceType())
         .sourceId(item.getSourceId())
-        .appliedTaxes(item.getTaxes() != null ? item.getTaxes().stream().map(t -> new com.res.hms.tax.application.dto.TaxComponent(t.getTaxCode(), t.getTaxName(), t.getTaxRate(), t.getTaxAmount())).collect(java.util.stream.Collectors.toList()) : null)
+        .appliedTaxes(
+            item.getTaxes() != null
+                ? item.getTaxes().stream()
+                    .map(
+                        t ->
+                            new com.res.hms.tax.application.dto.TaxComponent(
+                                t.getTaxCode(), t.getTaxName(), t.getTaxRate(), t.getTaxAmount()))
+                    .collect(java.util.stream.Collectors.toList())
+                : null)
         .build();
   }
 
@@ -98,27 +109,37 @@ public class InvoiceService {
   }
 
   @Transactional
-  public Invoice getOrCreateInvoice(UUID hospitalId, UUID patientId, UUID visitId, String customerName) {
+  public Invoice getOrCreateInvoice(
+      UUID hospitalId, UUID patientId, UUID visitId, String customerName) {
+    return getOrCreateInvoice(hospitalId, patientId, visitId, customerName, null);
+  }
+
+  @Transactional
+  public Invoice getOrCreateInvoice(
+      UUID hospitalId, UUID patientId, UUID visitId, String customerName, String customerPhone) {
     if (visitId != null) {
       return invoiceRepository
           .findByVisitId(visitId)
           .filter(i -> i.getStatus() != InvoiceStatus.CANCELLED)
-          .orElseGet(() -> createInvoice(hospitalId, patientId, visitId, customerName));
+          .orElseGet(
+              () -> createInvoice(hospitalId, patientId, visitId, customerName, customerPhone));
     }
-    return createInvoice(hospitalId, patientId, null, customerName);
+    return createInvoice(hospitalId, patientId, null, customerName, customerPhone);
   }
 
   @Transactional
   public Invoice createInvoice(UUID hospitalId, UUID patientId, UUID visitId) {
-    return createInvoice(hospitalId, patientId, visitId, null);
+    return createInvoice(hospitalId, patientId, visitId, null, null);
   }
 
   @Transactional
-  public Invoice createInvoice(UUID hospitalId, UUID patientId, UUID visitId, String customerName) {
+  public Invoice createInvoice(
+      UUID hospitalId, UUID patientId, UUID visitId, String customerName, String customerPhone) {
     Invoice invoice = new Invoice();
     invoice.setHospitalId(hospitalId);
     invoice.setPatientId(patientId);
     invoice.setCustomerName(customerName);
+    invoice.setCustomerPhone(customerPhone);
     invoice.setVisitId(visitId);
     invoice.setInvoiceNumber("INV-" + System.currentTimeMillis());
     invoice.setStatus(InvoiceStatus.UNPAID);
@@ -157,17 +178,18 @@ public class InvoiceService {
     item.setQuantity(quantity);
     item.setUnitPrice(unitPrice);
     item.setTaxPercentage(BigDecimal.ZERO);
-    
+
     BigDecimal subtotal = unitPrice.multiply(quantity);
     BigDecimal discount = discountAmount != null ? discountAmount : BigDecimal.ZERO;
     BigDecimal taxableAmount = subtotal.subtract(discount);
-    
+
     BigDecimal totalTax = BigDecimal.ZERO;
     if (taxComponents != null) {
       for (com.res.hms.tax.application.dto.TaxComponent tc : taxComponents) {
         totalTax = totalTax.add(tc.taxAmount());
-        
-        com.res.hms.finance.domain.InvoiceItemTax itemTax = new com.res.hms.finance.domain.InvoiceItemTax();
+
+        com.res.hms.finance.domain.InvoiceItemTax itemTax =
+            new com.res.hms.finance.domain.InvoiceItemTax();
         itemTax.setInvoiceItem(item);
         itemTax.setTaxCode(tc.taxCode());
         itemTax.setTaxName(tc.taxName());
@@ -177,7 +199,7 @@ public class InvoiceService {
         item.getTaxes().add(itemTax);
       }
     }
-    
+
     item.setTaxableAmount(taxableAmount);
     item.setTaxAmount(totalTax);
     item.setDiscountAmount(discount);
@@ -189,8 +211,13 @@ public class InvoiceService {
     item.setDoctorName(doctorName);
     item.setInvoice(invoice);
 
-    log.info("Invoice Item Added: Subtotal={}, Discount={}, Taxable={}, Tax={}, Net={}", 
-        subtotal, discount, taxableAmount, totalTax, item.getNetTotal());
+    log.info(
+        "Invoice Item Added: Subtotal={}, Discount={}, Taxable={}, Tax={}, Net={}",
+        subtotal,
+        discount,
+        taxableAmount,
+        totalTax,
+        item.getNetTotal());
 
     invoiceItemRepository.save(item);
     invoice.getItems().add(item);
@@ -215,8 +242,12 @@ public class InvoiceService {
             .map(InvoiceItem::getTaxAmount)
             .reduce(BigDecimal.ZERO, BigDecimal::add);
 
-    log.info("Updating Invoice Totals: Subtotal={}, Discount={}, Tax={}, Total={}", 
-        subtotal, discount, tax, subtotal.add(tax).subtract(discount));
+    log.info(
+        "Updating Invoice Totals: Subtotal={}, Discount={}, Tax={}, Total={}",
+        subtotal,
+        discount,
+        tax,
+        subtotal.add(tax).subtract(discount));
 
     invoice.setSubtotalAmount(subtotal);
     invoice.setTaxAmount(tax);

@@ -7,7 +7,6 @@ import com.res.hms.pharmacy.application.dto.StockImportResponse;
 import com.res.hms.pharmacy.application.dto.StockRequest;
 import com.res.hms.pharmacy.domain.Medicine;
 import com.res.hms.pharmacy.domain.MedicineForm;
-import com.res.hms.pharmacy.domain.PharmacyStock;
 import com.res.hms.pharmacy.infrastructure.repository.HospitalMedicineCatalogRepository;
 import com.res.hms.pharmacy.infrastructure.repository.MedicineRepository;
 import com.res.hms.pharmacy.infrastructure.repository.PharmacyStockRepository;
@@ -202,23 +201,27 @@ public class PharmacyExcelService {
             statusCell, "ERROR: [Expiry Date] cannot be in the past: " + expStr, styles[3]);
         return "ERROR";
       }
-      
-      boolean taxInclusive = "Y".equalsIgnoreCase(taxIncStr) || "YES".equalsIgnoreCase(taxIncStr) || "TRUE".equalsIgnoreCase(taxIncStr);
-      
-      StockRequest stockRequest = StockRequest.builder()
-          .medicineId(medicine.getId())
-          .batchNumber(batch)
-          .expiryDate(expiryDate)
-          .quantity(PharmacyExcelHelper.parseQuantity(qtyStr))
-          .purchasePrice(PharmacyExcelHelper.parseBigDecimal(pPriceStr))
-          .sellingPrice(PharmacyExcelHelper.parseBigDecimal(sPriceStr))
-          .hsnCode(hsn)
-          .supplierState(supplierState)
-          .taxInclusive(taxInclusive)
-          .build();
-          
+
+      boolean taxInclusive =
+          "Y".equalsIgnoreCase(taxIncStr)
+              || "YES".equalsIgnoreCase(taxIncStr)
+              || "TRUE".equalsIgnoreCase(taxIncStr);
+
+      StockRequest stockRequest =
+          StockRequest.builder()
+              .medicineId(medicine.getId())
+              .batchNumber(batch)
+              .expiryDate(expiryDate)
+              .quantity(PharmacyExcelHelper.parseQuantity(qtyStr))
+              .purchasePrice(PharmacyExcelHelper.parseBigDecimal(pPriceStr))
+              .sellingPrice(PharmacyExcelHelper.parseBigDecimal(sPriceStr))
+              .hsnCode(hsn)
+              .supplierState(supplierState)
+              .taxInclusive(taxInclusive)
+              .build();
+
       pharmacyStockService.stockIn(stockRequest);
-      
+
       PharmacyExcelHelper.updateCell(statusCell, "SUCCESS", styles[1]);
       return "SUCCESS";
     } catch (Exception e) {

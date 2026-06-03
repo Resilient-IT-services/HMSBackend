@@ -19,5 +19,4 @@ public record TaxCalculationRequest(
     Instant invoiceDate,
     String patientCategory,
     String insuranceProvider,
-    boolean isTaxInclusive
-) {}
+    boolean isTaxInclusive) {}

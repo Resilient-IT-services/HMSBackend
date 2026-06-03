@@ -166,34 +166,41 @@ class PrescriptionControllerIntegrationTest {
 
   @Test
   void testPrescriptionListingWithFilteringAndSorting() throws Exception {
-    // 1. Setup multiple prescriptions (Business rule: need separate appointments with recorded vitals)
+    // 1. Setup multiple prescriptions (Business rule: need separate appointments with recorded
+    // vitals)
     UUID patientId = testDataHelper.createTestPatient(hospitalId).getId();
-    
+
     createPrescription("Alice Smith", patientId);
     createPrescription("Bob Jones", patientId);
 
     // 2. Filter by patientName
-    mockMvc.perform(get("/api/v1/pharmacy/prescriptions")
-            .session(session)
-            .header("X-Hospital-Id", hospitalId.toString())
-            .param("patientName", "Alice"))
+    mockMvc
+        .perform(
+            get("/api/v1/pharmacy/prescriptions")
+                .session(session)
+                .header("X-Hospital-Id", hospitalId.toString())
+                .param("patientName", "Alice"))
         .andExpect(status().isOk())
         .andExpect(jsonPath("$.data.totalElements").value(1))
         .andExpect(jsonPath("$.data.content[0].patientName").value("Alice Smith"));
 
     // 3. Search by doctorName
-    mockMvc.perform(get("/api/v1/pharmacy/prescriptions")
-            .session(session)
-            .header("X-Hospital-Id", hospitalId.toString())
-            .param("search", "Prescriber"))
+    mockMvc
+        .perform(
+            get("/api/v1/pharmacy/prescriptions")
+                .session(session)
+                .header("X-Hospital-Id", hospitalId.toString())
+                .param("search", "Prescriber"))
         .andExpect(status().isOk())
         .andExpect(jsonPath("$.data.totalElements").value(2));
 
     // 4. Sort by patientName asc
-    mockMvc.perform(get("/api/v1/pharmacy/prescriptions")
-            .session(session)
-            .header("X-Hospital-Id", hospitalId.toString())
-            .param("sort", "patientName,asc"))
+    mockMvc
+        .perform(
+            get("/api/v1/pharmacy/prescriptions")
+                .session(session)
+                .header("X-Hospital-Id", hospitalId.toString())
+                .param("sort", "patientName,asc"))
         .andExpect(status().isOk())
         .andExpect(jsonPath("$.data.content[0].patientName").value("Alice Smith"))
         .andExpect(jsonPath("$.data.content[1].patientName").value("Bob Jones"));
@@ -212,11 +219,13 @@ class PrescriptionControllerIntegrationTest {
 
     PrescriptionDTO dto = PrescriptionDTO.builder().appointmentId(aptId).items(List.of()).build();
 
-    mockMvc.perform(post("/api/v1/pharmacy/prescriptions")
-            .session(session)
-            .header("X-Hospital-Id", hospitalId.toString())
-            .contentType(MediaType.APPLICATION_JSON)
-            .content(objectMapper.writeValueAsString(dto)))
+    mockMvc
+        .perform(
+            post("/api/v1/pharmacy/prescriptions")
+                .session(session)
+                .header("X-Hospital-Id", hospitalId.toString())
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(dto)))
         .andExpect(status().isOk());
   }
 

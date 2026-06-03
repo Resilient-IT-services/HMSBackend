@@ -38,13 +38,19 @@ class InventoryServiceTest {
 
   @Test
   void testListItems() {
-    when(itemRepository.findAll(any(org.springframework.data.jpa.domain.Specification.class), any(org.springframework.data.domain.Pageable.class)))
+    when(itemRepository.findAll(
+            any(org.springframework.data.jpa.domain.Specification.class),
+            any(org.springframework.data.domain.Pageable.class)))
         .thenReturn(new PageImpl<>(java.util.List.of()));
 
-    var result = inventoryService.listItems(org.springframework.data.domain.PageRequest.of(0, 10), "test", java.util.Map.of());
+    var result =
+        inventoryService.listItems(
+            org.springframework.data.domain.PageRequest.of(0, 10), "test", java.util.Map.of());
 
     assertNotNull(result);
     verify(itemRepository)
-        .findAll(any(org.springframework.data.jpa.domain.Specification.class), any(org.springframework.data.domain.Pageable.class));
+        .findAll(
+            any(org.springframework.data.jpa.domain.Specification.class),
+            any(org.springframework.data.domain.Pageable.class));
   }
 }

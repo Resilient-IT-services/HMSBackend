@@ -8,5 +8,5 @@ import org.springframework.stereotype.Repository;
 
 @Repository
 public interface TaxGroupDetailRepository extends JpaRepository<TaxGroupDetail, UUID> {
-    void deleteByGroup(TaxGroup group);
+  void deleteByGroup(TaxGroup group);
 }

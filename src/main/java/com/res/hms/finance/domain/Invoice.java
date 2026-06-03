@@ -37,6 +37,9 @@ public class Invoice extends HospitalScopedEntity {
   @Column(name = "customer_name")
   private String customerName;
 
+  @Column(name = "customer_phone")
+  private String customerPhone;
+
   @Column(name = "visit_id")
   private UUID visitId;
 

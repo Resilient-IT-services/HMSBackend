@@ -39,11 +39,17 @@ public class PharmacyStockService {
   @Transactional
   public PharmacyStock stockIn(StockRequest request) {
     UUID hospitalId = hospitalContext.requireHospitalId();
-    Hospital hospital = hospitalRepository.findById(hospitalId)
-        .orElseThrow(() -> new ApiException("NOT_FOUND", "Hospital not found", HttpStatus.NOT_FOUND));
+    Hospital hospital =
+        hospitalRepository
+            .findById(hospitalId)
+            .orElseThrow(
+                () -> new ApiException("NOT_FOUND", "Hospital not found", HttpStatus.NOT_FOUND));
 
-    Medicine medicine = medicineRepository.findById(request.getMedicineId())
-        .orElseThrow(() -> new ApiException("NOT_FOUND", "Medicine not found", HttpStatus.NOT_FOUND));
+    Medicine medicine =
+        medicineRepository
+            .findById(request.getMedicineId())
+            .orElseThrow(
+                () -> new ApiException("NOT_FOUND", "Medicine not found", HttpStatus.NOT_FOUND));
 
     // 1. Handle HSN Auto-propagation
     String effectiveHsn = request.getHsnCode();
@@ -59,33 +65,41 @@ public class PharmacyStockService {
     BigDecimal purchasePrice = request.getPurchasePrice();
     BigDecimal quantity = BigDecimal.valueOf(request.getQuantity());
     BigDecimal totalAmount = purchasePrice.multiply(quantity);
-    
-    TaxCalculationRequest taxRequest = TaxCalculationRequest.builder()
-        .hospitalId(hospitalId)
-        .itemType("MEDICINE")
-        .itemCode(medicine.getName())
-        .hsnOrSacCode(effectiveHsn)
-        .quantity(quantity)
-        .unitPrice(purchasePrice)
-        .taxableAmount(totalAmount)
-        .isTaxInclusive(request.isTaxInclusive()) // We need to add this to TaxCalculationRequest
-        .hospitalState(hospital.getState())
-        .billingState(hasText(request.getSupplierState()) ? request.getSupplierState() : hospital.getState())
-        .build();
+
+    TaxCalculationRequest taxRequest =
+        TaxCalculationRequest.builder()
+            .hospitalId(hospitalId)
+            .itemType("MEDICINE")
+            .itemCode(medicine.getName())
+            .hsnOrSacCode(effectiveHsn)
+            .quantity(quantity)
+            .unitPrice(purchasePrice)
+            .taxableAmount(totalAmount)
+            .isTaxInclusive(
+                request.isTaxInclusive()) // We need to add this to TaxCalculationRequest
+            .hospitalState(hospital.getState())
+            .billingState(
+                hasText(request.getSupplierState())
+                    ? request.getSupplierState()
+                    : hospital.getState())
+            .build();
 
     TaxCalculationResult taxResult = taxEngineService.calculate(taxRequest);
 
     // 3. Update Current Stock
-    PharmacyStock stock = pharmacyStockRepository
-        .findByHospitalIdAndMedicineIdAndBatchNumber(hospitalId, medicine.getId(), request.getBatchNumber())
-        .orElseGet(() -> {
-          PharmacyStock s = new PharmacyStock();
-          s.setHospitalId(hospitalId);
-          s.setMedicine(medicine);
-          s.setBatchNumber(request.getBatchNumber());
-          s.setQuantity(0);
-          return s;
-        });
+    PharmacyStock stock =
+        pharmacyStockRepository
+            .findByHospitalIdAndMedicineIdAndBatchNumber(
+                hospitalId, medicine.getId(), request.getBatchNumber())
+            .orElseGet(
+                () -> {
+                  PharmacyStock s = new PharmacyStock();
+                  s.setHospitalId(hospitalId);
+                  s.setMedicine(medicine);
+                  s.setBatchNumber(request.getBatchNumber());
+                  s.setQuantity(0);
+                  return s;
+                });
 
     stock.setExpiryDate(request.getExpiryDate());
     stock.setQuantity(stock.getQuantity() + request.getQuantity());
@@ -109,16 +123,19 @@ public class PharmacyStockService {
     tx.setSupplierState(request.getSupplierState());
 
     // 5. Create Tax Snapshots
-    taxResult.components().forEach(comp -> {
-      PharmacyStockTransactionTax taxSnapshot = new PharmacyStockTransactionTax();
-      taxSnapshot.setTransaction(tx);
-      taxSnapshot.setTaxCode(comp.taxCode());
-      taxSnapshot.setTaxName(comp.taxName());
-      taxSnapshot.setTaxRate(comp.taxRate());
-      taxSnapshot.setTaxAmount(comp.taxAmount());
-      taxSnapshot.setTaxableAmount(taxResult.taxableAmount());
-      tx.getTaxes().add(taxSnapshot);
-    });
+    taxResult
+        .components()
+        .forEach(
+            comp -> {
+              PharmacyStockTransactionTax taxSnapshot = new PharmacyStockTransactionTax();
+              taxSnapshot.setTransaction(tx);
+              taxSnapshot.setTaxCode(comp.taxCode());
+              taxSnapshot.setTaxName(comp.taxName());
+              taxSnapshot.setTaxRate(comp.taxRate());
+              taxSnapshot.setTaxAmount(comp.taxAmount());
+              taxSnapshot.setTaxableAmount(taxResult.taxableAmount());
+              tx.getTaxes().add(taxSnapshot);
+            });
 
     transactionRepository.save(tx);
 

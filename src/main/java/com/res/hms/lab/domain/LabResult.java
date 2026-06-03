@@ -22,16 +22,16 @@ import lombok.Setter;
 @AllArgsConstructor
 @Builder
 public class LabResult {
-    @Id
-    @GeneratedValue(strategy = GenerationType.UUID)
-    private UUID id;
+  @Id
+  @GeneratedValue(strategy = GenerationType.UUID)
+  private UUID id;
 
-    @Column(name = "sample_id")
-    private UUID sampleId;
+  @Column(name = "sample_id")
+  private UUID sampleId;
 
-    @Column(name = "entered_by")
-    private UUID enteredBy;
+  @Column(name = "entered_by")
+  private UUID enteredBy;
 
-    @Column(name = "entered_at")
-    private Instant enteredAt;
+  @Column(name = "entered_at")
+  private Instant enteredAt;
 }

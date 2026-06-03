@@ -13,19 +13,19 @@ import lombok.*;
 @AllArgsConstructor
 @Builder
 public class LabSampleRejection {
-    @Id
-    @GeneratedValue(strategy = GenerationType.UUID)
-    private UUID id;
+  @Id
+  @GeneratedValue(strategy = GenerationType.UUID)
+  private UUID id;
 
-    @Column(name = "sample_id")
-    private UUID sampleId;
+  @Column(name = "sample_id")
+  private UUID sampleId;
 
-    @Column(name = "reason")
-    private String reason;
+  @Column(name = "reason")
+  private String reason;
 
-    @Column(name = "rejected_by")
-    private UUID rejectedBy;
+  @Column(name = "rejected_by")
+  private UUID rejectedBy;
 
-    @Column(name = "rejected_at")
-    private Instant rejectedAt;
+  @Column(name = "rejected_at")
+  private Instant rejectedAt;
 }

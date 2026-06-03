@@ -22,24 +22,24 @@ import org.springframework.web.bind.annotation.RestController;
 @Tag(name = "Laboratory Orders", description = "Endpoints for managing laboratory orders and queue")
 public class LabOrderController {
 
-    private final LabOrderService service;
+  private final LabOrderService service;
 
-    @PostMapping
-    @PreAuthorize("hasAnyRole('DOCTOR', 'ADMIN', 'SUPER_ADMIN')")
-    public ApiResponse<LabOrder> createOrder(@RequestBody LabOrderCreateRequest request) {
-        return ApiResponse.success(service.createOrder(request));
-    }
+  @PostMapping
+  @PreAuthorize("hasAnyRole('DOCTOR', 'ADMIN', 'SUPER_ADMIN')")
+  public ApiResponse<LabOrder> createOrder(@RequestBody LabOrderCreateRequest request) {
+    return ApiResponse.success(service.createOrder(request));
+  }
 
-    @GetMapping("/queue")
-    @PreAuthorize("hasAnyRole('LAB_TECHNICIAN', 'ADMIN', 'SUPER_ADMIN')")
-    public ApiResponse<List<LabOrderResponseDTO>> getQueue() {
-        return ApiResponse.success(service.getQueue());
-    }
+  @GetMapping("/queue")
+  @PreAuthorize("hasAnyRole('LAB_TECHNICIAN', 'ADMIN', 'SUPER_ADMIN')")
+  public ApiResponse<List<LabOrderResponseDTO>> getQueue() {
+    return ApiResponse.success(service.getQueue());
+  }
 
-    @PostMapping("/results")
-    @PreAuthorize("hasAnyRole('LAB_TECHNICIAN', 'ADMIN', 'SUPER_ADMIN')")
-    public ApiResponse<Void> saveResults(@RequestBody LabResultSaveRequest request) {
-        service.saveResults(request);
-        return ApiResponse.success(null);
-    }
+  @PostMapping("/results")
+  @PreAuthorize("hasAnyRole('LAB_TECHNICIAN', 'ADMIN', 'SUPER_ADMIN')")
+  public ApiResponse<Void> saveResults(@RequestBody LabResultSaveRequest request) {
+    service.saveResults(request);
+    return ApiResponse.success(null);
+  }
 }

@@ -13,19 +13,19 @@ import lombok.*;
 @AllArgsConstructor
 @Builder
 public class LabMachineMaintenance {
-    @Id
-    @GeneratedValue(strategy = GenerationType.UUID)
-    private UUID id;
+  @Id
+  @GeneratedValue(strategy = GenerationType.UUID)
+  private UUID id;
 
-    @Column(name = "machine_id")
-    private UUID machineId;
+  @Column(name = "machine_id")
+  private UUID machineId;
 
-    @Column(name = "maintenance_date")
-    private LocalDate maintenanceDate;
+  @Column(name = "maintenance_date")
+  private LocalDate maintenanceDate;
 
-    @Column(name = "next_due_date")
-    private LocalDate nextDueDate;
+  @Column(name = "next_due_date")
+  private LocalDate nextDueDate;
 
-    @Column(name = "remarks")
-    private String remarks;
+  @Column(name = "remarks")
+  private String remarks;
 }

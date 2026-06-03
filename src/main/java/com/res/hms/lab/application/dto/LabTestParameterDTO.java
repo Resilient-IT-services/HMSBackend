@@ -11,9 +11,9 @@ import lombok.NoArgsConstructor;
 @NoArgsConstructor
 @AllArgsConstructor
 public class LabTestParameterDTO {
-    private UUID id;
-    private UUID testId;
-    private String parameterName;
-    private String unit;
-    private Integer displayOrder;
+  private UUID id;
+  private UUID testId;
+  private String parameterName;
+  private String unit;
+  private Integer displayOrder;
 }

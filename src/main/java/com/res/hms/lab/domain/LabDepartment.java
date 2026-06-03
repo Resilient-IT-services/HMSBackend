@@ -13,25 +13,25 @@ import lombok.*;
 @AllArgsConstructor
 @Builder
 public class LabDepartment {
-    @Id
-    @GeneratedValue(strategy = GenerationType.UUID)
-    private UUID id;
+  @Id
+  @GeneratedValue(strategy = GenerationType.UUID)
+  private UUID id;
 
-    @Column(name = "hospital_id")
-    private UUID hospitalId;
+  @Column(name = "hospital_id")
+  private UUID hospitalId;
 
-    @Column(name = "code")
-    private String code;
+  @Column(name = "code")
+  private String code;
 
-    @Column(name = "name")
-    private String name;
+  @Column(name = "name")
+  private String name;
 
-    @Column(name = "active")
-    private Boolean active;
+  @Column(name = "active")
+  private Boolean active;
 
-    @Column(name = "created_at")
-    private Instant createdAt;
+  @Column(name = "created_at")
+  private Instant createdAt;
 
-    @Column(name = "updated_at")
-    private Instant updatedAt;
+  @Column(name = "updated_at")
+  private Instant updatedAt;
 }

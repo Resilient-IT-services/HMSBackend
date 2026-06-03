@@ -21,7 +21,8 @@ public class TaxController {
   private final TaxEngineService taxEngineService;
 
   @PostMapping("/calculate")
-  public ApiResponse<TaxCalculationResult> calculate(@Valid @RequestBody TaxCalculationRequest request) {
+  public ApiResponse<TaxCalculationResult> calculate(
+      @Valid @RequestBody TaxCalculationRequest request) {
     return ApiResponse.success(taxEngineService.calculate(request));
   }
 }

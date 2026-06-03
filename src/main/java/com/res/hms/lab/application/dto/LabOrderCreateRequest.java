@@ -12,8 +12,8 @@ import lombok.NoArgsConstructor;
 @AllArgsConstructor
 @Builder
 public class LabOrderCreateRequest {
-    private UUID patientId;
-    private UUID encounterId;
-    private List<UUID> testIds;
-    private List<UUID> packageIds;
+  private UUID patientId;
+  private UUID encounterId;
+  private List<UUID> testIds;
+  private List<UUID> packageIds;
 }

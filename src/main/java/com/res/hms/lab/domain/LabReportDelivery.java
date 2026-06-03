@@ -13,16 +13,16 @@ import lombok.*;
 @AllArgsConstructor
 @Builder
 public class LabReportDelivery {
-    @Id
-    @GeneratedValue(strategy = GenerationType.UUID)
-    private UUID id;
+  @Id
+  @GeneratedValue(strategy = GenerationType.UUID)
+  private UUID id;
 
-    @Column(name = "report_id")
-    private UUID reportId;
+  @Column(name = "report_id")
+  private UUID reportId;
 
-    @Column(name = "delivery_method")
-    private String deliveryMethod;
+  @Column(name = "delivery_method")
+  private String deliveryMethod;
 
-    @Column(name = "delivered_at")
-    private Instant deliveredAt;
+  @Column(name = "delivered_at")
+  private Instant deliveredAt;
 }

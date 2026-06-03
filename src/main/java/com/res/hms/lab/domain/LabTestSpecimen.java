@@ -13,25 +13,25 @@ import lombok.*;
 @AllArgsConstructor
 @Builder
 public class LabTestSpecimen {
-    @Id
-    @GeneratedValue(strategy = GenerationType.UUID)
-    private UUID id;
+  @Id
+  @GeneratedValue(strategy = GenerationType.UUID)
+  private UUID id;
 
-    @Column(name = "test_id")
-    private UUID testId;
+  @Column(name = "test_id")
+  private UUID testId;
 
-    @Column(name = "specimen_type_id")
-    private UUID specimenTypeId;
+  @Column(name = "specimen_type_id")
+  private UUID specimenTypeId;
 
-    @Column(name = "container_type")
-    private String containerType;
+  @Column(name = "container_type")
+  private String containerType;
 
-    @Column(name = "volume_required")
-    private BigDecimal volumeRequired;
+  @Column(name = "volume_required")
+  private BigDecimal volumeRequired;
 
-    @Column(name = "fasting_required")
-    private Boolean fastingRequired;
+  @Column(name = "fasting_required")
+  private Boolean fastingRequired;
 
-    @Column(name = "collection_instruction")
-    private String collectionInstruction;
+  @Column(name = "collection_instruction")
+  private String collectionInstruction;
 }

@@ -21,13 +21,9 @@ import jakarta.persistence.criteria.Predicate;
 import jakarta.persistence.criteria.Root;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Locale;
 import java.util.UUID;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
-import org.springframework.data.domain.PageRequest;
-import org.springframework.data.domain.Pageable;
-import org.springframework.data.domain.Sort;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
@@ -57,7 +53,10 @@ public class AppointmentService {
   }
 
   @Transactional(readOnly = true)
-  public PageResponse<AppointmentDTO> list(org.springframework.data.domain.Pageable pageable, String search, java.util.Map<String, String> filters) {
+  public PageResponse<AppointmentDTO> list(
+      org.springframework.data.domain.Pageable pageable,
+      String search,
+      java.util.Map<String, String> filters) {
     UUID hospitalId = hospitalContext.requireHospitalId();
 
     com.res.hms.core.util.SpecificationBuilder<Appointment> builder =
@@ -78,7 +77,8 @@ public class AppointmentService {
         };
 
     Page<Appointment> assignments =
-        appointmentRepository.findAll(Specification.where(spec).and(fixedSpec).and(fetchSpec), pageable);
+        appointmentRepository.findAll(
+            Specification.where(spec).and(fixedSpec).and(fetchSpec), pageable);
     return PageResponse.from(assignments.map(this::toDto));
   }
 
@@ -97,7 +97,7 @@ public class AppointmentService {
 
     Specification<Appointment> spec = builder.build();
     Specification<Appointment> fixedSpec = getFixedSpec(hospitalId, filters);
-    
+
     Predicate predicate = Specification.where(spec).and(fixedSpec).toPredicate(root, query, cb);
     if (predicate != null) {
       query.where(predicate);
@@ -121,7 +121,8 @@ public class AppointmentService {
     // Upcoming count logic
     CriteriaQuery<Long> countQuery = cb.createQuery(Long.class);
     Root<Appointment> countRoot = countQuery.from(Appointment.class);
-    Predicate baseCountPredicate = Specification.where(spec).and(fixedSpec).toPredicate(countRoot, countQuery, cb);
+    Predicate baseCountPredicate =
+        Specification.where(spec).and(fixedSpec).toPredicate(countRoot, countQuery, cb);
 
     java.time.Instant now = java.time.Instant.now();
     Predicate futurePredicate = cb.greaterThan(countRoot.get("appointmentTime"), now);
@@ -143,7 +144,10 @@ public class AppointmentService {
   }
 
   @Transactional(readOnly = true)
-  public PageResponse<AppointmentSummaryDTO> listSummary(org.springframework.data.domain.Pageable pageable, String search, java.util.Map<String, String> filters) {
+  public PageResponse<AppointmentSummaryDTO> listSummary(
+      org.springframework.data.domain.Pageable pageable,
+      String search,
+      java.util.Map<String, String> filters) {
     UUID hospitalId = hospitalContext.requireHospitalId();
 
     // Map legacy 'doctor' param to 'doctorName' for SpecificationBuilder
@@ -168,11 +172,13 @@ public class AppointmentService {
         };
 
     Page<Appointment> results =
-        appointmentRepository.findAll(Specification.where(spec).and(fixedSpec).and(fetchSpec), pageable);
+        appointmentRepository.findAll(
+            Specification.where(spec).and(fixedSpec).and(fetchSpec), pageable);
     return PageResponse.from(results.map(this::toSummaryDto));
   }
 
-  private Specification<Appointment> getFixedSpec(UUID hospitalId, java.util.Map<String, String> filters) {
+  private Specification<Appointment> getFixedSpec(
+      UUID hospitalId, java.util.Map<String, String> filters) {
     return (root, query, cb) -> {
       List<Predicate> predicates = new ArrayList<>();
       predicates.add(cb.equal(root.get("hospitalId"), hospitalId));
@@ -180,28 +186,37 @@ public class AppointmentService {
 
       if (filters.containsKey("from")) {
         try {
-          predicates.add(cb.greaterThanOrEqualTo(root.get("appointmentTime"), 
-              java.time.Instant.parse(filters.get("from"))));
-        } catch (Exception ignored) {}
+          predicates.add(
+              cb.greaterThanOrEqualTo(
+                  root.get("appointmentTime"), java.time.Instant.parse(filters.get("from"))));
+        } catch (Exception ignored) {
+        }
       }
       if (filters.containsKey("to")) {
         try {
-          predicates.add(cb.lessThanOrEqualTo(root.get("appointmentTime"), 
-              java.time.Instant.parse(filters.get("to"))));
-        } catch (Exception ignored) {}
+          predicates.add(
+              cb.lessThanOrEqualTo(
+                  root.get("appointmentTime"), java.time.Instant.parse(filters.get("to"))));
+        } catch (Exception ignored) {
+        }
       }
       if (filters.containsKey("patientId")) {
         try {
-          predicates.add(cb.equal(root.get("patientId"), UUID.fromString(filters.get("patientId"))));
-        } catch (Exception ignored) {}
+          predicates.add(
+              cb.equal(root.get("patientId"), UUID.fromString(filters.get("patientId"))));
+        } catch (Exception ignored) {
+        }
       }
       if (filters.containsKey("doctorId")) {
         try {
           predicates.add(cb.equal(root.get("doctorId"), UUID.fromString(filters.get("doctorId"))));
-        } catch (Exception ignored) {}
+        } catch (Exception ignored) {
+        }
       }
       if (filters.containsKey("token")) {
-        predicates.add(cb.like(root.get("tokenNumber").as(String.class), "%" + filters.get("token").trim() + "%"));
+        predicates.add(
+            cb.like(
+                root.get("tokenNumber").as(String.class), "%" + filters.get("token").trim() + "%"));
       }
 
       return cb.and(predicates.toArray(new Predicate[0]));

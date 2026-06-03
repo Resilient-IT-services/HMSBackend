@@ -58,7 +58,9 @@ public class MedicineController {
   @GetMapping("/medicines")
   @PreAuthorize(SecurityConstants.HAS_PHARMACY_ACCESS)
   public ApiResponse<PageResponse<MedicineDTO>> list(
-      @org.springframework.data.web.PageableDefault(sort = "createdAt", direction = org.springframework.data.domain.Sort.Direction.DESC)
+      @org.springframework.data.web.PageableDefault(
+              sort = "createdAt",
+              direction = org.springframework.data.domain.Sort.Direction.DESC)
           org.springframework.data.domain.Pageable pageable,
       @RequestParam(required = false) String search,
       @RequestParam java.util.Map<String, String> allParams) {
@@ -68,7 +70,9 @@ public class MedicineController {
   @GetMapping("/medicines/summary")
   @PreAuthorize(SecurityConstants.HAS_PHARMACY_ACCESS)
   public ApiResponse<PageResponse<MedicineSummaryDTO>> listSummary(
-      @org.springframework.data.web.PageableDefault(sort = "createdAt", direction = org.springframework.data.domain.Sort.Direction.DESC)
+      @org.springframework.data.web.PageableDefault(
+              sort = "createdAt",
+              direction = org.springframework.data.domain.Sort.Direction.DESC)
           org.springframework.data.domain.Pageable pageable,
       @RequestParam(required = false) String search,
       @RequestParam java.util.Map<String, String> allParams) {
@@ -116,7 +120,9 @@ public class MedicineController {
   @GetMapping("/stock")
   @PreAuthorize(SecurityConstants.HAS_PHARMACY_ACCESS)
   public ApiResponse<PageResponse<PharmacyStockDTO>> listStock(
-      @org.springframework.data.web.PageableDefault(sort = "medicine.name", direction = org.springframework.data.domain.Sort.Direction.ASC)
+      @org.springframework.data.web.PageableDefault(
+              sort = "medicine.name",
+              direction = org.springframework.data.domain.Sort.Direction.ASC)
           org.springframework.data.domain.Pageable pageable,
       @RequestParam(required = false) String search,
       @RequestParam java.util.Map<String, String> allParams) {
@@ -174,7 +180,9 @@ public class MedicineController {
   @GetMapping("/alerts/low-stock")
   @PreAuthorize(SecurityConstants.HAS_ADMIN_OR_PHARMACIST)
   public ApiResponse<PageResponse<PharmacyStockDTO>> lowStockAlerts(
-      @org.springframework.data.web.PageableDefault(sort = "medicine.name", direction = org.springframework.data.domain.Sort.Direction.ASC)
+      @org.springframework.data.web.PageableDefault(
+              sort = "medicine.name",
+              direction = org.springframework.data.domain.Sort.Direction.ASC)
           org.springframework.data.domain.Pageable pageable,
       @RequestParam(required = false) String search,
       @RequestParam java.util.Map<String, String> allParams) {

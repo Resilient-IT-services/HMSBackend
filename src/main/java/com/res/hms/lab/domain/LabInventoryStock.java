@@ -13,19 +13,19 @@ import lombok.*;
 @AllArgsConstructor
 @Builder
 public class LabInventoryStock {
-    @Id
-    @GeneratedValue(strategy = GenerationType.UUID)
-    private UUID id;
+  @Id
+  @GeneratedValue(strategy = GenerationType.UUID)
+  private UUID id;
 
-    @Column(name = "item_id")
-    private UUID itemId;
+  @Column(name = "item_id")
+  private UUID itemId;
 
-    @Column(name = "hospital_id")
-    private UUID hospitalId;
+  @Column(name = "hospital_id")
+  private UUID hospitalId;
 
-    @Column(name = "available_qty")
-    private BigDecimal availableQty;
+  @Column(name = "available_qty")
+  private BigDecimal availableQty;
 
-    @Column(name = "reorder_level")
-    private BigDecimal reorderLevel;
+  @Column(name = "reorder_level")
+  private BigDecimal reorderLevel;
 }

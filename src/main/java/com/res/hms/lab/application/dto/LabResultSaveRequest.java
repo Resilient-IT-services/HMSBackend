@@ -12,17 +12,17 @@ import lombok.NoArgsConstructor;
 @AllArgsConstructor
 @Builder
 public class LabResultSaveRequest {
-    private UUID orderTestId;
-    private List<ParameterResultDTO> results;
+  private UUID orderTestId;
+  private List<ParameterResultDTO> results;
 
-    @Data
-    @NoArgsConstructor
-    @AllArgsConstructor
-    @Builder
-    public static class ParameterResultDTO {
-        private UUID parameterId;
-        private String value;
-        private Boolean abnormal;
-        private Boolean critical;
-    }
+  @Data
+  @NoArgsConstructor
+  @AllArgsConstructor
+  @Builder
+  public static class ParameterResultDTO {
+    private UUID parameterId;
+    private String value;
+    private Boolean abnormal;
+    private Boolean critical;
+  }
 }

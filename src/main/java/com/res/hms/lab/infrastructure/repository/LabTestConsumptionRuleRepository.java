@@ -7,5 +7,6 @@ import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
 import org.springframework.stereotype.Repository;
 
 @Repository
-public interface LabTestConsumptionRuleRepository extends JpaRepository<LabTestConsumptionRule, UUID>, JpaSpecificationExecutor<LabTestConsumptionRule> {
-}
+public interface LabTestConsumptionRuleRepository
+    extends JpaRepository<LabTestConsumptionRule, UUID>,
+        JpaSpecificationExecutor<LabTestConsumptionRule> {}

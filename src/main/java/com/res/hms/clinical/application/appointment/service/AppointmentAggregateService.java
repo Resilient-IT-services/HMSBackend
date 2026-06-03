@@ -74,7 +74,8 @@ public class AppointmentAggregateService {
 
     // Validation: Prevent past bookings
     boolean isNew = dto.getId() == null;
-    if (isNew && dto.getAppointmentTime().isBefore(java.time.OffsetDateTime.now().minusMinutes(1))) {
+    if (isNew
+        && dto.getAppointmentTime().isBefore(java.time.OffsetDateTime.now().minusMinutes(1))) {
       throw new ApiException(
           "PAST_BOOKING_DISALLOWED",
           "Cannot book an appointment in the past.",

@@ -17,21 +17,25 @@ import org.mapstruct.ReportingPolicy;
 @Mapper(componentModel = "spring", unmappedTargetPolicy = ReportingPolicy.IGNORE)
 public interface LabMapper {
 
-    LabDepartmentDTO toDto(LabDepartment entity);
-    LabDepartment toEntity(LabDepartmentDTO dto);
+  LabDepartmentDTO toDto(LabDepartment entity);
 
-    @Mapping(target = "departmentName", source = "department.name")
-    LabTestDTO toDto(LabTest entity);
-    
-    @Mapping(target = "departmentId", source = "departmentId")
-    LabTest toEntity(LabTestDTO dto);
+  LabDepartment toEntity(LabDepartmentDTO dto);
 
-    LabTestParameterDTO toDto(LabTestParameter entity);
-    LabTestParameter toEntity(LabTestParameterDTO dto);
+  @Mapping(target = "departmentName", source = "department.name")
+  LabTestDTO toDto(LabTest entity);
 
-    LabReferenceRangeDTO toDto(LabReferenceRange entity);
-    LabReferenceRange toEntity(LabReferenceRangeDTO dto);
+  @Mapping(target = "departmentId", source = "departmentId")
+  LabTest toEntity(LabTestDTO dto);
 
-    LabPriceDTO toDto(LabPrice entity);
-    LabPrice toEntity(LabPriceDTO dto);
+  LabTestParameterDTO toDto(LabTestParameter entity);
+
+  LabTestParameter toEntity(LabTestParameterDTO dto);
+
+  LabReferenceRangeDTO toDto(LabReferenceRange entity);
+
+  LabReferenceRange toEntity(LabReferenceRangeDTO dto);
+
+  LabPriceDTO toDto(LabPrice entity);
+
+  LabPrice toEntity(LabPriceDTO dto);
 }

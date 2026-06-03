@@ -6,8 +6,8 @@ import lombok.Data;
 
 @Data
 public class TaxGroupDTO {
-    private UUID id;
-    private String name;
-    private boolean active;
-    private List<TaxMasterDTO> taxes;
+  private UUID id;
+  private String name;
+  private boolean active;
+  private List<TaxMasterDTO> taxes;
 }

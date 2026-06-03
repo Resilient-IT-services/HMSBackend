@@ -12,16 +12,16 @@ import lombok.*;
 @AllArgsConstructor
 @Builder
 public class LabReferralLab {
-    @Id
-    @GeneratedValue(strategy = GenerationType.UUID)
-    private UUID id;
+  @Id
+  @GeneratedValue(strategy = GenerationType.UUID)
+  private UUID id;
 
-    @Column(name = "lab_name")
-    private String labName;
+  @Column(name = "lab_name")
+  private String labName;
 
-    @Column(name = "contact_person")
-    private String contactPerson;
+  @Column(name = "contact_person")
+  private String contactPerson;
 
-    @Column(name = "email")
-    private String email;
+  @Column(name = "email")
+  private String email;
 }

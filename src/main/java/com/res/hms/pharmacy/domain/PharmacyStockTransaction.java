@@ -61,7 +61,7 @@ public class PharmacyStockTransaction extends HospitalScopedEntity {
   private LocalDateTime transactionDate = LocalDateTime.now();
 
   private String reference;
-  
+
   @Column(name = "supplier_name")
   private String supplierName;
 
