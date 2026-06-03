@@ -3,6 +3,8 @@ package com.res.hms.lab.domain;
 import jakarta.persistence.*;
 import java.util.UUID;
 import lombok.*;
+import org.hibernate.annotations.JdbcTypeCode;
+import org.hibernate.type.SqlTypes;
 
 @Entity
 @Table(name = "lab_report_template", schema = "lab")
@@ -22,6 +24,7 @@ public class LabReportTemplate {
     @Column(name = "template_name")
     private String templateName;
 
-    @Column(name = "template_json")
+    @JdbcTypeCode(SqlTypes.JSON)
+    @Column(name = "template_json", columnDefinition = "jsonb")
     private String templateJson;
 }
