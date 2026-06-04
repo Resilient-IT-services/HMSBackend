@@ -11,7 +11,10 @@ import com.res.hms.clinical.infrastructure.repository.AppointmentRepository;
 import com.res.hms.core.exception.ApiException;
 import com.res.hms.core.tenant.HospitalContext;
 import com.res.hms.iam.application.service.DoctorProfileService;
+import com.res.hms.iam.application.dto.DoctorAvailabilityResponse;
 import com.res.hms.iam.domain.DoctorProfile;
+import java.util.List;
+import java.util.Optional;
 import java.util.UUID;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -33,6 +36,8 @@ public class AppointmentAggregateService {
   private final com.res.hms.clinical.application.vital.service.VitalValidationService
       vitalValidationService;
   private final com.res.hms.clinical.application.service.PatientVisitService patientVisitService;
+  private final com.res.hms.hospital.infrastructure.repository.HospitalRepository
+      hospitalRepository;
 
   private final com.res.hms.core.service.DomainEventPublisher eventPublisher;
 
@@ -120,6 +125,8 @@ public class AppointmentAggregateService {
                       new ApiException("NOT_FOUND", "Appointment not found", HttpStatus.NOT_FOUND));
       updateAppointment(appointment, dto, hospitalId);
     }
+
+    validateAppointmentProximity(dto, hospitalId);
 
     appointmentRepository.saveAndFlush(appointment);
 
@@ -430,5 +437,84 @@ public class AppointmentAggregateService {
       throw new ApiException(
           "CONSULTATION_RUNNING", "One consultation is already in progress", HttpStatus.CONFLICT);
     }
+  }
+
+  private void validateAppointmentProximity(AppointmentDTO dto, UUID hospitalId) {
+    if (dto.getDoctorId() == null || dto.getAppointmentTime() == null) {
+      return;
+    }
+
+    // Get hospital timezone
+    String tz =
+        hospitalRepository
+            .findById(hospitalId)
+            .map(com.res.hms.hospital.domain.Hospital::getTimezone)
+            .orElse("Asia/Kolkata");
+    java.time.ZoneId zoneId = java.time.ZoneId.of(tz);
+
+    java.time.ZonedDateTime appointmentZdt = dto.getAppointmentTime().atZoneSameInstant(zoneId);
+    java.time.LocalDate appointmentDate = appointmentZdt.toLocalDate();
+    java.time.LocalTime requestedTime = appointmentZdt.toLocalTime();
+
+    DoctorAvailabilityResponse availability =
+        doctorProfileService.getAvailableSlots(dto.getDoctorId(), appointmentDate);
+
+    if (availability.getSessions() == null || availability.getSessions().isEmpty()) {
+      return;
+    }
+
+    availability.getSessions().stream()
+        .filter(
+            s ->
+                !requestedTime.isBefore(s.getStartTime()) && requestedTime.isBefore(s.getEndTime()))
+        .findFirst()
+        .ifPresent(
+            session -> {
+              Integer max = session.getMaxPatients();
+              long bufferSeconds;
+
+              if (max == null || max <= 0) {
+                bufferSeconds = 60; // Default 60 seconds if calculation fails
+              } else {
+                long sessionMins =
+                    java.time.Duration.between(session.getStartTime(), session.getEndTime())
+                        .toMinutes();
+                double avgSlotMins = (double) sessionMins / max;
+                bufferSeconds = (long) (avgSlotMins * 0.25 * 60);
+              }
+
+              if (bufferSeconds <= 0) bufferSeconds = 1;
+
+              java.time.Instant requestedInstant = dto.getAppointmentTime().toInstant();
+              java.time.Instant startBuffer = requestedInstant.minusSeconds(bufferSeconds);
+              java.time.Instant endBuffer = requestedInstant.plusSeconds(bufferSeconds);
+
+              List<Appointment> existingAppointments =
+                  appointmentRepository.findByDoctorIdAndDate(dto.getDoctorId(), appointmentDate);
+
+              for (Appointment existing : existingAppointments) {
+                if (dto.getId() != null && existing.getId().equals(dto.getId())) {
+                  continue;
+                }
+
+                java.time.Instant existingInstant = existing.getAppointmentTime();
+                // Check if existing appointment is within [requestedTime - buffer, requestedTime + buffer]
+                if (!existingInstant.isBefore(startBuffer) && !existingInstant.isAfter(endBuffer)) {
+                  throw new ApiException(
+                      "APPOINTMENT_TOO_CLOSE",
+                      "Another appointment is already booked too close to this time. "
+                          + (max == null || max <= 0
+                              ? "A default 60-second buffer is required."
+                              : "For a doctor with "
+                                  + max
+                                  + " patients per "
+                                  + java.time.Duration.between(
+                                          session.getStartTime(), session.getEndTime())
+                                      .toMinutes()
+                                  + " minute session, a buffer is required."),
+                      HttpStatus.BAD_REQUEST);
+                }
+              }
+            });
   }
 }

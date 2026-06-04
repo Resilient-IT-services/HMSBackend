@@ -33,6 +33,7 @@ public class DoctorAvailabilityService {
   private final DoctorScheduleRepository scheduleRepository;
   private final DoctorAvailabilityOverrideRepository availabilityOverrideRepository;
   private final AppointmentRepository appointmentRepository;
+  private final java.time.Clock clock;
 
   @Transactional(readOnly = true)
   public DoctorAvailabilityResponse getAvailableSlots(
@@ -47,7 +48,7 @@ public class DoctorAvailabilityService {
 
     List<Appointment> appointments =
         appointmentRepository.findByDoctorIdAndDate(doctorProfile.getId(), date);
-    ZonedDateTime nowHospital = ZonedDateTime.now(zoneId);
+    ZonedDateTime nowHospital = ZonedDateTime.now(clock.withZone(zoneId));
     LocalDate today = nowHospital.toLocalDate();
     LocalTime now = nowHospital.toLocalTime();
 
@@ -94,7 +95,15 @@ public class DoctorAvailabilityService {
               null,
               count,
               true,
-              calculateSuggestedTime(o.getStartTime(), count, duration)));
+              calculateSuggestedTime(
+                  o.getStartTime(),
+                  o.getEndTime(),
+                  duration,
+                  appointments,
+                  date,
+                  today,
+                  now,
+                  zoneId)));
     }
   }
 
@@ -125,7 +134,15 @@ public class DoctorAvailabilityService {
                 s.getMaxPatients(),
                 count,
                 count < max,
-                calculateSuggestedTime(s.getStartTime(), count, duration)));
+                calculateSuggestedTime(
+                    s.getStartTime(),
+                    s.getEndTime(),
+                    duration,
+                    appointments,
+                    date,
+                    today,
+                    now,
+                    zoneId)));
       }
     }
   }
@@ -155,7 +172,7 @@ public class DoctorAvailabilityService {
             .map(a -> a.getAppointmentTime().atZone(zoneId).toLocalTime())
             .collect(Collectors.toSet());
 
-    ZonedDateTime nowHospital = ZonedDateTime.now(zoneId);
+    ZonedDateTime nowHospital = ZonedDateTime.now(clock.withZone(zoneId));
     LocalDate today = nowHospital.toLocalDate();
     LocalTime now = nowHospital.toLocalTime();
 
@@ -242,7 +259,15 @@ public class DoctorAvailabilityService {
       LocalDate today,
       LocalTime now,
       List<DoctorSlotDTO> allSlots) {
-    boolean isPast = date.isBefore(today) || (date.equals(today) && current.isBefore(now));
+    boolean isPastTime = false;
+    if (date.equals(today)) {
+      if (slotEnd.equals(LocalTime.MIDNIGHT)) {
+        isPastTime = false;
+      } else {
+        isPastTime = !slotEnd.isAfter(now);
+      }
+    }
+    boolean isPast = date.isBefore(today) || isPastTime;
     boolean isBooked = bookedTimes.contains(current);
     String status = isPast ? "SESSION_EXPIRED" : (isBooked ? "BOOKED" : "AVAILABLE");
 
@@ -265,8 +290,47 @@ public class DoctorAvailabilityService {
   }
 
   private LocalTime calculateSuggestedTime(
-      LocalTime sessionStart, int currentBookings, int durationMinutes) {
-    return sessionStart.plusMinutes((long) currentBookings * durationMinutes);
+      LocalTime sessionStart,
+      LocalTime sessionEnd,
+      int durationMinutes,
+      List<Appointment> appointments,
+      LocalDate date,
+      LocalDate today,
+      LocalTime now,
+      ZoneId zoneId) {
+
+    Set<LocalTime> bookedTimes =
+        appointments.stream()
+            .map(a -> a.getAppointmentTime().atZone(zoneId).toLocalTime())
+            .collect(Collectors.toSet());
+
+    LocalTime current = sessionStart;
+
+    // If today, skip slots that are already past (slot end is not in future)
+    if (date.equals(today)) {
+      while (current.isBefore(sessionEnd)
+          || (sessionEnd.equals(LocalTime.MIDNIGHT) && !current.equals(LocalTime.MIDNIGHT))) {
+        LocalTime slotEnd = current.plusMinutes(durationMinutes);
+        if (slotEnd.isAfter(now)
+            || (slotEnd.equals(LocalTime.MIDNIGHT) && !now.equals(LocalTime.MIDNIGHT))) {
+          break;
+        }
+        current = slotEnd;
+        if (current.equals(LocalTime.MIDNIGHT)) break;
+      }
+    }
+
+    // Now find the first unbooked slot
+    while (current.isBefore(sessionEnd)
+        || (sessionEnd.equals(LocalTime.MIDNIGHT) && !current.equals(LocalTime.MIDNIGHT))) {
+      if (!bookedTimes.contains(current)) {
+        return current;
+      }
+      current = current.plusMinutes(durationMinutes);
+      if (current.equals(LocalTime.MIDNIGHT)) break;
+    }
+
+    return null;
   }
 
   @Transactional(readOnly = true)
