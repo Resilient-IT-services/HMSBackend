@@ -52,12 +52,24 @@ public class AppointmentService {
             () -> new ApiException("NOT_FOUND", "Appointment not found", HttpStatus.NOT_FOUND));
   }
 
+  private void sanitizeFilters(java.util.Map<String, String> filters) {
+    // Map legacy 'doctor' param to 'doctorName' for SpecificationBuilder
+    if (filters.containsKey("doctor") && !filters.containsKey("doctorName")) {
+      filters.put("doctorName", filters.get("doctor"));
+    }
+    // Map 'tokenNumber' from UI filter to 'token' for custom LIKE matching in getFixedSpec
+    if (filters.containsKey("tokenNumber") && !filters.containsKey("token")) {
+      filters.put("token", filters.remove("tokenNumber"));
+    }
+  }
+
   @Transactional(readOnly = true)
   public PageResponse<AppointmentDTO> list(
       org.springframework.data.domain.Pageable pageable,
       String search,
       java.util.Map<String, String> filters) {
     UUID hospitalId = hospitalContext.requireHospitalId();
+    sanitizeFilters(filters);
 
     com.res.hms.core.util.SpecificationBuilder<Appointment> builder =
         new com.res.hms.core.util.SpecificationBuilder<>(
