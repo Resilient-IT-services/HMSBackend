@@ -55,11 +55,14 @@ public class PharmacySaleService {
   private final AppointmentRepository appointmentRepository;
   private final com.res.hms.hospital.infrastructure.repository.HospitalRepository
       hospitalRepository;
+  private final com.res.hms.iam.infrastructure.repository.UserAccountRepository
+      userAccountRepository;
   private final InvoiceService invoiceService;
   private final PaymentService paymentService;
   private final HospitalContext hospitalContext;
   private final com.res.hms.clinical.application.service.PatientVisitService patientVisitService;
   private final TaxEngineService taxEngineService;
+  private final com.res.hms.clinical.infrastructure.repository.PatientRepository patientRepository;
 
   @Transactional
   public QuickPharmacySaleResponse createSale(QuickPharmacySaleRequest request) {
@@ -144,6 +147,19 @@ public class PharmacySaleService {
     response.setInvoiceNumber(invoice.getInvoiceNumber());
     response.setPaymentId(paymentReceipt.paymentId());
     response.setReceiptNumber(paymentReceipt.receiptNumber());
+
+    // Populate additional details for the response
+    if (savedSale.getDoctorId() != null) {
+      userAccountRepository
+          .findById(savedSale.getDoctorId())
+          .ifPresent(u -> response.setDoctorName(u.getFullName()));
+    }
+    if (savedSale.getPatientId() != null) {
+      patientRepository
+          .findById(savedSale.getPatientId())
+          .ifPresent(p -> response.setPatientCode(p.getPatientCode()));
+    }
+
     return response;
   }
 
@@ -299,13 +315,23 @@ public class PharmacySaleService {
             hospitalId,
             request.getPatientId(),
             savedSale.getVisitId(),
-            savedSale.getCustomerName());
+            savedSale.getCustomerName(),
+            savedSale.getCustomerPhone());
     savedSale.setInvoiceId(invoice.getId());
     savedSale.setSaleNumber(invoice.getInvoiceNumber());
     return invoice;
   }
 
   private void addInvoiceItems(PharmacySale savedSale, Invoice invoice) {
+    String doctorName = savedSale.getExternalDoctorName();
+    if (doctorName == null && savedSale.getDoctorId() != null) {
+      doctorName =
+          userAccountRepository
+              .findById(savedSale.getDoctorId())
+              .map(com.res.hms.iam.domain.UserAccount::getFullName)
+              .orElse(null);
+    }
+
     for (PharmacySaleItem saleItem : savedSale.getItems()) {
       List<com.res.hms.tax.application.dto.TaxComponent> taxComponents =
           saleItem.getTaxes().stream()
@@ -325,7 +351,7 @@ public class PharmacySaleService {
           FinanceSourceType.PHARMACY_SALE_ITEM,
           saleItem.getId(),
           savedSale.getDoctorId(),
-          savedSale.getExternalDoctorName(),
+          doctorName,
           taxComponents);
     }
   }
@@ -426,18 +452,32 @@ public class PharmacySaleService {
                         .build())
             .toList();
 
-    return QuickPharmacySaleResponse.builder()
-        .saleId(sale.getId())
-        .saleNumber(sale.getSaleNumber())
-        .invoiceId(sale.getInvoiceId())
-        .totalAmount(sale.getTotalAmount())
-        .status(sale.getStatus().name())
-        .customerName(sale.getCustomerName())
-        .customerPhone(sale.getCustomerPhone())
-        .externalDoctorName(sale.getExternalDoctorName())
-        .createdAt(sale.getCreatedAt())
-        .items(items)
-        .build();
+    QuickPharmacySaleResponse response =
+        QuickPharmacySaleResponse.builder()
+            .saleId(sale.getId())
+            .saleNumber(sale.getSaleNumber())
+            .invoiceId(sale.getInvoiceId())
+            .totalAmount(sale.getTotalAmount())
+            .status(sale.getStatus().name())
+            .customerName(sale.getCustomerName())
+            .customerPhone(sale.getCustomerPhone())
+            .externalDoctorName(sale.getExternalDoctorName())
+            .createdAt(sale.getCreatedAt())
+            .items(items)
+            .build();
+
+    if (sale.getDoctorId() != null) {
+      userAccountRepository
+          .findById(sale.getDoctorId())
+          .ifPresent(u -> response.setDoctorName(u.getFullName()));
+    }
+    if (sale.getPatientId() != null) {
+      patientRepository
+          .findById(sale.getPatientId())
+          .ifPresent(p -> response.setPatientCode(p.getPatientCode()));
+    }
+
+    return response;
   }
 
   @Transactional(readOnly = true)

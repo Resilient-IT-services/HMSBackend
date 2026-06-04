@@ -153,7 +153,12 @@ public class InvoicePdfExportService {
     pNamePara.setSpacingBefore(4);
     pNamePara.setSpacingAfter(4);
     patientCell.addElement(pNamePara);
-    patientCell.addElement(new Paragraph("PATIENT ID: " + context.patientCode(), mutedLabel));
+
+    if (context.isWalkIn()) {
+      patientCell.addElement(new Paragraph("MOBILE: " + context.patientPhone(), mutedLabel));
+    } else {
+      patientCell.addElement(new Paragraph("PATIENT ID: " + context.patientCode(), mutedLabel));
+    }
     infoLayoutGrid.addCell(patientCell);
 
     PdfPCell serviceCell = createInfoCell(sectionTitleFont, "DOCTOR RECORD");

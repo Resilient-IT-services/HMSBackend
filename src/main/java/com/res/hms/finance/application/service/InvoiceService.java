@@ -111,26 +111,35 @@ public class InvoiceService {
   @Transactional
   public Invoice getOrCreateInvoice(
       UUID hospitalId, UUID patientId, UUID visitId, String customerName) {
+    return getOrCreateInvoice(hospitalId, patientId, visitId, customerName, null);
+  }
+
+  @Transactional
+  public Invoice getOrCreateInvoice(
+      UUID hospitalId, UUID patientId, UUID visitId, String customerName, String customerPhone) {
     if (visitId != null) {
       return invoiceRepository
           .findByVisitId(visitId)
           .filter(i -> i.getStatus() != InvoiceStatus.CANCELLED)
-          .orElseGet(() -> createInvoice(hospitalId, patientId, visitId, customerName));
+          .orElseGet(
+              () -> createInvoice(hospitalId, patientId, visitId, customerName, customerPhone));
     }
-    return createInvoice(hospitalId, patientId, null, customerName);
+    return createInvoice(hospitalId, patientId, null, customerName, customerPhone);
   }
 
   @Transactional
   public Invoice createInvoice(UUID hospitalId, UUID patientId, UUID visitId) {
-    return createInvoice(hospitalId, patientId, visitId, null);
+    return createInvoice(hospitalId, patientId, visitId, null, null);
   }
 
   @Transactional
-  public Invoice createInvoice(UUID hospitalId, UUID patientId, UUID visitId, String customerName) {
+  public Invoice createInvoice(
+      UUID hospitalId, UUID patientId, UUID visitId, String customerName, String customerPhone) {
     Invoice invoice = new Invoice();
     invoice.setHospitalId(hospitalId);
     invoice.setPatientId(patientId);
     invoice.setCustomerName(customerName);
+    invoice.setCustomerPhone(customerPhone);
     invoice.setVisitId(visitId);
     invoice.setInvoiceNumber("INV-" + System.currentTimeMillis());
     invoice.setStatus(InvoiceStatus.UNPAID);

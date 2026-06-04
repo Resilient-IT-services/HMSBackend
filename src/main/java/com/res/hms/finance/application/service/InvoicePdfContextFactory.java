@@ -48,10 +48,15 @@ public class InvoicePdfContextFactory {
     }
 
     String patientName = "Unknown Patient";
+    String patientPhone = "N/A";
+    boolean isWalkIn = true;
     if (invoice.getPatient() != null) {
       patientName = invoice.getPatient().getFullName();
+      patientPhone = invoice.getPatient().getPhone();
+      isWalkIn = false;
     } else if (invoice.getCustomerName() != null) {
       patientName = invoice.getCustomerName();
+      patientPhone = invoice.getCustomerPhone() != null ? invoice.getCustomerPhone() : "N/A";
     }
 
     String patientCode =
@@ -68,6 +73,14 @@ public class InvoicePdfContextFactory {
     }
 
     return new InvoicePdfContext(
-        hospitalName, gstinNumber, receptionistName, patientName, patientCode, consultingDoctor);
+        hospitalName,
+        gstinNumber,
+        receptionistName,
+        patientName,
+        patientCode,
+        patientPhone,
+        consultingDoctor,
+        isWalkIn,
+        invoice.getVisitId());
   }
 }

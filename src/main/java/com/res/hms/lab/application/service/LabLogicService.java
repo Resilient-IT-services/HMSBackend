@@ -36,7 +36,9 @@ public class LabLogicService {
     Optional<LabReferenceRange> specific =
         allRanges.stream().filter(r -> r.getGender().equalsIgnoreCase(gender)).findFirst();
 
-    if (specific.isPresent()) return specific.map(mapper::toDto);
+    if (specific.isPresent()) {
+      return specific.map(mapper::toDto);
+    }
 
     // 2. Fallback to 'ALL'
     return allRanges.stream()
@@ -47,20 +49,28 @@ public class LabLogicService {
 
   /** Logic: Determine result status (NORMAL, ABNORMAL, CRITICAL) */
   public String determineResultStatus(LabReferenceRangeDTO range, String value) {
-    if (value == null || range == null) return "PENDING";
+    if (value == null || range == null) {
+      return "PENDING";
+    }
 
     try {
       BigDecimal val = new BigDecimal(value);
 
       // Check Critical
-      if (range.getCriticalMin() != null && val.compareTo(range.getCriticalMin()) <= 0)
+      if (range.getCriticalMin() != null && val.compareTo(range.getCriticalMin()) <= 0) {
         return "CRITICAL_LOW";
-      if (range.getCriticalMax() != null && val.compareTo(range.getCriticalMax()) >= 0)
+      }
+      if (range.getCriticalMax() != null && val.compareTo(range.getCriticalMax()) >= 0) {
         return "CRITICAL_HIGH";
+      }
 
       // Check Normal
-      if (val.compareTo(range.getMinValue()) < 0) return "LOW";
-      if (val.compareTo(range.getMaxValue()) > 0) return "HIGH";
+      if (val.compareTo(range.getMinValue()) < 0) {
+        return "LOW";
+      }
+      if (val.compareTo(range.getMaxValue()) > 0) {
+        return "HIGH";
+      }
 
       return "NORMAL";
     } catch (NumberFormatException e) {

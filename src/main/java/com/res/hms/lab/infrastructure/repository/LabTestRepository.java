@@ -8,4 +8,8 @@ import org.springframework.stereotype.Repository;
 
 @Repository
 public interface LabTestRepository
-    extends JpaRepository<LabTest, UUID>, JpaSpecificationExecutor<LabTest> {}
+    extends JpaRepository<LabTest, UUID>, JpaSpecificationExecutor<LabTest> {
+  boolean existsByHospitalIdAndTestCodeIgnoreCase(UUID hospitalId, String testCode);
+
+  boolean existsByHospitalIdAndTestNameIgnoreCase(UUID hospitalId, String testName);
+}

@@ -87,7 +87,9 @@ public class LabReportService {
 
     for (LabOrderTest ot : orderTests) {
       LabTest test = testRepository.findById(ot.getTestId()).orElse(null);
-      if (test == null) continue;
+      if (test == null) {
+        continue;
+      }
 
       String deptName =
           departmentRepository
@@ -188,7 +190,9 @@ public class LabReportService {
   }
 
   private String calculateAge(LocalDate dob) {
-    if (dob == null) return "N/A";
+    if (dob == null) {
+      return "N/A";
+    }
     return String.valueOf(Period.between(dob, LocalDate.now()).getYears());
   }
 }

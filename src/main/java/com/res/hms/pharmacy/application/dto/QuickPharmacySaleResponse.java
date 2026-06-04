@@ -23,6 +23,8 @@ public class QuickPharmacySaleResponse {
   private String receiptNumber;
   private String customerName;
   private String customerPhone;
+  private String patientCode;
+  private String doctorName;
   private String externalDoctorName;
   private java.time.Instant createdAt;
   private List<Item> items;
