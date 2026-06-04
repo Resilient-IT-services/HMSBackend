@@ -5,5 +5,6 @@ public enum RoleCode {
   DOCTOR,
   NURSE,
   RECEPTIONIST,
-  PHARMACIST
+  PHARMACIST,
+  LAB_TECHNICIAN
 }
