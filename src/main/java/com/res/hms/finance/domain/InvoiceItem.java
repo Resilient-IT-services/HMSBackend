@@ -40,9 +40,6 @@ public class InvoiceItem extends HospitalScopedEntity {
   @Column(name = "unit_price", nullable = false, precision = 12, scale = 2)
   private BigDecimal unitPrice;
 
-  @Column(name = "tax_percentage", precision = 5, scale = 2)
-  private BigDecimal taxPercentage = BigDecimal.ZERO;
-
   @Column(name = "tax_amount", precision = 12, scale = 2)
   private BigDecimal taxAmount = BigDecimal.ZERO;
 

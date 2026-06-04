@@ -177,7 +177,6 @@ public class InvoiceService {
     item.setCategory(category);
     item.setQuantity(quantity);
     item.setUnitPrice(unitPrice);
-    item.setTaxPercentage(BigDecimal.ZERO);
 
     BigDecimal subtotal = unitPrice.multiply(quantity);
     BigDecimal discount = discountAmount != null ? discountAmount : BigDecimal.ZERO;

@@ -71,12 +71,10 @@ class MedicineControllerIntegrationTest {
 
   @Test
   void testMedicineListingWithFilteringAndSorting() throws Exception {
-    // 1. Create multiple medicines
-    createMedicine("Alpha", "Generic A", "Manufacturer X", 10.0, 15.0);
-    createMedicine("Beta", "Generic B", "Manufacturer Y", 20.0, 25.0);
-    createMedicine("Gamma", "Generic A", "Manufacturer X", 30.0, 35.0);
+    createMedicine("Alpha", "Generic A", "Manufacturer X");
+    createMedicine("Beta", "Generic B", "Manufacturer Y");
+    createMedicine("Gamma", "Generic A", "Manufacturer X");
 
-    // 2. Filter by genericName=Generic A
     mockMvc
         .perform(
             get("/api/v1/pharmacy/medicines")
@@ -86,7 +84,6 @@ class MedicineControllerIntegrationTest {
         .andExpect(status().isOk())
         .andExpect(jsonPath("$.data.totalElements").value(2));
 
-    // 3. Filter by manufacturer=Manufacturer Y
     mockMvc
         .perform(
             get("/api/v1/pharmacy/medicines")
@@ -97,7 +94,6 @@ class MedicineControllerIntegrationTest {
         .andExpect(jsonPath("$.data.totalElements").value(1))
         .andExpect(jsonPath("$.data.content[0].name").value("Beta"));
 
-    // 4. Search by name
     mockMvc
         .perform(
             get("/api/v1/pharmacy/medicines")
@@ -108,7 +104,6 @@ class MedicineControllerIntegrationTest {
         .andExpect(jsonPath("$.data.totalElements").value(1))
         .andExpect(jsonPath("$.data.content[0].name").value("Gamma"));
 
-    // 5. Sort by name desc
     mockMvc
         .perform(
             get("/api/v1/pharmacy/medicines")
@@ -121,12 +116,7 @@ class MedicineControllerIntegrationTest {
         .andExpect(jsonPath("$.data.content[2].name").value("Alpha"));
   }
 
-  private void createMedicine(
-      String name,
-      String genericName,
-      String manufacturer,
-      double purchasePrice,
-      double sellingPrice)
+  private void createMedicine(String name, String genericName, String manufacturer)
       throws Exception {
     String medicineJson =
         "{"
@@ -139,12 +129,6 @@ class MedicineControllerIntegrationTest {
             + "\"composition\": \"test\","
             + "\"strength\": \"test\","
             + "\"form\": \"TABLET\","
-            + "\"purchasePrice\": "
-            + purchasePrice
-            + ","
-            + "\"sellingPrice\": "
-            + sellingPrice
-            + ","
             + "\"manufacturer\": \""
             + manufacturer
             + "\""
@@ -169,12 +153,9 @@ class MedicineControllerIntegrationTest {
             + "\"composition\": \"Azithromycin 250mg\","
             + "\"strength\": \"250mg\","
             + "\"form\": \"TABLET\","
-            + "\"purchasePrice\": 10.0,"
-            + "\"sellingPrice\": 15.0,"
             + "\"manufacturer\": \"Generic Pharma\""
             + "}";
 
-    // 1. Create first time
     mockMvc
         .perform(
             post("/api/v1/pharmacy/medicines")
@@ -184,7 +165,6 @@ class MedicineControllerIntegrationTest {
                 .content(medicineJson))
         .andExpect(status().isOk());
 
-    // 2. Create again (duplicate)
     mockMvc
         .perform(
             post("/api/v1/pharmacy/medicines")
@@ -198,7 +178,6 @@ class MedicineControllerIntegrationTest {
 
   @Test
   void testMedicineCRUD() throws Exception {
-    // 1. Create
     String createRequest =
         "{"
             + "\"name\": \"Paracetamol\","
@@ -208,12 +187,7 @@ class MedicineControllerIntegrationTest {
             + "\"form\": \"TABLET\","
             + "\"category\": \"Analgesic\","
             + "\"manufacturer\": \"GSK\","
-            + "\"batchNumber\": \"BATCH-001\","
-            + "\"currentStock\": 100,"
-            + "\"reorderLevel\": 20,"
-            + "\"purchasePrice\": 2.50,"
-            + "\"sellingPrice\": 5.00,"
-            + "\"taxPercentage\": 12.5,"
+            + "\"thresholdQuantity\": 20,"
             + "\"temperature\": \"Room Temp\","
             + "\"humidity\": \"Dry\","
             + "\"specialNotes\": \"Keep away from light\""
@@ -228,19 +202,8 @@ class MedicineControllerIntegrationTest {
                 .content(createRequest))
         .andExpect(status().isOk())
         .andExpect(jsonPath("$.data.name").value("Paracetamol"))
-        .andExpect(jsonPath("$.data.genericName").value("Acetaminophen"))
-        .andExpect(jsonPath("$.data.sellingPrice").value(5.0));
+        .andExpect(jsonPath("$.data.genericName").value("Acetaminophen"));
 
-    // 2. List
-    mockMvc
-        .perform(
-            get("/api/v1/pharmacy/medicines")
-                .session(session)
-                .header("X-Hospital-Id", testHospitalId.toString()))
-        .andExpect(status().isOk())
-        .andExpect(jsonPath("$.data.content[0].name").value("Paracetamol"));
-
-    // 3. Search
     mockMvc
         .perform(
             get("/api/v1/pharmacy/medicines")
@@ -252,48 +215,30 @@ class MedicineControllerIntegrationTest {
   }
 
   @Test
-  void testPharmacyStockListing() throws Exception {
-    // 1. Create Medicine with Stock
+  void testCreateMedicineWithoutPrices() throws Exception {
+    String payload =
+        "{"
+            + "\"name\":\"Zmed123\","
+            + "\"genericName\":\"Zmed123\","
+            + "\"composition\":\"Zmed123\","
+            + "\"strength\":\"100mg\","
+            + "\"form\":\"TABLET\","
+            + "\"manufacturer\":\"Zmed123\","
+            + "\"scheduleType\":\"OTC\","
+            + "\"category\":\"General\","
+            + "\"thresholdQuantity\":10,"
+            + "\"hsnCode\":\"Zmed123\""
+            + "}";
+
     mockMvc
         .perform(
             post("/api/v1/pharmacy/medicines")
                 .session(session)
                 .header("X-Hospital-Id", testHospitalId.toString())
                 .contentType(MediaType.APPLICATION_JSON)
-                .content(
-                    "{"
-                        + "\"name\": \"Amoxicillin\","
-                        + "\"genericName\": \"Amoxicillin\","
-                        + "\"composition\": \"Amoxicillin 500mg\","
-                        + "\"strength\": \"500mg\","
-                        + "\"form\": \"CAPSULE\","
-                        + "\"manufacturer\": \"Generic Pharma\","
-                        + "\"batchNumber\": \"AMOX-01\","
-                        + "\"currentStock\": 50,"
-                        + "\"purchasePrice\": 5.0,"
-                        + "\"sellingPrice\": 10.0"
-                        + "}"))
-        .andExpect(status().isOk());
-
-    // 2. List Stock
-    mockMvc
-        .perform(
-            get("/api/v1/pharmacy/stock")
-                .session(session)
-                .header("X-Hospital-Id", testHospitalId.toString()))
+                .content(payload))
         .andExpect(status().isOk())
-        .andExpect(jsonPath("$.data.content[0].medicineName").value("Amoxicillin"))
-        .andExpect(jsonPath("$.data.content[0].batchNumber").value("AMOX-01"))
-        .andExpect(jsonPath("$.data.content[0].quantity").value(50));
-
-    // 3. Filter Low Stock (Threshold is 20 in service)
-    mockMvc
-        .perform(
-            get("/api/v1/pharmacy/stock")
-                .session(session)
-                .header("X-Hospital-Id", testHospitalId.toString())
-                .param("status", "LOW_STOCK"))
-        .andExpect(status().isOk())
-        .andExpect(jsonPath("$.data.totalElements").value(0));
+        .andExpect(jsonPath("$.data.name").value("Zmed123"))
+        .andExpect(jsonPath("$.data.id").exists());
   }
 }

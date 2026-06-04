@@ -27,9 +27,6 @@ public class HospitalMedicineCatalog extends HospitalScopedEntity {
   @Column(name = "base_selling_price")
   private BigDecimal baseSellingPrice;
 
-  @Column(name = "tax_percentage")
-  private BigDecimal taxPercentage;
-
   @Column(name = "is_active", nullable = false)
   private boolean active = true;
 }

@@ -2,8 +2,6 @@ package com.res.hms.pharmacy.application.dto;
 
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
-import java.math.BigDecimal;
-import java.time.LocalDate;
 import java.util.UUID;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -38,17 +36,8 @@ public class MedicineDTO {
   @NotBlank(message = "Manufacturer is required")
   private String manufacturer;
 
-  // Inventory & Batch Information (Initial/Default)
-  private String batchNumber;
-  private LocalDate expiryDate;
-  private Integer currentStock;
   private Integer thresholdQuantity;
-
-  // Pricing & Tax
-  private BigDecimal purchasePrice;
-  private BigDecimal sellingPrice;
   private String hsnCode;
-  private BigDecimal taxPercentage;
 
   // Storage Instructions
   private String temperature;

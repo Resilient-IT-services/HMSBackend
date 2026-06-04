@@ -44,7 +44,6 @@ class FinanceEntityTest {
     item.setCategory(InvoiceItemCategory.LAB);
     item.setQuantity(BigDecimal.ONE);
     item.setUnitPrice(BigDecimal.TEN);
-    item.setTaxPercentage(BigDecimal.ZERO);
     item.setTaxAmount(BigDecimal.ZERO);
     item.setDiscountAmount(BigDecimal.ZERO);
     item.setSubtotal(BigDecimal.TEN);
@@ -57,7 +56,6 @@ class FinanceEntityTest {
     assertThat(item.getCategory()).isEqualTo(InvoiceItemCategory.LAB);
     assertThat(item.getQuantity()).isEqualTo(BigDecimal.ONE);
     assertThat(item.getUnitPrice()).isEqualTo(BigDecimal.TEN);
-    assertThat(item.getTaxPercentage()).isEqualTo(BigDecimal.ZERO);
     assertThat(item.getTaxAmount()).isEqualTo(BigDecimal.ZERO);
     assertThat(item.getDiscountAmount()).isEqualTo(BigDecimal.ZERO);
     assertThat(item.getSubtotal()).isEqualTo(BigDecimal.TEN);

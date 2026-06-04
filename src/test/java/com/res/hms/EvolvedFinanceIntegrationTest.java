@@ -91,10 +91,9 @@ class EvolvedFinanceIntegrationTest {
     item.setInvoiceId(invoice.getId());
     item.setItemDescription("Consultation");
     item.setCategory(InvoiceItemCategory.CONSULTATION);
-    item.setQuantity(BigDecimal.ONE);
-    item.setUnitPrice(new BigDecimal("1000.00"));
-    item.setTaxPercentage(new BigDecimal("5.00"));
-    item.setTaxAmount(new BigDecimal("50.00"));
+    item.setQuantity(new BigDecimal("1.00"));
+    item.setUnitPrice(new BigDecimal("100.00"));
+    item.setTaxAmount(new BigDecimal("5.00"));
     item.setDiscountAmount(BigDecimal.ZERO);
     item.setSubtotal(new BigDecimal("1000.00"));
     item.setNetTotal(new BigDecimal("1050.00"));

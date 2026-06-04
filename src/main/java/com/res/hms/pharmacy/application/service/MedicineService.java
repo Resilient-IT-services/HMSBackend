@@ -15,7 +15,7 @@ import com.res.hms.pharmacy.infrastructure.repository.HospitalMedicineCatalogRep
 import com.res.hms.pharmacy.infrastructure.repository.MedicineRepository;
 import com.res.hms.pharmacy.infrastructure.repository.PharmacyStockRepository;
 import jakarta.persistence.criteria.Predicate;
-import java.math.BigDecimal;
+import java.io.IOException;
 import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.List;
@@ -33,13 +33,11 @@ import org.springframework.web.multipart.MultipartFile;
 @Service
 @RequiredArgsConstructor
 public class MedicineService {
-  private static final int DEFAULT_LOW_STOCK_THRESHOLD = 20;
   private final MedicineRepository medicineRepository;
   private final HospitalMedicineCatalogRepository hospitalMedicineCatalogRepository;
   private final PharmacyStockRepository pharmacyStockRepository;
   private final HospitalContext hospitalContext;
   private final PharmacyExcelService pharmacyExcelService;
-  private final PharmacySaleService pharmacySaleService;
   private final PharmacyStockService pharmacyStockService;
 
   @Transactional(readOnly = true)
@@ -67,55 +65,10 @@ public class MedicineService {
         request.getName(), request.getGenericName(), request.getStrength(), request.getForm())) {
       throw new ApiException("DUPLICATE_MEDICINE", "Medicine already exists", HttpStatus.CONFLICT);
     }
-    if (request.getExpiryDate() != null && request.getExpiryDate().isBefore(LocalDate.now())) {
-      throw new ApiException(
-          "INVALID_EXPIRY", "Initial stock expiry cannot be in the past", HttpStatus.BAD_REQUEST);
-    }
-    if (request.getPurchasePrice() == null
-        || request.getPurchasePrice().compareTo(java.math.BigDecimal.ZERO) <= 0) {
-      throw new ApiException(
-          "INVALID_PRICE", "Purchase price must be greater than zero", HttpStatus.BAD_REQUEST);
-    }
-    if (request.getSellingPrice() == null
-        || request.getSellingPrice().compareTo(java.math.BigDecimal.ZERO) <= 0) {
-      throw new ApiException(
-          "INVALID_PRICE", "Selling price must be greater than zero", HttpStatus.BAD_REQUEST);
-    }
-    if (request.getSellingPrice().compareTo(request.getPurchasePrice()) < 0) {
-      throw new ApiException(
-          "INVALID_PRICE",
-          "Selling price cannot be less than purchase price",
-          HttpStatus.BAD_REQUEST);
-    }
+
     Medicine medicine = new Medicine();
     updateFields(medicine, request);
     Medicine savedMedicine = medicineRepository.save(medicine);
-
-    if (request.getCurrentStock() != null
-        && request.getCurrentStock() > 0
-        && hasText(request.getBatchNumber())) {
-      Optional.ofNullable(hospitalContext.getHospitalIdOrNull())
-          .ifPresent(
-              hospitalId -> {
-                StockRequest stockRequest =
-                    StockRequest.builder()
-                        .medicineId(savedMedicine.getId())
-                        .batchNumber(request.getBatchNumber())
-                        .expiryDate(request.getExpiryDate())
-                        .quantity(request.getCurrentStock())
-                        .purchasePrice(
-                            request.getPurchasePrice() != null
-                                ? request.getPurchasePrice()
-                                : BigDecimal.ZERO)
-                        .sellingPrice(
-                            request.getSellingPrice() != null
-                                ? request.getSellingPrice()
-                                : BigDecimal.ZERO)
-                        .hsnCode(request.getHsnCode())
-                        .build();
-                pharmacyStockService.stockIn(stockRequest);
-              });
-    }
 
     return toDto(savedMedicine);
   }
@@ -382,32 +335,19 @@ public class MedicineService {
   }
 
   public MedicineDTO toDto(Medicine medicine) {
-    MedicineDTO.MedicineDTOBuilder builder =
-        MedicineDTO.builder()
-            .id(medicine.getId())
-            .name(medicine.getName())
-            .genericName(medicine.getGenericName())
-            .composition(medicine.getComposition())
-            .strength(medicine.getStrength())
-            .form(medicine.getForm())
-            .scheduleType(medicine.getScheduleType())
-            .hsnCode(medicine.getHsnCode())
-            .thresholdQuantity(medicine.getThresholdQuantity())
-            .manufacturer(medicine.getManufacturer());
-
-    Optional.ofNullable(hospitalContext.getHospitalIdOrNull())
-        .ifPresent(
-            hospitalId -> {
-              hospitalMedicineCatalogRepository
-                  .findByHospitalIdAndMedicineId(hospitalId, medicine.getId())
-                  .ifPresent(
-                      catalog -> {
-                        builder.sellingPrice(catalog.getBaseSellingPrice());
-                        builder.taxPercentage(catalog.getTaxPercentage());
-                      });
-            });
-
-    return builder.build();
+    return MedicineDTO.builder()
+        .id(medicine.getId())
+        .name(medicine.getName())
+        .genericName(medicine.getGenericName())
+        .composition(medicine.getComposition())
+        .strength(medicine.getStrength())
+        .form(medicine.getForm())
+        .scheduleType(medicine.getScheduleType())
+        .hsnCode(medicine.getHsnCode())
+        .thresholdQuantity(medicine.getThresholdQuantity())
+        .manufacturer(medicine.getManufacturer())
+        .temperature(medicine.getStorageTemperature())
+        .build();
   }
 
   private void updateFields(Medicine medicine, MedicineDTO dto) {
@@ -418,34 +358,26 @@ public class MedicineService {
     medicine.setForm(dto.getForm());
     medicine.setScheduleType(dto.getScheduleType());
     medicine.setHsnCode(dto.getHsnCode());
-
     medicine.setManufacturer(dto.getManufacturer());
+    medicine.setStorageTemperature(dto.getTemperature());
 
     medicine.setThresholdQuantity(
         dto.getThresholdQuantity() != null ? dto.getThresholdQuantity() : 10);
-    // Ensure medicine is saved first to have an ID for the catalog association
+
     medicineRepository.save(medicine);
 
     Optional.ofNullable(hospitalContext.getHospitalIdOrNull())
         .ifPresent(
             hospitalId -> {
-              var catalog =
-                  hospitalMedicineCatalogRepository
-                      .findByHospitalIdAndMedicineId(hospitalId, medicine.getId())
-                      .orElseGet(
-                          () -> {
-                            var c = new com.res.hms.pharmacy.domain.HospitalMedicineCatalog();
-                            c.setHospitalId(hospitalId);
-                            c.setMedicine(medicine);
-                            return c;
-                          });
-              catalog.setBaseSellingPrice(dto.getSellingPrice());
-              catalog.setTaxPercentage(dto.getTaxPercentage());
-              hospitalMedicineCatalogRepository.save(catalog);
+              hospitalMedicineCatalogRepository
+                  .findByHospitalIdAndMedicineId(hospitalId, medicine.getId())
+                  .orElseGet(
+                      () -> {
+                        var c = new com.res.hms.pharmacy.domain.HospitalMedicineCatalog();
+                        c.setHospitalId(hospitalId);
+                        c.setMedicine(medicine);
+                        return hospitalMedicineCatalogRepository.save(c);
+                      });
             });
-  }
-
-  private boolean hasText(String value) {
-    return value != null && !value.isBlank();
   }
 }

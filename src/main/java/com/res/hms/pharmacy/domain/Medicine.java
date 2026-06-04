@@ -55,4 +55,7 @@ public class Medicine extends BaseEntity {
 
   @Column(name = "hsn_code")
   private String hsnCode;
+
+  @Column(name = "storage_temperature")
+  private String storageTemperature;
 }
