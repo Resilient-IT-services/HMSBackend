@@ -11,11 +11,11 @@ import lombok.NoArgsConstructor;
 @AllArgsConstructor
 @Builder
 public class LabOrderTestResponseDTO {
-    private UUID id;
-    private UUID testId;
-    private String testName;
-    private String testCode;
-    private UUID packageId;
-    private String packageName;
-    private String status;
+  private UUID id;
+  private UUID testId;
+  private String testName;
+  private String testCode;
+  private UUID packageId;
+  private String packageName;
+  private String status;
 }

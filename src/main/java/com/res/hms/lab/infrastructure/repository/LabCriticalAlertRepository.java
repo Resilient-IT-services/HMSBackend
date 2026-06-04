@@ -7,5 +7,5 @@ import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
 import org.springframework.stereotype.Repository;
 
 @Repository
-public interface LabCriticalAlertRepository extends JpaRepository<LabCriticalAlert, UUID>, JpaSpecificationExecutor<LabCriticalAlert> {
-}
+public interface LabCriticalAlertRepository
+    extends JpaRepository<LabCriticalAlert, UUID>, JpaSpecificationExecutor<LabCriticalAlert> {}

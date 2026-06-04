@@ -13,47 +13,47 @@ import lombok.*;
 @AllArgsConstructor
 @Builder
 public class LabTest {
-    @Id
-    @GeneratedValue(strategy = GenerationType.UUID)
-    private UUID id;
+  @Id
+  @GeneratedValue(strategy = GenerationType.UUID)
+  private UUID id;
 
-    @Column(name = "hospital_id")
-    private UUID hospitalId;
+  @Column(name = "hospital_id")
+  private UUID hospitalId;
 
-    @Column(name = "test_code")
-    private String testCode;
+  @Column(name = "test_code")
+  private String testCode;
 
-    @Column(name = "test_name")
-    private String testName;
+  @Column(name = "test_name")
+  private String testName;
 
-    @Column(name = "short_name")
-    private String shortName;
+  @Column(name = "short_name")
+  private String shortName;
 
-    @Column(name = "alias_name")
-    private String aliasName;
+  @Column(name = "alias_name")
+  private String aliasName;
 
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "department_id", insertable = false, updatable = false)
-    private LabDepartment department;
+  @ManyToOne(fetch = FetchType.LAZY)
+  @JoinColumn(name = "department_id", insertable = false, updatable = false)
+  private LabDepartment department;
 
-    @Column(name = "department_id")
-    private UUID departmentId;
+  @Column(name = "department_id")
+  private UUID departmentId;
 
-    @Column(name = "result_type")
-    private String resultType;
+  @Column(name = "result_type")
+  private String resultType;
 
-    @Column(name = "tat_value")
-    private Integer tatValue;
+  @Column(name = "tat_value")
+  private Integer tatValue;
 
-    @Column(name = "tat_unit")
-    private String tatUnit;
+  @Column(name = "tat_unit")
+  private String tatUnit;
 
-    @Column(name = "active")
-    private Boolean active;
+  @Column(name = "active")
+  private Boolean active;
 
-    @Column(name = "created_at")
-    private Instant createdAt;
+  @Column(name = "created_at")
+  private Instant createdAt;
 
-    @Column(name = "updated_at")
-    private Instant updatedAt;
+  @Column(name = "updated_at")
+  private Instant updatedAt;
 }

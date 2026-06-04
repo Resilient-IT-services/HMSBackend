@@ -15,9 +15,6 @@ import java.util.List;
 import java.util.UUID;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
-import org.springframework.data.domain.PageRequest;
-import org.springframework.data.domain.Pageable;
-import org.springframework.data.domain.Sort;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -31,40 +28,50 @@ public class PatientService {
   private final ResourceLookup resourceLookup;
 
   @Transactional(readOnly = true)
-  public PageResponse<PatientDTO> list(org.springframework.data.domain.Pageable pageable, String search, java.util.Map<String, String> filters) {
+  public PageResponse<PatientDTO> list(
+      org.springframework.data.domain.Pageable pageable,
+      String search,
+      java.util.Map<String, String> filters) {
     UUID hospitalId = hospitalContext.requireHospitalId();
     com.res.hms.core.util.SpecificationBuilder<Patient> builder =
         new com.res.hms.core.util.SpecificationBuilder<>(
             filters, search, java.util.List.of("fullName", "patientCode", "phone"));
 
     Specification<Patient> spec = builder.build();
-    Specification<Patient> fixedSpec = (root, query, cb) -> {
-      List<Predicate> predicates = new ArrayList<>();
-      predicates.add(cb.equal(root.get("hospitalId"), hospitalId));
-      predicates.add(cb.equal(root.get("deleted"), false));
-      return cb.and(predicates.toArray(new Predicate[0]));
-    };
+    Specification<Patient> fixedSpec =
+        (root, query, cb) -> {
+          List<Predicate> predicates = new ArrayList<>();
+          predicates.add(cb.equal(root.get("hospitalId"), hospitalId));
+          predicates.add(cb.equal(root.get("deleted"), false));
+          return cb.and(predicates.toArray(new Predicate[0]));
+        };
 
-    Page<Patient> results = patientRepository.findAll(Specification.where(spec).and(fixedSpec), pageable);
+    Page<Patient> results =
+        patientRepository.findAll(Specification.where(spec).and(fixedSpec), pageable);
     return PageResponse.from(results.map(this::toDto));
   }
 
   @Transactional(readOnly = true)
-  public PageResponse<PatientSummaryDTO> listSummary(org.springframework.data.domain.Pageable pageable, String search, java.util.Map<String, String> filters) {
+  public PageResponse<PatientSummaryDTO> listSummary(
+      org.springframework.data.domain.Pageable pageable,
+      String search,
+      java.util.Map<String, String> filters) {
     UUID hospitalId = hospitalContext.requireHospitalId();
     com.res.hms.core.util.SpecificationBuilder<Patient> builder =
         new com.res.hms.core.util.SpecificationBuilder<>(
             filters, search, java.util.List.of("fullName", "patientCode", "phone"));
 
     Specification<Patient> spec = builder.build();
-    Specification<Patient> fixedSpec = (root, query, cb) -> {
-      List<Predicate> predicates = new ArrayList<>();
-      predicates.add(cb.equal(root.get("hospitalId"), hospitalId));
-      predicates.add(cb.equal(root.get("deleted"), false));
-      return cb.and(predicates.toArray(new Predicate[0]));
-    };
+    Specification<Patient> fixedSpec =
+        (root, query, cb) -> {
+          List<Predicate> predicates = new ArrayList<>();
+          predicates.add(cb.equal(root.get("hospitalId"), hospitalId));
+          predicates.add(cb.equal(root.get("deleted"), false));
+          return cb.and(predicates.toArray(new Predicate[0]));
+        };
 
-    Page<Patient> results = patientRepository.findAll(Specification.where(spec).and(fixedSpec), pageable);
+    Page<Patient> results =
+        patientRepository.findAll(Specification.where(spec).and(fixedSpec), pageable);
     return PageResponse.from(results.map(this::toSummaryDto));
   }
 

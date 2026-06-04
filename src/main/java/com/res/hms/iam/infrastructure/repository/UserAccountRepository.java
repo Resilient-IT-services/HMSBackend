@@ -23,13 +23,15 @@ public interface UserAccountRepository
           + "WHERE LOWER(TRIM(u.username)) = LOWER(TRIM(:username)) AND u.deleted = false")
   Optional<UserAccount> findByUsername(@Param("username") String username);
 
-  @Query("SELECT COUNT(u) > 0 FROM UserAccount u WHERE LOWER(TRIM(u.username)) = LOWER(TRIM(:username))")
+  @Query(
+      "SELECT COUNT(u) > 0 FROM UserAccount u WHERE LOWER(TRIM(u.username)) = LOWER(TRIM(:username))")
   boolean existsByUsername(@Param("username") String username);
 
   @Query("SELECT COUNT(u) > 0 FROM UserAccount u WHERE LOWER(TRIM(u.email)) = LOWER(TRIM(:email))")
   boolean existsByEmail(@Param("email") String email);
 
-  @Query("SELECT COUNT(u) > 0 FROM UserAccount u WHERE LOWER(TRIM(u.email)) = LOWER(TRIM(:email)) AND u.id <> :id")
+  @Query(
+      "SELECT COUNT(u) > 0 FROM UserAccount u WHERE LOWER(TRIM(u.email)) = LOWER(TRIM(:email)) AND u.id <> :id")
   boolean existsByEmailAndIdNot(@Param("email") String email, @Param("id") UUID id);
 
   List<UserAccount> findAllByDeletedFalse();

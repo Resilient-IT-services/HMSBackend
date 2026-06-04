@@ -12,16 +12,16 @@ import lombok.*;
 @AllArgsConstructor
 @Builder
 public class LabInventoryItem {
-    @Id
-    @GeneratedValue(strategy = GenerationType.UUID)
-    private UUID id;
+  @Id
+  @GeneratedValue(strategy = GenerationType.UUID)
+  private UUID id;
 
-    @Column(name = "item_code")
-    private String itemCode;
+  @Column(name = "item_code")
+  private String itemCode;
 
-    @Column(name = "item_name")
-    private String itemName;
+  @Column(name = "item_name")
+  private String itemName;
 
-    @Column(name = "unit")
-    private String unit;
+  @Column(name = "unit")
+  private String unit;
 }

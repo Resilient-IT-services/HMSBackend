@@ -12,13 +12,13 @@ import lombok.*;
 @AllArgsConstructor
 @Builder
 public class LabPackageTest {
-    @Id
-    @GeneratedValue(strategy = GenerationType.UUID)
-    private UUID id;
+  @Id
+  @GeneratedValue(strategy = GenerationType.UUID)
+  private UUID id;
 
-    @Column(name = "package_id")
-    private UUID packageId;
+  @Column(name = "package_id")
+  private UUID packageId;
 
-    @Column(name = "test_id")
-    private UUID testId;
+  @Column(name = "test_id")
+  private UUID testId;
 }

@@ -12,22 +12,22 @@ import lombok.*;
 @AllArgsConstructor
 @Builder
 public class LabMachine {
-    @Id
-    @GeneratedValue(strategy = GenerationType.UUID)
-    private UUID id;
+  @Id
+  @GeneratedValue(strategy = GenerationType.UUID)
+  private UUID id;
 
-    @Column(name = "hospital_id")
-    private UUID hospitalId;
+  @Column(name = "hospital_id")
+  private UUID hospitalId;
 
-    @Column(name = "machine_code")
-    private String machineCode;
+  @Column(name = "machine_code")
+  private String machineCode;
 
-    @Column(name = "machine_name")
-    private String machineName;
+  @Column(name = "machine_name")
+  private String machineName;
 
-    @Column(name = "manufacturer")
-    private String manufacturer;
+  @Column(name = "manufacturer")
+  private String manufacturer;
 
-    @Column(name = "serial_number")
-    private String serialNumber;
+  @Column(name = "serial_number")
+  private String serialNumber;
 }

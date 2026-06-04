@@ -71,6 +71,9 @@ public class InvoiceItem extends HospitalScopedEntity {
   @Column(name = "doctor_name")
   private String doctorName;
 
-  @jakarta.persistence.OneToMany(mappedBy = "invoiceItem", cascade = jakarta.persistence.CascadeType.ALL, orphanRemoval = true)
+  @jakarta.persistence.OneToMany(
+      mappedBy = "invoiceItem",
+      cascade = jakarta.persistence.CascadeType.ALL,
+      orphanRemoval = true)
   private java.util.List<InvoiceItemTax> taxes = new java.util.ArrayList<>();
 }

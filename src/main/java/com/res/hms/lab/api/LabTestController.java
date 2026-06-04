@@ -16,30 +16,30 @@ import org.springframework.web.bind.annotation.*;
 @RequiredArgsConstructor
 public class LabTestController {
 
-    private final LabTestService service;
+  private final LabTestService service;
 
-    @GetMapping
-    @PreAuthorize("isAuthenticated()")
-    public ApiResponse<List<LabTestDTO>> listAll() {
-        return ApiResponse.success(service.listAll());
-    }
+  @GetMapping
+  @PreAuthorize("isAuthenticated()")
+  public ApiResponse<List<LabTestDTO>> listAll() {
+    return ApiResponse.success(service.listAll());
+  }
 
-    @PostMapping
-    @PreAuthorize("hasAnyRole('ADMIN', 'SUPER_ADMIN')")
-    public ApiResponse<LabTestDTO> create(@RequestBody LabTestDTO dto) {
-        return ApiResponse.success(service.create(dto));
-    }
+  @PostMapping
+  @PreAuthorize("hasAnyRole('ADMIN', 'SUPER_ADMIN')")
+  public ApiResponse<LabTestDTO> create(@RequestBody LabTestDTO dto) {
+    return ApiResponse.success(service.create(dto));
+  }
 
-    @PutMapping("/{id}")
-    @PreAuthorize("hasAnyRole('ADMIN', 'SUPER_ADMIN')")
-    public ApiResponse<LabTestDTO> update(@PathVariable UUID id, @RequestBody LabTestDTO dto) {
-        return ApiResponse.success(service.update(id, dto));
-    }
+  @PutMapping("/{id}")
+  @PreAuthorize("hasAnyRole('ADMIN', 'SUPER_ADMIN')")
+  public ApiResponse<LabTestDTO> update(@PathVariable UUID id, @RequestBody LabTestDTO dto) {
+    return ApiResponse.success(service.update(id, dto));
+  }
 
-    @DeleteMapping("/{id}")
-    @PreAuthorize("hasAnyRole('ADMIN', 'SUPER_ADMIN')")
-    public ApiResponse<Void> delete(@PathVariable UUID id) {
-        service.delete(id);
-        return ApiResponse.success(null);
-    }
+  @DeleteMapping("/{id}")
+  @PreAuthorize("hasAnyRole('ADMIN', 'SUPER_ADMIN')")
+  public ApiResponse<Void> delete(@PathVariable UUID id) {
+    service.delete(id);
+    return ApiResponse.success(null);
+  }
 }

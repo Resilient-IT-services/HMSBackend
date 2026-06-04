@@ -7,5 +7,5 @@ import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
 import org.springframework.stereotype.Repository;
 
 @Repository
-public interface LabReportTemplateRepository extends JpaRepository<LabReportTemplate, UUID>, JpaSpecificationExecutor<LabReportTemplate> {
-}
+public interface LabReportTemplateRepository
+    extends JpaRepository<LabReportTemplate, UUID>, JpaSpecificationExecutor<LabReportTemplate> {}

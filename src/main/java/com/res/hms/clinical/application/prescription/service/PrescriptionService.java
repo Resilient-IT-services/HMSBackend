@@ -23,9 +23,6 @@ import java.util.UUID;
 import java.util.stream.Collectors;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
-import org.springframework.data.domain.PageRequest;
-import org.springframework.data.domain.Pageable;
-import org.springframework.data.domain.Sort;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
@@ -42,7 +39,9 @@ public class PrescriptionService {
 
   @Transactional(readOnly = true)
   public PageResponse<PrescriptionSummaryDTO> listSummary(
-      org.springframework.data.domain.Pageable pageable, String search, java.util.Map<String, String> filters) {
+      org.springframework.data.domain.Pageable pageable,
+      String search,
+      java.util.Map<String, String> filters) {
     UUID hospitalId = hospitalContext.requireHospitalId();
 
     com.res.hms.core.util.SpecificationBuilder<Prescription> builder =
@@ -50,12 +49,13 @@ public class PrescriptionService {
             filters, search, java.util.List.of("patientName", "doctorName"));
 
     Specification<Prescription> spec = builder.build();
-    Specification<Prescription> fixedSpec = (root, query, cb) -> {
-      List<Predicate> predicates = new ArrayList<>();
-      predicates.add(cb.equal(root.get("hospitalId"), hospitalId));
-      predicates.add(cb.equal(root.get("deleted"), false));
-      return cb.and(predicates.toArray(new Predicate[0]));
-    };
+    Specification<Prescription> fixedSpec =
+        (root, query, cb) -> {
+          List<Predicate> predicates = new ArrayList<>();
+          predicates.add(cb.equal(root.get("hospitalId"), hospitalId));
+          predicates.add(cb.equal(root.get("deleted"), false));
+          return cb.and(predicates.toArray(new Predicate[0]));
+        };
 
     Specification<Prescription> fetchSpec =
         (root, query, cb) -> {
@@ -67,7 +67,8 @@ public class PrescriptionService {
         };
 
     Page<Prescription> results =
-        prescriptionRepository.findAll(Specification.where(spec).and(fixedSpec).and(fetchSpec), pageable);
+        prescriptionRepository.findAll(
+            Specification.where(spec).and(fixedSpec).and(fetchSpec), pageable);
     return PageResponse.from(results.map(this::toSummaryDto));
   }
 
@@ -98,7 +99,9 @@ public class PrescriptionService {
 
   @Transactional(readOnly = true)
   public PageResponse<PrescriptionDTO> list(
-      org.springframework.data.domain.Pageable pageable, String search, java.util.Map<String, String> filters) {
+      org.springframework.data.domain.Pageable pageable,
+      String search,
+      java.util.Map<String, String> filters) {
     UUID hospitalId = hospitalContext.requireHospitalId();
 
     com.res.hms.core.util.SpecificationBuilder<Prescription> builder =
@@ -106,12 +109,13 @@ public class PrescriptionService {
             filters, search, java.util.List.of("patientName", "doctorName"));
 
     Specification<Prescription> spec = builder.build();
-    Specification<Prescription> fixedSpec = (root, query, cb) -> {
-      List<Predicate> predicates = new ArrayList<>();
-      predicates.add(cb.equal(root.get("hospitalId"), hospitalId));
-      predicates.add(cb.equal(root.get("deleted"), false));
-      return cb.and(predicates.toArray(new Predicate[0]));
-    };
+    Specification<Prescription> fixedSpec =
+        (root, query, cb) -> {
+          List<Predicate> predicates = new ArrayList<>();
+          predicates.add(cb.equal(root.get("hospitalId"), hospitalId));
+          predicates.add(cb.equal(root.get("deleted"), false));
+          return cb.and(predicates.toArray(new Predicate[0]));
+        };
 
     Specification<Prescription> fetchSpec =
         (root, query, cb) -> {
@@ -124,7 +128,8 @@ public class PrescriptionService {
         };
 
     Page<Prescription> results =
-        prescriptionRepository.findAll(Specification.where(spec).and(fixedSpec).and(fetchSpec), pageable);
+        prescriptionRepository.findAll(
+            Specification.where(spec).and(fixedSpec).and(fetchSpec), pageable);
     return PageResponse.from(results.map(this::toDto));
   }
 

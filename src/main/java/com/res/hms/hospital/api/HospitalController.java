@@ -37,7 +37,9 @@ public class HospitalController {
   @GetMapping
   @PreAuthorize("hasRole('SUPER_ADMIN')")
   public ApiResponse<PageResponse<HospitalDTO>> list(
-      @org.springframework.data.web.PageableDefault(sort = "name", direction = org.springframework.data.domain.Sort.Direction.ASC)
+      @org.springframework.data.web.PageableDefault(
+              sort = "name",
+              direction = org.springframework.data.domain.Sort.Direction.ASC)
           org.springframework.data.domain.Pageable pageable,
       @RequestParam(required = false) String search,
       @RequestParam java.util.Map<String, String> allParams) {

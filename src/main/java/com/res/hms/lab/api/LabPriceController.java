@@ -16,23 +16,23 @@ import org.springframework.web.bind.annotation.*;
 @RequiredArgsConstructor
 public class LabPriceController {
 
-    private final LabPriceService service;
+  private final LabPriceService service;
 
-    @GetMapping
-    @PreAuthorize("isAuthenticated()")
-    public ApiResponse<List<LabPriceDTO>> listAll() {
-        return ApiResponse.success(service.listAll());
-    }
+  @GetMapping
+  @PreAuthorize("isAuthenticated()")
+  public ApiResponse<List<LabPriceDTO>> listAll() {
+    return ApiResponse.success(service.listAll());
+  }
 
-    @GetMapping("/test/{testId}")
-    @PreAuthorize("isAuthenticated()")
-    public ApiResponse<LabPriceDTO> getByTest(@PathVariable UUID testId) {
-        return ApiResponse.success(service.getByTest(testId));
-    }
+  @GetMapping("/test/{testId}")
+  @PreAuthorize("isAuthenticated()")
+  public ApiResponse<LabPriceDTO> getByTest(@PathVariable UUID testId) {
+    return ApiResponse.success(service.getByTest(testId));
+  }
 
-    @PostMapping
-    @PreAuthorize("hasAnyRole('ADMIN', 'SUPER_ADMIN')")
-    public ApiResponse<LabPriceDTO> savePrice(@RequestBody LabPriceDTO dto) {
-        return ApiResponse.success(service.savePrice(dto));
-    }
+  @PostMapping
+  @PreAuthorize("hasAnyRole('ADMIN', 'SUPER_ADMIN')")
+  public ApiResponse<LabPriceDTO> savePrice(@RequestBody LabPriceDTO dto) {
+    return ApiResponse.success(service.savePrice(dto));
+  }
 }

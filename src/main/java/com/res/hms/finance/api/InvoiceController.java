@@ -34,8 +34,7 @@ public class InvoiceController {
 
   @GetMapping("/{id}/export")
   public ResponseEntity<byte[]> exportInvoice(
-      @PathVariable UUID id,
-      @RequestParam(required = false) InvoiceItemCategory category) {
+      @PathVariable UUID id, @RequestParam(required = false) InvoiceItemCategory category) {
 
     byte[] pdf = invoiceService.exportInvoicePdf(id, category);
 

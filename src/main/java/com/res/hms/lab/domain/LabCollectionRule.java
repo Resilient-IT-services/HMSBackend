@@ -12,19 +12,19 @@ import lombok.*;
 @AllArgsConstructor
 @Builder
 public class LabCollectionRule {
-    @Id
-    @GeneratedValue(strategy = GenerationType.UUID)
-    private UUID id;
+  @Id
+  @GeneratedValue(strategy = GenerationType.UUID)
+  private UUID id;
 
-    @Column(name = "test_id")
-    private UUID testId;
+  @Column(name = "test_id")
+  private UUID testId;
 
-    @Column(name = "barcode_required")
-    private Boolean barcodeRequired;
+  @Column(name = "barcode_required")
+  private Boolean barcodeRequired;
 
-    @Column(name = "home_collection_allowed")
-    private Boolean homeCollectionAllowed;
+  @Column(name = "home_collection_allowed")
+  private Boolean homeCollectionAllowed;
 
-    @Column(name = "collection_mandatory")
-    private Boolean collectionMandatory;
+  @Column(name = "collection_mandatory")
+  private Boolean collectionMandatory;
 }

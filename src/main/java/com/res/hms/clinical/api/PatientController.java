@@ -48,7 +48,9 @@ public class PatientController {
   @GetMapping
   @PreAuthorize(SecurityConstants.HAS_ANY_STAFF)
   public ApiResponse<PageResponse<PatientDTO>> list(
-      @org.springframework.data.web.PageableDefault(sort = "createdAt", direction = org.springframework.data.domain.Sort.Direction.DESC)
+      @org.springframework.data.web.PageableDefault(
+              sort = "createdAt",
+              direction = org.springframework.data.domain.Sort.Direction.DESC)
           org.springframework.data.domain.Pageable pageable,
       @RequestParam(required = false) String search,
       @RequestParam java.util.Map<String, String> allParams) {
@@ -58,7 +60,9 @@ public class PatientController {
   @GetMapping("/summary")
   @PreAuthorize(SecurityConstants.HAS_ANY_STAFF)
   public ApiResponse<PageResponse<PatientSummaryDTO>> listSummary(
-      @org.springframework.data.web.PageableDefault(sort = "createdAt", direction = org.springframework.data.domain.Sort.Direction.DESC)
+      @org.springframework.data.web.PageableDefault(
+              sort = "createdAt",
+              direction = org.springframework.data.domain.Sort.Direction.DESC)
           org.springframework.data.domain.Pageable pageable,
       @RequestParam(required = false) String search,
       @RequestParam java.util.Map<String, String> allParams) {

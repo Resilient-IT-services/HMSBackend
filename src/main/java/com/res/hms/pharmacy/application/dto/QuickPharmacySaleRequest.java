@@ -21,10 +21,12 @@ public class QuickPharmacySaleRequest {
   private UUID doctorId;
   private String externalDoctorName;
   private String customerName;
-    @jakarta.validation.constraints.Pattern(
-        regexp = "^[0-9]{10}$",
-        message = "Mobile number must be exactly 10 digits")
-    private String customerPhone;
+
+  @jakarta.validation.constraints.Pattern(
+      regexp = "^[0-9]{10}$",
+      message = "Mobile number must be exactly 10 digits")
+  private String customerPhone;
+
   private String notes;
   @jakarta.validation.Valid private List<Item> items;
   @jakarta.validation.Valid private PaymentInfo payment;

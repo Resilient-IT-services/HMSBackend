@@ -36,7 +36,9 @@ public class SpecificationBuilder<T> {
 
   public Specification<T> build() {
     return (root, query, cb) -> {
-      if (useDistinct && query.getResultType() != Long.class && query.getResultType() != long.class) {
+      if (useDistinct
+          && query.getResultType() != Long.class
+          && query.getResultType() != long.class) {
         query.distinct(true);
       }
 
@@ -90,11 +92,15 @@ public class SpecificationBuilder<T> {
 
       if (path.getJavaType().equals(Boolean.class) || path.getJavaType().equals(boolean.class)) {
         predicates.add(cb.equal(path, Boolean.valueOf(value)));
-      } else if (path.getJavaType().isEnum() || path.getModel() != null && path.getModel().getBindableJavaType().isEnum()) {
+      } else if (path.getJavaType().isEnum()
+          || path.getModel() != null && path.getModel().getBindableJavaType().isEnum()) {
         try {
-          Class<? extends Enum> enumType = (Class<? extends Enum>) (path.getJavaType().isEnum() ? path.getJavaType() : path.getModel().getBindableJavaType());
-          predicates.add(
-              cb.equal(path, Enum.valueOf(enumType, value.toUpperCase())));
+          Class<? extends Enum> enumType =
+              (Class<? extends Enum>)
+                  (path.getJavaType().isEnum()
+                      ? path.getJavaType()
+                      : path.getModel().getBindableJavaType());
+          predicates.add(cb.equal(path, Enum.valueOf(enumType, value.toUpperCase())));
         } catch (IllegalArgumentException e) {
           // Skip invalid enum values instead of throwing exception
           continue;

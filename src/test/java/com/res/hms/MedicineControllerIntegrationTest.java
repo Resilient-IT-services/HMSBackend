@@ -121,17 +121,33 @@ class MedicineControllerIntegrationTest {
         .andExpect(jsonPath("$.data.content[2].name").value("Alpha"));
   }
 
-  private void createMedicine(String name, String genericName, String manufacturer, double purchasePrice, double sellingPrice) throws Exception {
+  private void createMedicine(
+      String name,
+      String genericName,
+      String manufacturer,
+      double purchasePrice,
+      double sellingPrice)
+      throws Exception {
     String medicineJson =
         "{"
-            + "\"name\": \"" + name + "\","
-            + "\"genericName\": \"" + genericName + "\","
+            + "\"name\": \""
+            + name
+            + "\","
+            + "\"genericName\": \""
+            + genericName
+            + "\","
             + "\"composition\": \"test\","
             + "\"strength\": \"test\","
             + "\"form\": \"TABLET\","
-            + "\"purchasePrice\": " + purchasePrice + ","
-            + "\"sellingPrice\": " + sellingPrice + ","
-            + "\"manufacturer\": \"" + manufacturer + "\""
+            + "\"purchasePrice\": "
+            + purchasePrice
+            + ","
+            + "\"sellingPrice\": "
+            + sellingPrice
+            + ","
+            + "\"manufacturer\": \""
+            + manufacturer
+            + "\""
             + "}";
 
     mockMvc

@@ -37,71 +37,85 @@ class UserManagementIntegrationTest {
   @Test
   void testUserListingWithFilteringAndSorting() throws Exception {
     UUID hospitalId = testDataHelper.createHospitalIfMissing("USER_TEST", "User Test Hospital");
-    
+
     // 1. Setup multiple users
     createUser(hospitalId, "alice_user", "Alice Smith", RoleCode.NURSE, true);
     createUser(hospitalId, "bob_user", "Bob Jones", RoleCode.DOCTOR, true);
     createUser(hospitalId, "charlie_user", "Charlie Brown", RoleCode.NURSE, false);
 
     // 2. Login as admin
-    MockHttpSession adminSession = (MockHttpSession) mockMvc
-        .perform(post("/api/v1/auth/login")
-            .contentType(MediaType.APPLICATION_JSON)
-            .content("{\"username\": \"admin\", \"password\": \"admin123\"}"))
-        .andExpect(status().isOk())
-        .andReturn().getRequest().getSession();
+    MockHttpSession adminSession =
+        (MockHttpSession)
+            mockMvc
+                .perform(
+                    post("/api/v1/auth/login")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"username\": \"admin\", \"password\": \"admin123\"}"))
+                .andExpect(status().isOk())
+                .andReturn()
+                .getRequest()
+                .getSession();
 
     // 3. Filter by role=NURSE
-    mockMvc.perform(get("/api/v1/users")
-            .session(adminSession)
-            .header("X-Hospital-Id", hospitalId.toString())
-            .param("role", "NURSE"))
+    mockMvc
+        .perform(
+            get("/api/v1/users")
+                .session(adminSession)
+                .header("X-Hospital-Id", hospitalId.toString())
+                .param("role", "NURSE"))
         .andExpect(status().isOk())
         .andExpect(jsonPath("$.data.totalElements").value(2));
 
     // 4. Filter by active=false
-    mockMvc.perform(get("/api/v1/users")
-            .session(adminSession)
-            .header("X-Hospital-Id", hospitalId.toString())
-            .param("active", "false"))
+    mockMvc
+        .perform(
+            get("/api/v1/users")
+                .session(adminSession)
+                .header("X-Hospital-Id", hospitalId.toString())
+                .param("active", "false"))
         .andExpect(status().isOk())
         .andExpect(jsonPath("$.data.totalElements").value(1))
         .andExpect(jsonPath("$.data.content[0].fullName").value("Charlie Brown"));
 
     // 5. Search by name
-    mockMvc.perform(get("/api/v1/users")
-            .session(adminSession)
-            .header("X-Hospital-Id", hospitalId.toString())
-            .param("search", "Jones"))
+    mockMvc
+        .perform(
+            get("/api/v1/users")
+                .session(adminSession)
+                .header("X-Hospital-Id", hospitalId.toString())
+                .param("search", "Jones"))
         .andExpect(status().isOk())
         .andExpect(jsonPath("$.data.totalElements").value(1))
         .andExpect(jsonPath("$.data.content[0].fullName").value("Bob Jones"));
 
     // 6. Sort by fullName desc
-    mockMvc.perform(get("/api/v1/users")
-            .session(adminSession)
-            .header("X-Hospital-Id", hospitalId.toString())
-            .param("sort", "fullName,desc"))
+    mockMvc
+        .perform(
+            get("/api/v1/users")
+                .session(adminSession)
+                .header("X-Hospital-Id", hospitalId.toString())
+                .param("sort", "fullName,desc"))
         .andExpect(status().isOk())
         .andExpect(jsonPath("$.data.content[0].fullName").value("Charlie Brown"))
         .andExpect(jsonPath("$.data.content[1].fullName").value("Bob Jones"))
         .andExpect(jsonPath("$.data.content[2].fullName").value("Alice Smith"));
   }
 
-  private void createUser(UUID hospitalId, String username, String fullName, RoleCode role, boolean active) {
+  private void createUser(
+      UUID hospitalId, String username, String fullName, RoleCode role, boolean active) {
     UserAccount user = new UserAccount();
     user.setUsername(username);
     user.setFullName(fullName);
     user.setPasswordHash(passwordEncoder.encode("password"));
     user.setActive(active);
-    
+
     UserContract contract = new UserContract();
     contract.setUser(user);
     contract.setHospitalId(hospitalId);
     contract.setRole(roleRepository.findByCode(role).orElseThrow());
     contract.setActive(true);
     user.getContracts().add(contract);
-    
+
     userAccountRepository.save(user);
   }
 

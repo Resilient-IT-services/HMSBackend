@@ -21,19 +21,19 @@ import lombok.Setter;
 @AllArgsConstructor
 @Builder
 public class LabOrderTest {
-    @Id
-    @GeneratedValue(strategy = GenerationType.UUID)
-    private UUID id;
+  @Id
+  @GeneratedValue(strategy = GenerationType.UUID)
+  private UUID id;
 
-    @Column(name = "order_id")
-    private UUID orderId;
+  @Column(name = "order_id")
+  private UUID orderId;
 
-    @Column(name = "test_id")
-    private UUID testId;
+  @Column(name = "test_id")
+  private UUID testId;
 
-    @Column(name = "package_id")
-    private UUID packageId;
+  @Column(name = "package_id")
+  private UUID packageId;
 
-    @Column(name = "status")
-    private String status;
+  @Column(name = "status")
+  private String status;
 }

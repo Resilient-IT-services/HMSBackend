@@ -13,22 +13,22 @@ import lombok.*;
 @AllArgsConstructor
 @Builder
 public class LabResultVerification {
-    @Id
-    @GeneratedValue(strategy = GenerationType.UUID)
-    private UUID id;
+  @Id
+  @GeneratedValue(strategy = GenerationType.UUID)
+  private UUID id;
 
-    @Column(name = "result_id")
-    private UUID resultId;
+  @Column(name = "result_id")
+  private UUID resultId;
 
-    @Column(name = "verified_by")
-    private UUID verifiedBy;
+  @Column(name = "verified_by")
+  private UUID verifiedBy;
 
-    @Column(name = "verified_at")
-    private Instant verifiedAt;
+  @Column(name = "verified_at")
+  private Instant verifiedAt;
 
-    @Column(name = "status")
-    private String status;
+  @Column(name = "status")
+  private String status;
 
-    @Column(name = "remarks")
-    private String remarks;
+  @Column(name = "remarks")
+  private String remarks;
 }

@@ -11,13 +11,13 @@ import com.res.hms.clinical.infrastructure.repository.AppointmentRepository;
 import com.res.hms.finance.application.listener.FinancialIntegrationListener;
 import com.res.hms.finance.domain.Invoice;
 import com.res.hms.finance.infrastructure.repository.InvoiceRepository;
-import java.util.UUID;
-import org.junit.jupiter.api.Test;
 import com.res.hms.iam.infrastructure.repository.RoleRepository;
 import com.res.hms.iam.infrastructure.repository.UserAccountRepository;
-import org.springframework.security.crypto.password.PasswordEncoder;
+import java.util.UUID;
+import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -30,13 +30,16 @@ class AppointmentChargeIntegrationTest {
   @Autowired private AppointmentRepository appointmentRepository;
   @Autowired private InvoiceRepository invoiceRepository;
   @Autowired private TestDataHelper testDataHelper;
-  @Autowired private com.res.hms.clinical.infrastructure.repository.PatientVisitRepository visitRepository;
+
+  @Autowired
+  private com.res.hms.clinical.infrastructure.repository.PatientVisitRepository visitRepository;
 
   @Autowired private PasswordEncoder passwordEncoder;
   @Autowired private RoleRepository roleRepository;
   @Autowired private UserAccountRepository userAccountRepository;
 
-  @Autowired private com.res.hms.finance.infrastructure.repository.InvoiceItemRepository invoiceItemRepository;
+  @Autowired
+  private com.res.hms.finance.infrastructure.repository.InvoiceItemRepository invoiceItemRepository;
 
   @org.junit.jupiter.api.BeforeEach
   void setup() {
@@ -59,30 +62,41 @@ class AppointmentChargeIntegrationTest {
     // 1. Setup
     UUID hospitalId = testDataHelper.createHospitalIfMissing("CH_TAX_MULTI", "Multi Tax Hospital");
     UUID patientId = testDataHelper.createTestPatient(hospitalId).getId();
-    
+
     // Create Doctor and set fee
-    UUID doctorId = testDataHelper.createTestDoctor(hospitalId, "multi_dr_" + UUID.randomUUID().toString().substring(0, 8));
+    UUID doctorId =
+        testDataHelper.createTestDoctor(
+            hospitalId, "multi_dr_" + UUID.randomUUID().toString().substring(0, 8));
     java.math.BigDecimal expectedFee = new java.math.BigDecimal("1000.00");
     testDataHelper.setConsultationFee(doctorId, hospitalId, expectedFee);
 
     // Setup Multi-Tax Rule for CONSULTATION (CGST 9% + SGST 9%)
-    testDataHelper.setupTaxRule("CONSULTATION", java.util.List.of(
-        new com.res.hms.TestDataHelper.TaxComponentData("CGST_9", "Central GST 9%", "CGST", new java.math.BigDecimal("9.00")),
-        new com.res.hms.TestDataHelper.TaxComponentData("SGST_9", "State GST 9%", "SGST", new java.math.BigDecimal("9.00"))
-    ));
+    testDataHelper.setupTaxRule(
+        "CONSULTATION",
+        java.util.List.of(
+            new com.res.hms.TestDataHelper.TaxComponentData(
+                "CGST_9", "Central GST 9%", "CGST", new java.math.BigDecimal("9.00")),
+            new com.res.hms.TestDataHelper.TaxComponentData(
+                "SGST_9", "State GST 9%", "SGST", new java.math.BigDecimal("9.00"))));
 
     // Create an actual appointment in DB
-    com.res.hms.clinical.domain.PatientVisit visit = testDataHelper.createTestVisit(hospitalId, patientId);
-    Appointment appointment = testDataHelper.createTestAppointment(hospitalId, patientId, doctorId, visit.getId());
+    com.res.hms.clinical.domain.PatientVisit visit =
+        testDataHelper.createTestVisit(hospitalId, patientId);
+    Appointment appointment =
+        testDataHelper.createTestAppointment(hospitalId, patientId, doctorId, visit.getId());
 
-    AppointmentBookedEvent event = new AppointmentBookedEvent(appointment.getId(), patientId, hospitalId);
+    AppointmentBookedEvent event =
+        new AppointmentBookedEvent(appointment.getId(), patientId, hospitalId);
 
     // 2. Execute
     listener.onAppointmentBooked(event);
 
     // 3. Verify
-    AppointmentCharge charge = chargeRepository.findByAppointmentIdAndHospitalId(appointment.getId(), hospitalId).orElseThrow();
-    
+    AppointmentCharge charge =
+        chargeRepository
+            .findByAppointmentIdAndHospitalId(appointment.getId(), hospitalId)
+            .orElseThrow();
+
     // Expected: 1000 + 90 (CGST) + 90 (SGST) = 1180
     assertThat(charge.getTaxableAmount()).isEqualByComparingTo("1000.00");
     assertThat(charge.getTaxAmount()).isEqualByComparingTo("180.00");
@@ -93,8 +107,9 @@ class AppointmentChargeIntegrationTest {
     Invoice invoice = invoiceRepository.findById(charge.getInvoiceId()).orElseThrow();
     assertThat(invoice.getTaxAmount()).isEqualByComparingTo("180.00");
     assertThat(invoice.getTotalAmount()).isEqualByComparingTo("1180.00");
-    
-    java.util.List<com.res.hms.finance.domain.InvoiceItem> invoiceItems = invoiceItemRepository.findAllByInvoiceId(invoice.getId());
+
+    java.util.List<com.res.hms.finance.domain.InvoiceItem> invoiceItems =
+        invoiceItemRepository.findAllByInvoiceId(invoice.getId());
     assertThat(invoiceItems.get(0).getTaxes()).hasSize(2);
   }
 
@@ -105,21 +120,25 @@ class AppointmentChargeIntegrationTest {
     UUID hospitalId = testDataHelper.createHospitalIfMissing("CH_TEST_DEDUP", "Dedup Hospital");
     UUID patientId = testDataHelper.createTestPatient(hospitalId).getId();
     UUID doctorId = testDataHelper.createTestDoctor(hospitalId, "dedup_dr");
-    
-    com.res.hms.clinical.domain.PatientVisit visit = testDataHelper.createTestVisit(hospitalId, patientId);
-    Appointment appointment = testDataHelper.createTestAppointment(hospitalId, patientId, doctorId, visit.getId());
 
-    AppointmentBookedEvent event = new AppointmentBookedEvent(appointment.getId(), patientId, hospitalId);
+    com.res.hms.clinical.domain.PatientVisit visit =
+        testDataHelper.createTestVisit(hospitalId, patientId);
+    Appointment appointment =
+        testDataHelper.createTestAppointment(hospitalId, patientId, doctorId, visit.getId());
+
+    AppointmentBookedEvent event =
+        new AppointmentBookedEvent(appointment.getId(), patientId, hospitalId);
 
     // 2. Execute twice
     listener.onAppointmentBooked(event);
     listener.onAppointmentBooked(event);
 
     // 3. Verify only ONE charge exists
-    java.util.List<AppointmentCharge> charges = chargeRepository.findAll().stream()
-        .filter(c -> c.getAppointmentId().equals(appointment.getId()))
-        .toList();
-    
+    java.util.List<AppointmentCharge> charges =
+        chargeRepository.findAll().stream()
+            .filter(c -> c.getAppointmentId().equals(appointment.getId()))
+            .toList();
+
     assertThat(charges).hasSize(1);
   }
 }

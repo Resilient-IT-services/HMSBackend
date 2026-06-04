@@ -13,12 +13,12 @@ import lombok.NoArgsConstructor;
 @NoArgsConstructor
 @AllArgsConstructor
 public class LabPriceDTO {
-    private UUID id;
-    private UUID hospitalId;
-    private UUID testId;
-    private UUID packageId;
-    private BigDecimal standardPrice;
-    private BigDecimal emergencyPrice;
-    private BigDecimal insurancePrice;
-    private LocalDate effectiveFrom;
+  private UUID id;
+  private UUID hospitalId;
+  private UUID testId;
+  private UUID packageId;
+  private BigDecimal standardPrice;
+  private BigDecimal emergencyPrice;
+  private BigDecimal insurancePrice;
+  private LocalDate effectiveFrom;
 }

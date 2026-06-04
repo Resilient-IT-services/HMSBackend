@@ -13,22 +13,22 @@ import lombok.*;
 @AllArgsConstructor
 @Builder
 public class LabOrderStatusHistory {
-    @Id
-    @GeneratedValue(strategy = GenerationType.UUID)
-    private UUID id;
+  @Id
+  @GeneratedValue(strategy = GenerationType.UUID)
+  private UUID id;
 
-    @Column(name = "order_id")
-    private UUID orderId;
+  @Column(name = "order_id")
+  private UUID orderId;
 
-    @Column(name = "old_status")
-    private String oldStatus;
+  @Column(name = "old_status")
+  private String oldStatus;
 
-    @Column(name = "new_status")
-    private String newStatus;
+  @Column(name = "new_status")
+  private String newStatus;
 
-    @Column(name = "changed_by")
-    private UUID changedBy;
+  @Column(name = "changed_by")
+  private UUID changedBy;
 
-    @Column(name = "changed_at")
-    private Instant changedAt;
+  @Column(name = "changed_at")
+  private Instant changedAt;
 }

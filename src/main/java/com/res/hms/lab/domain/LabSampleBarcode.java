@@ -12,16 +12,16 @@ import lombok.*;
 @AllArgsConstructor
 @Builder
 public class LabSampleBarcode {
-    @Id
-    @GeneratedValue(strategy = GenerationType.UUID)
-    private UUID id;
+  @Id
+  @GeneratedValue(strategy = GenerationType.UUID)
+  private UUID id;
 
-    @Column(name = "sample_id")
-    private UUID sampleId;
+  @Column(name = "sample_id")
+  private UUID sampleId;
 
-    @Column(name = "barcode_value")
-    private String barcodeValue;
+  @Column(name = "barcode_value")
+  private String barcodeValue;
 
-    @Column(name = "qr_code_value")
-    private String qrCodeValue;
+  @Column(name = "qr_code_value")
+  private String qrCodeValue;
 }

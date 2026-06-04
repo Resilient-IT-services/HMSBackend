@@ -4,6 +4,7 @@ import com.res.hms.clinical.application.event.AppointmentBookedEvent;
 import com.res.hms.clinical.domain.Appointment;
 import com.res.hms.clinical.domain.AppointmentCharge;
 import com.res.hms.clinical.domain.AppointmentChargeItem;
+import com.res.hms.clinical.domain.AppointmentChargeTax;
 import com.res.hms.clinical.infrastructure.repository.AppointmentChargeRepository;
 import com.res.hms.finance.domain.FinanceSourceType;
 import com.res.hms.finance.domain.Invoice;
@@ -11,17 +12,15 @@ import com.res.hms.finance.domain.InvoiceItemCategory;
 import com.res.hms.iam.domain.DoctorHospitalDetails;
 import com.res.hms.pharmacy.application.event.PharmacySaleCompletedEvent;
 import com.res.hms.pharmacy.domain.PharmacySale;
+import com.res.hms.tax.application.dto.TaxCalculationRequest;
+import com.res.hms.tax.application.dto.TaxCalculationResult;
+import com.res.hms.tax.application.service.TaxEngineService;
 import java.math.BigDecimal;
+import java.time.Instant;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.event.EventListener;
 import org.springframework.stereotype.Component;
-
-import com.res.hms.tax.application.dto.TaxCalculationRequest;
-import com.res.hms.tax.application.dto.TaxCalculationResult;
-import com.res.hms.tax.application.service.TaxEngineService;
-import com.res.hms.clinical.domain.AppointmentChargeTax;
-import java.time.Instant;
 
 @Slf4j
 @Component
@@ -83,16 +82,17 @@ public class FinancialIntegrationListener {
               .orElse(BigDecimal.ZERO);
 
       // 3. Tax Calculation
-      TaxCalculationRequest taxRequest = TaxCalculationRequest.builder()
-          .hospitalId(event.hospitalId())
-          .itemType("CONSULTATION")
-          .itemCode("CONS-" + appointment.getDoctorId())
-          .taxableAmount(fee)
-          .quantity(BigDecimal.ONE)
-          .unitPrice(fee)
-          .invoiceDate(Instant.now())
-          .build();
-          
+      TaxCalculationRequest taxRequest =
+          TaxCalculationRequest.builder()
+              .hospitalId(event.hospitalId())
+              .itemType("CONSULTATION")
+              .itemCode("CONS-" + appointment.getDoctorId())
+              .taxableAmount(fee)
+              .quantity(BigDecimal.ONE)
+              .unitPrice(fee)
+              .invoiceDate(Instant.now())
+              .build();
+
       TaxCalculationResult taxResult = taxEngineService.calculate(taxRequest);
 
       // 4. Create AppointmentCharge (Business side)
@@ -120,16 +120,19 @@ public class FinancialIntegrationListener {
 
       // Save snapshots
       if (taxResult.components() != null) {
-        taxResult.components().forEach(c -> {
-          AppointmentChargeTax act = new AppointmentChargeTax();
-          act.setCharge(charge);
-          act.setTaxCode(c.taxCode());
-          act.setTaxName(c.taxName());
-          act.setTaxRate(c.taxRate());
-          act.setTaxAmount(c.taxAmount());
-          act.setTaxableAmount(taxResult.taxableAmount());
-          charge.getTaxes().add(act);
-        });
+        taxResult
+            .components()
+            .forEach(
+                c -> {
+                  AppointmentChargeTax act = new AppointmentChargeTax();
+                  act.setCharge(charge);
+                  act.setTaxCode(c.taxCode());
+                  act.setTaxName(c.taxName());
+                  act.setTaxRate(c.taxRate());
+                  act.setTaxAmount(c.taxAmount());
+                  act.setTaxableAmount(taxResult.taxableAmount());
+                  charge.getTaxes().add(act);
+                });
       }
 
       // 5. Get or Create Invoice (Finance side)
@@ -212,4 +215,3 @@ public class FinancialIntegrationListener {
     }
   }
 }
-

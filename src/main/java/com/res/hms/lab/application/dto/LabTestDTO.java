@@ -11,16 +11,16 @@ import lombok.NoArgsConstructor;
 @NoArgsConstructor
 @AllArgsConstructor
 public class LabTestDTO {
-    private UUID id;
-    private UUID hospitalId;
-    private String testCode;
-    private String testName;
-    private String shortName;
-    private String aliasName;
-    private UUID departmentId;
-    private String departmentName;
-    private String resultType;
-    private Integer tatValue;
-    private String tatUnit;
-    private boolean active;
+  private UUID id;
+  private UUID hospitalId;
+  private String testCode;
+  private String testName;
+  private String shortName;
+  private String aliasName;
+  private UUID departmentId;
+  private String departmentName;
+  private String resultType;
+  private Integer tatValue;
+  private String tatUnit;
+  private boolean active;
 }

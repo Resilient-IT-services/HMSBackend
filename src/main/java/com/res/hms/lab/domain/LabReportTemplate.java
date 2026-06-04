@@ -22,17 +22,17 @@ import org.hibernate.annotations.Type;
 @AllArgsConstructor
 @Builder
 public class LabReportTemplate {
-    @Id
-    @GeneratedValue(strategy = GenerationType.UUID)
-    private UUID id;
+  @Id
+  @GeneratedValue(strategy = GenerationType.UUID)
+  private UUID id;
 
-    @Column(name = "test_id")
-    private UUID testId;
+  @Column(name = "test_id")
+  private UUID testId;
 
-    @Column(name = "template_name")
-    private String templateName;
+  @Column(name = "template_name")
+  private String templateName;
 
-    @Type(io.hypersistence.utils.hibernate.type.json.JsonType.class)
-    @Column(name = "template_json", columnDefinition = "jsonb")
-    private String templateJson;
+  @Type(io.hypersistence.utils.hibernate.type.json.JsonType.class)
+  @Column(name = "template_json", columnDefinition = "jsonb")
+  private String templateJson;
 }

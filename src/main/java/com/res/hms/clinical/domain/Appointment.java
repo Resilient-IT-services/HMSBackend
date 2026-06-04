@@ -96,9 +96,10 @@ public class Appointment extends HospitalScopedEntity {
 
     java.time.OffsetDateTime utcAppointmentTime =
         appointmentTime.atOffset(java.time.ZoneOffset.UTC);
-    
+
     // Always derive and truncate to avoid precision issues in some timezones/drivers
     this.appointmentDate = utcAppointmentTime.toLocalDate();
-    this.appointmentSlotTime = utcAppointmentTime.toLocalTime().truncatedTo(java.time.temporal.ChronoUnit.SECONDS);
+    this.appointmentSlotTime =
+        utcAppointmentTime.toLocalTime().truncatedTo(java.time.temporal.ChronoUnit.SECONDS);
   }
 }

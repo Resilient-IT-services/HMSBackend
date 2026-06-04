@@ -19,6 +19,7 @@ import com.res.hms.pharmacy.application.dto.QuickPharmacySaleResponse;
 import com.res.hms.pharmacy.domain.PharmacyReturn;
 import com.res.hms.pharmacy.domain.PharmacySale;
 import com.res.hms.pharmacy.domain.PharmacySaleItem;
+import com.res.hms.pharmacy.domain.PharmacySaleItemTax;
 import com.res.hms.pharmacy.domain.PharmacySaleStatus;
 import com.res.hms.pharmacy.domain.PharmacyStock;
 import com.res.hms.pharmacy.infrastructure.repository.MedicineRepository;
@@ -26,22 +27,19 @@ import com.res.hms.pharmacy.infrastructure.repository.PharmacyReturnRepository;
 import com.res.hms.pharmacy.infrastructure.repository.PharmacySaleItemRepository;
 import com.res.hms.pharmacy.infrastructure.repository.PharmacySaleRepository;
 import com.res.hms.pharmacy.infrastructure.repository.PharmacyStockRepository;
+import com.res.hms.tax.application.dto.TaxCalculationRequest;
+import com.res.hms.tax.application.dto.TaxCalculationResult;
+import com.res.hms.tax.application.service.TaxEngineService;
 import java.math.BigDecimal;
+import java.time.Instant;
 import java.time.LocalDate;
 import java.util.List;
 import java.util.UUID;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.data.domain.PageRequest;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-
-import com.res.hms.tax.application.dto.TaxCalculationRequest;
-import com.res.hms.tax.application.dto.TaxCalculationResult;
-import com.res.hms.tax.application.service.TaxEngineService;
-import com.res.hms.pharmacy.domain.PharmacySaleItemTax;
-import java.time.Instant;
 
 @Slf4j
 @Service
@@ -55,7 +53,8 @@ public class PharmacySaleService {
   private final PharmacyReturnRepository pharmacyReturnRepository;
   private final PrescriptionRepository prescriptionRepository;
   private final AppointmentRepository appointmentRepository;
-  private final com.res.hms.hospital.infrastructure.repository.HospitalRepository hospitalRepository;
+  private final com.res.hms.hospital.infrastructure.repository.HospitalRepository
+      hospitalRepository;
   private final InvoiceService invoiceService;
   private final PaymentService paymentService;
   private final HospitalContext hospitalContext;
@@ -75,29 +74,33 @@ public class PharmacySaleService {
     sale.setTotalAmount(processItems(hospitalId, request.getItems(), sale));
 
     PharmacySale savedSale = pharmacySaleRepository.save(sale);
-    com.res.hms.hospital.domain.Hospital hospital = hospitalRepository.findById(hospitalId)
-        .orElseThrow(() -> new ApiException("NOT_FOUND", "Hospital not found", HttpStatus.NOT_FOUND));
-    
+    com.res.hms.hospital.domain.Hospital hospital =
+        hospitalRepository
+            .findById(hospitalId)
+            .orElseThrow(
+                () -> new ApiException("NOT_FOUND", "Hospital not found", HttpStatus.NOT_FOUND));
+
     // Calculate and Save Taxes for each item
     for (PharmacySaleItem item : savedSale.getItems()) {
-      TaxCalculationRequest taxRequest = TaxCalculationRequest.builder()
-          .hospitalId(hospitalId)
-          .itemType("PHARMACY")
-          .itemCode(item.getMedicine().getId().toString())
-          .hsnOrSacCode(item.getMedicine().getHsnCode())
-          .taxableAmount(item.getTaxableAmount())
-          .quantity(BigDecimal.valueOf(item.getQuantity()))
-          .unitPrice(item.getUnitPrice())
-          .hospitalState(hospital.getState())
-          .billingState(hospital.getState()) // Default to intra-state for pharmacy sales
-          .invoiceDate(Instant.now())
-          .build();
-      
+      TaxCalculationRequest taxRequest =
+          TaxCalculationRequest.builder()
+              .hospitalId(hospitalId)
+              .itemType("PHARMACY")
+              .itemCode(item.getMedicine().getId().toString())
+              .hsnOrSacCode(item.getMedicine().getHsnCode())
+              .taxableAmount(item.getTaxableAmount())
+              .quantity(BigDecimal.valueOf(item.getQuantity()))
+              .unitPrice(item.getUnitPrice())
+              .hospitalState(hospital.getState())
+              .billingState(hospital.getState()) // Default to intra-state for pharmacy sales
+              .invoiceDate(Instant.now())
+              .build();
+
       TaxCalculationResult taxResult = taxEngineService.calculate(taxRequest);
-      
+
       item.setTaxAmount(taxResult.totalTax());
       item.setNetAmount(item.getTaxableAmount().add(taxResult.totalTax()));
-      
+
       if (taxResult.components() != null) {
         for (com.res.hms.tax.application.dto.TaxComponent tc : taxResult.components()) {
           PharmacySaleItemTax pit = new PharmacySaleItemTax();
@@ -111,11 +114,12 @@ public class PharmacySaleService {
         }
       }
     }
-    
+
     // Update total sale amount with taxes
-    BigDecimal grandTotal = savedSale.getItems().stream()
-        .map(PharmacySaleItem::getNetAmount)
-        .reduce(BigDecimal.ZERO, BigDecimal::add);
+    BigDecimal grandTotal =
+        savedSale.getItems().stream()
+            .map(PharmacySaleItem::getNetAmount)
+            .reduce(BigDecimal.ZERO, BigDecimal::add);
     savedSale.setTotalAmount(grandTotal);
     pharmacySaleRepository.save(savedSale);
 
@@ -292,7 +296,10 @@ public class PharmacySaleService {
       QuickPharmacySaleRequest request, UUID hospitalId, PharmacySale savedSale) {
     Invoice invoice =
         invoiceService.getOrCreateInvoice(
-            hospitalId, request.getPatientId(), savedSale.getVisitId(), savedSale.getCustomerName());
+            hospitalId,
+            request.getPatientId(),
+            savedSale.getVisitId(),
+            savedSale.getCustomerName());
     savedSale.setInvoiceId(invoice.getId());
     savedSale.setSaleNumber(invoice.getInvoiceNumber());
     return invoice;
@@ -300,10 +307,12 @@ public class PharmacySaleService {
 
   private void addInvoiceItems(PharmacySale savedSale, Invoice invoice) {
     for (PharmacySaleItem saleItem : savedSale.getItems()) {
-      List<com.res.hms.tax.application.dto.TaxComponent> taxComponents = 
+      List<com.res.hms.tax.application.dto.TaxComponent> taxComponents =
           saleItem.getTaxes().stream()
-              .map(t -> new com.res.hms.tax.application.dto.TaxComponent(
-                  t.getTaxCode(), t.getTaxName(), t.getTaxRate(), t.getTaxAmount()))
+              .map(
+                  t ->
+                      new com.res.hms.tax.application.dto.TaxComponent(
+                          t.getTaxCode(), t.getTaxName(), t.getTaxRate(), t.getTaxAmount()))
               .toList();
 
       invoiceService.addItem(
@@ -493,7 +502,8 @@ public class PharmacySaleService {
     if (filters.containsKey("threshold")) {
       try {
         threshold = Integer.parseInt(filters.get("threshold"));
-      } catch (Exception ignored) {}
+      } catch (Exception ignored) {
+      }
     }
 
     com.res.hms.core.util.SpecificationBuilder<PharmacyStock> builder =
@@ -502,17 +512,19 @@ public class PharmacySaleService {
 
     final int finalThreshold = threshold;
     org.springframework.data.jpa.domain.Specification<PharmacyStock> spec = builder.build();
-    org.springframework.data.jpa.domain.Specification<PharmacyStock> fixedSpec = (root, query, cb) -> {
-      return cb.and(
-          cb.equal(root.get("hospitalId"), hospitalId),
-          cb.lessThan(root.get("quantity"), finalThreshold)
-      );
-    };
+    org.springframework.data.jpa.domain.Specification<PharmacyStock> fixedSpec =
+        (root, query, cb) -> {
+          return cb.and(
+              cb.equal(root.get("hospitalId"), hospitalId),
+              cb.lessThan(root.get("quantity"), finalThreshold));
+        };
 
     return com.res.hms.core.api.PageResponse.from(
-        pharmacyStockRepository.findAll(
-            org.springframework.data.jpa.domain.Specification.where(spec).and(fixedSpec), 
-            pageable).map(this::toStockDto));
+        pharmacyStockRepository
+            .findAll(
+                org.springframework.data.jpa.domain.Specification.where(spec).and(fixedSpec),
+                pageable)
+            .map(this::toStockDto));
   }
 
   private PharmacyStockDTO toStockDto(PharmacyStock stock) {

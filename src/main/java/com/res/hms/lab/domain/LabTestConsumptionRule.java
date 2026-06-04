@@ -13,16 +13,16 @@ import lombok.*;
 @AllArgsConstructor
 @Builder
 public class LabTestConsumptionRule {
-    @Id
-    @GeneratedValue(strategy = GenerationType.UUID)
-    private UUID id;
+  @Id
+  @GeneratedValue(strategy = GenerationType.UUID)
+  private UUID id;
 
-    @Column(name = "test_id")
-    private UUID testId;
+  @Column(name = "test_id")
+  private UUID testId;
 
-    @Column(name = "item_id")
-    private UUID itemId;
+  @Column(name = "item_id")
+  private UUID itemId;
 
-    @Column(name = "quantity")
-    private BigDecimal quantity;
+  @Column(name = "quantity")
+  private BigDecimal quantity;
 }

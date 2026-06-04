@@ -12,25 +12,25 @@ import lombok.*;
 @AllArgsConstructor
 @Builder
 public class LabResultParameter {
-    @Id
-    @GeneratedValue(strategy = GenerationType.UUID)
-    private UUID id;
+  @Id
+  @GeneratedValue(strategy = GenerationType.UUID)
+  private UUID id;
 
-    @Column(name = "result_id")
-    private UUID resultId;
+  @Column(name = "result_id")
+  private UUID resultId;
 
-    @Column(name = "parameter_id")
-    private UUID parameterId;
+  @Column(name = "parameter_id")
+  private UUID parameterId;
 
-    @Column(name = "result_value")
-    private String resultValue;
+  @Column(name = "result_value")
+  private String resultValue;
 
-    @Column(name = "abnormal")
-    private Boolean abnormal;
+  @Column(name = "abnormal")
+  private Boolean abnormal;
 
-    @Column(name = "critical")
-    private Boolean critical;
+  @Column(name = "critical")
+  private Boolean critical;
 
-    @Column(name = "result_status")
-    private String resultStatus;
+  @Column(name = "result_status")
+  private String resultStatus;
 }
