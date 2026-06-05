@@ -92,7 +92,9 @@ public class TaxEngineService {
   }
 
   private boolean shouldApply(String taxType, boolean isInterstate) {
-    if (taxType == null) return false;
+    if (taxType == null) {
+      return false;
+    }
     taxType = taxType.toUpperCase();
 
     if (isInterstate) {

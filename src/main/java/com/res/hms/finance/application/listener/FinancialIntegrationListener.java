@@ -47,22 +47,7 @@ public class FinancialIntegrationListener {
     log.info("RECEIVED AppointmentBookedEvent for appointment: {}", event.appointmentId());
 
     try {
-      // 1. Deduplication: Check if charge already exists
-      if (appointmentChargeRepository
-          .findByAppointmentIdAndHospitalId(event.appointmentId(), event.hospitalId())
-          .isPresent()) {
-        log.info(
-            "DEDUPLICATION: Charge already exists for appointment {}, skipping.",
-            event.appointmentId());
-        return;
-      }
-
-      // Legacy deduplication check
-      if (invoiceItemRepository.existsBySourceTypeAndSourceId(
-          FinanceSourceType.APPOINTMENT, event.appointmentId())) {
-        log.info(
-            "DEDUPLICATION: Invoice already exists for appointment {}, skipping auto-generation.",
-            event.appointmentId());
+      if (isDuplicate(event)) {
         return;
       }
 
@@ -82,58 +67,10 @@ public class FinancialIntegrationListener {
               .orElse(BigDecimal.ZERO);
 
       // 3. Tax Calculation
-      TaxCalculationRequest taxRequest =
-          TaxCalculationRequest.builder()
-              .hospitalId(event.hospitalId())
-              .itemType("CONSULTATION")
-              .itemCode("CONS-" + appointment.getDoctorId())
-              .taxableAmount(fee)
-              .quantity(BigDecimal.ONE)
-              .unitPrice(fee)
-              .invoiceDate(Instant.now())
-              .build();
-
-      TaxCalculationResult taxResult = taxEngineService.calculate(taxRequest);
+      TaxCalculationResult taxResult = calculateTax(event, appointment, fee);
 
       // 4. Create AppointmentCharge (Business side)
-      AppointmentCharge charge = new AppointmentCharge();
-      charge.setHospitalId(event.hospitalId());
-      charge.setPatientId(event.patientId());
-      charge.setAppointmentId(event.appointmentId());
-      charge.setDoctorId(appointment.getDoctorId());
-      charge.setDoctorName(appointment.getDoctorName());
-      charge.setSourceType("CONSULTATION");
-      charge.setStatus("COMPLETED");
-      charge.setTaxableAmount(taxResult.taxableAmount());
-      charge.setTaxAmount(taxResult.totalTax());
-      charge.setTotalAmount(taxResult.grandTotal());
-
-      AppointmentChargeItem chargeItem = new AppointmentChargeItem();
-      chargeItem.setHospitalId(event.hospitalId());
-      chargeItem.setCharge(charge);
-      chargeItem.setItemName("Consultation - " + appointment.getDoctorName());
-      chargeItem.setAmount(fee);
-      chargeItem.setQuantity(1);
-      chargeItem.setSubtotal(fee);
-
-      charge.getItems().add(chargeItem);
-
-      // Save snapshots
-      if (taxResult.components() != null) {
-        taxResult
-            .components()
-            .forEach(
-                c -> {
-                  AppointmentChargeTax act = new AppointmentChargeTax();
-                  act.setCharge(charge);
-                  act.setTaxCode(c.taxCode());
-                  act.setTaxName(c.taxName());
-                  act.setTaxRate(c.taxRate());
-                  act.setTaxAmount(c.taxAmount());
-                  act.setTaxableAmount(taxResult.taxableAmount());
-                  charge.getTaxes().add(act);
-                });
-      }
+      AppointmentCharge charge = createAppointmentCharge(event, appointment, fee, taxResult);
 
       // 5. Get or Create Invoice (Finance side)
       Invoice invoice =
@@ -143,7 +80,7 @@ public class FinancialIntegrationListener {
       // 6. Add Consultation Item to Invoice with Tax Snapshot
       invoiceService.addItem(
           invoice.getId(),
-          chargeItem.getItemName(),
+          "Consultation - " + appointment.getDoctorName(),
           InvoiceItemCategory.CONSULTATION,
           BigDecimal.ONE,
           fee,
@@ -168,6 +105,90 @@ public class FinancialIntegrationListener {
           event.appointmentId(),
           e);
     }
+  }
+
+  private boolean isDuplicate(AppointmentBookedEvent event) {
+    // 1. Deduplication: Check if charge already exists
+    if (appointmentChargeRepository
+        .findByAppointmentIdAndHospitalId(event.appointmentId(), event.hospitalId())
+        .isPresent()) {
+      log.info(
+          "DEDUPLICATION: Charge already exists for appointment {}, skipping.",
+          event.appointmentId());
+      return true;
+    }
+
+    // Legacy deduplication check
+    if (invoiceItemRepository.existsBySourceTypeAndSourceId(
+        FinanceSourceType.APPOINTMENT, event.appointmentId())) {
+      log.info(
+          "DEDUPLICATION: Invoice already exists for appointment {}, skipping auto-generation.",
+          event.appointmentId());
+      return true;
+    }
+    return false;
+  }
+
+  private TaxCalculationResult calculateTax(
+      AppointmentBookedEvent event, Appointment appointment, BigDecimal fee) {
+    TaxCalculationRequest taxRequest =
+        TaxCalculationRequest.builder()
+            .hospitalId(event.hospitalId())
+            .itemType("CONSULTATION")
+            .itemCode("CONS-" + appointment.getDoctorId())
+            .taxableAmount(fee)
+            .quantity(BigDecimal.ONE)
+            .unitPrice(fee)
+            .invoiceDate(Instant.now())
+            .build();
+
+    return taxEngineService.calculate(taxRequest);
+  }
+
+  private AppointmentCharge createAppointmentCharge(
+      AppointmentBookedEvent event,
+      Appointment appointment,
+      BigDecimal fee,
+      TaxCalculationResult taxResult) {
+    AppointmentCharge charge = new AppointmentCharge();
+    charge.setHospitalId(event.hospitalId());
+    charge.setPatientId(event.patientId());
+    charge.setAppointmentId(event.appointmentId());
+    charge.setDoctorId(appointment.getDoctorId());
+    charge.setDoctorName(appointment.getDoctorName());
+    charge.setSourceType("CONSULTATION");
+    charge.setStatus("COMPLETED");
+    charge.setTaxableAmount(taxResult.taxableAmount());
+    charge.setTaxAmount(taxResult.totalTax());
+    charge.setTotalAmount(taxResult.grandTotal());
+
+    AppointmentChargeItem chargeItem = new AppointmentChargeItem();
+    chargeItem.setHospitalId(event.hospitalId());
+    chargeItem.setCharge(charge);
+    chargeItem.setItemName("Consultation - " + appointment.getDoctorName());
+    chargeItem.setAmount(fee);
+    chargeItem.setQuantity(1);
+    chargeItem.setSubtotal(fee);
+
+    charge.getItems().add(chargeItem);
+
+    // Save snapshots
+    if (taxResult.components() != null) {
+      taxResult
+          .components()
+          .forEach(
+              c -> {
+                AppointmentChargeTax act = new AppointmentChargeTax();
+                act.setCharge(charge);
+                act.setTaxCode(c.taxCode());
+                act.setTaxName(c.taxName());
+                act.setTaxRate(c.taxRate());
+                act.setTaxAmount(c.taxAmount());
+                act.setTaxableAmount(taxResult.taxableAmount());
+                charge.getTaxes().add(act);
+              });
+    }
+    return charge;
   }
 
   @EventListener

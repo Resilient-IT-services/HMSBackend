@@ -212,10 +212,10 @@ class MedicineControllerIntegrationTest {
                 .param("search", "Para"))
         .andExpect(status().isOk())
         .andExpect(jsonPath("$.data.content[0].name").value("Paracetamol"));
-    }
+  }
 
-    @Test
-    void testSearchByHsnCode() throws Exception {
+  @Test
+  void testSearchByHsnCode() throws Exception {
     String payload =
         "{"
             + "\"name\":\"HSNTest\","

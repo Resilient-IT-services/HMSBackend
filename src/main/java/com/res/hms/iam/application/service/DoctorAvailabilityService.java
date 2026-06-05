@@ -315,7 +315,9 @@ public class DoctorAvailabilityService {
           break;
         }
         current = slotEnd;
-        if (current.equals(LocalTime.MIDNIGHT)) break;
+        if (current.equals(LocalTime.MIDNIGHT)) {
+          break;
+        }
       }
     }
 
@@ -326,7 +328,9 @@ public class DoctorAvailabilityService {
         return current;
       }
       current = current.plusMinutes(durationMinutes);
-      if (current.equals(LocalTime.MIDNIGHT)) break;
+      if (current.equals(LocalTime.MIDNIGHT)) {
+        break;
+      }
     }
 
     return null;

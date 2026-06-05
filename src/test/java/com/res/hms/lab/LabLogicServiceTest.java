@@ -1,7 +1,8 @@
 package com.res.hms.lab;
 
-import static org.junit.jupiter.api.Assertions.*;
-import static org.mockito.Mockito.*;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.mockito.Mockito.when;
 
 import com.res.hms.lab.application.dto.LabReferenceRangeDTO;
 import com.res.hms.lab.application.service.LabLogicService;
