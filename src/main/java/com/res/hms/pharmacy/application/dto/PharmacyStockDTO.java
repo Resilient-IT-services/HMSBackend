@@ -26,4 +26,5 @@ public class PharmacyStockDTO {
   private BigDecimal purchasePrice;
   private BigDecimal sellingPrice;
   private BigDecimal price;
+  private String hsnCode;
 }
