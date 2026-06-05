@@ -49,7 +49,7 @@ public class MedicineService {
         new com.res.hms.core.util.SpecificationBuilder<>(
             filters,
             search,
-            java.util.List.of("name", "genericName", "composition", "manufacturer"));
+            java.util.List.of("name", "genericName", "composition", "manufacturer", "hsnCode"));
     return PageResponse.from(
         medicineRepository.findAll(builder.build(), pageable).map(this::toDto));
   }
@@ -176,7 +176,7 @@ public class MedicineService {
         new com.res.hms.core.util.SpecificationBuilder<>(
             filters,
             search,
-            java.util.List.of("name", "genericName", "composition", "manufacturer"));
+            java.util.List.of("name", "genericName", "composition", "manufacturer", "hsnCode"));
     org.springframework.data.domain.Page<Medicine> medicinesPage =
         medicineRepository.findAll(builder.build(), pageable);
 
@@ -204,6 +204,7 @@ public class MedicineService {
         .strength(medicine.getStrength())
         .form(medicine.getForm())
         .manufacturer(medicine.getManufacturer())
+        .hsnCode(medicine.getHsnCode())
         .currentStock(stock)
         .thresholdQuantity(medicine.getThresholdQuantity())
         .build();
@@ -320,6 +321,7 @@ public class MedicineService {
             .strength(medicine.getStrength())
             .form(medicine.getForm())
             .thresholdQuantity(medicine.getThresholdQuantity())
+            .hsnCode(medicine.getHsnCode())
             .manufacturer(medicine.getManufacturer());
 
     Optional.ofNullable(hospitalContext.getHospitalIdOrNull())

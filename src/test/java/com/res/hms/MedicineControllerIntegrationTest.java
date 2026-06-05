@@ -212,6 +212,40 @@ class MedicineControllerIntegrationTest {
                 .param("search", "Para"))
         .andExpect(status().isOk())
         .andExpect(jsonPath("$.data.content[0].name").value("Paracetamol"));
+    }
+
+    @Test
+    void testSearchByHsnCode() throws Exception {
+    String payload =
+        "{"
+            + "\"name\":\"HSNTest\","
+            + "\"genericName\":\"HSNTest\","
+            + "\"composition\":\"HSNTest\","
+            + "\"strength\":\"100mg\","
+            + "\"form\":\"TABLET\","
+            + "\"manufacturer\":\"HSNTest\","
+            + "\"hsnCode\":\"HSN12345\""
+            + "}";
+
+    mockMvc
+        .perform(
+            post("/api/v1/pharmacy/medicines")
+                .session(session)
+                .header("X-Hospital-Id", testHospitalId.toString())
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(payload))
+        .andExpect(status().isOk());
+
+    // Partial match, case-insensitive
+    mockMvc
+        .perform(
+            get("/api/v1/pharmacy/medicines")
+                .session(session)
+                .header("X-Hospital-Id", testHospitalId.toString())
+                .param("search", "hsn123"))
+        .andExpect(status().isOk())
+        .andExpect(jsonPath("$.data.content[0].name").value("HSNTest"))
+        .andExpect(jsonPath("$.data.content[0].hsnCode").value("HSN12345"));
   }
 
   @Test
