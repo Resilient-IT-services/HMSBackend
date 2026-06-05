@@ -59,6 +59,9 @@ public class UserAccount extends BaseEntity {
   @Column(nullable = false)
   private boolean deleted;
 
+  @Column(name = "last_login_at")
+  private java.time.Instant lastLoginAt;
+
   @OneToOne(mappedBy = "user", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
   private DoctorProfile doctorProfile;
 

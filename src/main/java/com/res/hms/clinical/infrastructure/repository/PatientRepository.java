@@ -43,4 +43,7 @@ public interface PatientRepository
     """,
       nativeQuery = true)
   Optional<String> findLastPatientCodeGlobal(@Param("prefix") String prefix);
+
+  @Query("SELECT p.hospitalId, COUNT(p.id) as patientCount FROM Patient p GROUP BY p.hospitalId ORDER BY patientCount DESC")
+  List<Object[]> findTopHospitalsByPatientCount(org.springframework.data.domain.Pageable pageable);
 }

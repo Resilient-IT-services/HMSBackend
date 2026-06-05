@@ -14,4 +14,7 @@ public interface InvoiceRepository extends BaseRepository<Invoice> {
       "SELECT i FROM Invoice i WHERE i.visitId = :visitId")
   java.util.Optional<Invoice> findByVisitId(
       @org.springframework.data.repository.query.Param("visitId") UUID visitId);
+
+  @org.springframework.data.jpa.repository.Query("SELECT SUM(i.totalAmount) FROM Invoice i")
+  java.math.BigDecimal sumTotalAmount();
 }

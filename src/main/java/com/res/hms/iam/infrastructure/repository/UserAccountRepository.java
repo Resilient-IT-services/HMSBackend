@@ -73,4 +73,10 @@ public interface UserAccountRepository
       @Param("id") UUID id, @Param("hospitalId") UUID hospitalId);
 
   long countByActive(boolean active);
+
+  @Query("SELECT u FROM UserAccount u WHERE u.deleted = false ORDER BY u.createdAt DESC")
+  List<UserAccount> findRecentUsers(Pageable pageable);
+
+  @Query("SELECT COUNT(u) FROM UserAccount u WHERE u.lastLoginAt >= :date")
+  long countActiveUsersSince(@Param("date") java.time.Instant date);
 }
