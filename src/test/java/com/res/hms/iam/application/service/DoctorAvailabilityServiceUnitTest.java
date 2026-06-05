@@ -98,7 +98,8 @@ class DoctorAvailabilityServiceUnitTest {
 
     when(availabilityOverrideRepository.findByDoctorIdAndHospitalIdAndDate(any(), any(), any()))
         .thenReturn(List.of());
-    when(appointmentRepository.findByDoctorIdAndDate(any(), any())).thenReturn(List.of());
+    when(appointmentRepository.findByDoctorIdAndDateRange(any(), any(), any()))
+        .thenReturn(List.of());
 
     DoctorSchedule schedule = new DoctorSchedule();
     schedule.setDayOfWeek(DayOfWeek.MONDAY);
@@ -124,7 +125,8 @@ class DoctorAvailabilityServiceUnitTest {
 
     when(availabilityOverrideRepository.findByDoctorIdAndHospitalIdAndDate(any(), any(), eq(today)))
         .thenReturn(List.of());
-    when(appointmentRepository.findByDoctorIdAndDate(any(), eq(today))).thenReturn(List.of());
+    when(appointmentRepository.findByDoctorIdAndDateRange(any(), any(), any()))
+        .thenReturn(List.of());
 
     DoctorSchedule schedule = new DoctorSchedule();
     schedule.setDayOfWeek(today.getDayOfWeek());
@@ -157,7 +159,8 @@ class DoctorAvailabilityServiceUnitTest {
         java.time.LocalDateTime.of(today, LocalTime.of(15, 30))
             .atZone(zoneId)
             .toInstant());
-    when(appointmentRepository.findByDoctorIdAndDate(any(), eq(today))).thenReturn(List.of(apt));
+    when(appointmentRepository.findByDoctorIdAndDateRange(any(), any(), any()))
+        .thenReturn(List.of(apt));
 
     DoctorSchedule schedule = new DoctorSchedule();
     schedule.setDayOfWeek(today.getDayOfWeek());
@@ -183,7 +186,8 @@ class DoctorAvailabilityServiceUnitTest {
 
     when(availabilityOverrideRepository.findByDoctorIdAndHospitalIdAndDate(any(), any(), eq(today)))
         .thenReturn(List.of());
-    when(appointmentRepository.findByDoctorIdAndDate(any(), eq(today))).thenReturn(List.of());
+    when(appointmentRepository.findByDoctorIdAndDateRange(any(), any(), any()))
+        .thenReturn(List.of());
 
     DoctorSchedule schedule = new DoctorSchedule();
     schedule.setDayOfWeek(today.getDayOfWeek());

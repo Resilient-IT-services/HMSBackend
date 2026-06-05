@@ -11,6 +11,8 @@ import com.res.hms.iam.application.repository.DoctorProfileRepository;
 import com.res.hms.iam.domain.UserAccount;
 import com.res.hms.iam.infrastructure.repository.UserAccountRepository;
 import java.time.OffsetDateTime;
+import java.time.ZoneId;
+import java.time.ZonedDateTime;
 import java.util.UUID;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -36,6 +38,7 @@ class AppointmentValidationIntegrationTest {
   private UUID hospitalId;
   private UUID patientId;
   private UUID doctorId;
+  private final ZoneId hospitalZone = ZoneId.of("Asia/Kolkata");
 
   @BeforeEach
   void setup() {
@@ -49,11 +52,13 @@ class AppointmentValidationIntegrationTest {
 
   @Test
   void testCreateAppointmentInPastFails() {
+    // 2 hours in the past relative to now in hospital zone
+    OffsetDateTime pastTime = ZonedDateTime.now(hospitalZone).minusHours(2).toOffsetDateTime();
     AppointmentDTO request =
         AppointmentDTO.builder()
             .patientId(patientId)
             .doctorId(doctorId)
-            .appointmentTime(OffsetDateTime.now().minusHours(2)) // 2 hours in the past
+            .appointmentTime(pastTime)
             .build();
 
     assertThrows(
@@ -66,11 +71,13 @@ class AppointmentValidationIntegrationTest {
 
   @Test
   void testCreateAppointmentInFutureSucceeds() {
+    // 2 hours in the future relative to now in hospital zone
+    OffsetDateTime futureTime = ZonedDateTime.now(hospitalZone).plusHours(2).toOffsetDateTime();
     AppointmentDTO request =
         AppointmentDTO.builder()
             .patientId(patientId)
             .doctorId(doctorId)
-            .appointmentTime(OffsetDateTime.now().plusHours(2)) // 2 hours in the future
+            .appointmentTime(futureTime)
             .build();
 
     appointmentAggregateService.saveAppointmentAggregate(request);
@@ -90,7 +97,7 @@ class AppointmentValidationIntegrationTest {
             .get();
     UUID assignmentId = drUser.getContracts().stream().findFirst().get().getId();
 
-    OffsetDateTime tomorrow = OffsetDateTime.now().plusDays(1);
+    ZonedDateTime tomorrow = ZonedDateTime.now(hospitalZone).plusDays(1);
 
     com.res.hms.clinical.domain.DoctorSchedule schedule =
         new com.res.hms.clinical.domain.DoctorSchedule();
@@ -101,7 +108,8 @@ class AppointmentValidationIntegrationTest {
     schedule.setMaxPatients(30);
     scheduleRepository.saveAndFlush(schedule);
 
-    OffsetDateTime time1 = tomorrow.withHour(10).withMinute(0).withSecond(0).withNano(0);
+    OffsetDateTime time1 =
+        tomorrow.withHour(10).withMinute(0).withSecond(0).withNano(0).toOffsetDateTime();
 
     AppointmentDTO appt1 =
         AppointmentDTO.builder()
@@ -155,7 +163,7 @@ class AppointmentValidationIntegrationTest {
             .get();
     UUID assignmentId = drUser.getContracts().stream().findFirst().get().getId();
 
-    OffsetDateTime tomorrow = OffsetDateTime.now().plusDays(1);
+    ZonedDateTime tomorrow = ZonedDateTime.now(hospitalZone).plusDays(1);
 
     com.res.hms.clinical.domain.DoctorSchedule schedule =
         new com.res.hms.clinical.domain.DoctorSchedule();
@@ -166,7 +174,8 @@ class AppointmentValidationIntegrationTest {
     schedule.setMaxPatients(10);
     scheduleRepository.saveAndFlush(schedule);
 
-    OffsetDateTime anchor = tomorrow.withHour(14).withMinute(30).withSecond(0).withNano(0);
+    ZonedDateTime anchorZdt = tomorrow.withHour(14).withMinute(30).withSecond(0).withNano(0);
+    OffsetDateTime anchor = anchorZdt.toOffsetDateTime();
 
     // Book anchor appointment
     appointmentAggregateService.saveAppointmentAggregate(
@@ -235,8 +244,8 @@ class AppointmentValidationIntegrationTest {
   @Test
   void testProximityCheckIsDoctorSpecific() {
     // Two doctors, same time. Should pass.
-    OffsetDateTime tomorrow = OffsetDateTime.now().plusDays(1);
-    OffsetDateTime time = tomorrow.withHour(10).withMinute(0);
+    ZonedDateTime tomorrow = ZonedDateTime.now(hospitalZone).plusDays(1);
+    OffsetDateTime time = tomorrow.withHour(10).withMinute(0).toOffsetDateTime();
 
     // Doctor 1 booking
     appointmentAggregateService.saveAppointmentAggregate(
@@ -271,7 +280,7 @@ class AppointmentValidationIntegrationTest {
             .get();
     UUID assignmentId = drUser.getContracts().stream().findFirst().get().getId();
 
-    OffsetDateTime tomorrow = OffsetDateTime.now().plusDays(1);
+    ZonedDateTime tomorrow = ZonedDateTime.now(hospitalZone).plusDays(1);
 
     com.res.hms.clinical.domain.DoctorSchedule schedule =
         new com.res.hms.clinical.domain.DoctorSchedule();
@@ -282,7 +291,8 @@ class AppointmentValidationIntegrationTest {
     schedule.setMaxPatients(null); // No patient limit entered
     scheduleRepository.saveAndFlush(schedule);
 
-    OffsetDateTime anchor = tomorrow.withHour(16).withMinute(30).withSecond(0).withNano(0);
+    ZonedDateTime anchorZdt = tomorrow.withHour(16).withMinute(30).withSecond(0).withNano(0);
+    OffsetDateTime anchor = anchorZdt.toOffsetDateTime();
 
     // Book anchor appointment
     appointmentAggregateService.saveAppointmentAggregate(

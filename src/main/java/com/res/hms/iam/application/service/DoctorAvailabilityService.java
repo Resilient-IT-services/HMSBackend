@@ -11,6 +11,7 @@ import com.res.hms.iam.application.dto.DoctorAvailabilityResponse;
 import com.res.hms.iam.application.dto.DoctorSlotDTO;
 import com.res.hms.iam.domain.DoctorProfile;
 import com.res.hms.iam.domain.UserContract;
+import java.time.Instant;
 import java.time.LocalDate;
 import java.time.LocalTime;
 import java.time.ZoneId;
@@ -46,8 +47,7 @@ public class DoctorAvailabilityService {
       return new DoctorAvailabilityResponse(Collections.emptyList());
     }
 
-    List<Appointment> appointments =
-        appointmentRepository.findByDoctorIdAndDate(doctorProfile.getId(), date);
+    List<Appointment> appointments = getAppointmentsForDate(doctorProfile.getId(), date, zoneId);
     ZonedDateTime nowHospital = ZonedDateTime.now(clock.withZone(zoneId));
     LocalDate today = nowHospital.toLocalDate();
     LocalTime now = nowHospital.toLocalTime();
@@ -165,8 +165,7 @@ public class DoctorAvailabilityService {
       return Collections.emptyList();
     }
 
-    List<Appointment> appointments =
-        appointmentRepository.findByDoctorIdAndDate(doctorProfile.getId(), date);
+    List<Appointment> appointments = getAppointmentsForDate(doctorProfile.getId(), date, zoneId);
     Set<LocalTime> bookedTimes =
         appointments.stream()
             .map(a -> a.getAppointmentTime().atZone(zoneId).toLocalTime())
@@ -339,5 +338,11 @@ public class DoctorAvailabilityService {
         .findByDoctorIdAndHospitalIdAndDate(doctorId, hospitalId, date)
         .stream()
         .anyMatch(e -> ExceptionType.FULL_DAY_OFF.equals(e.getType()));
+  }
+
+  private List<Appointment> getAppointmentsForDate(UUID doctorId, LocalDate date, ZoneId zoneId) {
+    Instant start = date.atStartOfDay(zoneId).toInstant();
+    Instant end = date.plusDays(1).atStartOfDay(zoneId).toInstant();
+    return appointmentRepository.findByDoctorIdAndDateRange(doctorId, start, end);
   }
 }
