@@ -10,15 +10,13 @@ import static org.mockito.Mockito.when;
 import com.res.hms.clinical.application.appointment.dto.AppointmentDTO;
 import com.res.hms.clinical.application.appointment.dto.VitalsDTO;
 import com.res.hms.clinical.domain.Appointment;
-import com.res.hms.clinical.domain.DoctorSchedule;
 import com.res.hms.clinical.domain.Vitals;
 import com.res.hms.clinical.infrastructure.repository.AppointmentRepository;
-import com.res.hms.clinical.infrastructure.repository.DoctorScheduleRepository;
 import com.res.hms.core.exception.ApiException;
 import com.res.hms.hospital.domain.Hospital;
 import com.res.hms.hospital.infrastructure.repository.HospitalRepository;
-import com.res.hms.iam.domain.UserContract;
-import com.res.hms.iam.infrastructure.repository.UserContractRepository;
+import com.res.hms.iam.application.dto.DoctorAvailabilityResponse;
+import com.res.hms.iam.application.service.DoctorProfileService;
 import java.math.BigDecimal;
 import java.time.Instant;
 import java.time.LocalDate;
@@ -36,22 +34,19 @@ class AppointmentValidationHelperTest {
 
   private HospitalRepository hospitalRepository;
   private AppointmentRepository appointmentRepository;
-  private DoctorScheduleRepository doctorScheduleRepository;
-  private UserContractRepository userContractRepository;
+  private DoctorProfileService doctorProfileService;
   private AppointmentValidationHelper validationHelper;
 
   @BeforeEach
   void setUp() {
     hospitalRepository = mock(HospitalRepository.class);
     appointmentRepository = mock(AppointmentRepository.class);
-    doctorScheduleRepository = mock(DoctorScheduleRepository.class);
-    userContractRepository = mock(UserContractRepository.class);
+    doctorProfileService = mock(DoctorProfileService.class);
     validationHelper =
         new AppointmentValidationHelper(
-            hospitalRepository,
             appointmentRepository,
-            doctorScheduleRepository,
-            userContractRepository);
+            doctorProfileService,
+            hospitalRepository);
   }
 
   @Test
@@ -84,18 +79,17 @@ class AppointmentValidationHelperTest {
 
     AppointmentDTO dto = AppointmentDTO.builder().doctorId(doctorId).appointmentTime(time).build();
 
-    UserContract contract = new UserContract();
-    contract.setId(UUID.randomUUID());
-    when(userContractRepository.findByDoctorIdAndHospitalId(doctorId, hospitalId))
-        .thenReturn(Optional.of(contract));
+    DoctorAvailabilityResponse availability = DoctorAvailabilityResponse.builder()
+        .sessions(List.of(new DoctorAvailabilityResponse.SessionInfo(
+            UUID.randomUUID(),
+            LocalTime.of(9, 0),
+            LocalTime.of(11, 0),
+            30, 0, true, LocalTime.of(9, 30)
+        )))
+        .build();
 
-    DoctorSchedule schedule = new DoctorSchedule();
-    schedule.setStartTime(LocalTime.of(9, 0));
-    schedule.setEndTime(LocalTime.of(11, 0));
-    schedule.setMaxPatients(30); // 120 mins / 30 = 4 mins slot. Buffer = 1 min.
-
-    when(doctorScheduleRepository.findByAssignmentAndDay(eq(contract.getId()), any()))
-        .thenReturn(List.of(schedule));
+    when(doctorProfileService.getAvailableSlots(eq(doctorId), any(LocalDate.class)))
+        .thenReturn(availability);
     when(appointmentRepository.findByDoctorIdAndDateRange(eq(doctorId), any(), any()))
         .thenReturn(Collections.emptyList());
 
@@ -104,37 +98,19 @@ class AppointmentValidationHelperTest {
   }
 
   @Test
-  void testValidateAppointmentProximity_NoAssignment() {
+  void testValidateAppointmentProximity_NoSessions() {
     UUID hospitalId = UUID.randomUUID();
     UUID doctorId = UUID.randomUUID();
-    when(userContractRepository.findByDoctorIdAndHospitalId(doctorId, hospitalId))
-        .thenReturn(Optional.empty());
+    ZoneId zoneId = ZoneId.of("UTC");
+    OffsetDateTime time = OffsetDateTime.now();
 
-    AppointmentDTO dto =
-        AppointmentDTO.builder().doctorId(doctorId).appointmentTime(OffsetDateTime.now()).build();
-    validationHelper.validateAppointmentProximity(
-        dto, hospitalId, ZoneId.of("UTC"), new Instant[2]);
+    AppointmentDTO dto = AppointmentDTO.builder().doctorId(doctorId).appointmentTime(time).build();
+
+    when(doctorProfileService.getAvailableSlots(eq(doctorId), any(LocalDate.class)))
+        .thenReturn(DoctorAvailabilityResponse.builder().sessions(Collections.emptyList()).build());
+
+    validationHelper.validateAppointmentProximity(dto, hospitalId, zoneId, new Instant[2]);
     // Should not throw exception
-  }
-
-  @Test
-  void testValidateAppointmentProximity_NoSchedule() {
-    UUID hospitalId = UUID.randomUUID();
-    UUID doctorId = UUID.randomUUID();
-    UserContract contract = new UserContract();
-    contract.setId(UUID.randomUUID());
-    when(userContractRepository.findByDoctorIdAndHospitalId(doctorId, hospitalId))
-        .thenReturn(Optional.of(contract));
-    when(doctorScheduleRepository.findByAssignmentAndDay(any(), any()))
-        .thenReturn(Collections.emptyList());
-    when(appointmentRepository.findByDoctorIdAndDateRange(any(), any(), any()))
-        .thenReturn(Collections.emptyList());
-
-    AppointmentDTO dto =
-        AppointmentDTO.builder().doctorId(doctorId).appointmentTime(OffsetDateTime.now()).build();
-    validationHelper.validateAppointmentProximity(
-        dto, hospitalId, ZoneId.of("UTC"), new Instant[2]);
-    // Should not throw exception (uses default 60s buffer)
   }
 
   @Test
@@ -164,18 +140,17 @@ class AppointmentValidationHelperTest {
 
     AppointmentDTO dto = AppointmentDTO.builder().doctorId(doctorId).appointmentTime(time).build();
 
-    UserContract contract = new UserContract();
-    contract.setId(UUID.randomUUID());
-    when(userContractRepository.findByDoctorIdAndHospitalId(doctorId, hospitalId))
-        .thenReturn(Optional.of(contract));
+    DoctorAvailabilityResponse availability = DoctorAvailabilityResponse.builder()
+        .sessions(List.of(new DoctorAvailabilityResponse.SessionInfo(
+            UUID.randomUUID(),
+            LocalTime.of(9, 0),
+            LocalTime.of(11, 0),
+            30, 0, true, LocalTime.of(9, 30)
+        )))
+        .build();
 
-    DoctorSchedule schedule = new DoctorSchedule();
-    schedule.setStartTime(LocalTime.of(9, 0));
-    schedule.setEndTime(LocalTime.of(11, 0));
-    schedule.setMaxPatients(30); // 1 min buffer
-
-    when(doctorScheduleRepository.findByAssignmentAndDay(eq(contract.getId()), any()))
-        .thenReturn(List.of(schedule));
+    when(doctorProfileService.getAvailableSlots(eq(doctorId), any(LocalDate.class)))
+        .thenReturn(availability);
 
     Appointment existing = new Appointment();
     existing.setAppointmentTime(Instant.parse("2026-06-05T10:00:00Z"));
