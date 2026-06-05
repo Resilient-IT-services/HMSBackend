@@ -155,9 +155,7 @@ class DoctorAvailabilityServiceUnitTest {
     // Mock an appointment at 15:30
     com.res.hms.clinical.domain.Appointment apt = new com.res.hms.clinical.domain.Appointment();
     apt.setAppointmentTime(
-        java.time.LocalDateTime.of(today, LocalTime.of(15, 30))
-            .atZone(zoneId)
-            .toInstant());
+        java.time.LocalDateTime.of(today, LocalTime.of(15, 30)).atZone(zoneId).toInstant());
     when(appointmentRepository.findByDoctorIdAndDateRange(any(), any(), any()))
         .thenReturn(List.of(apt));
 

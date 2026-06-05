@@ -27,8 +27,6 @@ public class MedicineDTO {
   @NotBlank(message = "Strength is required")
   private String strength;
 
-
-
   @NotNull(message = "Medicine form is required")
   private com.res.hms.pharmacy.domain.MedicineForm form;
 

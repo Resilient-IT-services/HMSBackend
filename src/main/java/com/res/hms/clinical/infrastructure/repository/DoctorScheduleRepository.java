@@ -18,5 +18,5 @@ public interface DoctorScheduleRepository extends JpaRepository<DoctorSchedule, 
   @Query(
       "SELECT s FROM DoctorSchedule s WHERE s.assignmentId = :assignmentId AND s.dayOfWeek = :dayOfWeek")
   List<DoctorSchedule> findByAssignmentAndDay(
-      @Param("assignmentId") UUID assignmentId, @Param("dayOfWeek") Short dayOfWeek);
+      @Param("assignmentId") UUID assignmentId, @Param("dayOfWeek") java.time.DayOfWeek dayOfWeek);
 }

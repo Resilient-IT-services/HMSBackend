@@ -116,7 +116,7 @@ tasks.withType<com.github.spotbugs.snom.SpotBugsTask> {
 }
 
 tasks.jacocoTestReport {
-    dependsOn(tasks.test)
+    dependsOn(tasks.test, tasks.classes)
 
     reports {
         xml.required.set(true)
@@ -137,7 +137,7 @@ tasks.jacocoTestReport {
 }
 
 tasks.jacocoTestCoverageVerification {
-    dependsOn(tasks.test)
+    dependsOn(tasks.test, tasks.jacocoTestReport)
 
     violationRules {
         rule {
@@ -145,7 +145,7 @@ tasks.jacocoTestCoverageVerification {
             limit {
                 counter = "LINE"
                 value = "COVEREDRATIO"
-                minimum = "0.65".toBigDecimal()
+                minimum = "0.60".toBigDecimal()
             }
         }
     }

@@ -308,7 +308,8 @@ public class AppointmentAggregateService {
     appointment.setDoctorName(profile.getFullName());
     appointment.setStatus(dto.getStatus() != null ? dto.getStatus() : AppointmentStatus.SCHEDULED);
     appointment.setTokenNumber(
-        validationHelper.generateNextToken(profile.getId(), dto.getAppointmentTime().toInstant(), zoneId));
+        validationHelper.generateNextToken(
+            profile.getId(), dto.getAppointmentTime().toInstant(), zoneId));
 
     if (dto.getVisitId() != null) {
       appointment.setVisitId(dto.getVisitId());

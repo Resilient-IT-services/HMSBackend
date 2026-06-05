@@ -11,12 +11,8 @@ import com.res.hms.finance.application.service.PaymentService;
 import com.res.hms.finance.domain.FinanceSourceType;
 import com.res.hms.finance.domain.Invoice;
 import com.res.hms.finance.domain.InvoiceItemCategory;
-import com.res.hms.pharmacy.application.dto.PharmacyReturnRequest;
-import com.res.hms.pharmacy.application.dto.PharmacyReturnResponse;
-import com.res.hms.pharmacy.application.dto.PharmacyStockDTO;
 import com.res.hms.pharmacy.application.dto.QuickPharmacySaleRequest;
 import com.res.hms.pharmacy.application.dto.QuickPharmacySaleResponse;
-import com.res.hms.pharmacy.domain.PharmacyReturn;
 import com.res.hms.pharmacy.domain.PharmacySale;
 import com.res.hms.pharmacy.domain.PharmacySaleItem;
 import com.res.hms.pharmacy.domain.PharmacySaleItemTax;
@@ -32,7 +28,6 @@ import com.res.hms.tax.application.dto.TaxCalculationResult;
 import com.res.hms.tax.application.service.TaxEngineService;
 import java.math.BigDecimal;
 import java.time.Instant;
-import java.time.LocalDate;
 import java.util.List;
 import java.util.UUID;
 import lombok.RequiredArgsConstructor;
@@ -63,6 +58,7 @@ public class PharmacySaleService {
   private final com.res.hms.clinical.application.service.PatientVisitService patientVisitService;
   private final TaxEngineService taxEngineService;
   private final com.res.hms.clinical.infrastructure.repository.PatientRepository patientRepository;
+  private final PharmacyStockService pharmacyStockService;
 
   @Transactional
   public QuickPharmacySaleResponse createSale(QuickPharmacySaleRequest request) {
@@ -484,106 +480,5 @@ public class PharmacySaleService {
   public List<Object[]> searchRecentCustomers(String search) {
     UUID hospitalId = hospitalContext.requireHospitalId();
     return pharmacySaleRepository.searchRecentWalkinCustomers(hospitalId, search);
-  }
-
-  @Transactional
-  public PharmacyReturnResponse returnStock(PharmacyReturnRequest request) {
-    UUID hospitalId = hospitalContext.requireHospitalId();
-    PharmacySaleItem saleItem =
-        pharmacySaleItemRepository
-            .findByIdAndHospitalId(request.getSaleItemId(), hospitalId)
-            .orElseThrow(
-                () -> new ApiException("NOT_FOUND", "Sale item not found", HttpStatus.NOT_FOUND));
-
-    if (request.getQuantity() > saleItem.getQuantity()) {
-      throw new ApiException(
-          "INVALID_RETURN", "Return quantity exceeds sale quantity", HttpStatus.BAD_REQUEST);
-    }
-
-    PharmacyStock stock = saleItem.getStock();
-    stock.setQuantity(stock.getQuantity() + request.getQuantity());
-
-    PharmacyReturn pharmacyReturn = new PharmacyReturn();
-    pharmacyReturn.setHospitalId(hospitalId);
-    pharmacyReturn.setSaleItem(saleItem);
-    pharmacyReturn.setStock(stock);
-    pharmacyReturn.setQuantity(request.getQuantity());
-    pharmacyReturn.setReason(request.getReason());
-    pharmacyReturn = pharmacyReturnRepository.save(pharmacyReturn);
-
-    return PharmacyReturnResponse.builder()
-        .id(pharmacyReturn.getId())
-        .saleItemId(saleItem.getId())
-        .stockId(stock.getId())
-        .quantity(pharmacyReturn.getQuantity())
-        .reason(pharmacyReturn.getReason())
-        .build();
-  }
-
-  @Transactional(readOnly = true)
-  public List<PharmacyStockDTO> expiryAlerts(int days) {
-    UUID hospitalId = hospitalContext.requireHospitalId();
-    LocalDate today = LocalDate.now();
-    return pharmacyStockRepository
-        .findExpiringBatches(hospitalId, today, today.plusDays(days))
-        .stream()
-        .map(this::toStockDto)
-        .toList();
-  }
-
-  @Transactional(readOnly = true)
-  public com.res.hms.core.api.PageResponse<PharmacyStockDTO> lowStockAlerts(
-      org.springframework.data.domain.Pageable pageable,
-      String search,
-      java.util.Map<String, String> filters) {
-    UUID hospitalId = hospitalContext.requireHospitalId();
-
-    int threshold = 20;
-    if (filters.containsKey("threshold")) {
-      try {
-        threshold = Integer.parseInt(filters.get("threshold"));
-      } catch (Exception ignored) {
-      }
-    }
-
-    com.res.hms.core.util.SpecificationBuilder<PharmacyStock> builder =
-        new com.res.hms.core.util.SpecificationBuilder<>(
-            filters, search, java.util.List.of("medicine.name", "batchNumber"));
-
-    final int finalThreshold = threshold;
-    org.springframework.data.jpa.domain.Specification<PharmacyStock> spec = builder.build();
-    org.springframework.data.jpa.domain.Specification<PharmacyStock> fixedSpec =
-        (root, query, cb) -> {
-          return cb.and(
-              cb.equal(root.get("hospitalId"), hospitalId),
-              cb.lessThan(root.get("quantity"), finalThreshold));
-        };
-
-    return com.res.hms.core.api.PageResponse.from(
-        pharmacyStockRepository
-            .findAll(
-                org.springframework.data.jpa.domain.Specification.where(spec).and(fixedSpec),
-                pageable)
-            .map(this::toStockDto));
-  }
-
-  private PharmacyStockDTO toStockDto(PharmacyStock stock) {
-    Long total =
-        pharmacyStockRepository.availableQuantity(
-            stock.getHospitalId(), stock.getMedicine().getId(), LocalDate.now());
-    return PharmacyStockDTO.builder()
-        .id(stock.getId())
-        .medicineId(stock.getMedicine().getId())
-        .medicineName(stock.getMedicine().getName())
-        .genericName(stock.getMedicine().getGenericName())
-        .composition(stock.getMedicine().getComposition())
-        .batchNumber(stock.getBatchNumber())
-        .expiryDate(stock.getExpiryDate())
-        .quantity(stock.getQuantity())
-        .totalQuantity(total.intValue())
-        .purchasePrice(stock.getPurchasePrice())
-        .sellingPrice(stock.getSellingPrice())
-        .price(stock.getSellingPrice())
-        .build();
   }
 }

@@ -1,25 +1,39 @@
 package com.res.hms.pharmacy.application.service;
 
+import com.res.hms.core.api.PageResponse;
 import com.res.hms.core.exception.ApiException;
 import com.res.hms.core.tenant.HospitalContext;
+import com.res.hms.core.util.SpecificationBuilder;
 import com.res.hms.hospital.domain.Hospital;
 import com.res.hms.hospital.infrastructure.repository.HospitalRepository;
+import com.res.hms.pharmacy.application.dto.PharmacyReturnRequest;
+import com.res.hms.pharmacy.application.dto.PharmacyReturnResponse;
+import com.res.hms.pharmacy.application.dto.PharmacyStockDTO;
 import com.res.hms.pharmacy.application.dto.StockRequest;
 import com.res.hms.pharmacy.domain.Medicine;
+import com.res.hms.pharmacy.domain.PharmacyReturn;
+import com.res.hms.pharmacy.domain.PharmacySaleItem;
 import com.res.hms.pharmacy.domain.PharmacyStock;
 import com.res.hms.pharmacy.domain.PharmacyStockTransaction;
 import com.res.hms.pharmacy.domain.PharmacyStockTransactionTax;
 import com.res.hms.pharmacy.domain.PharmacyStockTransactionType;
 import com.res.hms.pharmacy.infrastructure.repository.MedicineRepository;
+import com.res.hms.pharmacy.infrastructure.repository.PharmacyReturnRepository;
+import com.res.hms.pharmacy.infrastructure.repository.PharmacySaleItemRepository;
 import com.res.hms.pharmacy.infrastructure.repository.PharmacyStockRepository;
 import com.res.hms.pharmacy.infrastructure.repository.PharmacyStockTransactionRepository;
 import com.res.hms.tax.application.dto.TaxCalculationRequest;
 import com.res.hms.tax.application.dto.TaxCalculationResult;
 import com.res.hms.tax.application.service.TaxEngineService;
 import java.math.BigDecimal;
+import java.time.LocalDate;
+import java.util.List;
+import java.util.Map;
 import java.util.UUID;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.jpa.domain.Specification;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -35,6 +49,8 @@ public class PharmacyStockService {
   private final HospitalRepository hospitalRepository;
   private final TaxEngineService taxEngineService;
   private final HospitalContext hospitalContext;
+  private final PharmacySaleItemRepository pharmacySaleItemRepository;
+  private final PharmacyReturnRepository pharmacyReturnRepository;
 
   @Transactional
   public PharmacyStock stockIn(StockRequest request) {
@@ -75,8 +91,7 @@ public class PharmacyStockService {
             .quantity(quantity)
             .unitPrice(purchasePrice)
             .taxableAmount(totalAmount)
-            .isTaxInclusive(
-                request.isTaxInclusive()) // We need to add this to TaxCalculationRequest
+            .isTaxInclusive(request.isTaxInclusive())
             .hospitalState(hospital.getState())
             .billingState(
                 hasText(request.getSupplierState())
@@ -140,6 +155,102 @@ public class PharmacyStockService {
     transactionRepository.save(tx);
 
     return savedStock;
+  }
+
+  @Transactional
+  public PharmacyReturnResponse returnStock(PharmacyReturnRequest request) {
+    UUID hospitalId = hospitalContext.requireHospitalId();
+    PharmacySaleItem saleItem =
+        pharmacySaleItemRepository
+            .findByIdAndHospitalId(request.getSaleItemId(), hospitalId)
+            .orElseThrow(
+                () -> new ApiException("NOT_FOUND", "Sale item not found", HttpStatus.NOT_FOUND));
+
+    if (request.getQuantity() > saleItem.getQuantity()) {
+      throw new ApiException(
+          "INVALID_RETURN", "Return quantity exceeds sale quantity", HttpStatus.BAD_REQUEST);
+    }
+
+    PharmacyStock stock = saleItem.getStock();
+    stock.setQuantity(stock.getQuantity() + request.getQuantity());
+
+    PharmacyReturn pharmacyReturn = new PharmacyReturn();
+    pharmacyReturn.setHospitalId(hospitalId);
+    pharmacyReturn.setSaleItem(saleItem);
+    pharmacyReturn.setStock(stock);
+    pharmacyReturn.setQuantity(request.getQuantity());
+    pharmacyReturn.setReason(request.getReason());
+    pharmacyReturn = pharmacyReturnRepository.save(pharmacyReturn);
+
+    return PharmacyReturnResponse.builder()
+        .id(pharmacyReturn.getId())
+        .saleItemId(saleItem.getId())
+        .stockId(stock.getId())
+        .quantity(pharmacyReturn.getQuantity())
+        .reason(pharmacyReturn.getReason())
+        .build();
+  }
+
+  @Transactional(readOnly = true)
+  public List<PharmacyStockDTO> expiryAlerts(int days) {
+    UUID hospitalId = hospitalContext.requireHospitalId();
+    LocalDate today = LocalDate.now();
+    return pharmacyStockRepository
+        .findExpiringBatches(hospitalId, today, today.plusDays(days))
+        .stream()
+        .map(this::toStockDto)
+        .toList();
+  }
+
+  @Transactional(readOnly = true)
+  public PageResponse<PharmacyStockDTO> lowStockAlerts(
+      Pageable pageable, String search, Map<String, String> filters) {
+    UUID hospitalId = hospitalContext.requireHospitalId();
+
+    int threshold = 20;
+    if (filters.containsKey("threshold")) {
+      try {
+        threshold = Integer.parseInt(filters.get("threshold"));
+      } catch (Exception ignored) {
+      }
+    }
+
+    SpecificationBuilder<PharmacyStock> builder =
+        new SpecificationBuilder<>(filters, search, List.of("medicine.name", "batchNumber"));
+
+    final int finalThreshold = threshold;
+    Specification<PharmacyStock> spec = builder.build();
+    Specification<PharmacyStock> fixedSpec =
+        (root, query, cb) -> {
+          return cb.and(
+              cb.equal(root.get("hospitalId"), hospitalId),
+              cb.lessThan(root.get("quantity"), finalThreshold));
+        };
+
+    return PageResponse.from(
+        pharmacyStockRepository
+            .findAll(Specification.where(spec).and(fixedSpec), pageable)
+            .map(this::toStockDto));
+  }
+
+  public PharmacyStockDTO toStockDto(PharmacyStock stock) {
+    Long total =
+        pharmacyStockRepository.availableQuantity(
+            stock.getHospitalId(), stock.getMedicine().getId(), LocalDate.now());
+    return PharmacyStockDTO.builder()
+        .id(stock.getId())
+        .medicineId(stock.getMedicine().getId())
+        .medicineName(stock.getMedicine().getName())
+        .genericName(stock.getMedicine().getGenericName())
+        .composition(stock.getMedicine().getComposition())
+        .batchNumber(stock.getBatchNumber())
+        .expiryDate(stock.getExpiryDate())
+        .quantity(stock.getQuantity())
+        .totalQuantity(total.intValue())
+        .purchasePrice(stock.getPurchasePrice())
+        .sellingPrice(stock.getSellingPrice())
+        .price(stock.getSellingPrice())
+        .build();
   }
 
   private boolean hasText(String s) {

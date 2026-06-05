@@ -42,6 +42,7 @@ public class MedicineController {
 
   private final MedicineService medicineService;
   private final PharmacySaleService pharmacySaleService;
+  private final com.res.hms.pharmacy.application.service.PharmacyStockService pharmacyStockService;
 
   @PostMapping("/medicines/import")
   @PreAuthorize("hasRole('SUPER_ADMIN')")
@@ -167,14 +168,14 @@ public class MedicineController {
   @PreAuthorize(SecurityConstants.HAS_ADMIN_OR_PHARMACIST)
   public ApiResponse<PharmacyReturnResponse> returnStock(
       @Valid @RequestBody PharmacyReturnRequest request) {
-    return ApiResponse.success(pharmacySaleService.returnStock(request));
+    return ApiResponse.success(pharmacyStockService.returnStock(request));
   }
 
   @GetMapping("/alerts/expiry")
   @PreAuthorize(SecurityConstants.HAS_ADMIN_OR_PHARMACIST)
   public ApiResponse<List<PharmacyStockDTO>> expiryAlerts(
       @RequestParam(defaultValue = "30") int days) {
-    return ApiResponse.success(pharmacySaleService.expiryAlerts(days));
+    return ApiResponse.success(pharmacyStockService.expiryAlerts(days));
   }
 
   @GetMapping("/alerts/low-stock")
@@ -186,6 +187,6 @@ public class MedicineController {
           org.springframework.data.domain.Pageable pageable,
       @RequestParam(required = false) String search,
       @RequestParam java.util.Map<String, String> allParams) {
-    return ApiResponse.success(pharmacySaleService.lowStockAlerts(pageable, search, allParams));
+    return ApiResponse.success(pharmacyStockService.lowStockAlerts(pageable, search, allParams));
   }
 }
