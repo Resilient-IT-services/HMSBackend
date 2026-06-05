@@ -584,6 +584,7 @@ public class PharmacySaleService {
         .purchasePrice(stock.getPurchasePrice())
         .sellingPrice(stock.getSellingPrice())
         .price(stock.getSellingPrice())
+        .hsnCode(stock.getMedicine().getHsnCode())
         .build();
   }
 }
