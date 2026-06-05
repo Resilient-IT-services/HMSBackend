@@ -458,7 +458,7 @@ public class PharmacySaleService {
             .saleNumber(sale.getSaleNumber())
             .invoiceId(sale.getInvoiceId())
             .totalAmount(sale.getTotalAmount())
-            .status(sale.getStatus().name())
+            .status(sale.getStatus() != null ? sale.getStatus().name() : null)
             .customerName(sale.getCustomerName())
             .customerPhone(sale.getCustomerPhone())
             .externalDoctorName(sale.getExternalDoctorName())
