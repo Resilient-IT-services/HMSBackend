@@ -458,7 +458,7 @@ public class PharmacySaleService {
             .saleNumber(sale.getSaleNumber())
             .invoiceId(sale.getInvoiceId())
             .totalAmount(sale.getTotalAmount())
-            .status(sale.getStatus() != null ? sale.getStatus().name() : null)
+            .status(sale.getStatus().name())
             .customerName(sale.getCustomerName())
             .customerPhone(sale.getCustomerPhone())
             .externalDoctorName(sale.getExternalDoctorName())
@@ -584,7 +584,6 @@ public class PharmacySaleService {
         .purchasePrice(stock.getPurchasePrice())
         .sellingPrice(stock.getSellingPrice())
         .price(stock.getSellingPrice())
-        .hsnCode(stock.getMedicine().getHsnCode())
         .build();
   }
 }

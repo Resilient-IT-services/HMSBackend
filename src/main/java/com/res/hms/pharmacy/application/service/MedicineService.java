@@ -15,7 +15,6 @@ import com.res.hms.pharmacy.infrastructure.repository.HospitalMedicineCatalogRep
 import com.res.hms.pharmacy.infrastructure.repository.MedicineRepository;
 import com.res.hms.pharmacy.infrastructure.repository.PharmacyStockRepository;
 import jakarta.persistence.criteria.Predicate;
-import java.io.IOException;
 import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.List;

@@ -11,13 +11,11 @@ import com.res.hms.clinical.infrastructure.repository.AppointmentRepository;
 import com.res.hms.core.exception.ApiException;
 import com.res.hms.core.tenant.HospitalContext;
 import com.res.hms.iam.application.service.DoctorProfileService;
-import com.res.hms.iam.application.dto.DoctorAvailabilityResponse;
 import com.res.hms.iam.domain.DoctorProfile;
 import java.time.Instant;
 import java.time.LocalDate;
 import java.time.ZoneId;
 import java.time.ZonedDateTime;
-import java.util.List;
 import java.util.UUID;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -41,20 +39,71 @@ public class AppointmentAggregateService {
   private final com.res.hms.clinical.application.service.PatientVisitService patientVisitService;
   private final com.res.hms.hospital.infrastructure.repository.HospitalRepository
       hospitalRepository;
-
   private final com.res.hms.core.service.DomainEventPublisher eventPublisher;
+  private final AppointmentValidationHelper validationHelper;
 
   @Transactional
   public AppointmentDTO saveAppointmentAggregate(AppointmentDTO dto) {
     log.info("Starting aggregate save for appointment");
     UUID hospitalId = hospitalContext.requireHospitalId();
-    ZoneId zoneId = getHospitalZoneId(hospitalId);
+    ZoneId zoneId = validationHelper.getHospitalZoneId(hospitalId);
 
     Appointment existing = null;
     if (dto.getId() != null) {
       existing = appointmentRepository.findById(dto.getId()).orElse(null);
     }
 
+    validateStatusForUpdate(dto, existing);
+
+    // Validation: Prevent past bookings
+    boolean isNew = dto.getId() == null;
+    if (isNew
+        && dto.getAppointmentTime().isBefore(java.time.OffsetDateTime.now().minusMinutes(1))) {
+      throw new ApiException(
+          "PAST_BOOKING_DISALLOWED",
+          "Cannot book an appointment in the past.",
+          HttpStatus.BAD_REQUEST);
+    }
+
+    ZonedDateTime appointmentZdt = dto.getAppointmentTime().atZoneSameInstant(zoneId);
+    LocalDate appointmentDate = appointmentZdt.toLocalDate();
+    Instant[] range = validationHelper.getDayRange(appointmentDate, zoneId);
+
+    validateDoctorOverlap(dto, range, isNew);
+
+    if (dto.getVitals() != null) {
+      vitalValidationService.validate(dto.getVitals());
+    }
+
+    Appointment appointment;
+    if (isNew) {
+      appointment = createAppointment(dto, hospitalId, zoneId);
+    } else {
+      appointment =
+          appointmentRepository
+              .findByIdAndHospitalId(dto.getId(), hospitalId)
+              .orElseThrow(
+                  () ->
+                      new ApiException("NOT_FOUND", "Appointment not found", HttpStatus.NOT_FOUND));
+      updateAppointment(appointment, dto, hospitalId, zoneId);
+    }
+
+    validationHelper.validateAppointmentProximity(dto, hospitalId, zoneId, range);
+
+    appointmentRepository.saveAndFlush(appointment);
+
+    if (isNew) {
+      eventPublisher.publish(
+          "appointment",
+          appointment.getId(),
+          new com.res.hms.clinical.application.event.AppointmentBookedEvent(
+              appointment.getId(), appointment.getPatientId(), hospitalId));
+    }
+
+    return appointmentService.toDto(appointment);
+  }
+
+  private void validateStatusForUpdate(AppointmentDTO dto, Appointment existing) {
     if (existing != null
         && (existing.getStatus() == AppointmentStatus.PRESCRIPTION_FINALIZED
             || existing.getStatus() == AppointmentStatus.COMPLETED)) {
@@ -77,22 +126,9 @@ public class AppointmentAggregateService {
             HttpStatus.BAD_REQUEST);
       }
     }
+  }
 
-    // Validation: Prevent past bookings
-    boolean isNew = dto.getId() == null;
-    if (isNew
-        && dto.getAppointmentTime().isBefore(java.time.OffsetDateTime.now().minusMinutes(1))) {
-      throw new ApiException(
-          "PAST_BOOKING_DISALLOWED",
-          "Cannot book an appointment in the past.",
-          HttpStatus.BAD_REQUEST);
-    }
-
-    // Validation: Prevent multiple appointments with same doctor on same day (Hospital Timezone)
-    ZonedDateTime appointmentZdt = dto.getAppointmentTime().atZoneSameInstant(zoneId);
-    LocalDate appointmentDate = appointmentZdt.toLocalDate();
-    Instant[] range = getDayRange(appointmentDate, zoneId);
-
+  private void validateDoctorOverlap(AppointmentDTO dto, Instant[] range, boolean isNew) {
     boolean doctorOverlap;
     if (isNew) {
       doctorOverlap =
@@ -119,45 +155,12 @@ public class AppointmentAggregateService {
           "Patient already has an appointment with this doctor on the selected date",
           HttpStatus.BAD_REQUEST);
     }
-
-    if (dto.getVitals() != null) {
-      vitalValidationService.validate(dto.getVitals());
-    }
-
-    Appointment appointment;
-    if (isNew) {
-      appointment = createAppointment(dto, hospitalId, zoneId);
-    } else {
-      appointment =
-          appointmentRepository
-              .findByIdAndHospitalId(dto.getId(), hospitalId)
-              .orElseThrow(
-                  () ->
-                      new ApiException("NOT_FOUND", "Appointment not found", HttpStatus.NOT_FOUND));
-      updateAppointment(appointment, dto, hospitalId, zoneId);
-    }
-
-    validateAppointmentProximity(dto, hospitalId);
-
-    appointmentRepository.saveAndFlush(appointment);
-
-    if (isNew) {
-      eventPublisher.publish(
-          "appointment",
-          appointment.getId(),
-          new com.res.hms.clinical.application.event.AppointmentBookedEvent(
-              appointment.getId(), appointment.getPatientId(), hospitalId));
-    }
-
-    return appointmentService.toDto(appointment);
   }
 
   @Transactional
   public AppointmentDTO updateVitals(UUID id, VitalsDTO vitalsDto) {
     UUID hospitalId = hospitalContext.requireHospitalId();
-
     vitalValidationService.validate(vitalsDto);
-
     Appointment appointment =
         appointmentRepository
             .findByIdAndHospitalId(id, hospitalId)
@@ -179,20 +182,18 @@ public class AppointmentAggregateService {
       vitals.setAppointment(appointment);
       appointment.setVitals(vitals);
     }
-    mapVitalsDtoToEntity(vitalsDto, vitals);
+    validationHelper.mapVitalsDtoToEntity(vitalsDto, vitals);
 
     if (appointment.getStatus() == AppointmentStatus.PAID
         || appointment.getStatus() == AppointmentStatus.SCHEDULED) {
       appointment.setStatus(AppointmentStatus.VITALS_RECORDED);
     }
-
     return appointmentService.toDto(appointmentRepository.save(appointment));
   }
 
   @Transactional
   public AppointmentDTO updateConsultation(UUID id, AppointmentDTO dto) {
     UUID hospitalId = hospitalContext.requireHospitalId();
-
     Appointment appointment =
         appointmentRepository
             .findByIdAndHospitalId(id, hospitalId)
@@ -235,7 +236,6 @@ public class AppointmentAggregateService {
   @Transactional
   public AppointmentDTO resetPrescription(UUID id) {
     UUID hospitalId = hospitalContext.requireHospitalId();
-
     Appointment appointment =
         appointmentRepository
             .findByIdAndHospitalId(id, hospitalId)
@@ -254,10 +254,8 @@ public class AppointmentAggregateService {
     changes.put("reason", "Appointment prescription reset by admin");
     details.setAfter(changes);
     logEvent.setDetails(details);
-
     eventPublisher.publish("audit", id, logEvent);
 
-    // Move back to vitals recorded so consultation can continue
     appointment.setStatus(AppointmentStatus.VITALS_RECORDED);
     return appointmentService.toDto(appointmentRepository.save(appointment));
   }
@@ -265,9 +263,9 @@ public class AppointmentAggregateService {
   @Transactional
   public AppointmentDTO startNextConsultation(UUID doctorId) {
     UUID hospitalId = hospitalContext.requireHospitalId();
-    ZoneId zoneId = getHospitalZoneId(hospitalId);
+    ZoneId zoneId = validationHelper.getHospitalZoneId(hospitalId);
     LocalDate todayDate = ZonedDateTime.now(zoneId).toLocalDate();
-    Instant[] range = getDayRange(todayDate, zoneId);
+    Instant[] range = validationHelper.getDayRange(todayDate, zoneId);
 
     java.util.List<Appointment> runningAppointments =
         appointmentRepository.findRunningConsultationsForUpdateByDateRange(
@@ -295,18 +293,7 @@ public class AppointmentAggregateService {
 
     Appointment nextAppointment = waitingAppointments.get(0);
     nextAppointment.setStatus(AppointmentStatus.CONSULTATION_STARTED);
-
     return appointmentService.toDto(appointmentRepository.saveAndFlush(nextAppointment));
-  }
-
-  private void mapVitalsDtoToEntity(VitalsDTO dto, com.res.hms.clinical.domain.Vitals entity) {
-    entity.setBloodPressure(dto.getBloodPressure());
-    entity.setSystolic(dto.getSystolic());
-    entity.setDiastolic(dto.getDiastolic());
-    entity.setHeartRate(dto.getHeartRate());
-    entity.setOxygenLevel(dto.getOxygenLevel());
-    entity.setTemperature(dto.getTemperature());
-    entity.setWeight(dto.getWeight());
   }
 
   private Appointment createAppointment(AppointmentDTO dto, UUID hospitalId, ZoneId zoneId) {
@@ -321,7 +308,7 @@ public class AppointmentAggregateService {
     appointment.setDoctorName(profile.getFullName());
     appointment.setStatus(dto.getStatus() != null ? dto.getStatus() : AppointmentStatus.SCHEDULED);
     appointment.setTokenNumber(
-        generateNextToken(profile.getId(), dto.getAppointmentTime().toInstant(), zoneId));
+        validationHelper.generateNextToken(profile.getId(), dto.getAppointmentTime().toInstant(), zoneId));
 
     if (dto.getVisitId() != null) {
       appointment.setVisitId(dto.getVisitId());
@@ -362,31 +349,17 @@ public class AppointmentAggregateService {
 
     if (doctorChanged || dateChanged) {
       appointment.setTokenNumber(
-          generateNextToken(
+          validationHelper.generateNextToken(
               appointment.getDoctorId(), dto.getAppointmentTime().toInstant(), zoneId));
     }
 
     updateAppointmentFields(appointment, dto, hospitalId, zoneId);
   }
 
-  private Integer generateNextToken(UUID doctorId, Instant appointmentTime, ZoneId zoneId) {
-    LocalDate date = appointmentTime.atZone(zoneId).toLocalDate();
-    Instant[] range = getDayRange(date, zoneId);
-    Integer lastToken =
-        appointmentRepository.findMaxTokenByDoctorAndDateRange(doctorId, range[0], range[1]);
-
-    if (lastToken == null) {
-      return 1;
-    }
-
-    return lastToken + 1;
-  }
-
   private void updateAppointmentFields(
       Appointment appointment, AppointmentDTO dto, UUID hospitalId, ZoneId zoneId) {
     java.time.OffsetDateTime appointmentTime = dto.getAppointmentTime();
     appointment.setAppointmentTime(appointmentTime.toInstant());
-    // Use hospital timezone for these derived fields
     ZonedDateTime zdt = appointmentTime.atZoneSameInstant(zoneId);
     appointment.setAppointmentDate(zdt.toLocalDate());
     appointment.setAppointmentSlotTime(zdt.toLocalTime());
@@ -400,18 +373,13 @@ public class AppointmentAggregateService {
         vitals.setAppointment(appointment);
         appointment.setVitals(vitals);
       }
-      vitals.setBloodPressure(dto.getVitals().getBloodPressure());
-      vitals.setHeartRate(dto.getVitals().getHeartRate());
-      vitals.setTemperature(dto.getVitals().getTemperature());
-      vitals.setWeight(dto.getVitals().getWeight());
-      vitals.setOxygenLevel(dto.getVitals().getOxygenLevel());
+      validationHelper.mapVitalsDtoToEntity(dto.getVitals(), vitals);
     }
   }
 
   @Transactional
   public AppointmentDTO completeConsultation(UUID id) {
     UUID hospitalId = hospitalContext.requireHospitalId();
-
     Appointment appointment =
         appointmentRepository
             .findByIdAndHospitalId(id, hospitalId)
@@ -441,14 +409,13 @@ public class AppointmentAggregateService {
     }
 
     appointment.setStatus(AppointmentStatus.COMPLETED);
-
     return appointmentService.toDto(appointmentRepository.saveAndFlush(appointment));
   }
 
   private void ensureNoOtherConsultationRunning(Appointment appointment) {
-    ZoneId zoneId = getHospitalZoneId(appointment.getHospitalId());
+    ZoneId zoneId = validationHelper.getHospitalZoneId(appointment.getHospitalId());
     LocalDate appointmentDate = appointment.getAppointmentTime().atZone(zoneId).toLocalDate();
-    Instant[] range = getDayRange(appointmentDate, zoneId);
+    Instant[] range = validationHelper.getDayRange(appointmentDate, zoneId);
 
     java.util.List<Appointment> runningAppointments =
         appointmentRepository.findRunningConsultationsForUpdateByDateRange(
@@ -462,96 +429,5 @@ public class AppointmentAggregateService {
       throw new ApiException(
           "CONSULTATION_RUNNING", "One consultation is already in progress", HttpStatus.CONFLICT);
     }
-  }
-
-  private void validateAppointmentProximity(AppointmentDTO dto, UUID hospitalId) {
-    if (dto.getDoctorId() == null || dto.getAppointmentTime() == null) {
-      return;
-    }
-
-    // Get hospital timezone
-    ZoneId zoneId = getHospitalZoneId(hospitalId);
-
-    ZonedDateTime appointmentZdt = dto.getAppointmentTime().atZoneSameInstant(zoneId);
-    LocalDate appointmentDate = appointmentZdt.toLocalDate();
-    java.time.LocalTime requestedTime = appointmentZdt.toLocalTime();
-
-    DoctorAvailabilityResponse availability =
-        doctorProfileService.getAvailableSlots(dto.getDoctorId(), appointmentDate);
-
-    if (availability.getSessions() == null || availability.getSessions().isEmpty()) {
-      return;
-    }
-
-    availability.getSessions().stream()
-        .filter(
-            s ->
-                !requestedTime.isBefore(s.getStartTime()) && requestedTime.isBefore(s.getEndTime()))
-        .findFirst()
-        .ifPresent(
-            session -> {
-              Integer max = session.getMaxPatients();
-              long bufferSeconds;
-
-              if (max == null || max <= 0) {
-                bufferSeconds = 60; // Default 60 seconds if calculation fails
-              } else {
-                long sessionMins =
-                    java.time.Duration.between(session.getStartTime(), session.getEndTime())
-                        .toMinutes();
-                double avgSlotMins = (double) sessionMins / max;
-                bufferSeconds = (long) (avgSlotMins * 0.25 * 60);
-              }
-
-              if (bufferSeconds <= 0) bufferSeconds = 1;
-
-              Instant requestedInstant = dto.getAppointmentTime().toInstant();
-              Instant startBuffer = requestedInstant.minusSeconds(bufferSeconds);
-              Instant endBuffer = requestedInstant.plusSeconds(bufferSeconds);
-
-              Instant[] range = getDayRange(appointmentDate, zoneId);
-              List<Appointment> existingAppointments =
-                  appointmentRepository.findByDoctorIdAndDateRange(
-                      dto.getDoctorId(), range[0], range[1]);
-
-              for (Appointment existing : existingAppointments) {
-                if (dto.getId() != null && existing.getId().equals(dto.getId())) {
-                  continue;
-                }
-
-                Instant existingInstant = existing.getAppointmentTime();
-                // Check if existing appointment is within [requestedTime - buffer, requestedTime + buffer]
-                if (!existingInstant.isBefore(startBuffer) && !existingInstant.isAfter(endBuffer)) {
-                  throw new ApiException(
-                      "APPOINTMENT_TOO_CLOSE",
-                      "Another appointment is already booked too close to this time. "
-                          + (max == null || max <= 0
-                              ? "A default 60-second buffer is required."
-                              : "For a doctor with "
-                                  + max
-                                  + " patients per "
-                                  + java.time.Duration.between(
-                                          session.getStartTime(), session.getEndTime())
-                                      .toMinutes()
-                                  + " minute session, a buffer is required."),
-                      HttpStatus.BAD_REQUEST);
-                }
-              }
-            });
-  }
-
-  private ZoneId getHospitalZoneId(UUID hospitalId) {
-    String tz =
-        hospitalRepository
-            .findById(hospitalId)
-            .map(com.res.hms.hospital.domain.Hospital::getTimezone)
-            .orElse("Asia/Kolkata");
-    return ZoneId.of(tz);
-  }
-
-  private Instant[] getDayRange(LocalDate date, ZoneId zoneId) {
-    Instant start = date.atStartOfDay(zoneId).toInstant();
-    Instant end = date.plusDays(1).atStartOfDay(zoneId).toInstant();
-    return new Instant[] {start, end};
   }
 }

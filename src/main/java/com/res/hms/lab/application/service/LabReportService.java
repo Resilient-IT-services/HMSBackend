@@ -97,72 +97,8 @@ public class LabReportService {
               .map(LabDepartment::getName)
               .orElse("General");
 
-      List<LabReportPreviewDTO.ReportParameterDTO> parameterDTOs = new ArrayList<>();
-
-      List<LabTestParameter> testParams =
-          parameterRepository.findAll().stream()
-              .filter(p -> test.getId().equals(p.getTestId()))
-              .collect(Collectors.toList());
-
-      // Find latest result for this order test
-      LabSample latestSample =
-          sampleRepository.findAll().stream()
-              .filter(s -> ot.getId().equals(s.getOrderTestId()))
-              .findFirst()
-              .orElse(null);
-
-      LabResult latestResult = null;
-      if (latestSample != null) {
-        latestResult =
-            resultRepository.findAll().stream()
-                .filter(r -> latestSample.getId().equals(r.getSampleId()))
-                .findFirst()
-                .orElse(null);
-      }
-
-      for (LabTestParameter tp : testParams) {
-        String value = "--";
-        Boolean abnormal = false;
-        Boolean critical = false;
-
-        if (latestResult != null) {
-          final UUID resId = latestResult.getId();
-          LabResultParameter rp =
-              resultParameterRepository.findAll().stream()
-                  .filter(
-                      p -> resId.equals(p.getResultId()) && tp.getId().equals(p.getParameterId()))
-                  .findFirst()
-                  .orElse(null);
-
-          if (rp != null) {
-            value = rp.getResultValue();
-            abnormal = rp.getAbnormal();
-            critical = rp.getCritical();
-          }
-        }
-
-        // Fetch reference range
-        String refRange = "N/A";
-        List<LabReferenceRange> ranges =
-            rangeRepository.findAll().stream()
-                .filter(r -> tp.getId().equals(r.getParameterId()))
-                .collect(Collectors.toList());
-
-        if (!ranges.isEmpty()) {
-          LabReferenceRange r = ranges.get(0); // Simplification
-          refRange = r.getMinValue() + " - " + r.getMaxValue();
-        }
-
-        parameterDTOs.add(
-            LabReportPreviewDTO.ReportParameterDTO.builder()
-                .parameterName(tp.getParameterName())
-                .resultValue(value)
-                .unit(tp.getUnit())
-                .referenceRange(refRange)
-                .abnormal(abnormal)
-                .critical(critical)
-                .build());
-      }
+      List<LabReportPreviewDTO.ReportParameterDTO> parameterDTOs =
+          generateParameterDTOs(ot, test.getId());
 
       testGroups.add(
           LabReportPreviewDTO.ReportTestGroupDTO.builder()
@@ -187,6 +123,76 @@ public class LabReportService {
         .doctorName(doctorName)
         .testGroups(testGroups)
         .build();
+  }
+
+  private List<LabReportPreviewDTO.ReportParameterDTO> generateParameterDTOs(
+      LabOrderTest ot, UUID testId) {
+    List<LabReportPreviewDTO.ReportParameterDTO> parameterDTOs = new ArrayList<>();
+
+    List<LabTestParameter> testParams =
+        parameterRepository.findAll().stream()
+            .filter(p -> testId.equals(p.getTestId()))
+            .collect(Collectors.toList());
+
+    // Find latest result for this order test
+    LabSample latestSample =
+        sampleRepository.findAll().stream()
+            .filter(s -> ot.getId().equals(s.getOrderTestId()))
+            .findFirst()
+            .orElse(null);
+
+    LabResult latestResult = null;
+    if (latestSample != null) {
+      latestResult =
+          resultRepository.findAll().stream()
+              .filter(r -> latestSample.getId().equals(r.getSampleId()))
+              .findFirst()
+              .orElse(null);
+    }
+
+    for (LabTestParameter tp : testParams) {
+      String value = "--";
+      Boolean abnormal = false;
+      Boolean critical = false;
+
+      if (latestResult != null) {
+        final UUID resId = latestResult.getId();
+        LabResultParameter rp =
+            resultParameterRepository.findAll().stream()
+                .filter(p -> resId.equals(p.getResultId()) && tp.getId().equals(p.getParameterId()))
+                .findFirst()
+                .orElse(null);
+
+        if (rp != null) {
+          value = rp.getResultValue();
+          abnormal = rp.getAbnormal();
+          critical = rp.getCritical();
+        }
+      }
+
+      // Fetch reference range
+      String refRange = "N/A";
+      List<LabReferenceRange> ranges =
+          rangeRepository.findAll().stream()
+              .filter(r -> tp.getId().equals(r.getParameterId()))
+              .collect(Collectors.toList());
+
+      if (!ranges.isEmpty()) {
+        LabReferenceRange r = ranges.get(0); // Simplification
+        refRange = r.getMinValue() + " - " + r.getMaxValue();
+      }
+
+      parameterDTOs.add(
+          LabReportPreviewDTO.ReportParameterDTO.builder()
+              .parameterName(tp.getParameterName())
+              .resultValue(value)
+              .unit(tp.getUnit())
+              .referenceRange(refRange)
+              .abnormal(abnormal)
+              .critical(critical)
+              .build());
+    }
+    return parameterDTOs;
   }
 
   private String calculateAge(LocalDate dob) {

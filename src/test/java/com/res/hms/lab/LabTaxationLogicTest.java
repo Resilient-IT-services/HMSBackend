@@ -1,7 +1,8 @@
 package com.res.hms.lab;
 
-import static org.junit.jupiter.api.Assertions.*;
-import static org.mockito.Mockito.*;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.when;
 
 import com.res.hms.tax.application.dto.TaxCalculationRequest;
 import com.res.hms.tax.application.dto.TaxCalculationResult;
