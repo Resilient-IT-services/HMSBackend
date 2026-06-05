@@ -19,6 +19,7 @@ public class MedicineSummaryDTO {
   private com.res.hms.pharmacy.domain.MedicineForm form;
   private String category;
   private String manufacturer;
+  private String hsnCode;
   private Integer currentStock;
   private Integer thresholdQuantity;
 }

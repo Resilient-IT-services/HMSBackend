@@ -59,19 +59,13 @@ public class InvoicePdfExportService {
       BigDecimal total = invoice.getTotalAmount();
 
       if (filterCategory != null) {
-        items =
-            items.stream()
-                .filter(item -> filterCategory.equals(item.getCategory()))
-                .collect(Collectors.toList());
+        items = items.stream()
+            .filter(item -> filterCategory.equals(item.getCategory()))
+            .collect(Collectors.toList());
 
-        subtotal =
-            items.stream().map(InvoiceItem::getSubtotal).reduce(BigDecimal.ZERO, BigDecimal::add);
-        discount =
-            items.stream()
-                .map(InvoiceItem::getDiscountAmount)
-                .reduce(BigDecimal.ZERO, BigDecimal::add);
-        tax =
-            items.stream().map(InvoiceItem::getTaxAmount).reduce(BigDecimal.ZERO, BigDecimal::add);
+        subtotal = items.stream().map(InvoiceItem::getSubtotal).reduce(BigDecimal.ZERO, BigDecimal::add);
+        discount = items.stream().map(InvoiceItem::getDiscountAmount).reduce(BigDecimal.ZERO, BigDecimal::add);
+        tax = items.stream().map(InvoiceItem::getTaxAmount).reduce(BigDecimal.ZERO, BigDecimal::add);
         total = subtotal.add(tax).subtract(discount);
       }
 
@@ -90,12 +84,7 @@ public class InvoicePdfExportService {
     }
   }
 
-  private void addBranding(
-      Document document,
-      InvoicePdfContext context,
-      Invoice invoice,
-      InvoiceItemCategory filterCategory)
-      throws Exception {
+  private void addBranding(Document document, InvoicePdfContext context, Invoice invoice, InvoiceItemCategory filterCategory) throws Exception {
     Font brandFont = FontFactory.getFont(FontFactory.HELVETICA_BOLD, 26, UI_ORANGE);
     Font mainTitleFont = FontFactory.getFont(FontFactory.HELVETICA_BOLD, 15, Color.BLACK);
     Font textBold = FontFactory.getFont(FontFactory.HELVETICA_BOLD, 10, Color.BLACK);
@@ -111,14 +100,10 @@ public class InvoicePdfExportService {
 
     String invoiceTitle = "CONSULTATION BILLING INVOICE";
     if (InvoiceItemCategory.PHARMACY.equals(filterCategory)) {
-      invoiceTitle = "PHARMACY BILLING RECEIPT";
+        invoiceTitle = "PHARMACY BILLING RECEIPT";
     } else if (invoice.getItems() != null && !invoice.getItems().isEmpty()) {
-      boolean allPharmacy =
-          invoice.getItems().stream()
-              .allMatch(
-                  item ->
-                      com.res.hms.finance.domain.InvoiceItemCategory.PHARMACY.equals(
-                          item.getCategory()));
+      boolean allPharmacy = invoice.getItems().stream()
+          .allMatch(item -> com.res.hms.finance.domain.InvoiceItemCategory.PHARMACY.equals(item.getCategory()));
       if (allPharmacy) {
         invoiceTitle = "PHARMACY BILLING INVOICE";
       }
@@ -153,12 +138,7 @@ public class InvoicePdfExportService {
     pNamePara.setSpacingBefore(4);
     pNamePara.setSpacingAfter(4);
     patientCell.addElement(pNamePara);
-
-    if (context.isWalkIn()) {
-      patientCell.addElement(new Paragraph("MOBILE: " + context.patientPhone(), mutedLabel));
-    } else {
-      patientCell.addElement(new Paragraph("PATIENT ID: " + context.patientCode(), mutedLabel));
-    }
+    patientCell.addElement(new Paragraph("PATIENT ID: " + context.patientCode(), mutedLabel));
     infoLayoutGrid.addCell(patientCell);
 
     PdfPCell serviceCell = createInfoCell(sectionTitleFont, "DOCTOR RECORD");
@@ -212,8 +192,7 @@ public class InvoicePdfExportService {
     document.add(separatorLine);
   }
 
-  private void addSummaryMetrics(Document document, Invoice invoice, BigDecimal totalAmount)
-      throws Exception {
+  private void addSummaryMetrics(Document document, Invoice invoice, BigDecimal totalAmount) throws Exception {
     Font metaValueFont = FontFactory.getFont(FontFactory.HELVETICA_BOLD, 20, Color.BLACK);
     Font textBold = FontFactory.getFont(FontFactory.HELVETICA_BOLD, 10, Color.BLACK);
 
@@ -271,9 +250,7 @@ public class InvoicePdfExportService {
     document.add(detailsGrid);
   }
 
-  private void addFinancialSummary(
-      Document document, BigDecimal subtotal, BigDecimal discount, BigDecimal tax, BigDecimal total)
-      throws Exception {
+  private void addFinancialSummary(Document document, BigDecimal subtotal, BigDecimal discount, BigDecimal tax, BigDecimal total) throws Exception {
     Font textBold = FontFactory.getFont(FontFactory.HELVETICA_BOLD, 10, Color.BLACK);
     PdfPTable financialSummaryTable = new PdfPTable(2);
     financialSummaryTable.setWidthPercentage(100);
@@ -286,9 +263,15 @@ public class InvoicePdfExportService {
     PdfPTable mathematicalSubGrid = new PdfPTable(2);
     mathematicalSubGrid.setWidthPercentage(100);
     mathematicalSubGrid.setWidths(new float[] {55f, 45f});
-    addCalculatedRow(mathematicalSubGrid, "Gross Base Fee Charges", "₹ " + subtotal, textBold);
-    addCalculatedRow(mathematicalSubGrid, "Discount Deductions", "- ₹ " + discount, textBold);
-    addCalculatedRow(mathematicalSubGrid, "Tax Component Values", "₹ " + tax, textBold);
+    addCalculatedRow(
+        mathematicalSubGrid,
+        "Gross Base Fee Charges",
+        "₹ " + subtotal,
+        textBold);
+    addCalculatedRow(
+        mathematicalSubGrid, "Discount Deductions", "- ₹ " + discount, textBold);
+    addCalculatedRow(
+        mathematicalSubGrid, "Tax Component Values", "₹ " + tax, textBold);
     PdfPCell finalFooterLabel =
         new PdfPCell(
             new Phrase(
@@ -301,7 +284,8 @@ public class InvoicePdfExportService {
     PdfPCell finalFooterValue =
         new PdfPCell(
             new Phrase(
-                "₹ " + total, FontFactory.getFont(FontFactory.HELVETICA_BOLD, 13, UI_ORANGE)));
+                "₹ " + total,
+                FontFactory.getFont(FontFactory.HELVETICA_BOLD, 13, UI_ORANGE)));
     finalFooterValue.setBorder(Rectangle.NO_BORDER);
     finalFooterValue.setBackgroundColor(SOFT_ORANGE_BG);
     finalFooterValue.setPadding(10);
