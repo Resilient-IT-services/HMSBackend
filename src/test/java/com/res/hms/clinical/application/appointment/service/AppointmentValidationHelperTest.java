@@ -44,9 +44,7 @@ class AppointmentValidationHelperTest {
     doctorProfileService = mock(DoctorProfileService.class);
     validationHelper =
         new AppointmentValidationHelper(
-            appointmentRepository,
-            doctorProfileService,
-            hospitalRepository);
+            appointmentRepository, doctorProfileService, hospitalRepository);
   }
 
   @Test
@@ -79,14 +77,19 @@ class AppointmentValidationHelperTest {
 
     AppointmentDTO dto = AppointmentDTO.builder().doctorId(doctorId).appointmentTime(time).build();
 
-    DoctorAvailabilityResponse availability = DoctorAvailabilityResponse.builder()
-        .sessions(List.of(new DoctorAvailabilityResponse.SessionInfo(
-            UUID.randomUUID(),
-            LocalTime.of(9, 0),
-            LocalTime.of(11, 0),
-            30, 0, true, LocalTime.of(9, 30)
-        )))
-        .build();
+    DoctorAvailabilityResponse availability =
+        DoctorAvailabilityResponse.builder()
+            .sessions(
+                List.of(
+                    new DoctorAvailabilityResponse.SessionInfo(
+                        UUID.randomUUID(),
+                        LocalTime.of(9, 0),
+                        LocalTime.of(11, 0),
+                        30,
+                        0,
+                        true,
+                        LocalTime.of(9, 30))))
+            .build();
 
     when(doctorProfileService.getAvailableSlots(eq(doctorId), any(LocalDate.class)))
         .thenReturn(availability);
@@ -140,14 +143,19 @@ class AppointmentValidationHelperTest {
 
     AppointmentDTO dto = AppointmentDTO.builder().doctorId(doctorId).appointmentTime(time).build();
 
-    DoctorAvailabilityResponse availability = DoctorAvailabilityResponse.builder()
-        .sessions(List.of(new DoctorAvailabilityResponse.SessionInfo(
-            UUID.randomUUID(),
-            LocalTime.of(9, 0),
-            LocalTime.of(11, 0),
-            30, 0, true, LocalTime.of(9, 30)
-        )))
-        .build();
+    DoctorAvailabilityResponse availability =
+        DoctorAvailabilityResponse.builder()
+            .sessions(
+                List.of(
+                    new DoctorAvailabilityResponse.SessionInfo(
+                        UUID.randomUUID(),
+                        LocalTime.of(9, 0),
+                        LocalTime.of(11, 0),
+                        30,
+                        0,
+                        true,
+                        LocalTime.of(9, 30))))
+            .build();
 
     when(doctorProfileService.getAvailableSlots(eq(doctorId), any(LocalDate.class)))
         .thenReturn(availability);

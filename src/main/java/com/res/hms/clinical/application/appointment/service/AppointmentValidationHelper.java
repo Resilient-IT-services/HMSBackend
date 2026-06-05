@@ -76,13 +76,11 @@ public class AppointmentValidationHelper {
             });
   }
 
-  private long calculateBuffer(
-      DoctorAvailabilityResponse.SessionInfo session, Integer max) {
+  private long calculateBuffer(DoctorAvailabilityResponse.SessionInfo session, Integer max) {
     if (max == null || max <= 0) {
       return 60;
     }
-    long sessionMins =
-        Duration.between(session.getStartTime(), session.getEndTime()).toMinutes();
+    long sessionMins = Duration.between(session.getStartTime(), session.getEndTime()).toMinutes();
     double avgSlotMins = (double) sessionMins / max;
     long buffer = (long) (avgSlotMins * 0.25 * 60);
     return buffer <= 0 ? 1 : buffer;
@@ -98,8 +96,7 @@ public class AppointmentValidationHelper {
                 : "For a doctor with "
                     + max
                     + " patients per "
-                    + Duration.between(session.getStartTime(), session.getEndTime())
-                        .toMinutes()
+                    + Duration.between(session.getStartTime(), session.getEndTime()).toMinutes()
                     + " minute session, a buffer is required."),
         HttpStatus.BAD_REQUEST);
   }
