@@ -260,11 +260,7 @@ public class DoctorAvailabilityService {
       List<DoctorSlotDTO> allSlots) {
     boolean isPastTime = false;
     if (date.equals(today)) {
-      if (slotEnd.equals(LocalTime.MIDNIGHT)) {
-        isPastTime = false;
-      } else {
-        isPastTime = !slotEnd.isAfter(now);
-      }
+      isPastTime = current.isBefore(now);
     }
     boolean isPast = date.isBefore(today) || isPastTime;
     boolean isBooked = bookedTimes.contains(current);
@@ -305,16 +301,14 @@ public class DoctorAvailabilityService {
 
     LocalTime current = sessionStart;
 
-    // If today, skip slots that are already past (slot end is not in future)
+    // If today, skip slots that are already past (slot start time is not in past)
     if (date.equals(today)) {
       while (current.isBefore(sessionEnd)
           || (sessionEnd.equals(LocalTime.MIDNIGHT) && !current.equals(LocalTime.MIDNIGHT))) {
-        LocalTime slotEnd = current.plusMinutes(durationMinutes);
-        if (slotEnd.isAfter(now)
-            || (slotEnd.equals(LocalTime.MIDNIGHT) && !now.equals(LocalTime.MIDNIGHT))) {
+        if (!current.isBefore(now)) {
           break;
         }
-        current = slotEnd;
+        current = current.plusMinutes(durationMinutes);
         if (current.equals(LocalTime.MIDNIGHT)) {
           break;
         }

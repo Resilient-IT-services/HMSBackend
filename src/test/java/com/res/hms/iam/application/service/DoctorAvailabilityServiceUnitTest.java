@@ -196,10 +196,10 @@ class DoctorAvailabilityServiceUnitTest {
 
     var slots = doctorAvailabilityService.getSlots(doctorProfile, assignment, today, zoneId);
 
-    // Slot 15:00 - 15:15: End time (15:15) is BEFORE now (15:30) -> SESSION_EXPIRED
-    // Slot 15:15 - 15:30: End time (15:30) is EQUAL TO now (15:30) -> SESSION_EXPIRED
-    // Slot 15:30 - 15:45: End time (15:45) is AFTER now (15:30) -> AVAILABLE
-    // Slot 15:45 - 16:00: End time (16:00) is AFTER now (15:30) -> AVAILABLE
+    // Slot 15:00 - 15:15: Start time (15:00) is BEFORE now (15:30) -> SESSION_EXPIRED
+    // Slot 15:15 - 15:30: Start time (15:15) is BEFORE now (15:30) -> SESSION_EXPIRED
+    // Slot 15:30 - 15:45: Start time (15:30) is NOT BEFORE now (15:30) -> AVAILABLE
+    // Slot 15:45 - 16:00: Start time (15:45) is NOT BEFORE now (15:30) -> AVAILABLE
 
     assertEquals(4, slots.size());
     assertEquals("SESSION_EXPIRED", slots.get(0).getStatus());
@@ -210,5 +210,71 @@ class DoctorAvailabilityServiceUnitTest {
     assertTrue(slots.get(2).isAvailable());
     assertEquals("AVAILABLE", slots.get(3).getStatus());
     assertTrue(slots.get(3).isAvailable());
+  }
+
+  @Test
+  void testGetSlots_Today_StartInPast_SessionExpired() {
+    // Clock is fixed at 15:31 IST (10:01 UTC)
+    java.time.Clock clock31 =
+        java.time.Clock.fixed(
+            java.time.Instant.parse("2026-06-04T10:01:00Z"), java.time.ZoneId.of("UTC"));
+    doctorAvailabilityService =
+        new DoctorAvailabilityService(
+            scheduleRepository, availabilityOverrideRepository, appointmentRepository, clock31);
+
+    LocalDate today = LocalDate.of(2026, 6, 4);
+    when(availabilityOverrideRepository.findByDoctorIdAndHospitalIdAndDate(any(), any(), eq(today)))
+        .thenReturn(List.of());
+    when(appointmentRepository.findByDoctorIdAndDateRange(any(), any(), any()))
+        .thenReturn(List.of());
+
+    DoctorSchedule schedule = new DoctorSchedule();
+    schedule.setDayOfWeek(today.getDayOfWeek());
+    schedule.setStartTime(LocalTime.of(15, 30));
+    schedule.setEndTime(LocalTime.of(16, 00));
+    schedule.setSlotDurationMinutes(15);
+
+    when(scheduleRepository.findByAssignmentId(any())).thenReturn(List.of(schedule));
+
+    var slots = doctorAvailabilityService.getSlots(doctorProfile, assignment, today, zoneId);
+
+    // Slot 15:30 - 15:45: Start time (15:30) is BEFORE now (15:31) -> SESSION_EXPIRED
+    // Slot 15:45 - 16:00: Start time (15:45) is AFTER now (15:31) -> AVAILABLE
+    assertEquals(2, slots.size());
+    assertEquals("SESSION_EXPIRED", slots.get(0).getStatus());
+    assertEquals("AVAILABLE", slots.get(1).getStatus());
+  }
+
+  @Test
+  void testGetAvailableSlots_Today_StartInPast_SuggestedTime() {
+    // Clock is fixed at 15:31 IST (10:01 UTC)
+    java.time.Clock clock31 =
+        java.time.Clock.fixed(
+            java.time.Instant.parse("2026-06-04T10:01:00Z"), java.time.ZoneId.of("UTC"));
+    doctorAvailabilityService =
+        new DoctorAvailabilityService(
+            scheduleRepository, availabilityOverrideRepository, appointmentRepository, clock31);
+
+    LocalDate today = LocalDate.of(2026, 6, 4);
+    when(availabilityOverrideRepository.findByDoctorIdAndHospitalIdAndDate(any(), any(), eq(today)))
+        .thenReturn(List.of());
+    when(appointmentRepository.findByDoctorIdAndDateRange(any(), any(), any()))
+        .thenReturn(List.of());
+
+    DoctorSchedule schedule = new DoctorSchedule();
+    schedule.setDayOfWeek(today.getDayOfWeek());
+    schedule.setStartTime(LocalTime.of(15, 0));
+    schedule.setEndTime(LocalTime.of(16, 0));
+    schedule.setSlotDurationMinutes(15);
+
+    when(scheduleRepository.findByAssignmentId(any())).thenReturn(List.of(schedule));
+
+    var response =
+        doctorAvailabilityService.getAvailableSlots(doctorProfile, assignment, today, zoneId);
+
+    // Now is 15:31.
+    // Slots: 15:00, 15:15, 15:30 (all start in past)
+    // Next suggested should be 15:45
+    assertEquals(LocalTime.of(15, 45), response.getSessions().get(0).getNextSuggestedTime());
   }
 }
