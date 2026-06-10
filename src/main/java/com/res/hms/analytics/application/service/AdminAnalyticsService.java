@@ -48,6 +48,7 @@ public class AdminAnalyticsService {
     long activeUsersToday =
         userAccountRepository.countActiveUsersSince(
             java.time.Instant.now().truncatedTo(java.time.temporal.ChronoUnit.DAYS));
+    long operationalUsers = userAccountRepository.countByActive(true);
     long newHospitalsThisMonth =
         hospitalRepository.countByCreatedAtAfter(
             java.time.ZonedDateTime.now()
@@ -62,6 +63,7 @@ public class AdminAnalyticsService {
         .totalPatients(totalPatients)
         .totalRevenue(totalRevenue)
         .activeUsersToday(activeUsersToday)
+        .operationalUsers(operationalUsers)
         .newHospitalsThisMonth(newHospitalsThisMonth)
         .systemUptime("99.9%")
         .build();

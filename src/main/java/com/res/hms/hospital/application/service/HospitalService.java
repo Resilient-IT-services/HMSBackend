@@ -34,7 +34,7 @@ public class HospitalService {
       java.util.Map<String, String> filters) {
     com.res.hms.core.util.SpecificationBuilder<Hospital> builder =
         new com.res.hms.core.util.SpecificationBuilder<>(
-            filters, search, java.util.List.of("name", "code"));
+            filters, search, java.util.List.of("name", "code", "city"));
 
     return PageResponse.from(
         hospitalRepository.findAll(builder.build(), pageable).map(this::toDto));

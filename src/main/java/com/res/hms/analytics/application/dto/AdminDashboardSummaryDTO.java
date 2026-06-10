@@ -26,6 +26,7 @@ public class AdminDashboardSummaryDTO {
     private long totalHospitals;
     private long totalUsers;
     private long activeUsersToday;
+    private long operationalUsers;
     private long totalDoctors;
     private BigDecimal totalRevenue;
     private long newHospitalsThisMonth;

@@ -217,7 +217,21 @@ class PrescriptionControllerIntegrationTest {
     apt.setStatus(AppointmentStatus.VITALS_RECORDED);
     UUID aptId = appointmentRepository.save(apt).getId();
 
-    PrescriptionDTO dto = PrescriptionDTO.builder().appointmentId(aptId).items(List.of()).build();
+    Medicine med = new Medicine();
+    med.setName("Medicine for " + patientName);
+    UUID medId = medicineRepository.save(med).getId();
+
+    PrescriptionDTO dto =
+        PrescriptionDTO.builder()
+            .appointmentId(aptId)
+            .items(
+                List.of(
+                    PrescriptionItemDTO.builder()
+                        .medicineId(medId)
+                        .dosage("1 tab")
+                        .duration("1 day")
+                        .build()))
+            .build();
 
     mockMvc
         .perform(
