@@ -54,6 +54,8 @@ public class PrescriptionService {
           List<Predicate> predicates = new ArrayList<>();
           predicates.add(cb.equal(root.get("hospitalId"), hospitalId));
           predicates.add(cb.equal(root.get("deleted"), false));
+          // Only show prescriptions with items in the pharmacy queue
+          predicates.add(cb.greaterThan(cb.size(root.get("items")), 0));
           return cb.and(predicates.toArray(new Predicate[0]));
         };
 
@@ -114,6 +116,8 @@ public class PrescriptionService {
           List<Predicate> predicates = new ArrayList<>();
           predicates.add(cb.equal(root.get("hospitalId"), hospitalId));
           predicates.add(cb.equal(root.get("deleted"), false));
+          // Only show prescriptions with items in the pharmacy queue
+          predicates.add(cb.greaterThan(cb.size(root.get("items")), 0));
           return cb.and(predicates.toArray(new Predicate[0]));
         };
 
@@ -213,6 +217,18 @@ public class PrescriptionService {
   @Transactional
   public void saveOrUpdatePrescription(Appointment appointment, PrescriptionDTO dto) {
     UUID hospitalId = hospitalContext.requireHospitalId();
+
+    // If items are empty or null, we shouldn't have a prescription record for the pharmacy
+    if (dto.getItems() == null || dto.getItems().isEmpty()) {
+      prescriptionRepository
+          .findByAppointmentId(appointment.getId())
+          .ifPresent(
+              p -> {
+                p.getItems().clear();
+                prescriptionRepository.delete(p);
+              });
+      return;
+    }
 
     Prescription prescription =
         prescriptionRepository
