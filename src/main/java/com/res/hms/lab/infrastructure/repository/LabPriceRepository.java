@@ -8,4 +8,6 @@ import org.springframework.stereotype.Repository;
 
 @Repository
 public interface LabPriceRepository
-    extends JpaRepository<LabPrice, UUID>, JpaSpecificationExecutor<LabPrice> {}
+    extends JpaRepository<LabPrice, UUID>, JpaSpecificationExecutor<LabPrice> {
+  java.util.Optional<LabPrice> findByHospitalIdAndTestId(UUID hospitalId, UUID testId);
+}

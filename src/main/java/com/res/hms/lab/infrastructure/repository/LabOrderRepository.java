@@ -8,4 +8,9 @@ import org.springframework.stereotype.Repository;
 
 @Repository
 public interface LabOrderRepository
-    extends JpaRepository<LabOrder, UUID>, JpaSpecificationExecutor<LabOrder> {}
+    extends JpaRepository<LabOrder, UUID>, JpaSpecificationExecutor<LabOrder> {
+  java.util.List<LabOrder> findByPatientId(UUID patientId);
+
+  long countByHospitalIdAndStatusAndOrderedAtGreaterThanEqual(
+      UUID hospitalId, String status, java.time.Instant orderedAt);
+}

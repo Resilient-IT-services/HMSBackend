@@ -49,7 +49,8 @@ public class LabTestService {
         saved.getId(),
         AuditAction.CREATE,
         new AuditDetail(
-            null, java.util.Map.of("message", "Created new Global Lab Test: " + saved.getTestName())));
+            null,
+            java.util.Map.of("message", "Created new Global Lab Test: " + saved.getTestName())));
 
     return mapper.toDto(saved);
   }
@@ -107,7 +108,8 @@ public class LabTestService {
                   AuditAction.DELETE,
                   new AuditDetail(
                       null,
-                      java.util.Map.of("message", "Deleted Global Lab Test: " + entity.getTestName())));
+                      java.util.Map.of(
+                          "message", "Deleted Global Lab Test: " + entity.getTestName())));
             });
   }
 }
