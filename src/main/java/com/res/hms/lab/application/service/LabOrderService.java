@@ -28,6 +28,22 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import com.res.hms.core.api.PageResponse;
+import com.res.hms.lab.application.dto.LabQueueItemDTO;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
+
+import org.springframework.jdbc.core.JdbcTemplate;
+import com.res.hms.core.exception.ApiException;
+import org.springframework.http.HttpStatus;
+import java.time.LocalDate;
+import java.time.format.DateTimeFormatter;
+
+import com.res.hms.lab.application.dto.LabTestParameterDTO;
+import com.res.hms.lab.infrastructure.repository.LabTestParameterRepository;
+
 @Service
 @RequiredArgsConstructor
 public class LabOrderService {
@@ -40,7 +56,66 @@ public class LabOrderService {
   private final LabSampleRepository sampleRepository;
   private final LabResultRepository resultRepository;
   private final LabResultParameterRepository resultParameterRepository;
+  private final LabTestParameterRepository testParameterRepository;
   private final HospitalContext hospitalContext;
+  private final JdbcTemplate jdbcTemplate;
+  private final LabMapper mapper;
+
+  @Transactional(readOnly = true)
+  public List<LabTestParameterDTO> getParametersForOrderTest(UUID orderTestId) {
+    LabOrderTest orderTest = orderTestRepository.findById(orderTestId)
+        .orElseThrow(() -> new ApiException("NOT_FOUND", "Order test not found", HttpStatus.NOT_FOUND));
+        
+    if (orderTest.getTestId() == null) {
+       // MVP: Packages not fully supported for parameter fetching here yet
+       return List.of();
+    }
+    
+    return testParameterRepository.findByTestIdOrderByDisplayOrderAsc(orderTest.getTestId())
+        .stream()
+        .map(mapper::toDto)
+        .collect(Collectors.toList());
+  }
+
+  @Transactional(readOnly = true)
+  public PageResponse<LabQueueItemDTO> getLabQueue(String status, int page, int size) {
+    UUID hospitalId = hospitalContext.requireHospitalId();
+    Pageable pageable = PageRequest.of(page, size, Sort.by("orderedAt").descending());
+    
+    Page<LabQueueItemDTO> queue = orderTestRepository.findQueueByHospitalAndStatus(hospitalId, status, pageable);
+    return new PageResponse<>(queue.getContent(), queue.getNumber(), queue.getSize(), queue.getTotalElements(), queue.getTotalPages());
+  }
+
+  @Transactional
+  public String collectSample(UUID orderTestId) {
+    UUID hospitalId = hospitalContext.requireHospitalId();
+    UUID userId = hospitalContext.requireUserId();
+
+    LabOrderTest orderTest = orderTestRepository.findById(orderTestId)
+        .orElseThrow(() -> new ApiException("NOT_FOUND", "Order test not found", HttpStatus.NOT_FOUND));
+
+    if (!"PENDING".equals(orderTest.getStatus())) {
+        throw new ApiException("INVALID_STATE", "Sample already collected or processed", HttpStatus.BAD_REQUEST);
+    }
+
+    String datePart = LocalDate.now().format(DateTimeFormatter.ofPattern("yyyyMMdd"));
+    Long seq = jdbcTemplate.queryForObject("SELECT nextval('lab.sample_seq')", Long.class);
+    String sampleNumber = String.format("SMP-%s-%05d", datePart, seq);
+
+    LabSample sample = new LabSample();
+    sample.setHospitalId(hospitalId);
+    sample.setOrderTestId(orderTestId);
+    sample.setSampleNumber(sampleNumber);
+    sample.setCollectedBy(userId);
+    sample.setCollectedAt(Instant.now());
+    sample.setStatus("COLLECTED");
+    sampleRepository.save(sample);
+
+    orderTest.setStatus("SAMPLE_COLLECTED");
+    orderTestRepository.save(orderTest);
+
+    return sampleNumber;
+  }
 
   @Transactional
   public LabOrder createOrder(LabOrderCreateRequest request) {

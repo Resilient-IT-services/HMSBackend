@@ -8,4 +8,6 @@ import org.springframework.stereotype.Repository;
 
 @Repository
 public interface LabTestParameterRepository
-    extends JpaRepository<LabTestParameter, UUID>, JpaSpecificationExecutor<LabTestParameter> {}
+    extends JpaRepository<LabTestParameter, UUID>, JpaSpecificationExecutor<LabTestParameter> {
+  java.util.List<LabTestParameter> findByTestIdOrderByDisplayOrderAsc(UUID testId);
+}

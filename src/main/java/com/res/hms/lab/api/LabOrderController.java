@@ -16,6 +16,12 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
+import com.res.hms.core.api.PageResponse;
+import com.res.hms.lab.application.dto.LabQueueItemDTO;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.RequestParam;
+import java.util.UUID;
+
 @RestController
 @RequestMapping("/api/v1/lab/orders")
 @RequiredArgsConstructor
@@ -34,6 +40,27 @@ public class LabOrderController {
   @PreAuthorize("hasAnyRole('LAB_TECHNICIAN', 'ADMIN', 'SUPER_ADMIN')")
   public ApiResponse<List<LabOrderResponseDTO>> getQueue() {
     return ApiResponse.success(service.getQueue());
+  }
+
+  @GetMapping("/queue/paged")
+  @PreAuthorize("hasAnyRole('LAB_TECHNICIAN', 'PATHOLOGIST', 'ADMIN')")
+  public ApiResponse<PageResponse<LabQueueItemDTO>> getPagedQueue(
+      @RequestParam(required = false) String status,
+      @RequestParam(defaultValue = "0") int page,
+      @RequestParam(defaultValue = "20") int size) {
+    return ApiResponse.success(service.getLabQueue(status, page, size));
+  }
+
+  @PostMapping("/tests/{orderTestId}/collect")
+  @PreAuthorize("hasRole('LAB_TECHNICIAN')")
+  public ApiResponse<String> collectSample(@PathVariable UUID orderTestId) {
+    return ApiResponse.success(service.collectSample(orderTestId));
+  }
+
+  @GetMapping("/tests/{orderTestId}/parameters")
+  @PreAuthorize("hasAnyRole('LAB_TECHNICIAN', 'PATHOLOGIST', 'ADMIN', 'SUPER_ADMIN')")
+  public ApiResponse<List<com.res.hms.lab.application.dto.LabTestParameterDTO>> getParametersByOrderTest(@PathVariable UUID orderTestId) {
+    return ApiResponse.success(service.getParametersForOrderTest(orderTestId));
   }
 
   @PostMapping("/results")
