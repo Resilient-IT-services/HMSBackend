@@ -12,4 +12,10 @@ public interface LabTestRepository
   boolean existsByHospitalIdAndTestCodeIgnoreCase(UUID hospitalId, String testCode);
 
   boolean existsByHospitalIdAndTestNameIgnoreCase(UUID hospitalId, String testName);
+
+  boolean existsByHospitalIdIsNullAndTestCodeIgnoreCase(String testCode);
+
+  boolean existsByHospitalIdIsNullAndTestNameIgnoreCase(String testName);
+
+  java.util.List<LabTest> findByHospitalIdOrHospitalIdIsNull(UUID hospitalId);
 }

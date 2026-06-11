@@ -21,9 +21,11 @@ public class LabDepartmentService {
 
   @Transactional(readOnly = true)
   public List<LabDepartmentDTO> listAll() {
-    UUID hospitalId = hospitalContext.requireHospitalId();
-    return repository.findAll().stream()
-        .filter(d -> d.getHospitalId().equals(hospitalId))
+    UUID hospitalId = hospitalContext.getHospitalIdOrNull();
+    if (hospitalId == null && hospitalContext.isSuperAdmin()) {
+      return repository.findAll().stream().map(mapper::toDto).collect(Collectors.toList());
+    }
+    return repository.findByHospitalIdOrHospitalIdIsNull(hospitalId).stream()
         .map(mapper::toDto)
         .collect(Collectors.toList());
   }
@@ -31,7 +33,13 @@ public class LabDepartmentService {
   @Transactional
   public LabDepartmentDTO create(LabDepartmentDTO dto) {
     LabDepartment entity = mapper.toEntity(dto);
-    entity.setHospitalId(hospitalContext.requireHospitalId());
+    UUID hospitalId = hospitalContext.isSuperAdmin() ? null : hospitalContext.getHospitalIdOrNull();
+
+    if (hospitalId == null && !hospitalContext.isSuperAdmin()) {
+      throw new RuntimeException("Hospital selection required for non-SuperAdmin");
+    }
+
+    entity.setHospitalId(hospitalId);
     return mapper.toDto(repository.save(entity));
   }
 

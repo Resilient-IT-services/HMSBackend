@@ -28,24 +28,44 @@ public class LabTestService {
 
   @Transactional(readOnly = true)
   public List<LabTestDTO> listAll() {
-    UUID hospitalId = hospitalContext.requireHospitalId();
-    return repository.findAll().stream()
-        .filter(t -> t.getHospitalId().equals(hospitalId))
+    UUID hospitalId = hospitalContext.getHospitalIdOrNull();
+    if (hospitalId == null && hospitalContext.isSuperAdmin()) {
+      return repository.findAll().stream().map(mapper::toDto).collect(Collectors.toList());
+    }
+    return repository.findByHospitalIdOrHospitalIdIsNull(hospitalId).stream()
         .map(mapper::toDto)
         .collect(Collectors.toList());
   }
 
   @Transactional
   public LabTestDTO create(LabTestDTO dto) {
-    UUID hospitalId = hospitalContext.requireHospitalId();
+    UUID hospitalId = hospitalContext.isSuperAdmin() ? null : hospitalContext.getHospitalIdOrNull();
 
-    if (repository.existsByHospitalIdAndTestCodeIgnoreCase(hospitalId, dto.getTestCode())) {
+    if (hospitalId == null && !hospitalContext.isSuperAdmin()) {
       throw new ApiException(
-          "VALIDATION_ERROR", "Test code must be unique", HttpStatus.BAD_REQUEST);
+          "BUSINESS_RULE_VIOLATION",
+          "Hospital selection required for non-SuperAdmin",
+          HttpStatus.BAD_REQUEST);
     }
-    if (repository.existsByHospitalIdAndTestNameIgnoreCase(hospitalId, dto.getTestName())) {
-      throw new ApiException(
-          "VALIDATION_ERROR", "Test name must be unique", HttpStatus.BAD_REQUEST);
+
+    if (hospitalId != null) {
+      if (repository.existsByHospitalIdAndTestCodeIgnoreCase(hospitalId, dto.getTestCode())) {
+        throw new ApiException(
+            "VALIDATION_ERROR", "Test code must be unique for hospital", HttpStatus.BAD_REQUEST);
+      }
+      if (repository.existsByHospitalIdAndTestNameIgnoreCase(hospitalId, dto.getTestName())) {
+        throw new ApiException(
+            "VALIDATION_ERROR", "Test name must be unique for hospital", HttpStatus.BAD_REQUEST);
+      }
+    } else {
+      if (repository.existsByHospitalIdIsNullAndTestCodeIgnoreCase(dto.getTestCode())) {
+        throw new ApiException(
+            "VALIDATION_ERROR", "Global test code must be unique", HttpStatus.BAD_REQUEST);
+      }
+      if (repository.existsByHospitalIdIsNullAndTestNameIgnoreCase(dto.getTestName())) {
+        throw new ApiException(
+            "VALIDATION_ERROR", "Global test name must be unique", HttpStatus.BAD_REQUEST);
+      }
     }
 
     LabTest entity = mapper.toEntity(dto);
@@ -68,17 +88,30 @@ public class LabTestService {
     LabTest entity =
         repository.findById(id).orElseThrow(() -> new RuntimeException("Test not found"));
 
-    UUID hospitalId = hospitalContext.requireHospitalId();
+    UUID hospitalId = hospitalContext.getHospitalIdOrNull();
 
-    if (!entity.getTestCode().equalsIgnoreCase(dto.getTestCode())
-        && repository.existsByHospitalIdAndTestCodeIgnoreCase(hospitalId, dto.getTestCode())) {
-      throw new ApiException(
-          "VALIDATION_ERROR", "Test code must be unique", HttpStatus.BAD_REQUEST);
-    }
-    if (!entity.getTestName().equalsIgnoreCase(dto.getTestName())
-        && repository.existsByHospitalIdAndTestNameIgnoreCase(hospitalId, dto.getTestName())) {
-      throw new ApiException(
-          "VALIDATION_ERROR", "Test name must be unique", HttpStatus.BAD_REQUEST);
+    if (hospitalId != null) {
+      if (!entity.getTestCode().equalsIgnoreCase(dto.getTestCode())
+          && repository.existsByHospitalIdAndTestCodeIgnoreCase(hospitalId, dto.getTestCode())) {
+        throw new ApiException(
+            "VALIDATION_ERROR", "Test code must be unique", HttpStatus.BAD_REQUEST);
+      }
+      if (!entity.getTestName().equalsIgnoreCase(dto.getTestName())
+          && repository.existsByHospitalIdAndTestNameIgnoreCase(hospitalId, dto.getTestName())) {
+        throw new ApiException(
+            "VALIDATION_ERROR", "Test name must be unique", HttpStatus.BAD_REQUEST);
+      }
+    } else if (hospitalContext.isSuperAdmin()) {
+      if (!entity.getTestCode().equalsIgnoreCase(dto.getTestCode())
+          && repository.existsByHospitalIdIsNullAndTestCodeIgnoreCase(dto.getTestCode())) {
+        throw new ApiException(
+            "VALIDATION_ERROR", "Global test code must be unique", HttpStatus.BAD_REQUEST);
+      }
+      if (!entity.getTestName().equalsIgnoreCase(dto.getTestName())
+          && repository.existsByHospitalIdIsNullAndTestNameIgnoreCase(dto.getTestName())) {
+        throw new ApiException(
+            "VALIDATION_ERROR", "Global test name must be unique", HttpStatus.BAD_REQUEST);
+      }
     }
 
     entity.setTestName(dto.getTestName());
