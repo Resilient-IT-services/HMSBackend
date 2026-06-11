@@ -15,6 +15,7 @@ import com.res.hms.lab.domain.LabOrderTest;
 import com.res.hms.lab.domain.LabPackage;
 import com.res.hms.lab.domain.LabResult;
 import com.res.hms.lab.domain.LabResultParameter;
+import com.res.hms.lab.domain.LabResultVerification;
 import com.res.hms.lab.domain.LabSample;
 import com.res.hms.lab.domain.LabTest;
 import com.res.hms.lab.infrastructure.repository.LabOrderRepository;
@@ -22,6 +23,7 @@ import com.res.hms.lab.infrastructure.repository.LabOrderTestRepository;
 import com.res.hms.lab.infrastructure.repository.LabPackageRepository;
 import com.res.hms.lab.infrastructure.repository.LabResultParameterRepository;
 import com.res.hms.lab.infrastructure.repository.LabResultRepository;
+import com.res.hms.lab.infrastructure.repository.LabResultVerificationRepository;
 import com.res.hms.lab.infrastructure.repository.LabSampleRepository;
 import com.res.hms.lab.infrastructure.repository.LabTestParameterRepository;
 import com.res.hms.lab.infrastructure.repository.LabTestRepository;
@@ -53,6 +55,7 @@ public class LabOrderService {
   private final LabResultRepository resultRepository;
   private final LabResultParameterRepository resultParameterRepository;
   private final LabTestParameterRepository testParameterRepository;
+  private final LabResultVerificationRepository verificationRepository;
   private final HospitalContext hospitalContext;
   private final JdbcTemplate jdbcTemplate;
   private final LabMapper mapper;
@@ -234,6 +237,49 @@ public class LabOrderService {
         order.setStatus("COMPLETED");
         orderRepository.save(order);
       }
+    }
+  }
+
+  @Transactional
+  public void verifyResult(UUID orderTestId, String remarks, String status) {
+    LabOrderTest orderTest =
+        orderTestRepository
+            .findById(orderTestId)
+            .orElseThrow(() -> new RuntimeException("Order test not found"));
+
+    if (!"COMPLETED".equals(orderTest.getStatus())) {
+      throw new RuntimeException("Test must be in COMPLETED status to verify");
+    }
+
+    LabResult result =
+        resultRepository.findAll().stream()
+            .filter(
+                r ->
+                    sampleRepository.findAll().stream()
+                        .filter(s -> s.getOrderTestId().equals(orderTestId))
+                        .findFirst()
+                        .map(s -> s.getId().equals(r.getSampleId()))
+                        .orElse(false))
+            .findFirst()
+            .orElseThrow(() -> new RuntimeException("Result not found for this test"));
+
+    LabResultVerification verification =
+        LabResultVerification.builder()
+            .resultId(result.getId())
+            .verifiedBy(hospitalContext.requireUserId())
+            .verifiedAt(Instant.now())
+            .status(status)
+            .remarks(remarks)
+            .build();
+
+    verificationRepository.save(verification);
+
+    if ("VERIFIED".equalsIgnoreCase(status)) {
+      orderTest.setStatus("VERIFIED");
+      orderTestRepository.save(orderTest);
+    } else if ("REJECTED".equalsIgnoreCase(status)) {
+      orderTest.setStatus("SAMPLE_COLLECTED"); // Send back for re-processing
+      orderTestRepository.save(orderTest);
     }
   }
 

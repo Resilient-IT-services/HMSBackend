@@ -69,4 +69,12 @@ public class LabOrderController {
     service.saveResults(request);
     return ApiResponse.success(null);
   }
+
+  @PostMapping("/tests/{orderTestId}/verify")
+  @PreAuthorize("hasAnyRole('PATHOLOGIST', 'ADMIN', 'SUPER_ADMIN')")
+  public ApiResponse<Void> verifyResult(
+      @PathVariable UUID orderTestId, @RequestParam String remarks, @RequestParam String status) {
+    service.verifyResult(orderTestId, remarks, status);
+    return ApiResponse.success(null);
+  }
 }
