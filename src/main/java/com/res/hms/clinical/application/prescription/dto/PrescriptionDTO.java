@@ -22,4 +22,5 @@ public class PrescriptionDTO {
   private String status;
   private java.time.Instant createdAt;
   private List<PrescriptionItemDTO> items;
+  private List<PrescriptionLabItemDTO> labItems;
 }

@@ -133,8 +133,9 @@ public class AppointmentController {
 
   @PutMapping("/{id}/complete")
   @PreAuthorize("hasAnyRole('ADMIN','DOCTOR','SUPER_ADMIN')")
-  public ApiResponse<AppointmentDTO> completeConsultation(@PathVariable UUID id) {
-    return ApiResponse.success(appointmentAggregateService.completeConsultation(id));
+  public ApiResponse<AppointmentDTO> completeConsultation(
+      @PathVariable UUID id, @RequestBody(required = false) AppointmentDTO request) {
+    return ApiResponse.success(appointmentAggregateService.completeConsultation(id, request));
   }
 
   @PostMapping("/start-next/{doctorId}")

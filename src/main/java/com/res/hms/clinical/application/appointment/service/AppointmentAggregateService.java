@@ -23,6 +23,9 @@ import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import com.res.hms.lab.application.dto.LabOrderCreateRequest;
+import com.res.hms.lab.application.service.LabOrderService;
+
 @Slf4j
 @Service
 @RequiredArgsConstructor
@@ -41,6 +44,7 @@ public class AppointmentAggregateService {
       hospitalRepository;
   private final com.res.hms.core.service.DomainEventPublisher eventPublisher;
   private final AppointmentValidationHelper validationHelper;
+  private final LabOrderService labOrderService;
 
   @Transactional
   public AppointmentDTO saveAppointmentAggregate(AppointmentDTO dto) {
@@ -379,7 +383,7 @@ public class AppointmentAggregateService {
   }
 
   @Transactional
-  public AppointmentDTO completeConsultation(UUID id) {
+  public AppointmentDTO completeConsultation(UUID id, AppointmentDTO request) {
     UUID hospitalId = hospitalContext.requireHospitalId();
     Appointment appointment =
         appointmentRepository
@@ -407,6 +411,20 @@ public class AppointmentAggregateService {
           "CONSULTATION_NOT_STARTED",
           "Only an active consultation can be completed",
           HttpStatus.BAD_REQUEST);
+    }
+
+    // Auto-create Lab Order if investigations exist in the request payload
+    if (request != null && request.getPrescription() != null && request.getPrescription().getLabItems() != null && !request.getPrescription().getLabItems().isEmpty()) {
+      java.util.List<UUID> testIds = request.getPrescription().getLabItems().stream()
+          .map(com.res.hms.clinical.application.prescription.dto.PrescriptionLabItemDTO::getTestId)
+          .collect(java.util.stream.Collectors.toList());
+      
+      LabOrderCreateRequest labRequest = new LabOrderCreateRequest();
+      labRequest.setPatientId(appointment.getPatientId());
+      labRequest.setEncounterId(appointment.getVisitId() != null ? appointment.getVisitId() : appointment.getId());
+      labRequest.setTestIds(testIds);
+      
+      labOrderService.createOrder(labRequest);
     }
 
     appointment.setStatus(AppointmentStatus.COMPLETED);
