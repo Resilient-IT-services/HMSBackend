@@ -2,12 +2,14 @@ package com.res.hms.clinical.application.prescription.service;
 
 import com.res.hms.clinical.application.prescription.dto.PrescriptionDTO;
 import com.res.hms.clinical.application.prescription.dto.PrescriptionItemDTO;
+import com.res.hms.clinical.application.prescription.dto.PrescriptionLabItemDTO;
 import com.res.hms.clinical.application.prescription.dto.PrescriptionSummaryDTO;
 import com.res.hms.clinical.application.prescription.repository.PrescriptionRepository;
 import com.res.hms.clinical.domain.Appointment;
 import com.res.hms.clinical.domain.AppointmentStatus;
 import com.res.hms.clinical.domain.Prescription;
 import com.res.hms.clinical.domain.PrescriptionItem;
+import com.res.hms.clinical.domain.PrescriptionLabItem;
 import com.res.hms.clinical.domain.PrescriptionStatus;
 import com.res.hms.clinical.infrastructure.repository.AppointmentRepository;
 import com.res.hms.core.api.PageResponse;
@@ -208,6 +210,18 @@ public class PrescriptionService {
       }
     }
 
+    if (dto.getLabItems() != null) {
+      for (PrescriptionLabItemDTO labDto : dto.getLabItems()) {
+        PrescriptionLabItem labItem = new PrescriptionLabItem();
+        labItem.setHospitalId(hospitalId);
+        labItem.setPrescription(prescription);
+        labItem.setTestId(labDto.getTestId());
+        labItem.setTestName(labDto.getTestName());
+        labItem.setNotes(labDto.getNotes());
+        prescription.getLabItems().add(labItem);
+      }
+    }
+
     appointment.setStatus(AppointmentStatus.PRESCRIPTION_FINALIZED);
     appointmentRepository.save(appointment);
 
@@ -218,13 +232,17 @@ public class PrescriptionService {
   public void saveOrUpdatePrescription(Appointment appointment, PrescriptionDTO dto) {
     UUID hospitalId = hospitalContext.requireHospitalId();
 
-    // If items are empty or null, we shouldn't have a prescription record for the pharmacy
-    if (dto.getItems() == null || dto.getItems().isEmpty()) {
+    // If both items and labItems are empty or null, we shouldn't have a prescription record
+    boolean hasItems = dto.getItems() != null && !dto.getItems().isEmpty();
+    boolean hasLabItems = dto.getLabItems() != null && !dto.getLabItems().isEmpty();
+
+    if (!hasItems && !hasLabItems) {
       prescriptionRepository
           .findByAppointmentId(appointment.getId())
           .ifPresent(
               p -> {
                 p.getItems().clear();
+                p.getLabItems().clear();
                 prescriptionRepository.delete(p);
               });
       return;
@@ -247,6 +265,7 @@ public class PrescriptionService {
 
     // Clear existing items and re-add from DTO for simplicity in "upsert"
     prescription.getItems().clear();
+    prescription.getLabItems().clear();
 
     if (dto.getItems() != null) {
       for (PrescriptionItemDTO itemDto : dto.getItems()) {
@@ -271,6 +290,18 @@ public class PrescriptionService {
           item.setMedicineName(itemDto.getMedicineName());
         }
         prescription.getItems().add(item);
+      }
+    }
+
+    if (dto.getLabItems() != null) {
+      for (PrescriptionLabItemDTO labDto : dto.getLabItems()) {
+        PrescriptionLabItem labItem = new PrescriptionLabItem();
+        labItem.setHospitalId(hospitalId);
+        labItem.setPrescription(prescription);
+        labItem.setTestId(labDto.getTestId());
+        labItem.setTestName(labDto.getTestName());
+        labItem.setNotes(labDto.getNotes());
+        prescription.getLabItems().add(labItem);
       }
     }
 
@@ -342,6 +373,11 @@ public class PrescriptionService {
           prescription.getItems().stream().map(this::toItemDto).collect(Collectors.toList()));
     }
 
+    if (prescription.getLabItems() != null) {
+      builder.labItems(
+          prescription.getLabItems().stream().map(this::toLabItemDto).collect(Collectors.toList()));
+    }
+
     return builder.build();
   }
 
@@ -355,6 +391,17 @@ public class PrescriptionService {
         .medicineName(item.getMedicineName())
         .dosage(item.getDosage())
         .duration(item.getDuration())
+        .build();
+  }
+
+  private PrescriptionLabItemDTO toLabItemDto(PrescriptionLabItem item) {
+    if (item == null) {
+      return null;
+    }
+    return PrescriptionLabItemDTO.builder()
+        .testId(item.getTestId())
+        .testName(item.getTestName())
+        .notes(item.getNotes())
         .build();
   }
 }

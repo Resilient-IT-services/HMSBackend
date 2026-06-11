@@ -56,4 +56,11 @@ public class Prescription extends HospitalScopedEntity {
       orphanRemoval = true,
       fetch = FetchType.LAZY)
   private List<PrescriptionItem> items = new ArrayList<>();
+
+  @OneToMany(
+      mappedBy = "prescription",
+      cascade = CascadeType.ALL,
+      orphanRemoval = true,
+      fetch = FetchType.LAZY)
+  private List<PrescriptionLabItem> labItems = new ArrayList<>();
 }

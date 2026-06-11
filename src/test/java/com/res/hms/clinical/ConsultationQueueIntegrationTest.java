@@ -112,7 +112,7 @@ class ConsultationQueueIntegrationTest {
     apt2.setDoctorName("Dr. Queue");
     apt2.setPatientId(patient2.getId());
     apt2.setPatientName(patient2.getFullName());
-    apt2.setAppointmentTime(Instant.now().plusSeconds(3600));
+    apt2.setAppointmentTime(Instant.now());
     apt2.setStatus(AppointmentStatus.VITALS_RECORDED);
     appointmentRepository.save(apt2);
 
@@ -151,7 +151,7 @@ class ConsultationQueueIntegrationTest {
     apt2.setDoctorName("Dr. Queue");
     apt2.setPatientId(patient2.getId());
     apt2.setPatientName(patient2.getFullName());
-    apt2.setAppointmentTime(Instant.now().plusSeconds(3600));
+    apt2.setAppointmentTime(Instant.now());
     apt2.setStatus(AppointmentStatus.VITALS_RECORDED);
     appointmentRepository.save(apt2);
 
@@ -192,7 +192,7 @@ class ConsultationQueueIntegrationTest {
     next.setDoctorName("Dr. Queue");
     next.setPatientId(patient2.getId());
     next.setPatientName(patient2.getFullName());
-    next.setAppointmentTime(Instant.now().plusSeconds(60));
+    next.setAppointmentTime(Instant.now());
     next.setTokenNumber(2);
     next.setStatus(AppointmentStatus.VITALS_RECORDED);
     appointmentRepository.save(next);
@@ -203,7 +203,7 @@ class ConsultationQueueIntegrationTest {
     later.setDoctorName("Dr. Queue");
     later.setPatientId(patient3.getId());
     later.setPatientName(patient3.getFullName());
-    later.setAppointmentTime(Instant.now().plusSeconds(120));
+    later.setAppointmentTime(Instant.now());
     later.setTokenNumber(3);
     later.setStatus(AppointmentStatus.PAID);
     appointmentRepository.save(later);
@@ -243,7 +243,7 @@ class ConsultationQueueIntegrationTest {
     waiting.setDoctorName("Dr. Queue");
     waiting.setPatientId(waitingPatient.getId());
     waiting.setPatientName(waitingPatient.getFullName());
-    waiting.setAppointmentTime(Instant.now().plusSeconds(60));
+    waiting.setAppointmentTime(Instant.now());
     waiting.setTokenNumber(2);
     waiting.setStatus(AppointmentStatus.VITALS_RECORDED);
     appointmentRepository.save(waiting);

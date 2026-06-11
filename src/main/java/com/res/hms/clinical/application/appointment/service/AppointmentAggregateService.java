@@ -12,6 +12,8 @@ import com.res.hms.core.exception.ApiException;
 import com.res.hms.core.tenant.HospitalContext;
 import com.res.hms.iam.application.service.DoctorProfileService;
 import com.res.hms.iam.domain.DoctorProfile;
+import com.res.hms.lab.application.dto.LabOrderCreateRequest;
+import com.res.hms.lab.application.service.LabOrderService;
 import java.time.Instant;
 import java.time.LocalDate;
 import java.time.ZoneId;
@@ -22,9 +24,6 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-
-import com.res.hms.lab.application.dto.LabOrderCreateRequest;
-import com.res.hms.lab.application.service.LabOrderService;
 
 @Slf4j
 @Service
@@ -414,17 +413,29 @@ public class AppointmentAggregateService {
     }
 
     // Auto-create Lab Order if investigations exist in the request payload
-    if (request != null && request.getPrescription() != null && request.getPrescription().getLabItems() != null && !request.getPrescription().getLabItems().isEmpty()) {
-      java.util.List<UUID> testIds = request.getPrescription().getLabItems().stream()
-          .map(com.res.hms.clinical.application.prescription.dto.PrescriptionLabItemDTO::getTestId)
-          .collect(java.util.stream.Collectors.toList());
-      
+    if (request != null
+        && request.getPrescription() != null
+        && request.getPrescription().getLabItems() != null
+        && !request.getPrescription().getLabItems().isEmpty()) {
+      java.util.List<UUID> testIds =
+          request.getPrescription().getLabItems().stream()
+              .map(
+                  com.res.hms.clinical.application.prescription.dto.PrescriptionLabItemDTO
+                      ::getTestId)
+              .collect(java.util.stream.Collectors.toList());
+
       LabOrderCreateRequest labRequest = new LabOrderCreateRequest();
       labRequest.setPatientId(appointment.getPatientId());
-      labRequest.setEncounterId(appointment.getVisitId() != null ? appointment.getVisitId() : appointment.getId());
+      labRequest.setEncounterId(
+          appointment.getVisitId() != null ? appointment.getVisitId() : appointment.getId());
       labRequest.setTestIds(testIds);
-      
+
       labOrderService.createOrder(labRequest);
+    }
+
+    // Explicitly save/update prescription data before completing
+    if (request != null && request.getPrescription() != null) {
+      prescriptionService.saveOrUpdatePrescription(appointment, request.getPrescription());
     }
 
     appointment.setStatus(AppointmentStatus.COMPLETED);
