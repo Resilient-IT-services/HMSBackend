@@ -1,11 +1,15 @@
 package com.res.hms.lab.application.service;
 
 import com.res.hms.clinical.infrastructure.repository.PatientRepository;
+import com.res.hms.core.api.PageResponse;
+import com.res.hms.core.exception.ApiException;
 import com.res.hms.core.tenant.HospitalContext;
 import com.res.hms.lab.application.dto.LabOrderCreateRequest;
 import com.res.hms.lab.application.dto.LabOrderResponseDTO;
 import com.res.hms.lab.application.dto.LabOrderTestResponseDTO;
+import com.res.hms.lab.application.dto.LabQueueItemDTO;
 import com.res.hms.lab.application.dto.LabResultSaveRequest;
+import com.res.hms.lab.application.dto.LabTestParameterDTO;
 import com.res.hms.lab.domain.LabOrder;
 import com.res.hms.lab.domain.LabOrderTest;
 import com.res.hms.lab.domain.LabPackage;
@@ -19,30 +23,22 @@ import com.res.hms.lab.infrastructure.repository.LabPackageRepository;
 import com.res.hms.lab.infrastructure.repository.LabResultParameterRepository;
 import com.res.hms.lab.infrastructure.repository.LabResultRepository;
 import com.res.hms.lab.infrastructure.repository.LabSampleRepository;
+import com.res.hms.lab.infrastructure.repository.LabTestParameterRepository;
 import com.res.hms.lab.infrastructure.repository.LabTestRepository;
 import java.time.Instant;
+import java.time.LocalDate;
+import java.time.format.DateTimeFormatter;
 import java.util.List;
 import java.util.UUID;
 import java.util.stream.Collectors;
 import lombok.RequiredArgsConstructor;
-import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
-
-import com.res.hms.core.api.PageResponse;
-import com.res.hms.lab.application.dto.LabQueueItemDTO;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
-import org.springframework.data.domain.Sort;
-
-import org.springframework.jdbc.core.JdbcTemplate;
-import com.res.hms.core.exception.ApiException;
 import org.springframework.http.HttpStatus;
-import java.time.LocalDate;
-import java.time.format.DateTimeFormatter;
-
-import com.res.hms.lab.application.dto.LabTestParameterDTO;
-import com.res.hms.lab.infrastructure.repository.LabTestParameterRepository;
+import org.springframework.jdbc.core.JdbcTemplate;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 @Service
 @RequiredArgsConstructor
@@ -63,15 +59,19 @@ public class LabOrderService {
 
   @Transactional(readOnly = true)
   public List<LabTestParameterDTO> getParametersForOrderTest(UUID orderTestId) {
-    LabOrderTest orderTest = orderTestRepository.findById(orderTestId)
-        .orElseThrow(() -> new ApiException("NOT_FOUND", "Order test not found", HttpStatus.NOT_FOUND));
-        
+    LabOrderTest orderTest =
+        orderTestRepository
+            .findById(orderTestId)
+            .orElseThrow(
+                () -> new ApiException("NOT_FOUND", "Order test not found", HttpStatus.NOT_FOUND));
+
     if (orderTest.getTestId() == null) {
-       // MVP: Packages not fully supported for parameter fetching here yet
-       return List.of();
+      // MVP: Packages not fully supported for parameter fetching here yet
+      return List.of();
     }
-    
-    return testParameterRepository.findByTestIdOrderByDisplayOrderAsc(orderTest.getTestId())
+
+    return testParameterRepository
+        .findByTestIdOrderByDisplayOrderAsc(orderTest.getTestId())
         .stream()
         .map(mapper::toDto)
         .collect(Collectors.toList());
@@ -80,10 +80,16 @@ public class LabOrderService {
   @Transactional(readOnly = true)
   public PageResponse<LabQueueItemDTO> getLabQueue(String status, int page, int size) {
     UUID hospitalId = hospitalContext.requireHospitalId();
-    Pageable pageable = PageRequest.of(page, size, Sort.by("orderedAt").descending());
-    
-    Page<LabQueueItemDTO> queue = orderTestRepository.findQueueByHospitalAndStatus(hospitalId, status, pageable);
-    return new PageResponse<>(queue.getContent(), queue.getNumber(), queue.getSize(), queue.getTotalElements(), queue.getTotalPages());
+    Pageable pageable = PageRequest.of(page, size);
+
+    Page<LabQueueItemDTO> queue =
+        orderTestRepository.findQueueByHospitalAndStatus(hospitalId, status, pageable);
+    return new PageResponse<>(
+        queue.getContent(),
+        queue.getNumber(),
+        queue.getSize(),
+        queue.getTotalElements(),
+        queue.getTotalPages());
   }
 
   @Transactional
@@ -91,11 +97,15 @@ public class LabOrderService {
     UUID hospitalId = hospitalContext.requireHospitalId();
     UUID userId = hospitalContext.requireUserId();
 
-    LabOrderTest orderTest = orderTestRepository.findById(orderTestId)
-        .orElseThrow(() -> new ApiException("NOT_FOUND", "Order test not found", HttpStatus.NOT_FOUND));
+    LabOrderTest orderTest =
+        orderTestRepository
+            .findById(orderTestId)
+            .orElseThrow(
+                () -> new ApiException("NOT_FOUND", "Order test not found", HttpStatus.NOT_FOUND));
 
     if (!"PENDING".equals(orderTest.getStatus())) {
-        throw new ApiException("INVALID_STATE", "Sample already collected or processed", HttpStatus.BAD_REQUEST);
+      throw new ApiException(
+          "INVALID_STATE", "Sample already collected or processed", HttpStatus.BAD_REQUEST);
     }
 
     String datePart = LocalDate.now().format(DateTimeFormatter.ofPattern("yyyyMMdd"));

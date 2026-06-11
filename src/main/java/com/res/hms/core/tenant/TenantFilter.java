@@ -33,8 +33,16 @@ public class TenantFilter extends OncePerRequestFilter {
       throws ServletException, IOException {
 
     String hospitalIdHeader = request.getHeader(HOSPITAL_ID_HEADER);
+    String requestUri = request.getRequestURI();
 
     try {
+      // Allow fetching hospital details without a hospital header context
+      if (requestUri.startsWith("/api/v1/hospitals/") && request.getMethod().equals("GET")) {
+        log.debug("Bypassing TenantFilter for hospital details request: {}", requestUri);
+        filterChain.doFilter(request, response);
+        return;
+      }
+
       if (hospitalIdHeader != null && !hospitalIdHeader.isBlank()) {
         UUID hospitalId = UUID.fromString(hospitalIdHeader);
 

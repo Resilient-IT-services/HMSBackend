@@ -15,7 +15,7 @@ public class LabQueueItemDTO {
   private UUID orderId;
   private UUID orderTestId;
   private String orderNumber;
-  private String patientId;
+  private UUID patientId;
   private String patientName;
   private String doctorName;
   private String testName;
