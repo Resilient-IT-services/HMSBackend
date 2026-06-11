@@ -26,9 +26,6 @@ public class LabDepartment {
   @GeneratedValue(strategy = GenerationType.UUID)
   private UUID id;
 
-  @Column(name = "hospital_id")
-  private UUID hospitalId;
-
   @Column(name = "code")
   private String code;
 

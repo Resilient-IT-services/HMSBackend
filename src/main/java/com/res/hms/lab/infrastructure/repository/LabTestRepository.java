@@ -9,13 +9,7 @@ import org.springframework.stereotype.Repository;
 @Repository
 public interface LabTestRepository
     extends JpaRepository<LabTest, UUID>, JpaSpecificationExecutor<LabTest> {
-  boolean existsByHospitalIdAndTestCodeIgnoreCase(UUID hospitalId, String testCode);
+  boolean existsByTestCodeIgnoreCase(String testCode);
 
-  boolean existsByHospitalIdAndTestNameIgnoreCase(UUID hospitalId, String testName);
-
-  boolean existsByHospitalIdIsNullAndTestCodeIgnoreCase(String testCode);
-
-  boolean existsByHospitalIdIsNullAndTestNameIgnoreCase(String testName);
-
-  java.util.List<LabTest> findByHospitalIdOrHospitalIdIsNull(UUID hospitalId);
+  boolean existsByTestNameIgnoreCase(String testName);
 }

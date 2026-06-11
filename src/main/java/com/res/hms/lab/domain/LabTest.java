@@ -29,9 +29,6 @@ public class LabTest {
   @GeneratedValue(strategy = GenerationType.UUID)
   private UUID id;
 
-  @Column(name = "hospital_id")
-  private UUID hospitalId;
-
   @Column(name = "test_code")
   private String testCode;
 

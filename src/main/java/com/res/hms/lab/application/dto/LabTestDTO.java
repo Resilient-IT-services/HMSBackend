@@ -12,7 +12,6 @@ import lombok.NoArgsConstructor;
 @AllArgsConstructor
 public class LabTestDTO {
   private UUID id;
-  private UUID hospitalId;
   private String testCode;
   private String testName;
   private String shortName;

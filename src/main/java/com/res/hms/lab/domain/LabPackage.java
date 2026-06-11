@@ -25,9 +25,6 @@ public class LabPackage {
   @GeneratedValue(strategy = GenerationType.UUID)
   private UUID id;
 
-  @Column(name = "hospital_id")
-  private UUID hospitalId;
-
   @Column(name = "package_code")
   private String packageCode;
 

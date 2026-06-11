@@ -5,7 +5,6 @@ import com.res.hms.audit.application.service.AuditLogService;
 import com.res.hms.audit.domain.AuditAction;
 import com.res.hms.audit.domain.DomainEntity;
 import com.res.hms.core.exception.ApiException;
-import com.res.hms.core.tenant.HospitalContext;
 import com.res.hms.lab.application.dto.LabTestDTO;
 import com.res.hms.lab.domain.LabTest;
 import com.res.hms.lab.infrastructure.repository.LabTestRepository;
@@ -23,62 +22,34 @@ public class LabTestService {
 
   private final LabTestRepository repository;
   private final LabMapper mapper;
-  private final HospitalContext hospitalContext;
   private final AuditLogService auditLogService;
 
   @Transactional(readOnly = true)
   public List<LabTestDTO> listAll() {
-    UUID hospitalId = hospitalContext.getHospitalIdOrNull();
-    if (hospitalId == null && hospitalContext.isSuperAdmin()) {
-      return repository.findAll().stream().map(mapper::toDto).collect(Collectors.toList());
-    }
-    return repository.findByHospitalIdOrHospitalIdIsNull(hospitalId).stream()
-        .map(mapper::toDto)
-        .collect(Collectors.toList());
+    return repository.findAll().stream().map(mapper::toDto).collect(Collectors.toList());
   }
 
   @Transactional
   public LabTestDTO create(LabTestDTO dto) {
-    UUID hospitalId = hospitalContext.isSuperAdmin() ? null : hospitalContext.getHospitalIdOrNull();
-
-    if (hospitalId == null && !hospitalContext.isSuperAdmin()) {
+    if (repository.existsByTestCodeIgnoreCase(dto.getTestCode())) {
       throw new ApiException(
-          "BUSINESS_RULE_VIOLATION",
-          "Hospital selection required for non-SuperAdmin",
-          HttpStatus.BAD_REQUEST);
+          "VALIDATION_ERROR", "Global test code must be unique", HttpStatus.BAD_REQUEST);
     }
-
-    if (hospitalId != null) {
-      if (repository.existsByHospitalIdAndTestCodeIgnoreCase(hospitalId, dto.getTestCode())) {
-        throw new ApiException(
-            "VALIDATION_ERROR", "Test code must be unique for hospital", HttpStatus.BAD_REQUEST);
-      }
-      if (repository.existsByHospitalIdAndTestNameIgnoreCase(hospitalId, dto.getTestName())) {
-        throw new ApiException(
-            "VALIDATION_ERROR", "Test name must be unique for hospital", HttpStatus.BAD_REQUEST);
-      }
-    } else {
-      if (repository.existsByHospitalIdIsNullAndTestCodeIgnoreCase(dto.getTestCode())) {
-        throw new ApiException(
-            "VALIDATION_ERROR", "Global test code must be unique", HttpStatus.BAD_REQUEST);
-      }
-      if (repository.existsByHospitalIdIsNullAndTestNameIgnoreCase(dto.getTestName())) {
-        throw new ApiException(
-            "VALIDATION_ERROR", "Global test name must be unique", HttpStatus.BAD_REQUEST);
-      }
+    if (repository.existsByTestNameIgnoreCase(dto.getTestName())) {
+      throw new ApiException(
+          "VALIDATION_ERROR", "Global test name must be unique", HttpStatus.BAD_REQUEST);
     }
 
     LabTest entity = mapper.toEntity(dto);
-    entity.setHospitalId(hospitalId);
     LabTest saved = repository.save(entity);
 
     auditLogService.record(
-        hospitalId,
+        null, // Global audit
         DomainEntity.LAB_TEST,
         saved.getId(),
         AuditAction.CREATE,
         new AuditDetail(
-            null, java.util.Map.of("message", "Created new Lab Test: " + saved.getTestName())));
+            null, java.util.Map.of("message", "Created new Global Lab Test: " + saved.getTestName())));
 
     return mapper.toDto(saved);
   }
@@ -88,30 +59,15 @@ public class LabTestService {
     LabTest entity =
         repository.findById(id).orElseThrow(() -> new RuntimeException("Test not found"));
 
-    UUID hospitalId = hospitalContext.getHospitalIdOrNull();
-
-    if (hospitalId != null) {
-      if (!entity.getTestCode().equalsIgnoreCase(dto.getTestCode())
-          && repository.existsByHospitalIdAndTestCodeIgnoreCase(hospitalId, dto.getTestCode())) {
-        throw new ApiException(
-            "VALIDATION_ERROR", "Test code must be unique", HttpStatus.BAD_REQUEST);
-      }
-      if (!entity.getTestName().equalsIgnoreCase(dto.getTestName())
-          && repository.existsByHospitalIdAndTestNameIgnoreCase(hospitalId, dto.getTestName())) {
-        throw new ApiException(
-            "VALIDATION_ERROR", "Test name must be unique", HttpStatus.BAD_REQUEST);
-      }
-    } else if (hospitalContext.isSuperAdmin()) {
-      if (!entity.getTestCode().equalsIgnoreCase(dto.getTestCode())
-          && repository.existsByHospitalIdIsNullAndTestCodeIgnoreCase(dto.getTestCode())) {
-        throw new ApiException(
-            "VALIDATION_ERROR", "Global test code must be unique", HttpStatus.BAD_REQUEST);
-      }
-      if (!entity.getTestName().equalsIgnoreCase(dto.getTestName())
-          && repository.existsByHospitalIdIsNullAndTestNameIgnoreCase(dto.getTestName())) {
-        throw new ApiException(
-            "VALIDATION_ERROR", "Global test name must be unique", HttpStatus.BAD_REQUEST);
-      }
+    if (!entity.getTestCode().equalsIgnoreCase(dto.getTestCode())
+        && repository.existsByTestCodeIgnoreCase(dto.getTestCode())) {
+      throw new ApiException(
+          "VALIDATION_ERROR", "Global test code must be unique", HttpStatus.BAD_REQUEST);
+    }
+    if (!entity.getTestName().equalsIgnoreCase(dto.getTestName())
+        && repository.existsByTestNameIgnoreCase(dto.getTestName())) {
+      throw new ApiException(
+          "VALIDATION_ERROR", "Global test name must be unique", HttpStatus.BAD_REQUEST);
     }
 
     entity.setTestName(dto.getTestName());
@@ -127,12 +83,12 @@ public class LabTestService {
     LabTest saved = repository.save(entity);
 
     auditLogService.record(
-        hospitalId,
+        null,
         DomainEntity.LAB_TEST,
         saved.getId(),
         AuditAction.UPDATE,
         new AuditDetail(
-            null, java.util.Map.of("message", "Updated Lab Test: " + saved.getTestName())));
+            null, java.util.Map.of("message", "Updated Global Lab Test: " + saved.getTestName())));
 
     return mapper.toDto(saved);
   }
@@ -145,13 +101,13 @@ public class LabTestService {
             entity -> {
               repository.delete(entity);
               auditLogService.record(
-                  entity.getHospitalId(),
+                  null,
                   DomainEntity.LAB_TEST,
                   entity.getId(),
                   AuditAction.DELETE,
                   new AuditDetail(
                       null,
-                      java.util.Map.of("message", "Deleted Lab Test: " + entity.getTestName())));
+                      java.util.Map.of("message", "Deleted Global Lab Test: " + entity.getTestName())));
             });
   }
 }
