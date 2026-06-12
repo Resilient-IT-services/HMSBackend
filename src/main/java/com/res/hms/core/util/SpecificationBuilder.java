@@ -70,6 +70,7 @@ public class SpecificationBuilder<T> {
     return cb.or(predicates.toArray(new Predicate[0]));
   }
 
+  @SuppressWarnings("unchecked")
   private Predicate createFilterPredicate(
       Root<T> root, CriteriaBuilder cb, Map<String, Join<?, ?>> joins) {
     List<Predicate> predicates = new ArrayList<>();

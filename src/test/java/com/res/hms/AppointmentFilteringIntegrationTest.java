@@ -73,8 +73,8 @@ class AppointmentFilteringIntegrationTest {
 
   @Test
   void testAppointmentListingWithFilteringAndSorting() throws Exception {
-    UUID doctorId = testDataHelper.createTestDoctor(hospitalId, "dr_apt_test");
-    UUID patientId = testDataHelper.createTestPatient(hospitalId).getId();
+    testDataHelper.createTestDoctor(hospitalId, "dr_apt_test");
+    testDataHelper.createTestPatient(hospitalId);
 
     // 1. Create multiple appointments
     createAppointment(
