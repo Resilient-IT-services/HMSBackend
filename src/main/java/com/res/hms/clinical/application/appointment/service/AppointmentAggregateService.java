@@ -12,7 +12,6 @@ import com.res.hms.core.exception.ApiException;
 import com.res.hms.core.tenant.HospitalContext;
 import com.res.hms.iam.application.service.DoctorProfileService;
 import com.res.hms.iam.domain.DoctorProfile;
-import com.res.hms.lab.application.dto.LabOrderCreateRequest;
 import com.res.hms.lab.application.service.LabOrderService;
 import java.time.Instant;
 import java.time.LocalDate;
@@ -410,27 +409,6 @@ public class AppointmentAggregateService {
           "CONSULTATION_NOT_STARTED",
           "Only an active consultation can be completed",
           HttpStatus.BAD_REQUEST);
-    }
-
-    // Auto-create Lab Order if investigations exist in the request payload
-    if (request != null
-        && request.getPrescription() != null
-        && request.getPrescription().getLabItems() != null
-        && !request.getPrescription().getLabItems().isEmpty()) {
-      java.util.List<UUID> testIds =
-          request.getPrescription().getLabItems().stream()
-              .map(
-                  com.res.hms.clinical.application.prescription.dto.PrescriptionLabItemDTO
-                      ::getTestId)
-              .collect(java.util.stream.Collectors.toList());
-
-      LabOrderCreateRequest labRequest = new LabOrderCreateRequest();
-      labRequest.setPatientId(appointment.getPatientId());
-      labRequest.setEncounterId(
-          appointment.getVisitId() != null ? appointment.getVisitId() : appointment.getId());
-      labRequest.setTestIds(testIds);
-
-      labOrderService.createOrder(labRequest);
     }
 
     // Explicitly save/update prescription data before completing

@@ -11,7 +11,9 @@ import lombok.NoArgsConstructor;
 @NoArgsConstructor
 @AllArgsConstructor
 public class PrescriptionLabItemDTO {
+  private UUID id;
   private UUID testId;
   private String testName;
   private String notes;
+  private String status;
 }

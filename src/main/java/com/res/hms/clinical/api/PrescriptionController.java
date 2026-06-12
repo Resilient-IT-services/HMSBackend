@@ -27,7 +27,7 @@ public class PrescriptionController {
   private final PrescriptionService prescriptionService;
 
   @GetMapping
-  @PreAuthorize("hasAnyRole('ADMIN','DOCTOR','NURSE','PHARMACIST','SUPER_ADMIN')")
+  @PreAuthorize("hasAnyRole('ADMIN','DOCTOR','NURSE','PHARMACIST','LAB_ADMIN','SUPER_ADMIN')")
   public ApiResponse<PageResponse<PrescriptionDTO>> list(
       @org.springframework.data.web.PageableDefault(
               sort = "createdAt",
@@ -39,7 +39,7 @@ public class PrescriptionController {
   }
 
   @GetMapping("/summary")
-  @PreAuthorize("hasAnyRole('ADMIN','DOCTOR','NURSE','PHARMACIST','SUPER_ADMIN')")
+  @PreAuthorize("hasAnyRole('ADMIN','DOCTOR','NURSE','PHARMACIST','LAB_ADMIN','SUPER_ADMIN')")
   public ApiResponse<PageResponse<PrescriptionSummaryDTO>> listSummary(
       @org.springframework.data.web.PageableDefault(
               sort = "createdAt",
@@ -50,6 +50,17 @@ public class PrescriptionController {
     return ApiResponse.success(prescriptionService.listSummary(pageable, search, allParams));
   }
 
+  @GetMapping("/lab-recommendations")
+  @PreAuthorize("hasAnyRole('ADMIN','DOCTOR','LAB_ADMIN','SUPER_ADMIN')")
+  public ApiResponse<PageResponse<PrescriptionSummaryDTO>> listLabRecommendations(
+      @org.springframework.data.web.PageableDefault(
+              sort = "createdAt",
+              direction = org.springframework.data.domain.Sort.Direction.DESC)
+          org.springframework.data.domain.Pageable pageable,
+      @RequestParam(required = false) String search) {
+    return ApiResponse.success(prescriptionService.listLabRecommendations(pageable, search));
+  }
+
   @PostMapping
   @PreAuthorize("hasAnyRole('ADMIN','DOCTOR','SUPER_ADMIN')")
   public ApiResponse<PrescriptionDTO> create(@Valid @RequestBody PrescriptionDTO request) {
@@ -57,7 +68,7 @@ public class PrescriptionController {
   }
 
   @GetMapping("/{id}")
-  @PreAuthorize("hasAnyRole('ADMIN','DOCTOR','NURSE','PHARMACIST','SUPER_ADMIN')")
+  @PreAuthorize("hasAnyRole('ADMIN','DOCTOR','NURSE','PHARMACIST','LAB_ADMIN','SUPER_ADMIN')")
   public ApiResponse<PrescriptionDTO> get(@PathVariable UUID id) {
     return ApiResponse.success(prescriptionService.getById(id));
   }

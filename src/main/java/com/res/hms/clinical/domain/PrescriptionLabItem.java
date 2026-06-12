@@ -28,4 +28,8 @@ public class PrescriptionLabItem extends HospitalScopedEntity {
 
   @Column(name = "notes")
   private String notes;
+
+  @jakarta.persistence.Enumerated(jakarta.persistence.EnumType.STRING)
+  @Column(name = "status", nullable = false)
+  private PrescriptionLabItemStatus status = PrescriptionLabItemStatus.PENDING;
 }

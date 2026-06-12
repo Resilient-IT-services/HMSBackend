@@ -66,8 +66,7 @@ public class MedicineService {
     }
 
     Medicine medicine = new Medicine();
-    updateFields(medicine, request);
-    Medicine savedMedicine = medicineRepository.save(medicine);
+    Medicine savedMedicine = updateFieldsAndSave(medicine, request);
 
     return toDto(savedMedicine);
   }
@@ -80,8 +79,7 @@ public class MedicineService {
   @Transactional
   public MedicineDTO update(UUID id, MedicineDTO request) {
     Medicine medicine = requireMedicine(id);
-    updateFields(medicine, request);
-    return toDto(medicineRepository.save(medicine));
+    return toDto(updateFieldsAndSave(medicine, request));
   }
 
   @Transactional
@@ -351,7 +349,7 @@ public class MedicineService {
         .build();
   }
 
-  private void updateFields(Medicine medicine, MedicineDTO dto) {
+  private Medicine updateFieldsAndSave(Medicine medicine, MedicineDTO dto) {
     medicine.setName(dto.getName());
     medicine.setGenericName(dto.getGenericName());
     medicine.setComposition(dto.getComposition());
@@ -365,20 +363,23 @@ public class MedicineService {
     medicine.setThresholdQuantity(
         dto.getThresholdQuantity() != null ? dto.getThresholdQuantity() : 10);
 
-    medicineRepository.save(medicine);
+    // Save first to avoid transient property exceptions for the catalog
+    Medicine saved = medicineRepository.save(medicine);
 
     Optional.ofNullable(hospitalContext.getHospitalIdOrNull())
         .ifPresent(
             hospitalId -> {
               hospitalMedicineCatalogRepository
-                  .findByHospitalIdAndMedicineId(hospitalId, medicine.getId())
+                  .findByHospitalIdAndMedicineId(hospitalId, saved.getId())
                   .orElseGet(
                       () -> {
                         var c = new com.res.hms.pharmacy.domain.HospitalMedicineCatalog();
                         c.setHospitalId(hospitalId);
-                        c.setMedicine(medicine);
+                        c.setMedicine(saved);
                         return hospitalMedicineCatalogRepository.save(c);
                       });
             });
+
+    return saved;
   }
 }

@@ -1,10 +1,18 @@
 package com.res.hms.lab.application.service;
 
+import com.res.hms.clinical.domain.Prescription;
+import com.res.hms.clinical.domain.PrescriptionLabItem;
+import com.res.hms.clinical.domain.PrescriptionLabItemStatus;
 import com.res.hms.clinical.infrastructure.repository.PatientRepository;
 import com.res.hms.core.api.PageResponse;
 import com.res.hms.core.exception.ApiException;
 import com.res.hms.core.tenant.HospitalContext;
+import com.res.hms.finance.application.dto.RecordPaymentRequest;
+import com.res.hms.finance.domain.FinanceSourceType;
+import com.res.hms.finance.domain.Invoice;
+import com.res.hms.finance.domain.InvoiceItemCategory;
 import com.res.hms.lab.application.dto.LabOrderCreateRequest;
+import com.res.hms.lab.application.dto.LabOrderFromRecommendationRequest;
 import com.res.hms.lab.application.dto.LabOrderResponseDTO;
 import com.res.hms.lab.application.dto.LabOrderTestResponseDTO;
 import com.res.hms.lab.application.dto.LabQueueItemDTO;
@@ -13,6 +21,7 @@ import com.res.hms.lab.application.dto.LabTestParameterDTO;
 import com.res.hms.lab.domain.LabOrder;
 import com.res.hms.lab.domain.LabOrderTest;
 import com.res.hms.lab.domain.LabPackage;
+import com.res.hms.lab.domain.LabPrice;
 import com.res.hms.lab.domain.LabResult;
 import com.res.hms.lab.domain.LabResultParameter;
 import com.res.hms.lab.domain.LabResultVerification;
@@ -27,6 +36,7 @@ import com.res.hms.lab.infrastructure.repository.LabResultVerificationRepository
 import com.res.hms.lab.infrastructure.repository.LabSampleRepository;
 import com.res.hms.lab.infrastructure.repository.LabTestParameterRepository;
 import com.res.hms.lab.infrastructure.repository.LabTestRepository;
+import java.math.BigDecimal;
 import java.time.Instant;
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
@@ -56,6 +66,11 @@ public class LabOrderService {
   private final LabResultParameterRepository resultParameterRepository;
   private final LabTestParameterRepository testParameterRepository;
   private final LabResultVerificationRepository verificationRepository;
+  private final com.res.hms.clinical.application.prescription.repository.PrescriptionRepository
+      prescriptionRepository;
+  private final com.res.hms.finance.application.service.InvoiceService invoiceService;
+  private final com.res.hms.finance.application.service.PaymentService paymentService;
+  private final com.res.hms.lab.infrastructure.repository.LabPriceRepository priceRepository;
   private final HospitalContext hospitalContext;
   private final JdbcTemplate jdbcTemplate;
   private final LabMapper mapper;
@@ -163,6 +178,112 @@ public class LabOrderService {
                 .build());
       }
     }
+
+    return order;
+  }
+
+  @Transactional
+  public LabOrder createOrderFromRecommendation(LabOrderFromRecommendationRequest request) {
+    UUID hospitalId = hospitalContext.requireHospitalId();
+    UUID userId = hospitalContext.requireUserId();
+
+    Prescription prescription =
+        prescriptionRepository
+            .findByIdAndHospitalId(request.getPrescriptionId(), hospitalId)
+            .orElseThrow(
+                () ->
+                    new ApiException("NOT_FOUND", "Prescription not found", HttpStatus.NOT_FOUND));
+
+    if (request.getTestIds() == null || request.getTestIds().isEmpty()) {
+      throw new ApiException(
+          "BAD_REQUEST", "No tests selected for ordering", HttpStatus.BAD_REQUEST);
+    }
+
+    // 1. Create Lab Order record first
+    UUID visitId =
+        prescription.getAppointment() != null ? prescription.getAppointment().getVisitId() : null;
+    LabOrder order =
+        LabOrder.builder()
+            .hospitalId(hospitalId)
+            .patientId(prescription.getPatientId())
+            .encounterId(visitId)
+            .orderNumber("ORD-" + System.currentTimeMillis())
+            .status("ORDERED")
+            .orderedAt(Instant.now())
+            .build();
+
+    order = orderRepository.save(order);
+
+    // 2. Prepare Invoice
+    Invoice invoice =
+        invoiceService.getOrCreateInvoice(hospitalId, prescription.getPatientId(), visitId);
+
+    // 3. Process each selected test
+    for (UUID testId : request.getTestIds()) {
+      // Create LabOrderTest first to get its ID (used as source_id in invoice)
+      LabOrderTest orderTest =
+          orderTestRepository.save(
+              LabOrderTest.builder()
+                  .orderId(order.getId())
+                  .testId(testId)
+                  .status("PENDING")
+                  .build());
+
+      // Get Price
+      BigDecimal testPrice =
+          priceRepository
+              .findByHospitalIdAndTestId(hospitalId, testId)
+              .map(LabPrice::getStandardPrice)
+              .orElse(BigDecimal.ZERO);
+
+      // Determine Test Name (from prescription items or catalog)
+      String testName =
+          prescription.getLabItems().stream()
+              .filter(item -> item.getTestId().equals(testId))
+              .findFirst()
+              .map(PrescriptionLabItem::getTestName)
+              .orElseGet(
+                  () ->
+                      testRepository
+                          .findById(testId)
+                          .map(LabTest::getTestName)
+                          .orElse("Unknown Test"));
+
+      // Add to Invoice with sourceId
+      invoiceService.addItem(
+          invoice.getId(),
+          testName,
+          InvoiceItemCategory.LAB,
+          BigDecimal.ONE,
+          testPrice,
+          BigDecimal.ZERO,
+          FinanceSourceType.LAB_ORDER,
+          orderTest.getId(), // Crucial: This satisfies the NOT NULL source_id constraint
+          prescription.getDoctorId(),
+          prescription.getDoctorName(),
+          null);
+
+      // Update recommendation status if applicable
+      prescription.getLabItems().stream()
+          .filter(item -> item.getTestId().equals(testId))
+          .filter(item -> item.getStatus() == PrescriptionLabItemStatus.PENDING)
+          .forEach(item -> item.setStatus(PrescriptionLabItemStatus.ORDERED));
+    }
+
+    // 4. Record Payment if provided
+    if (request.getAmountPaid() != null && request.getAmountPaid().compareTo(BigDecimal.ZERO) > 0) {
+      RecordPaymentRequest paymentRequest = new RecordPaymentRequest();
+      paymentRequest.setPatientId(prescription.getPatientId());
+      paymentRequest.setVisitId(visitId);
+      paymentRequest.setAmount(request.getAmountPaid());
+      paymentRequest.setPaymentMode(request.getPaymentMode());
+      paymentRequest.setReferenceNumber(request.getReferenceNumber());
+      paymentRequest.setInvoiceId(invoice.getId());
+
+      paymentService.recordPayment(hospitalId, paymentRequest, userId);
+    }
+
+    prescriptionRepository.save(prescription);
 
     return order;
   }

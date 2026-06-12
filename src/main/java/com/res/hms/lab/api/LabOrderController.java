@@ -35,6 +35,13 @@ public class LabOrderController {
     return ApiResponse.success(service.createOrder(request));
   }
 
+  @PostMapping("/from-recommendation")
+  @PreAuthorize("hasAnyRole('LAB_ADMIN', 'ADMIN', 'SUPER_ADMIN')")
+  public ApiResponse<LabOrder> createFromRecommendation(
+      @RequestBody com.res.hms.lab.application.dto.LabOrderFromRecommendationRequest request) {
+    return ApiResponse.success(service.createOrderFromRecommendation(request));
+  }
+
   @GetMapping("/queue")
   @PreAuthorize("hasAnyRole('LAB_ADMIN', 'ADMIN', 'SUPER_ADMIN')")
   public ApiResponse<List<LabOrderResponseDTO>> getQueue() {

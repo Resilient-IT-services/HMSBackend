@@ -10,6 +10,7 @@ import com.res.hms.clinical.domain.AppointmentStatus;
 import com.res.hms.clinical.domain.Prescription;
 import com.res.hms.clinical.domain.PrescriptionItem;
 import com.res.hms.clinical.domain.PrescriptionLabItem;
+import com.res.hms.clinical.domain.PrescriptionLabItemStatus;
 import com.res.hms.clinical.domain.PrescriptionStatus;
 import com.res.hms.clinical.infrastructure.repository.AppointmentRepository;
 import com.res.hms.core.api.PageResponse;
@@ -218,6 +219,7 @@ public class PrescriptionService {
         labItem.setTestId(labDto.getTestId());
         labItem.setTestName(labDto.getTestName());
         labItem.setNotes(labDto.getNotes());
+        labItem.setStatus(PrescriptionLabItemStatus.PENDING);
         prescription.getLabItems().add(labItem);
       }
     }
@@ -265,7 +267,15 @@ public class PrescriptionService {
 
     // Clear existing items and re-add from DTO for simplicity in "upsert"
     prescription.getItems().clear();
+
+    // Preserve lab items that are already ordered, only update pending ones
+    List<PrescriptionLabItem> orderedLabItems =
+        prescription.getLabItems().stream()
+            .filter(item -> item.getStatus() == PrescriptionLabItemStatus.ORDERED)
+            .collect(Collectors.toList());
+
     prescription.getLabItems().clear();
+    prescription.getLabItems().addAll(orderedLabItems);
 
     if (dto.getItems() != null) {
       for (PrescriptionItemDTO itemDto : dto.getItems()) {
@@ -295,17 +305,58 @@ public class PrescriptionService {
 
     if (dto.getLabItems() != null) {
       for (PrescriptionLabItemDTO labDto : dto.getLabItems()) {
+        // Skip if this test was already ordered (to prevent duplicates)
+        boolean alreadyOrdered =
+            orderedLabItems.stream()
+                .anyMatch(ordered -> ordered.getTestId().equals(labDto.getTestId()));
+        if (alreadyOrdered) {
+          continue;
+        }
+
         PrescriptionLabItem labItem = new PrescriptionLabItem();
         labItem.setHospitalId(hospitalId);
         labItem.setPrescription(prescription);
         labItem.setTestId(labDto.getTestId());
         labItem.setTestName(labDto.getTestName());
         labItem.setNotes(labDto.getNotes());
+        labItem.setStatus(PrescriptionLabItemStatus.PENDING);
         prescription.getLabItems().add(labItem);
       }
     }
 
     prescriptionRepository.save(prescription);
+  }
+
+  @Transactional(readOnly = true)
+  public PageResponse<PrescriptionSummaryDTO> listLabRecommendations(
+      org.springframework.data.domain.Pageable pageable, String search) {
+    UUID hospitalId = hospitalContext.requireHospitalId();
+
+    Specification<Prescription> spec =
+        (root, query, cb) -> {
+          List<Predicate> predicates = new ArrayList<>();
+          predicates.add(cb.equal(root.get("hospitalId"), hospitalId));
+          predicates.add(cb.equal(root.get("deleted"), false));
+
+          // Only show prescriptions with pending lab items
+          jakarta.persistence.criteria.Join<Prescription, PrescriptionLabItem> labItems =
+              root.join("labItems");
+          predicates.add(cb.equal(labItems.get("status"), PrescriptionLabItemStatus.PENDING));
+
+          if (search != null && !search.isEmpty()) {
+            String searchLower = "%" + search.toLowerCase() + "%";
+            predicates.add(
+                cb.or(
+                    cb.like(cb.lower(root.get("patientName")), searchLower),
+                    cb.like(cb.lower(root.get("doctorName")), searchLower)));
+          }
+
+          query.distinct(true);
+          return cb.and(predicates.toArray(new Predicate[0]));
+        };
+
+    Page<Prescription> results = prescriptionRepository.findAll(spec, pageable);
+    return PageResponse.from(results.map(this::toSummaryDto));
   }
 
   @Transactional(readOnly = true)
@@ -399,9 +450,11 @@ public class PrescriptionService {
       return null;
     }
     return PrescriptionLabItemDTO.builder()
+        .id(item.getId())
         .testId(item.getTestId())
         .testName(item.getTestName())
         .notes(item.getNotes())
+        .status(item.getStatus() != null ? item.getStatus().name() : null)
         .build();
   }
 }
