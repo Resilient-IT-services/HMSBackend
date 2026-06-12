@@ -19,7 +19,7 @@ import com.res.hms.iam.application.dto.UserSummaryDTO;
 import com.res.hms.iam.domain.AdminHospitalDetails;
 import com.res.hms.iam.domain.DoctorHospitalDetails;
 import com.res.hms.iam.domain.DoctorProfile;
-import com.res.hms.iam.domain.LabTechProfile;
+import com.res.hms.iam.domain.LabAdminProfile;
 import com.res.hms.iam.domain.NurseHospitalDetails;
 import com.res.hms.iam.domain.NurseProfile;
 import com.res.hms.iam.domain.PharmacistHospitalDetails;
@@ -58,7 +58,7 @@ public abstract class UserMapper {
   @Mapping(target = "doctorInfo", source = "doctorProfile")
   @Mapping(target = "nurseInfo", source = "nurseProfile")
   @Mapping(target = "pharmacistInfo", source = "pharmacistProfile")
-  @Mapping(target = "labTechInfo", source = "labTechProfile")
+  @Mapping(target = "labAdminInfo", source = "labAdminProfile")
   @Mapping(target = "receptionistInfo", source = "receptionistProfile")
   public abstract UserDetailsDTO toDetailsDTO(UserAccount user);
 
@@ -144,7 +144,7 @@ public abstract class UserMapper {
 
   public abstract UserDetailsDTO.PharmacistInfo toPharmacistInfo(PharmacistProfile profile);
 
-  public abstract UserDetailsDTO.LabTechInfo toLabTechInfo(LabTechProfile profile);
+  public abstract UserDetailsDTO.LabAdminInfo toLabAdminInfo(LabAdminProfile profile);
 
   public abstract UserDetailsDTO.ReceptionistInfo toReceptionistInfo(ReceptionistProfile profile);
 

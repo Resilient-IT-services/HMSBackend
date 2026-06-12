@@ -23,7 +23,7 @@ public class HospitalLabSettingsController {
   private final HospitalLabSettingsService service;
 
   @GetMapping("/dashboard/stats")
-  @PreAuthorize("hasAnyRole('ADMIN', 'LAB_TECHNICIAN')")
+  @PreAuthorize("hasAnyRole('ADMIN', 'LAB_ADMIN')")
   public ApiResponse<HospitalLabDashboardStatsDTO> getDashboardStats() {
     return ApiResponse.success(service.getDashboardStats());
   }

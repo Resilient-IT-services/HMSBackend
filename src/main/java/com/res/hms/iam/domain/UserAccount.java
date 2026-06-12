@@ -72,7 +72,7 @@ public class UserAccount extends BaseEntity {
   private PharmacistProfile pharmacistProfile;
 
   @OneToOne(mappedBy = "user", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
-  private LabTechProfile labTechProfile;
+  private LabAdminProfile labAdminProfile;
 
   @OneToOne(mappedBy = "user", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
   private ReceptionistProfile receptionistProfile;

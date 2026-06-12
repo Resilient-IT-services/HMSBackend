@@ -46,7 +46,7 @@ public class UserDetailsDTO {
   private DoctorInfo doctorInfo;
   private NurseInfo nurseInfo;
   private PharmacistInfo pharmacistInfo;
-  private LabTechInfo labTechInfo;
+  private LabAdminInfo labAdminInfo;
   private ReceptionistInfo receptionistInfo;
 
   // Hospital Specific Memberships (Consolidated structure)
@@ -126,7 +126,7 @@ public class UserDetailsDTO {
   @Builder
   @NoArgsConstructor
   @AllArgsConstructor
-  public static class LabTechInfo {
+  public static class LabAdminInfo {
     private String specialty;
     private String licenseNo;
   }

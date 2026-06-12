@@ -10,7 +10,7 @@ import static org.mockito.Mockito.when;
 import com.res.hms.core.exception.ApiException;
 import com.res.hms.iam.application.dto.UserDetailsDTO;
 import com.res.hms.iam.application.repository.DoctorProfileRepository;
-import com.res.hms.iam.infrastructure.repository.LabTechProfileRepository;
+import com.res.hms.iam.infrastructure.repository.LabAdminProfileRepository;
 import com.res.hms.iam.infrastructure.repository.NurseProfileRepository;
 import com.res.hms.iam.infrastructure.repository.PharmacistProfileRepository;
 import java.util.List;
@@ -27,7 +27,7 @@ class UserValidationServiceTest {
   @Mock private DoctorProfileRepository doctorProfileRepository;
   @Mock private NurseProfileRepository nurseProfileRepository;
   @Mock private PharmacistProfileRepository pharmacistProfileRepository;
-  @Mock private LabTechProfileRepository labTechProfileRepository;
+  @Mock private LabAdminProfileRepository labAdminProfileRepository;
 
   @InjectMocks private UserValidationService userValidationService;
 

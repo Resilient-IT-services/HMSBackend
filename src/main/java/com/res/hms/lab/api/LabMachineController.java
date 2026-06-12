@@ -26,7 +26,7 @@ public class LabMachineController {
   private final LabMachineService service;
 
   @GetMapping
-  @PreAuthorize("hasAnyRole('LAB_TECHNICIAN', 'ADMIN', 'SUPER_ADMIN')")
+  @PreAuthorize("hasAnyRole('LAB_ADMIN', 'ADMIN', 'SUPER_ADMIN')")
   public ApiResponse<List<LabMachineDTO>> listAll() {
     return ApiResponse.success(service.listAll());
   }

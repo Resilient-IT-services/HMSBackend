@@ -25,7 +25,7 @@ public class LabInventoryController {
   private final LabInventoryService service;
 
   @GetMapping
-  @PreAuthorize("hasAnyRole('LAB_TECHNICIAN', 'ADMIN', 'SUPER_ADMIN')")
+  @PreAuthorize("hasAnyRole('LAB_ADMIN', 'ADMIN', 'SUPER_ADMIN')")
   public ApiResponse<List<LabInventoryItemDTO>> listInventory() {
     return ApiResponse.success(service.listInventory());
   }
@@ -37,7 +37,7 @@ public class LabInventoryController {
   }
 
   @PostMapping("/transactions")
-  @PreAuthorize("hasAnyRole('LAB_TECHNICIAN', 'ADMIN', 'SUPER_ADMIN')")
+  @PreAuthorize("hasAnyRole('LAB_ADMIN', 'ADMIN', 'SUPER_ADMIN')")
   public ApiResponse<Void> recordTransaction(
       @RequestParam UUID itemId, @RequestParam BigDecimal quantity, @RequestParam String type) {
     service.recordTransaction(itemId, quantity, type);

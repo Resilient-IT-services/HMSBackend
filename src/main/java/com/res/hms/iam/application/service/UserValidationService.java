@@ -3,7 +3,7 @@ package com.res.hms.iam.application.service;
 import com.res.hms.core.exception.ApiException;
 import com.res.hms.iam.application.dto.UserDetailsDTO;
 import com.res.hms.iam.application.repository.DoctorProfileRepository;
-import com.res.hms.iam.infrastructure.repository.LabTechProfileRepository;
+import com.res.hms.iam.infrastructure.repository.LabAdminProfileRepository;
 import com.res.hms.iam.infrastructure.repository.NurseProfileRepository;
 import com.res.hms.iam.infrastructure.repository.PharmacistProfileRepository;
 import java.util.UUID;
@@ -18,7 +18,7 @@ public class UserValidationService {
   private final DoctorProfileRepository doctorProfileRepository;
   private final NurseProfileRepository nurseProfileRepository;
   private final PharmacistProfileRepository pharmacistProfileRepository;
-  private final LabTechProfileRepository labTechProfileRepository;
+  private final LabAdminProfileRepository labAdminProfileRepository;
 
   public void validateProfileUniqueness(UserDetailsDTO request, UUID userId) {
     validateDoctorLicenseRequired(request, userId);
@@ -66,18 +66,18 @@ public class UserValidationService {
             HttpStatus.CONFLICT);
       }
     }
-    String labTechLicense =
+    String labAdminLicense =
         normalizeProfileIdentifier(
-            request.getLabTechInfo() != null ? request.getLabTechInfo().getLicenseNo() : null);
-    if (labTechLicense != null) {
+            request.getLabAdminInfo() != null ? request.getLabAdminInfo().getLicenseNo() : null);
+    if (labAdminLicense != null) {
       boolean exists =
           (userId == null)
-              ? labTechProfileRepository.existsByLicenseNo(labTechLicense)
-              : labTechProfileRepository.existsByLicenseNoAndUserIdNot(labTechLicense, userId);
+              ? labAdminProfileRepository.existsByLicenseNo(labAdminLicense)
+              : labAdminProfileRepository.existsByLicenseNoAndUserIdNot(labAdminLicense, userId);
       if (exists) {
         throw new ApiException(
             "BUSINESS_RULE_VIOLATION",
-            "Lab Tech license number already exists",
+            "Lab Admin license number already exists",
             HttpStatus.CONFLICT);
       }
     }

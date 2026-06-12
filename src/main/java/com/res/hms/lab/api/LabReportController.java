@@ -21,7 +21,7 @@ public class LabReportController {
   private final LabReportService service;
 
   @GetMapping("/preview/{orderId}")
-  @PreAuthorize("hasAnyRole('LAB_TECHNICIAN', 'DOCTOR', 'ADMIN', 'SUPER_ADMIN')")
+  @PreAuthorize("hasAnyRole('LAB_ADMIN', 'DOCTOR', 'ADMIN', 'SUPER_ADMIN')")
   public ApiResponse<LabReportPreviewDTO> getReportPreview(@PathVariable UUID orderId) {
     return ApiResponse.success(service.getReportPreview(orderId));
   }

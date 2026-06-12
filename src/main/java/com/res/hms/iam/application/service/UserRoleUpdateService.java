@@ -17,7 +17,7 @@ public class UserRoleUpdateService {
   private final DoctorProfileService doctorProfileService;
   private final NurseProfileService nurseProfileService;
   private final PharmacistProfileService pharmacistProfileService;
-  private final LabTechProfileService labTechProfileService;
+  private final LabAdminProfileService labAdminProfileService;
   private final ReceptionistProfileService receptionistProfileService;
   private final AdminProfileService adminProfileService;
 
@@ -29,7 +29,7 @@ public class UserRoleUpdateService {
     doctorProfileService.updateProfile(user, request.getDoctorInfo());
     nurseProfileService.updateProfile(user, request.getNurseInfo());
     pharmacistProfileService.updateProfile(user, request.getPharmacistInfo(), allRoles);
-    labTechProfileService.updateProfile(user, request.getLabTechInfo());
+    labAdminProfileService.updateProfile(user, request.getLabAdminInfo());
     receptionistProfileService.updateProfile(user, request.getReceptionistInfo(), allRoles);
 
     if (request.getMemberships() != null) {

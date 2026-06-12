@@ -36,13 +36,13 @@ public class LabOrderController {
   }
 
   @GetMapping("/queue")
-  @PreAuthorize("hasAnyRole('LAB_TECHNICIAN', 'ADMIN', 'SUPER_ADMIN')")
+  @PreAuthorize("hasAnyRole('LAB_ADMIN', 'ADMIN', 'SUPER_ADMIN')")
   public ApiResponse<List<LabOrderResponseDTO>> getQueue() {
     return ApiResponse.success(service.getQueue());
   }
 
   @GetMapping("/queue/paged")
-  @PreAuthorize("hasAnyRole('LAB_TECHNICIAN', 'PATHOLOGIST', 'ADMIN')")
+  @PreAuthorize("hasAnyRole('LAB_ADMIN', 'PATHOLOGIST', 'ADMIN')")
   public ApiResponse<PageResponse<LabQueueItemDTO>> getPagedQueue(
       @RequestParam(required = false) String status,
       @RequestParam(defaultValue = "0") int page,
@@ -51,20 +51,20 @@ public class LabOrderController {
   }
 
   @PostMapping("/tests/{orderTestId}/collect")
-  @PreAuthorize("hasRole('LAB_TECHNICIAN')")
+  @PreAuthorize("hasRole('LAB_ADMIN')")
   public ApiResponse<String> collectSample(@PathVariable UUID orderTestId) {
     return ApiResponse.success(service.collectSample(orderTestId));
   }
 
   @GetMapping("/tests/{orderTestId}/parameters")
-  @PreAuthorize("hasAnyRole('LAB_TECHNICIAN', 'PATHOLOGIST', 'ADMIN', 'SUPER_ADMIN')")
+  @PreAuthorize("hasAnyRole('LAB_ADMIN', 'PATHOLOGIST', 'ADMIN', 'SUPER_ADMIN')")
   public ApiResponse<List<com.res.hms.lab.application.dto.LabTestParameterDTO>>
       getParametersByOrderTest(@PathVariable UUID orderTestId) {
     return ApiResponse.success(service.getParametersForOrderTest(orderTestId));
   }
 
   @PostMapping("/results")
-  @PreAuthorize("hasAnyRole('LAB_TECHNICIAN', 'ADMIN', 'SUPER_ADMIN')")
+  @PreAuthorize("hasAnyRole('LAB_ADMIN', 'ADMIN', 'SUPER_ADMIN')")
   public ApiResponse<Void> saveResults(@RequestBody LabResultSaveRequest request) {
     service.saveResults(request);
     return ApiResponse.success(null);
