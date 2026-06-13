@@ -6,6 +6,8 @@ import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.Table;
+import jakarta.persistence.EnumType;
+import jakarta.persistence.Enumerated;
 import java.util.UUID;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -30,6 +32,17 @@ public class LabOrderTest {
 
   @Column(name = "test_id")
   private UUID testId;
+
+  @Column(name = "test_name")
+  private String testName;
+
+  @Enumerated(EnumType.STRING)
+  @Column(name = "category")
+  private TestCategory category;
+
+  @Enumerated(EnumType.STRING)
+  @Column(name = "result_entry_type")
+  private ResultEntryType resultEntryType;
 
   @Column(name = "package_id")
   private UUID packageId;

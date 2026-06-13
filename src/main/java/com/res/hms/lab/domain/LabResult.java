@@ -26,6 +26,9 @@ public class LabResult {
   @GeneratedValue(strategy = GenerationType.UUID)
   private UUID id;
 
+  @Column(name = "order_test_id")
+  private UUID orderTestId;
+
   @Column(name = "sample_id")
   private UUID sampleId;
 
@@ -34,4 +37,7 @@ public class LabResult {
 
   @Column(name = "entered_at")
   private Instant enteredAt;
+
+  @Column(name = "findings", columnDefinition = "TEXT")
+  private String findings;
 }

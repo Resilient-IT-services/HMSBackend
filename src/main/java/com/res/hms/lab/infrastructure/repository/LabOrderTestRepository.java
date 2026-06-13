@@ -18,7 +18,7 @@ public interface LabOrderTestRepository
       value =
           "SELECT new com.res.hms.lab.application.dto.LabQueueItemDTO("
               + "o.id, ot.id, o.orderNumber, o.patientId, "
-              + "p.fullName, '', (SELECT t.testName FROM LabTest t WHERE t.id = ot.testId), ot.status, o.orderedAt) "
+              + "p.fullName, '', ot.testName, CAST(ot.category AS string), CAST(ot.resultEntryType AS string), ot.status, o.orderedAt) "
               + "FROM LabOrderTest ot, LabOrder o, com.res.hms.clinical.domain.Patient p "
               + "WHERE ot.orderId = o.id AND o.patientId = p.id "
               + "AND o.hospitalId = :hospitalId "

@@ -19,6 +19,8 @@ public class LabQueueItemDTO {
   private String patientName;
   private String doctorName;
   private String testName;
+  private String category;
+  private String resultEntryType;
   private String status;
   private Instant orderedAt;
 }

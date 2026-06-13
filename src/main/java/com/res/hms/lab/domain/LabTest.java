@@ -2,6 +2,8 @@ package com.res.hms.lab.domain;
 
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
+import jakarta.persistence.EnumType;
+import jakarta.persistence.Enumerated;
 import jakarta.persistence.FetchType;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
@@ -48,8 +50,13 @@ public class LabTest {
   @Column(name = "department_id")
   private UUID departmentId;
 
-  @Column(name = "result_type")
-  private String resultType;
+  @Enumerated(EnumType.STRING)
+  @Column(name = "category")
+  private TestCategory category;
+
+  @Enumerated(EnumType.STRING)
+  @Column(name = "result_entry_type")
+  private ResultEntryType resultEntryType;
 
   @Column(name = "tat_value")
   private Integer tatValue;

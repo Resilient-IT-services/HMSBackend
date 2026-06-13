@@ -18,6 +18,8 @@ public class LabTestDTO {
   private String aliasName;
   private UUID departmentId;
   private String departmentName;
+  private String category;
+  private String resultEntryType;
   private String resultType;
   private Integer tatValue;
   private String tatUnit;

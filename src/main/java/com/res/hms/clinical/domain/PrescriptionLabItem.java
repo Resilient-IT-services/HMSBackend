@@ -29,6 +29,9 @@ public class PrescriptionLabItem extends HospitalScopedEntity {
   @Column(name = "notes")
   private String notes;
 
+  @Column(name = "lab_order_test_id")
+  private java.util.UUID labOrderTestId;
+
   @jakarta.persistence.Enumerated(jakarta.persistence.EnumType.STRING)
   @Column(name = "status", nullable = false)
   private PrescriptionLabItemStatus status = PrescriptionLabItemStatus.PENDING;

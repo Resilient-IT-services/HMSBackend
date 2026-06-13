@@ -16,4 +16,7 @@ public class LabTestParameterDTO {
   private String parameterName;
   private String unit;
   private Integer displayOrder;
+  private String resultValue;
+  private Boolean abnormal;
+  private Boolean critical;
 }

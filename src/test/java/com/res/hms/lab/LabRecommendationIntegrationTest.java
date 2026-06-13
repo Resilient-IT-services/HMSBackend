@@ -5,6 +5,8 @@ import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.ArgumentMatchers.nullable;
+import static org.mockito.Mockito.lenient;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -20,6 +22,7 @@ import com.res.hms.finance.domain.Invoice;
 import com.res.hms.finance.domain.PaymentMode;
 import com.res.hms.lab.application.dto.LabOrderFromRecommendationRequest;
 import com.res.hms.lab.application.service.LabOrderService;
+import com.res.hms.lab.application.service.LabRecommendationService;
 import com.res.hms.lab.domain.LabOrder;
 import com.res.hms.lab.domain.LabOrderTest;
 import com.res.hms.lab.domain.LabPrice;
@@ -52,7 +55,7 @@ public class LabRecommendationIntegrationTest {
   @Mock private InvoiceService invoiceService;
   @Mock private PaymentService paymentService;
   @Mock private HospitalContext hospitalContext;
-  @InjectMocks private LabOrderService labOrderService;
+  @InjectMocks private LabRecommendationService labRecommendationService;
 
   private UUID hospitalId;
   private UUID userId;
@@ -86,37 +89,42 @@ public class LabRecommendationIntegrationTest {
     item1.setStatus(PrescriptionLabItemStatus.PENDING);
     prescription.getLabItems().add(item1);
 
-    when(hospitalContext.requireHospitalId()).thenReturn(hospitalId);
-    when(hospitalContext.requireUserId()).thenReturn(userId);
-    when(prescriptionRepository.findByIdAndHospitalId(prescriptionId, hospitalId))
+    lenient().when(hospitalContext.requireHospitalId()).thenReturn(hospitalId);
+    lenient().when(hospitalContext.requireUserId()).thenReturn(userId);
+    lenient().when(prescriptionRepository.findByIdAndHospitalId(prescriptionId, hospitalId))
         .thenReturn(Optional.of(prescription));
 
     // Mock Price for Test 1
     LabPrice price1 = new LabPrice();
     price1.setStandardPrice(new BigDecimal("500.00"));
-    when(priceRepository.findByHospitalIdAndTestId(hospitalId, test1Id))
+    lenient().when(priceRepository.findByHospitalIdAndTestId(hospitalId, test1Id))
         .thenReturn(Optional.of(price1));
 
     // Mock Price for Extra Test 2
     LabPrice price2 = new LabPrice();
     price2.setStandardPrice(new BigDecimal("300.00"));
-    when(priceRepository.findByHospitalIdAndTestId(hospitalId, test2Id))
+    lenient().when(priceRepository.findByHospitalIdAndTestId(hospitalId, test2Id))
         .thenReturn(Optional.of(price2));
 
     // Mock Test Repository for Extra Test
     LabTest test2 = new LabTest();
     test2.setId(test2Id);
     test2.setTestName("Extra Test 2");
-    when(testRepository.findById(test2Id)).thenReturn(Optional.of(test2));
+    lenient().when(testRepository.findById(test2Id)).thenReturn(Optional.of(test2));
+
+    LabTest test1 = new LabTest();
+    test1.setId(test1Id);
+    test1.setTestName("Test 1");
+    lenient().when(testRepository.findById(test1Id)).thenReturn(Optional.of(test1));
 
     // Mock Invoice
     Invoice invoice = new Invoice();
     invoice.setId(UUID.randomUUID());
-    when(invoiceService.getOrCreateInvoice(any(), any(), any())).thenReturn(invoice);
+    lenient().when(invoiceService.getOrCreateInvoice(any(), any(), nullable(UUID.class))).thenReturn(invoice);
 
     // Mock Lab Order and Order Test saves
-    when(orderRepository.save(any(LabOrder.class))).thenAnswer(i -> i.getArgument(0));
-    when(orderTestRepository.save(any(LabOrderTest.class)))
+    lenient().when(orderRepository.save(any(LabOrder.class))).thenAnswer(i -> i.getArgument(0));
+    lenient().when(orderTestRepository.save(any(LabOrderTest.class)))
         .thenAnswer(
             i -> {
               LabOrderTest ot = i.getArgument(0);
@@ -132,7 +140,7 @@ public class LabRecommendationIntegrationTest {
     request.setAmountPaid(new BigDecimal("800.00"));
 
     // When
-    LabOrder result = labOrderService.createOrderFromRecommendation(request);
+    LabOrder result = labRecommendationService.createOrderFromRecommendation(request);
 
     // Then
     assertNotNull(result);

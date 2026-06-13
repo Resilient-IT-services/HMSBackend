@@ -7,6 +7,8 @@ import com.res.hms.audit.domain.DomainEntity;
 import com.res.hms.core.exception.ApiException;
 import com.res.hms.lab.application.dto.LabTestDTO;
 import com.res.hms.lab.domain.LabTest;
+import com.res.hms.lab.domain.ResultEntryType;
+import com.res.hms.lab.domain.TestCategory;
 import com.res.hms.lab.infrastructure.repository.LabTestRepository;
 import java.util.List;
 import java.util.UUID;
@@ -76,7 +78,22 @@ public class LabTestService {
     entity.setShortName(dto.getShortName());
     entity.setAliasName(dto.getAliasName());
     entity.setDepartmentId(dto.getDepartmentId());
-    entity.setResultType(dto.getResultType());
+    
+    if (dto.getCategory() != null) {
+        entity.setCategory(TestCategory.valueOf(dto.getCategory()));
+    }
+    
+    if (dto.getResultEntryType() != null) {
+        entity.setResultEntryType(ResultEntryType.valueOf(dto.getResultEntryType()));
+    } else if (dto.getResultType() != null) {
+        // Fallback for old resultType string
+        try {
+            entity.setResultEntryType(ResultEntryType.valueOf(dto.getResultType()));
+        } catch (IllegalArgumentException e) {
+            entity.setResultEntryType(ResultEntryType.PARAMETER);
+        }
+    }
+    
     entity.setTatValue(dto.getTatValue());
     entity.setTatUnit(dto.getTatUnit());
     entity.setActive(dto.isActive());

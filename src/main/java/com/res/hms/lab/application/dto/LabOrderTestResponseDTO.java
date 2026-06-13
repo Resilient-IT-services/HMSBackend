@@ -15,6 +15,8 @@ public class LabOrderTestResponseDTO {
   private UUID testId;
   private String testName;
   private String testCode;
+  private String category;
+  private String resultEntryType;
   private UUID packageId;
   private String packageName;
   private String status;

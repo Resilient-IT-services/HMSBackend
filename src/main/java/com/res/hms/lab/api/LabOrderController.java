@@ -28,6 +28,7 @@ import org.springframework.web.bind.annotation.RestController;
 public class LabOrderController {
 
   private final LabOrderService service;
+  private final com.res.hms.lab.application.service.LabRecommendationService recommendationService;
 
   @PostMapping
   @PreAuthorize("hasAnyRole('DOCTOR', 'ADMIN', 'SUPER_ADMIN')")
@@ -39,7 +40,7 @@ public class LabOrderController {
   @PreAuthorize("hasAnyRole('LAB_ADMIN', 'ADMIN', 'SUPER_ADMIN')")
   public ApiResponse<LabOrder> createFromRecommendation(
       @RequestBody com.res.hms.lab.application.dto.LabOrderFromRecommendationRequest request) {
-    return ApiResponse.success(service.createOrderFromRecommendation(request));
+    return ApiResponse.success(recommendationService.createOrderFromRecommendation(request));
   }
 
   @GetMapping("/queue")
@@ -63,6 +64,13 @@ public class LabOrderController {
     return ApiResponse.success(service.collectSample(orderTestId));
   }
 
+  @PostMapping("/tests/{orderTestId}/process")
+  @PreAuthorize("hasRole('LAB_ADMIN')")
+  public ApiResponse<Void> markProcessing(@PathVariable UUID orderTestId) {
+    service.markProcessing(orderTestId);
+    return ApiResponse.success(null);
+  }
+
   @GetMapping("/tests/{orderTestId}/parameters")
   @PreAuthorize("hasAnyRole('LAB_ADMIN', 'PATHOLOGIST', 'ADMIN', 'SUPER_ADMIN')")
   public ApiResponse<List<com.res.hms.lab.application.dto.LabTestParameterDTO>>
@@ -78,7 +86,7 @@ public class LabOrderController {
   }
 
   @PostMapping("/tests/{orderTestId}/verify")
-  @PreAuthorize("hasAnyRole('PATHOLOGIST', 'ADMIN', 'SUPER_ADMIN')")
+  @PreAuthorize("hasAnyRole('PATHOLOGIST', 'LAB_ADMIN', 'ADMIN', 'SUPER_ADMIN')")
   public ApiResponse<Void> verifyResult(
       @PathVariable UUID orderTestId, @RequestParam String remarks, @RequestParam String status) {
     service.verifyResult(orderTestId, remarks, status);

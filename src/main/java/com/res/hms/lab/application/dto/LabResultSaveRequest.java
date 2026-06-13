@@ -13,6 +13,7 @@ import lombok.NoArgsConstructor;
 @Builder
 public class LabResultSaveRequest {
   private UUID orderTestId;
+  private String findings;
   private List<ParameterResultDTO> results;
 
   @Data
