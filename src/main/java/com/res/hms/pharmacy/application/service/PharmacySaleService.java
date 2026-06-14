@@ -140,7 +140,6 @@ public class PharmacySaleService {
     }
 
     var response = toQuickSaleResponse(savedSale);
-    response.setInvoiceNumber(invoice.getInvoiceNumber());
     response.setPaymentId(paymentReceipt.paymentId());
     response.setReceiptNumber(paymentReceipt.receiptNumber());
 
@@ -453,6 +452,7 @@ public class PharmacySaleService {
             .saleId(sale.getId())
             .saleNumber(sale.getSaleNumber())
             .invoiceId(sale.getInvoiceId())
+            .invoiceNumber(sale.getSaleNumber())
             .totalAmount(sale.getTotalAmount())
             .status(sale.getStatus().name())
             .customerName(sale.getCustomerName())

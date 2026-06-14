@@ -51,6 +51,7 @@ public class PharmacyMapper {
         .saleId(sale.getId())
         .saleNumber(sale.getSaleNumber())
         .invoiceId(sale.getInvoiceId())
+        .invoiceNumber(sale.getSaleNumber())
         .totalAmount(sale.getTotalAmount())
         .status(sale.getStatus().name())
         .customerName(sale.getCustomerName())
