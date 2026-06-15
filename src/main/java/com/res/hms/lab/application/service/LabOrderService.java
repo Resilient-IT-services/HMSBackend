@@ -12,8 +12,8 @@ import com.res.hms.lab.application.dto.LabResultSaveRequest;
 import com.res.hms.lab.application.dto.LabTestParameterDTO;
 import com.res.hms.lab.domain.LabOrder;
 import com.res.hms.lab.domain.LabOrderTest;
-import com.res.hms.lab.domain.LabResult;
 import com.res.hms.lab.domain.LabPackageTest;
+import com.res.hms.lab.domain.LabResult;
 import com.res.hms.lab.domain.LabSample;
 import com.res.hms.lab.domain.LabSpecimenType;
 import com.res.hms.lab.domain.LabTest;
@@ -64,7 +64,8 @@ public class LabOrderService {
   private final com.res.hms.lab.infrastructure.repository.LabPriceRepository priceRepository;
   private final LabTestSpecimenRepository testSpecimenRepository;
   private final LabPackageTestRepository packageTestRepository;
-  private final com.res.hms.lab.infrastructure.repository.LabSpecimenTypeRepository specimenTypeRepository;
+  private final com.res.hms.lab.infrastructure.repository.LabSpecimenTypeRepository
+      specimenTypeRepository;
   private final LabResultService labResultService;
   private final HospitalContext hospitalContext;
   private final JdbcTemplate jdbcTemplate;
@@ -170,7 +171,8 @@ public class LabOrderService {
     }
   }
 
-  private void saveSample(UUID hospitalId, UUID orderTestId, String sampleNumber, UUID specimenTypeId, UUID userId) {
+  private void saveSample(
+      UUID hospitalId, UUID orderTestId, String sampleNumber, UUID specimenTypeId, UUID userId) {
     LabSample sample = new LabSample();
     sample.setHospitalId(hospitalId);
     sample.setOrderTestId(orderTestId);
@@ -262,7 +264,8 @@ public class LabOrderService {
                 .findById(testId)
                 .orElseThrow(
                     () ->
-                        new ApiException("NOT_FOUND", "Test not found: " + testId, HttpStatus.NOT_FOUND));
+                        new ApiException(
+                            "NOT_FOUND", "Test not found: " + testId, HttpStatus.NOT_FOUND));
 
         orderTestRepository.save(
             LabOrderTest.builder()
@@ -279,11 +282,7 @@ public class LabOrderService {
     if (packageIds != null) {
       for (UUID packageId : packageIds) {
         orderTestRepository.save(
-            LabOrderTest.builder()
-                .orderId(orderId)
-                .packageId(packageId)
-                .status("PENDING")
-                .build());
+            LabOrderTest.builder().orderId(orderId).packageId(packageId).status("PENDING").build());
       }
     }
   }
@@ -351,7 +350,8 @@ public class LabOrderService {
       syncPrescriptionStatus(orderTest.getId(), PrescriptionLabItemStatus.COMPLETED);
       updateOrderStatusIfAllTestsDone(orderTest.getOrderId());
     } else if ("REJECTED".equalsIgnoreCase(status)) {
-      orderTest.setStatus(orderTest.getCategory() == TestCategory.LAB ? "SAMPLE_COLLECTED" : "PENDING");
+      orderTest.setStatus(
+          orderTest.getCategory() == TestCategory.LAB ? "SAMPLE_COLLECTED" : "PENDING");
       orderTestRepository.save(orderTest);
     }
   }

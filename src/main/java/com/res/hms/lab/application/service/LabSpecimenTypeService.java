@@ -23,7 +23,8 @@ public class LabSpecimenTypeService {
 
   @Transactional
   public LabSpecimenTypeDTO create(LabSpecimenTypeDTO dto) {
-    LabSpecimenType entity = LabSpecimenType.builder().code(dto.getCode()).name(dto.getName()).build();
+    LabSpecimenType entity =
+        LabSpecimenType.builder().code(dto.getCode()).name(dto.getName()).build();
     return toDto(repository.save(entity));
   }
 

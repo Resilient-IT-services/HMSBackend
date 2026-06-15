@@ -9,7 +9,6 @@ import static org.mockito.ArgumentMatchers.nullable;
 import static org.mockito.Mockito.lenient;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.when;
 
 import com.res.hms.clinical.application.prescription.repository.PrescriptionRepository;
 import com.res.hms.clinical.domain.Prescription;
@@ -21,7 +20,6 @@ import com.res.hms.finance.application.service.PaymentService;
 import com.res.hms.finance.domain.Invoice;
 import com.res.hms.finance.domain.PaymentMode;
 import com.res.hms.lab.application.dto.LabOrderFromRecommendationRequest;
-import com.res.hms.lab.application.service.LabOrderService;
 import com.res.hms.lab.application.service.LabRecommendationService;
 import com.res.hms.lab.domain.LabOrder;
 import com.res.hms.lab.domain.LabOrderTest;
@@ -91,19 +89,22 @@ public class LabRecommendationIntegrationTest {
 
     lenient().when(hospitalContext.requireHospitalId()).thenReturn(hospitalId);
     lenient().when(hospitalContext.requireUserId()).thenReturn(userId);
-    lenient().when(prescriptionRepository.findByIdAndHospitalId(prescriptionId, hospitalId))
+    lenient()
+        .when(prescriptionRepository.findByIdAndHospitalId(prescriptionId, hospitalId))
         .thenReturn(Optional.of(prescription));
 
     // Mock Price for Test 1
     LabPrice price1 = new LabPrice();
     price1.setStandardPrice(new BigDecimal("500.00"));
-    lenient().when(priceRepository.findByHospitalIdAndTestId(hospitalId, test1Id))
+    lenient()
+        .when(priceRepository.findByHospitalIdAndTestId(hospitalId, test1Id))
         .thenReturn(Optional.of(price1));
 
     // Mock Price for Extra Test 2
     LabPrice price2 = new LabPrice();
     price2.setStandardPrice(new BigDecimal("300.00"));
-    lenient().when(priceRepository.findByHospitalIdAndTestId(hospitalId, test2Id))
+    lenient()
+        .when(priceRepository.findByHospitalIdAndTestId(hospitalId, test2Id))
         .thenReturn(Optional.of(price2));
 
     // Mock Test Repository for Extra Test
@@ -120,11 +121,14 @@ public class LabRecommendationIntegrationTest {
     // Mock Invoice
     Invoice invoice = new Invoice();
     invoice.setId(UUID.randomUUID());
-    lenient().when(invoiceService.getOrCreateInvoice(any(), any(), nullable(UUID.class))).thenReturn(invoice);
+    lenient()
+        .when(invoiceService.getOrCreateInvoice(any(), any(), nullable(UUID.class)))
+        .thenReturn(invoice);
 
     // Mock Lab Order and Order Test saves
     lenient().when(orderRepository.save(any(LabOrder.class))).thenAnswer(i -> i.getArgument(0));
-    lenient().when(orderTestRepository.save(any(LabOrderTest.class)))
+    lenient()
+        .when(orderTestRepository.save(any(LabOrderTest.class)))
         .thenAnswer(
             i -> {
               LabOrderTest ot = i.getArgument(0);

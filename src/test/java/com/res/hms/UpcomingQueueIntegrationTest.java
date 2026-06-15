@@ -5,7 +5,6 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
-import com.res.hms.TestDataHelper;
 import com.res.hms.clinical.domain.Appointment;
 import com.res.hms.clinical.domain.AppointmentStatus;
 import com.res.hms.clinical.infrastructure.repository.AppointmentRepository;
@@ -74,25 +73,28 @@ public class UpcomingQueueIntegrationTest {
 
   @Test
   void testUpcomingCountWithDateFilters() throws Exception {
-    // 1. Create an appointment for tomorrow
-    createAppointment(
-        "Tomorrow Patient", AppointmentStatus.SCHEDULED, Instant.now().plus(1, ChronoUnit.DAYS));
-
-    // 2. Create an appointment for today (future time)
-    createAppointment(
-        "Today Future Patient", AppointmentStatus.SCHEDULED, Instant.now().plus(2, ChronoUnit.HOURS));
-
-    // 3. Create an appointment for today (past time)
-    createAppointment(
-        "Today Past Patient", AppointmentStatus.SCHEDULED, Instant.now().minus(2, ChronoUnit.HOURS));
-    
-    // 4. Create a completed appointment for tomorrow
-    createAppointment(
-        "Tomorrow Completed", AppointmentStatus.COMPLETED, Instant.now().plus(1, ChronoUnit.DAYS));
-
-    // Get stats for TODAY
     Instant startOfToday = Instant.now().truncatedTo(ChronoUnit.DAYS);
     Instant endOfToday = startOfToday.plus(1, ChronoUnit.DAYS).minus(1, ChronoUnit.MILLIS);
+
+    // 1. Create an appointment for tomorrow (future)
+    createAppointment(
+        "Tomorrow Patient",
+        AppointmentStatus.SCHEDULED,
+        startOfToday.plus(1, ChronoUnit.DAYS).plus(10, ChronoUnit.HOURS));
+
+    // 2. Create an appointment for today (future time - near end of day to be safe)
+    createAppointment(
+        "Today Future Patient", AppointmentStatus.SCHEDULED, endOfToday.minus(1, ChronoUnit.HOURS));
+
+    // 3. Create an appointment for today (past time - near start of day)
+    createAppointment(
+        "Today Past Patient", AppointmentStatus.SCHEDULED, startOfToday.plus(1, ChronoUnit.HOURS));
+
+    // 4. Create a completed appointment for tomorrow
+    createAppointment(
+        "Tomorrow Completed",
+        AppointmentStatus.COMPLETED,
+        startOfToday.plus(1, ChronoUnit.DAYS).plus(11, ChronoUnit.HOURS));
 
     mockMvc
         .perform(
@@ -102,26 +104,27 @@ public class UpcomingQueueIntegrationTest {
                 .param("from", startOfToday.toString())
                 .param("to", endOfToday.toString()))
         .andExpect(status().isOk())
-        .andExpect(jsonPath("$.data.upcoming").value(2));
+        .andExpect(jsonPath("$.data.upcoming").value(1));
   }
 
   @Test
   void testUpcomingListFilter() throws Exception {
+    Instant startOfToday = Instant.now().truncatedTo(ChronoUnit.DAYS);
+    Instant endOfToday = startOfToday.plus(1, ChronoUnit.DAYS).minus(1, ChronoUnit.MILLIS);
+
     // 1. Create an appointment for tomorrow
     createAppointment(
-        "Tomorrow Patient", AppointmentStatus.SCHEDULED, Instant.now().plus(1, ChronoUnit.DAYS));
+        "Tomorrow Patient",
+        AppointmentStatus.SCHEDULED,
+        startOfToday.plus(1, ChronoUnit.DAYS).plus(10, ChronoUnit.HOURS));
 
     // 2. Create an appointment for today (future time)
     createAppointment(
-        "Today Future Patient", AppointmentStatus.SCHEDULED, Instant.now().plus(2, ChronoUnit.HOURS));
+        "Today Future Patient", AppointmentStatus.SCHEDULED, endOfToday.minus(1, ChronoUnit.HOURS));
 
     // 3. Create an appointment for today (past time)
     createAppointment(
-        "Today Past Patient", AppointmentStatus.SCHEDULED, Instant.now().minus(2, ChronoUnit.HOURS));
-
-    // Get list with upcoming=true and TODAY date filters
-    Instant startOfToday = Instant.now().truncatedTo(ChronoUnit.DAYS);
-    Instant endOfToday = startOfToday.plus(1, ChronoUnit.DAYS).minus(1, ChronoUnit.MILLIS);
+        "Today Past Patient", AppointmentStatus.SCHEDULED, startOfToday.plus(1, ChronoUnit.HOURS));
 
     mockMvc
         .perform(
@@ -132,10 +135,12 @@ public class UpcomingQueueIntegrationTest {
                 .param("from", startOfToday.toString())
                 .param("to", endOfToday.toString()))
         .andExpect(status().isOk())
-        .andExpect(jsonPath("$.data.totalElements").value(2))
-        .andExpect(jsonPath("$.data.content[?(@.patientName == 'Tomorrow Patient')]").exists())
+        .andExpect(jsonPath("$.data.totalElements").value(1))
         .andExpect(jsonPath("$.data.content[?(@.patientName == 'Today Future Patient')]").exists())
-        .andExpect(jsonPath("$.data.content[?(@.patientName == 'Today Past Patient')]").doesNotExist());
+        .andExpect(
+            jsonPath("$.data.content[?(@.patientName == 'Tomorrow Patient')]").doesNotExist())
+        .andExpect(
+            jsonPath("$.data.content[?(@.patientName == 'Today Past Patient')]").doesNotExist());
   }
 
   private void createAppointment(String patientName, AppointmentStatus status, Instant time) {

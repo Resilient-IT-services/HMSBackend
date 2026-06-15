@@ -16,8 +16,8 @@ import com.res.hms.lab.domain.LabPrice;
 import com.res.hms.lab.domain.LabTest;
 import com.res.hms.lab.infrastructure.repository.LabOrderRepository;
 import com.res.hms.lab.infrastructure.repository.LabOrderTestRepository;
-import com.res.hms.lab.infrastructure.repository.LabTestRepository;
 import com.res.hms.lab.infrastructure.repository.LabPriceRepository;
+import com.res.hms.lab.infrastructure.repository.LabTestRepository;
 import java.math.BigDecimal;
 import java.time.Instant;
 import java.util.List;
@@ -34,7 +34,8 @@ public class LabRecommendationService {
   private final LabOrderRepository orderRepository;
   private final LabOrderTestRepository orderTestRepository;
   private final LabTestRepository testRepository;
-  private final com.res.hms.clinical.application.prescription.repository.PrescriptionRepository prescriptionRepository;
+  private final com.res.hms.clinical.application.prescription.repository.PrescriptionRepository
+      prescriptionRepository;
   private final com.res.hms.finance.application.service.InvoiceService invoiceService;
   private final com.res.hms.finance.application.service.PaymentService paymentService;
   private final LabPriceRepository priceRepository;
@@ -53,14 +54,13 @@ public class LabRecommendationService {
                     new ApiException("NOT_FOUND", "Prescription not found", HttpStatus.NOT_FOUND));
 
     if (request.getTestIds() == null || request.getTestIds().isEmpty()) {
-      throw new ApiException(
-          "BAD_REQUEST", "No tests selected", HttpStatus.BAD_REQUEST);
+      throw new ApiException("BAD_REQUEST", "No tests selected", HttpStatus.BAD_REQUEST);
     }
 
     UUID visitId =
         prescription.getAppointment() != null ? prescription.getAppointment().getVisitId() : null;
     LabOrder order = createLabOrderRecord(hospitalId, prescription.getPatientId(), visitId);
-    
+
     Invoice invoice =
         invoiceService.getOrCreateInvoice(hospitalId, prescription.getPatientId(), visitId);
 
@@ -96,7 +96,8 @@ public class LabRecommendationService {
               .findById(testId)
               .orElseThrow(
                   () ->
-                      new ApiException("NOT_FOUND", "Test not found: " + testId, HttpStatus.NOT_FOUND));
+                      new ApiException(
+                          "NOT_FOUND", "Test not found: " + testId, HttpStatus.NOT_FOUND));
 
       LabOrderTest orderTest =
           orderTestRepository.save(
@@ -139,7 +140,8 @@ public class LabRecommendationService {
     }
   }
 
-  private void updatePrescriptionLabItemStatus(Prescription prescription, UUID testId, UUID orderTestId) {
+  private void updatePrescriptionLabItemStatus(
+      Prescription prescription, UUID testId, UUID orderTestId) {
     prescription.getLabItems().stream()
         .filter(item -> item.getTestId().equals(testId))
         .filter(item -> item.getStatus() == PrescriptionLabItemStatus.PENDING)
@@ -163,7 +165,8 @@ public class LabRecommendationService {
       paymentRequest.setAmount(request.getAmountPaid());
       paymentRequest.setPaymentMode(request.getPaymentMode());
       paymentRequest.setReferenceNumber(request.getReferenceNumber());
-      Invoice invoice = invoiceService.getOrCreateInvoice(hospitalId, prescription.getPatientId(), visitId);
+      Invoice invoice =
+          invoiceService.getOrCreateInvoice(hospitalId, prescription.getPatientId(), visitId);
       paymentRequest.setInvoiceId(invoice.getId());
 
       paymentService.recordPayment(hospitalId, paymentRequest, userId);

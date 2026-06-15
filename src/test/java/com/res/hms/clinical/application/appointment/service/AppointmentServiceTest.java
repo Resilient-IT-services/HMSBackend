@@ -7,6 +7,7 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.lenient;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
@@ -56,6 +57,7 @@ class AppointmentServiceTest {
   @Mock private ResourceLookup resourceLookup;
   @Mock private HospitalRepository hospitalRepository;
   @Mock private EntityManager entityManager;
+  @Mock private java.time.Clock clock;
 
   @InjectMocks private AppointmentService appointmentService;
 
@@ -66,6 +68,7 @@ class AppointmentServiceTest {
   void setUp() {
     hospitalId = UUID.randomUUID();
     appointmentId = UUID.randomUUID();
+    lenient().when(clock.instant()).thenReturn(Instant.now());
   }
 
   @Test

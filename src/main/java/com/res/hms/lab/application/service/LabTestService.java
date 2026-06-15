@@ -78,22 +78,22 @@ public class LabTestService {
     entity.setShortName(dto.getShortName());
     entity.setAliasName(dto.getAliasName());
     entity.setDepartmentId(dto.getDepartmentId());
-    
+
     if (dto.getCategory() != null) {
-        entity.setCategory(TestCategory.valueOf(dto.getCategory()));
+      entity.setCategory(TestCategory.valueOf(dto.getCategory()));
     }
-    
+
     if (dto.getResultEntryType() != null) {
-        entity.setResultEntryType(ResultEntryType.valueOf(dto.getResultEntryType()));
+      entity.setResultEntryType(ResultEntryType.valueOf(dto.getResultEntryType()));
     } else if (dto.getResultType() != null) {
-        // Fallback for old resultType string
-        try {
-            entity.setResultEntryType(ResultEntryType.valueOf(dto.getResultType()));
-        } catch (IllegalArgumentException e) {
-            entity.setResultEntryType(ResultEntryType.PARAMETER);
-        }
+      // Fallback for old resultType string
+      try {
+        entity.setResultEntryType(ResultEntryType.valueOf(dto.getResultType()));
+      } catch (IllegalArgumentException e) {
+        entity.setResultEntryType(ResultEntryType.PARAMETER);
+      }
     }
-    
+
     entity.setTatValue(dto.getTatValue());
     entity.setTatUnit(dto.getTatUnit());
     entity.setActive(dto.isActive());

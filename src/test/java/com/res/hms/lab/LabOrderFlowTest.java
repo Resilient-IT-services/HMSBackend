@@ -67,7 +67,7 @@ public class LabOrderFlowTest {
               o.setId(UUID.randomUUID());
               return o;
             });
-            
+
     com.res.hms.lab.domain.LabTest mockTest = new com.res.hms.lab.domain.LabTest();
     mockTest.setId(testId);
     mockTest.setTestName("Mock Test");
