@@ -16,15 +16,15 @@ public interface MedicineRepository
 
   Optional<Medicine> findByNameIgnoreCase(String name);
 
-  @Query("SELECT m FROM Medicine m WHERE UPPER(m.name) = UPPER(:name) AND m.deleted = false")
+  @Query("SELECT m FROM Medicine m WHERE UPPER(m.name) = UPPER(CAST(:name AS string)) AND m.deleted = false")
   List<Medicine> findByExactName(@Param("name") String name);
 
   @Query(
       """
       SELECT COUNT(m) > 0 FROM Medicine m
-      WHERE UPPER(m.name) = UPPER(:name)
-      AND (:genericName IS NULL OR UPPER(m.genericName) = UPPER(:genericName))
-      AND (:strength IS NULL OR UPPER(m.strength) = UPPER(:strength))
+      WHERE UPPER(m.name) = UPPER(CAST(:name AS string))
+      AND (:genericName IS NULL OR UPPER(m.genericName) = UPPER(CAST(:genericName AS string)))
+      AND (:strength IS NULL OR UPPER(m.strength) = UPPER(CAST(:strength AS string)))
       AND (:form IS NULL OR m.form = :form)
       """)
   boolean existsDuplicate(
