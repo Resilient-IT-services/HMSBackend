@@ -16,7 +16,8 @@ public interface MedicineRepository
 
   Optional<Medicine> findByNameIgnoreCase(String name);
 
-  @Query("SELECT m FROM Medicine m WHERE UPPER(m.name) = UPPER(CAST(:name AS string)) AND m.deleted = false")
+  @Query(
+      "SELECT m FROM Medicine m WHERE UPPER(m.name) = UPPER(CAST(:name AS string)) AND m.deleted = false")
   List<Medicine> findByExactName(@Param("name") String name);
 
   @Query(

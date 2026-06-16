@@ -16,6 +16,7 @@ import com.res.hms.pharmacy.application.dto.StockImportResponse;
 import com.res.hms.pharmacy.application.dto.StockRequest;
 import com.res.hms.pharmacy.application.service.MedicineService;
 import com.res.hms.pharmacy.application.service.PharmacySaleService;
+import com.res.hms.pharmacy.application.service.PharmacyTemplateService;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.servlet.http.HttpServletResponse;
 import jakarta.validation.Valid;
@@ -108,6 +109,15 @@ public class MedicineController {
         com.res.hms.pharmacy.application.service.PharmacyTemplateService.generateMedicineTemplate();
     response.setContentType("application/vnd.openxmlformats-officedocument.spreadsheetml.sheet");
     response.setHeader("Content-Disposition", "attachment; filename=Medicine_Import_Template.xlsx");
+    response.getOutputStream().write(template);
+  }
+
+  @GetMapping("/stock/template")
+  @PreAuthorize(SecurityConstants.HAS_ADMIN_OR_PHARMACIST)
+  public void downloadStockTemplate(HttpServletResponse response) throws IOException {
+    byte[] template = PharmacyTemplateService.generateStockTemplate();
+    response.setContentType("application/vnd.openxmlformats-officedocument.spreadsheetml.sheet");
+    response.setHeader("Content-Disposition", "attachment; filename=Stock_Import_Template.xlsx");
     response.getOutputStream().write(template);
   }
 

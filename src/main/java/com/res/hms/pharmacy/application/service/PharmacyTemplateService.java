@@ -93,6 +93,45 @@ public class PharmacyTemplateService {
     }
   }
 
+  public static byte[] generateStockTemplate() throws IOException {
+    try (Workbook workbook = new XSSFWorkbook()) {
+      Sheet sheet = workbook.createSheet("Stock Template");
+      CellStyle headerStyle =
+          PharmacyExcelHelper.createStyle(
+              workbook, IndexedColors.GREY_25_PERCENT, FillPatternType.SOLID_FOREGROUND, true);
+
+      String[] columns = {
+        "Medicine Name",
+        "Batch Number",
+        "Expiry Date (YYYY-MM-DD)",
+        "Quantity",
+        "Purchase Price",
+        "Selling Price",
+        "HSN Code",
+        "Supplier State",
+        "Tax Inclusive (Y/N)"
+      };
+      Row header = sheet.createRow(0);
+      for (int i = 0; i < columns.length; i++) {
+        Cell cell = header.createCell(i);
+        cell.setCellValue(columns[i]);
+        cell.setCellStyle(headerStyle);
+        sheet.autoSizeColumn(i);
+      }
+
+      addDummyStockRow(sheet.createRow(1));
+
+      DataValidationHelper helper = sheet.getDataValidationHelper();
+      addValidation(sheet, helper, new String[] {"Y", "N"}, 1, 1000, 8, 8);
+
+      addInstructionSheet(workbook, getStockInstructions());
+
+      ByteArrayOutputStream bos = new ByteArrayOutputStream();
+      workbook.write(bos);
+      return bos.toByteArray();
+    }
+  }
+
   private static void addDummyMedicineRow(Row row) {
     row.createCell(0).setCellValue("Paracetamol 500mg");
     row.createCell(1).setCellValue("Acetaminophen");
@@ -116,6 +155,18 @@ public class PharmacyTemplateService {
     row.createCell(6).setCellValue(100);
     row.createCell(7).setCellValue("YES");
     row.createCell(8).setCellValue("NO");
+  }
+
+  private static void addDummyStockRow(Row row) {
+    row.createCell(0).setCellValue("Paracetamol 500mg");
+    row.createCell(1).setCellValue("BATCH001");
+    row.createCell(2).setCellValue(java.time.LocalDate.now().plusYears(1).toString());
+    row.createCell(3).setCellValue(100);
+    row.createCell(4).setCellValue(10.50);
+    row.createCell(5).setCellValue(15.00);
+    row.createCell(6).setCellValue("3004");
+    row.createCell(7).setCellValue("Maharashtra");
+    row.createCell(8).setCellValue("Y");
   }
 
   private static void addValidation(
@@ -173,6 +224,20 @@ public class PharmacyTemplateService {
       {"Low Stock Alert", "Optional", "Number (Threshold)"},
       {"Is Batch Tracked", "Mandatory", "YES / NO"},
       {"Is Expiry Tracked", "Mandatory", "YES / NO"}
+    };
+  }
+
+  private static String[][] getStockInstructions() {
+    return new String[][] {
+      {"Medicine Name", "Mandatory", "Must exist in Medicine Master"},
+      {"Batch Number", "Mandatory", "Unique Batch Identifier"},
+      {"Expiry Date", "Mandatory", "Format: YYYY-MM-DD"},
+      {"Quantity", "Mandatory", "Positive Number"},
+      {"Purchase Price", "Mandatory", "Positive Number"},
+      {"Selling Price", "Mandatory", "Positive Number (>= Purchase Price)"},
+      {"HSN Code", "Optional", "Text"},
+      {"Supplier State", "Optional", "Text"},
+      {"Tax Inclusive", "Mandatory", "Y / N"}
     };
   }
 }
