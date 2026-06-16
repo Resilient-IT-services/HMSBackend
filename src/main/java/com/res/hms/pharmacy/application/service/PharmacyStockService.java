@@ -9,6 +9,7 @@ import com.res.hms.hospital.infrastructure.repository.HospitalRepository;
 import com.res.hms.pharmacy.application.dto.PharmacyReturnRequest;
 import com.res.hms.pharmacy.application.dto.PharmacyReturnResponse;
 import com.res.hms.pharmacy.application.dto.PharmacyStockDTO;
+import com.res.hms.pharmacy.application.dto.PharmacyStockStatsDTO;
 import com.res.hms.pharmacy.application.dto.StockRequest;
 import com.res.hms.pharmacy.domain.Medicine;
 import com.res.hms.pharmacy.domain.PharmacyReturn;
@@ -231,6 +232,21 @@ public class PharmacyStockService {
         pharmacyStockRepository
             .findAll(Specification.where(spec).and(fixedSpec), pageable)
             .map(this::toStockDto));
+  }
+
+  @Transactional(readOnly = true)
+  public PharmacyStockStatsDTO getStockStats() {
+    UUID hospitalId = hospitalContext.requireHospitalId();
+    LocalDate today = LocalDate.now();
+    LocalDate thirtyDaysLater = today.plusDays(30);
+
+    return PharmacyStockStatsDTO.builder()
+        .totalBatches(pharmacyStockRepository.countByHospitalId(hospitalId))
+        .totalMedicines(pharmacyStockRepository.countUniqueMedicines(hospitalId))
+        .lowStockCount(pharmacyStockRepository.countLowStock(hospitalId))
+        .expiringSoonCount(
+            pharmacyStockRepository.countExpiringSoon(hospitalId, today, thirtyDaysLater))
+        .build();
   }
 
   public PharmacyStockDTO toStockDto(PharmacyStock stock) {

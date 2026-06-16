@@ -118,4 +118,32 @@ public interface PharmacyStockRepository extends BaseRepository<PharmacyStock> {
       @Param("hospitalId") UUID hospitalId,
       @Param("today") LocalDate today,
       @Param("until") LocalDate until);
+
+  long countByHospitalId(UUID hospitalId);
+
+  @Query(
+      "SELECT COUNT(DISTINCT s.medicine.id) FROM PharmacyStock s WHERE s.hospitalId = :hospitalId")
+  long countUniqueMedicines(@Param("hospitalId") UUID hospitalId);
+
+  @Query(
+      """
+      SELECT COUNT(s) FROM PharmacyStock s
+      JOIN s.medicine m
+      WHERE s.hospitalId = :hospitalId
+        AND s.quantity > 0
+        AND s.quantity <= m.thresholdQuantity
+      """)
+  long countLowStock(@Param("hospitalId") UUID hospitalId);
+
+  @Query(
+      """
+      SELECT COUNT(s) FROM PharmacyStock s
+      WHERE s.hospitalId = :hospitalId
+        AND s.quantity > 0
+        AND s.expiryDate BETWEEN :today AND :until
+      """)
+  long countExpiringSoon(
+      @Param("hospitalId") UUID hospitalId,
+      @Param("today") LocalDate today,
+      @Param("until") LocalDate until);
 }

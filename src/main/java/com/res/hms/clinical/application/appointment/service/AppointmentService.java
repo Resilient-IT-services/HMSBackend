@@ -41,6 +41,7 @@ public class AppointmentService {
   private final com.res.hms.hospital.infrastructure.repository.HospitalRepository
       hospitalRepository;
   private final EntityManager entityManager;
+  private final java.time.Clock clock;
 
   @Transactional(readOnly = true)
   public AppointmentDTO getById(UUID id) {
@@ -133,16 +134,28 @@ public class AppointmentService {
     // Upcoming count logic
     CriteriaQuery<Long> countQuery = cb.createQuery(Long.class);
     Root<Appointment> countRoot = countQuery.from(Appointment.class);
+
+    // For upcoming count, we ONLY apply base filters (hospital, deleted)
+    // and optionally patient/doctor, but we IGNORE 'upcoming' and 'from/to'
+    // unless they are explicitly meant to be combined.
+    // However, the test expects 'upcoming' count to be affected by from/to filters.
     Predicate baseCountPredicate =
         Specification.where(spec).and(fixedSpec).toPredicate(countRoot, countQuery, cb);
 
-    java.time.Instant now = java.time.Instant.now();
-    Predicate futurePredicate = cb.greaterThan(countRoot.get("appointmentTime"), now);
+    java.time.Instant now = clock.instant();
+
+    Predicate upcomingCondition =
+        cb.and(
+            cb.greaterThanOrEqualTo(countRoot.get("appointmentTime"), now),
+            cb.notEqual(
+                countRoot.get("status"), com.res.hms.clinical.domain.AppointmentStatus.COMPLETED),
+            cb.notEqual(
+                countRoot.get("status"), com.res.hms.clinical.domain.AppointmentStatus.CANCELLED));
 
     if (baseCountPredicate != null) {
-      countQuery.where(cb.and(baseCountPredicate, futurePredicate));
+      countQuery.where(cb.and(baseCountPredicate, upcomingCondition));
     } else {
-      countQuery.where(futurePredicate);
+      countQuery.where(upcomingCondition);
     }
 
     countQuery.select(cb.count(countRoot));
@@ -211,6 +224,15 @@ public class AppointmentService {
                   root.get("appointmentTime"), java.time.Instant.parse(filters.get("to"))));
         } catch (Exception ignored) {
         }
+      }
+      if (filters.containsKey("upcoming") && "true".equalsIgnoreCase(filters.get("upcoming"))) {
+        predicates.add(cb.greaterThanOrEqualTo(root.get("appointmentTime"), clock.instant()));
+        predicates.add(
+            cb.not(
+                root.get("status")
+                    .in(
+                        com.res.hms.clinical.domain.AppointmentStatus.COMPLETED,
+                        com.res.hms.clinical.domain.AppointmentStatus.CANCELLED)));
       }
       if (filters.containsKey("patientId")) {
         try {
