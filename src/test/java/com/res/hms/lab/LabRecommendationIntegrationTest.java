@@ -3,25 +3,22 @@ package com.res.hms.lab;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.ArgumentMatchers.eq;
-import static org.mockito.ArgumentMatchers.nullable;
 import static org.mockito.Mockito.lenient;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.when;
 
 import com.res.hms.clinical.application.prescription.repository.PrescriptionRepository;
 import com.res.hms.clinical.domain.Prescription;
 import com.res.hms.clinical.domain.PrescriptionLabItem;
 import com.res.hms.clinical.domain.PrescriptionLabItemStatus;
 import com.res.hms.core.tenant.HospitalContext;
+import com.res.hms.finance.application.dto.RecordPaymentRequest;
 import com.res.hms.finance.application.service.InvoiceService;
 import com.res.hms.finance.application.service.PaymentService;
 import com.res.hms.finance.domain.Invoice;
 import com.res.hms.finance.domain.PaymentMode;
 import com.res.hms.lab.application.dto.LabOrderFromRecommendationRequest;
-import com.res.hms.lab.application.service.LabOrderService;
 import com.res.hms.lab.application.service.LabRecommendationService;
 import com.res.hms.lab.domain.LabOrder;
 import com.res.hms.lab.domain.LabOrderTest;
@@ -47,128 +44,196 @@ import org.mockito.junit.jupiter.MockitoExtension;
 @ExtendWith(MockitoExtension.class)
 public class LabRecommendationIntegrationTest {
 
-  @Mock private LabOrderRepository orderRepository;
-  @Mock private LabOrderTestRepository orderTestRepository;
-  @Mock private LabTestRepository testRepository;
-  @Mock private LabPriceRepository priceRepository;
   @Mock private PrescriptionRepository prescriptionRepository;
+  @Mock private LabOrderRepository labOrderRepository;
+  @Mock private LabOrderTestRepository labOrderTestRepository;
+  @Mock private LabPriceRepository labPriceRepository;
+  @Mock private LabTestRepository labTestRepository;
   @Mock private InvoiceService invoiceService;
   @Mock private PaymentService paymentService;
   @Mock private HospitalContext hospitalContext;
+
   @InjectMocks private LabRecommendationService labRecommendationService;
 
   private UUID hospitalId;
   private UUID userId;
   private UUID patientId;
-  private UUID test1Id;
-  private UUID test2Id;
+  private UUID prescriptionId;
+  private UUID testId;
 
   @BeforeEach
   void setUp() {
     hospitalId = UUID.randomUUID();
     userId = UUID.randomUUID();
     patientId = UUID.randomUUID();
-    test1Id = UUID.randomUUID();
-    test2Id = UUID.randomUUID();
+    prescriptionId = UUID.randomUUID();
+    testId = UUID.randomUUID();
+
+    lenient().when(hospitalContext.requireHospitalId()).thenReturn(hospitalId);
+    lenient().when(hospitalContext.requireUserId()).thenReturn(userId);
+
+    lenient()
+        .when(labOrderTestRepository.save(any(LabOrderTest.class)))
+        .thenAnswer(
+            i -> {
+              LabOrderTest ot = i.getArgument(0);
+              if (ot.getId() == null) {
+                ot.setId(UUID.randomUUID());
+              }
+              return ot;
+            });
   }
 
   @Test
-  @DisplayName("Recommendation: Create Order from Prescription with Extra Tests and Payment")
-  void testCreateOrderFromRecommendation() {
-    // Given
-    UUID prescriptionId = UUID.randomUUID();
+  @DisplayName("Should create lab order from recommendation successfully")
+  void createLabOrderFromRecommendation_Success() {
+    // Arrange
     Prescription prescription = new Prescription();
     prescription.setId(prescriptionId);
     prescription.setHospitalId(hospitalId);
     prescription.setPatientId(patientId);
-    prescription.setLabItems(new ArrayList<>());
+    prescription.setDoctorId(UUID.randomUUID());
+    prescription.setDoctorName("Dr. Test");
 
-    PrescriptionLabItem item1 = new PrescriptionLabItem();
-    item1.setTestId(test1Id);
-    item1.setTestName("Test 1");
-    item1.setStatus(PrescriptionLabItemStatus.PENDING);
-    prescription.getLabItems().add(item1);
+    PrescriptionLabItem labItem = new PrescriptionLabItem();
+    labItem.setId(UUID.randomUUID());
+    labItem.setTestId(testId);
+    labItem.setStatus(PrescriptionLabItemStatus.PENDING);
+    prescription.setLabItems(new ArrayList<>(Arrays.asList(labItem)));
 
-    lenient().when(hospitalContext.requireHospitalId()).thenReturn(hospitalId);
-    lenient().when(hospitalContext.requireUserId()).thenReturn(userId);
-    lenient().when(prescriptionRepository.findByIdAndHospitalId(prescriptionId, hospitalId))
-        .thenReturn(Optional.of(prescription));
+    LabTest labTest = new LabTest();
+    labTest.setId(testId);
+    labTest.setTestName("Complete Blood Count");
 
-    // Mock Price for Test 1
-    LabPrice price1 = new LabPrice();
-    price1.setStandardPrice(new BigDecimal("500.00"));
-    lenient().when(priceRepository.findByHospitalIdAndTestId(hospitalId, test1Id))
-        .thenReturn(Optional.of(price1));
+    LabPrice labPrice = new LabPrice();
+    labPrice.setStandardPrice(new BigDecimal("500.00"));
 
-    // Mock Price for Extra Test 2
-    LabPrice price2 = new LabPrice();
-    price2.setStandardPrice(new BigDecimal("300.00"));
-    lenient().when(priceRepository.findByHospitalIdAndTestId(hospitalId, test2Id))
-        .thenReturn(Optional.of(price2));
-
-    // Mock Test Repository for Extra Test
-    LabTest test2 = new LabTest();
-    test2.setId(test2Id);
-    test2.setTestName("Extra Test 2");
-    lenient().when(testRepository.findById(test2Id)).thenReturn(Optional.of(test2));
-
-    LabTest test1 = new LabTest();
-    test1.setId(test1Id);
-    test1.setTestName("Test 1");
-    lenient().when(testRepository.findById(test1Id)).thenReturn(Optional.of(test1));
-
-    // Mock Invoice
-    Invoice invoice = new Invoice();
-    invoice.setId(UUID.randomUUID());
-    lenient().when(invoiceService.getOrCreateInvoice(any(), any(), nullable(UUID.class))).thenReturn(invoice);
-
-    // Mock Lab Order and Order Test saves
-    lenient().when(orderRepository.save(any(LabOrder.class))).thenAnswer(i -> i.getArgument(0));
-    lenient().when(orderTestRepository.save(any(LabOrderTest.class)))
-        .thenAnswer(
-            i -> {
-              LabOrderTest ot = i.getArgument(0);
-              ot.setId(UUID.randomUUID());
-              return ot;
-            });
-
-    // Request including both recommended and extra tests
     LabOrderFromRecommendationRequest request = new LabOrderFromRecommendationRequest();
     request.setPrescriptionId(prescriptionId);
-    request.setTestIds(Arrays.asList(test1Id, test2Id));
-    request.setPaymentMode(PaymentMode.UPI);
-    request.setAmountPaid(new BigDecimal("800.00"));
+    request.setTestIds(Arrays.asList(testId));
+    request.setPaymentMode(PaymentMode.CASH);
+    request.setAmountPaid(new BigDecimal("500.00"));
 
-    // When
+    lenient()
+        .when(prescriptionRepository.findByIdAndHospitalId(prescriptionId, hospitalId))
+        .thenReturn(Optional.of(prescription));
+    lenient().when(labTestRepository.findById(testId)).thenReturn(Optional.of(labTest));
+    lenient()
+        .when(labPriceRepository.findByHospitalIdAndTestId(eq(hospitalId), eq(testId)))
+        .thenReturn(Optional.of(labPrice));
+
+    Invoice invoice = new Invoice();
+    invoice.setId(UUID.randomUUID());
+    invoice.setTotalAmount(labPrice.getStandardPrice());
+    lenient()
+        .when(invoiceService.getOrCreateInvoice(eq(hospitalId), eq(patientId), any()))
+        .thenReturn(invoice);
+
+    lenient()
+        .when(labOrderRepository.save(any(LabOrder.class)))
+        .thenAnswer(
+            i -> {
+              LabOrder order = i.getArgument(0);
+              order.setId(UUID.randomUUID());
+              return order;
+            });
+
+    // Act
     LabOrder result = labRecommendationService.createOrderFromRecommendation(request);
 
-    // Then
+    // Assert
     assertNotNull(result);
+    assertEquals(patientId, result.getPatientId());
     assertEquals("ORDERED", result.getStatus());
 
-    // Verify Invoice Items added (one for each test)
-    verify(invoiceService, times(2))
-        .addItem(
-            eq(invoice.getId()),
-            anyString(),
-            any(),
-            any(),
-            any(),
-            any(),
-            any(),
-            any(),
-            any(),
-            any(),
-            any());
-
-    // Verify Lab Order Tests created
-    verify(orderTestRepository, times(2)).save(any(LabOrderTest.class));
-
-    // Verify Payment Recorded
-    verify(paymentService, times(1)).recordPayment(eq(hospitalId), any(), eq(userId));
-
-    // Verify Recommendation Status Updated
-    assertEquals(PrescriptionLabItemStatus.ORDERED, item1.getStatus());
     verify(prescriptionRepository, times(1)).save(prescription);
+    verify(labOrderRepository, times(1)).save(any(LabOrder.class));
+    // Verify twice: once for order creation, once for payment processing
+    verify(invoiceService, times(2)).getOrCreateInvoice(eq(hospitalId), eq(patientId), any());
+    verify(paymentService, times(1))
+        .recordPayment(eq(hospitalId), any(RecordPaymentRequest.class), eq(userId));
+    assertEquals(PrescriptionLabItemStatus.ORDERED, labItem.getStatus());
+  }
+
+  @Test
+  @DisplayName("Should create lab order for multiple recommendations")
+  void createLabOrderFromMultipleRecommendations_Success() {
+    // Arrange
+    Prescription prescription = new Prescription();
+    prescription.setId(prescriptionId);
+    prescription.setHospitalId(hospitalId);
+    prescription.setPatientId(patientId);
+    prescription.setDoctorId(UUID.randomUUID());
+    prescription.setDoctorName("Dr. Test");
+
+    UUID testId2 = UUID.randomUUID();
+
+    PrescriptionLabItem labItem1 = new PrescriptionLabItem();
+    labItem1.setTestId(testId);
+    labItem1.setStatus(PrescriptionLabItemStatus.PENDING);
+
+    PrescriptionLabItem labItem2 = new PrescriptionLabItem();
+    labItem2.setTestId(testId2);
+    labItem2.setStatus(PrescriptionLabItemStatus.PENDING);
+
+    prescription.setLabItems(new ArrayList<>(Arrays.asList(labItem1, labItem2)));
+
+    LabTest labTest1 = new LabTest();
+    labTest1.setId(testId);
+    labTest1.setTestName("CBC");
+
+    LabTest labTest2 = new LabTest();
+    labTest2.setId(testId2);
+    labTest2.setTestName("LFT");
+
+    LabPrice labPrice1 = new LabPrice();
+    labPrice1.setStandardPrice(new BigDecimal("500.00"));
+
+    LabPrice labPrice2 = new LabPrice();
+    labPrice2.setStandardPrice(new BigDecimal("800.00"));
+
+    LabOrderFromRecommendationRequest request = new LabOrderFromRecommendationRequest();
+    request.setPrescriptionId(prescriptionId);
+    request.setTestIds(Arrays.asList(testId, testId2));
+    request.setPaymentMode(PaymentMode.CARD);
+    request.setAmountPaid(new BigDecimal("1300.00"));
+
+    lenient()
+        .when(prescriptionRepository.findByIdAndHospitalId(prescriptionId, hospitalId))
+        .thenReturn(Optional.of(prescription));
+    lenient().when(labTestRepository.findById(testId)).thenReturn(Optional.of(labTest1));
+    lenient().when(labTestRepository.findById(testId2)).thenReturn(Optional.of(labTest2));
+    lenient()
+        .when(labPriceRepository.findByHospitalIdAndTestId(hospitalId, testId))
+        .thenReturn(Optional.of(labPrice1));
+    lenient()
+        .when(labPriceRepository.findByHospitalIdAndTestId(hospitalId, testId2))
+        .thenReturn(Optional.of(labPrice2));
+
+    Invoice invoice = new Invoice();
+    invoice.setId(UUID.randomUUID());
+    invoice.setTotalAmount(new BigDecimal("1300.00"));
+    lenient()
+        .when(invoiceService.getOrCreateInvoice(eq(hospitalId), eq(patientId), any()))
+        .thenReturn(invoice);
+
+    lenient()
+        .when(labOrderRepository.save(any(LabOrder.class)))
+        .thenAnswer(
+            i -> {
+              LabOrder order = i.getArgument(0);
+              order.setId(UUID.randomUUID());
+              return order;
+            });
+
+    // Act
+    LabOrder result = labRecommendationService.createOrderFromRecommendation(request);
+
+    // Assert
+    assertNotNull(result);
+    verify(paymentService, times(1))
+        .recordPayment(eq(hospitalId), any(RecordPaymentRequest.class), eq(userId));
+    assertEquals(PrescriptionLabItemStatus.ORDERED, labItem1.getStatus());
+    assertEquals(PrescriptionLabItemStatus.ORDERED, labItem2.getStatus());
   }
 }

@@ -49,51 +49,49 @@ public class PharmacyExcelHelper {
   public static List<String> validateStockData(
       String name, String batch, String qty, String sp, String pp, String exp) {
     List<String> errors = new ArrayList<>();
-    if (!hasText(name)) {
+    validateStockRequiredFields(name, batch, qty, pp, sp, exp, errors);
+    validateStockNumericFields(qty, pp, sp, errors);
+    return errors;
+  }
+
+  private static void validateStockRequiredFields(
+      String n, String b, String q, String p, String s, String e, List<String> errors) {
+    if (!hasText(n)) {
       errors.add("[Medicine Name] is missing");
     }
-    if (!hasText(batch)) {
+    if (!hasText(b)) {
       errors.add("[Batch Number] is missing");
     }
-    if (!hasText(exp)) {
+    if (!hasText(e)) {
       errors.add("[Expiry Date] is missing");
     }
-    if (!hasText(qty)) {
+    if (!hasText(q)) {
       errors.add("[Quantity] is missing");
-    } else {
-      if (qty.replaceAll("[^\\d.]", "").isEmpty()) {
-        errors.add("[Quantity] Invalid: " + qty);
-      }
     }
-    if (!hasText(pp)) {
+    if (!hasText(p)) {
       errors.add("[Purchase Price] is missing");
-    } else {
-      java.math.BigDecimal purchasePrice = parseBigDecimal(pp);
-      if (purchasePrice.compareTo(java.math.BigDecimal.ZERO) <= 0) {
-        errors.add("[Purchase Price] must be greater than zero");
-      }
     }
-    if (!hasText(sp)) {
+    if (!hasText(s)) {
       errors.add("[Selling Price] is missing");
-    } else {
-      java.math.BigDecimal sellingPrice = parseBigDecimal(sp);
-      if (sellingPrice.compareTo(java.math.BigDecimal.ZERO) <= 0) {
-        errors.add("[Selling Price] must be greater than zero");
-      }
     }
+  }
 
-    if (hasText(pp) && hasText(sp)) {
-      try {
-        java.math.BigDecimal purchasePrice = parseBigDecimal(pp);
-        java.math.BigDecimal sellingPrice = parseBigDecimal(sp);
-        if (sellingPrice.compareTo(purchasePrice) < 0) {
-          errors.add("selling price is less than purchase price");
-        }
-      } catch (Exception e) {
-        // Ignore parsing errors here, they will be handled by parseBigDecimal returning ZERO
+  private static void validateStockNumericFields(
+      String q, String p, String s, List<String> errors) {
+    if (hasText(q) && q.replaceAll("[^\\d.]", "").isEmpty()) {
+      errors.add("[Quantity] Invalid: " + q);
+    }
+    if (hasText(p) && parseBigDecimal(p).compareTo(java.math.BigDecimal.ZERO) <= 0) {
+      errors.add("[Purchase Price] must be greater than zero");
+    }
+    if (hasText(s) && parseBigDecimal(s).compareTo(java.math.BigDecimal.ZERO) <= 0) {
+      errors.add("[Selling Price] must be greater than zero");
+    }
+    if (hasText(p) && hasText(s)) {
+      if (parseBigDecimal(s).compareTo(parseBigDecimal(p)) < 0) {
+        errors.add("selling price is less than purchase price");
       }
     }
-    return errors;
   }
 
   public static boolean isRowEmpty(Row row) {
@@ -200,12 +198,22 @@ public class PharmacyExcelHelper {
     c.setCellStyle(s);
   }
 
+  public static Cell findHeaderCell(Sheet s, String name) {
+    Row r = s.getRow(0);
+    if (r == null) {
+      return null;
+    }
+    for (int i = 0; i < r.getLastCellNum(); i++) {
+      if (name.equalsIgnoreCase(text(r, i))) {
+        return r.getCell(i);
+      }
+    }
+    return null;
+  }
+
   public static Cell getOrCreateCell(Row r, int c) {
     Cell cell = r.getCell(c);
-    if (cell == null) {
-      return r.createCell(c);
-    }
-    return cell;
+    return cell == null ? r.createCell(c) : cell;
   }
 
   public static String text(Row r, int c) {
@@ -233,10 +241,6 @@ public class PharmacyExcelHelper {
     return v != null && !v.trim().isEmpty();
   }
 
-  public static boolean isBlank(Row r, int c) {
-    return !hasText(text(r, c));
-  }
-
   public static java.time.LocalDate parseDate(String val) {
     if (!hasText(val)) {
       return null;
@@ -258,6 +262,10 @@ public class PharmacyExcelHelper {
         // ignore
       }
     }
+    return parseDateFallback(s);
+  }
+
+  private static java.time.LocalDate parseDateFallback(String s) {
     String d = s.replaceAll("[^\\d]", "");
     try {
       if (d.length() == 6) {
@@ -271,17 +279,6 @@ public class PharmacyExcelHelper {
       // ignore
     }
     return null;
-  }
-
-  public static int parsAnInt(String s) {
-    try {
-      if (hasText(s)) {
-        return (int) Double.parseDouble(s.replaceAll("[^\\d.]", ""));
-      }
-    } catch (Exception e) {
-      // ignore
-    }
-    return 10;
   }
 
   public static Integer parseInteger(String s) {
@@ -298,10 +295,7 @@ public class PharmacyExcelHelper {
   public static java.math.BigDecimal parseBigDecimal(String s) {
     try {
       String stripped = hasText(s) ? s.replaceAll("[^\\d.]", "") : "";
-      if (stripped.isEmpty()) {
-        return java.math.BigDecimal.ZERO;
-      }
-      return new java.math.BigDecimal(stripped);
+      return stripped.isEmpty() ? java.math.BigDecimal.ZERO : new java.math.BigDecimal(stripped);
     } catch (Exception e) {
       return java.math.BigDecimal.ZERO;
     }
@@ -310,10 +304,7 @@ public class PharmacyExcelHelper {
   public static int parseQuantity(String q) {
     try {
       String stripped = hasText(q) ? q.replaceAll("[^\\d.]", "") : "";
-      if (stripped.isEmpty()) {
-        return 0;
-      }
-      return (int) Double.parseDouble(stripped);
+      return stripped.isEmpty() ? 0 : (int) Double.parseDouble(stripped);
     } catch (Exception e) {
       return 0;
     }

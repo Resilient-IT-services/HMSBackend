@@ -48,7 +48,8 @@ public class MedicineService {
         new com.res.hms.core.util.SpecificationBuilder<>(
             filters,
             search,
-            java.util.List.of("name", "genericName", "composition", "manufacturer", "hsnCode"));
+            java.util.List.of(
+                "name", "genericName", "composition", "manufacturer", "hsnCode", "itemCode"));
     return PageResponse.from(
         medicineRepository.findAll(builder.build(), pageable).map(this::toDto));
   }
@@ -173,7 +174,8 @@ public class MedicineService {
         new com.res.hms.core.util.SpecificationBuilder<>(
             filters,
             search,
-            java.util.List.of("name", "genericName", "composition", "manufacturer", "hsnCode"));
+            java.util.List.of(
+                "name", "genericName", "composition", "manufacturer", "hsnCode", "itemCode"));
     org.springframework.data.domain.Page<Medicine> medicinesPage =
         medicineRepository.findAll(builder.build(), pageable);
 
@@ -195,15 +197,22 @@ public class MedicineService {
   private MedicineSummaryDTO toSummaryDtoWithStock(Medicine medicine, int stock) {
     return MedicineSummaryDTO.builder()
         .id(medicine.getId())
+        .itemType(medicine.getItemType())
+        .department(medicine.getDepartment())
         .name(medicine.getName())
+        .itemCode(medicine.getItemCode())
         .genericName(medicine.getGenericName())
         .composition(medicine.getComposition())
         .strength(medicine.getStrength())
         .form(medicine.getForm())
+        .category(medicine.getCategory())
+        .baseUnit(medicine.getBaseUnit())
         .manufacturer(medicine.getManufacturer())
         .hsnCode(medicine.getHsnCode())
         .currentStock(stock)
         .thresholdQuantity(medicine.getThresholdQuantity())
+        .isBatchTracked(medicine.getIsBatchTracked())
+        .isExpiryTracked(medicine.getIsExpiryTracked())
         .build();
   }
 
@@ -313,7 +322,12 @@ public class MedicineService {
     MedicineSummaryDTO.MedicineSummaryDTOBuilder builder =
         MedicineSummaryDTO.builder()
             .id(medicine.getId())
+            .itemType(medicine.getItemType())
+            .department(medicine.getDepartment())
             .name(medicine.getName())
+            .itemCode(medicine.getItemCode())
+            .category(medicine.getCategory())
+            .baseUnit(medicine.getBaseUnit())
             .genericName(medicine.getGenericName())
             .strength(medicine.getStrength())
             .form(medicine.getForm())
@@ -336,29 +350,47 @@ public class MedicineService {
   public MedicineDTO toDto(Medicine medicine) {
     return MedicineDTO.builder()
         .id(medicine.getId())
+        .itemType(medicine.getItemType())
+        .department(medicine.getDepartment())
         .name(medicine.getName())
+        .itemCode(medicine.getItemCode())
         .genericName(medicine.getGenericName())
         .composition(medicine.getComposition())
         .strength(medicine.getStrength())
         .form(medicine.getForm())
+        .category(medicine.getCategory())
+        .baseUnit(medicine.getBaseUnit())
         .scheduleType(medicine.getScheduleType())
         .hsnCode(medicine.getHsnCode())
         .thresholdQuantity(medicine.getThresholdQuantity())
         .manufacturer(medicine.getManufacturer())
         .temperature(medicine.getStorageTemperature())
+        .isBatchTracked(medicine.getIsBatchTracked())
+        .isExpiryTracked(medicine.getIsExpiryTracked())
         .build();
   }
 
   private Medicine updateFieldsAndSave(Medicine medicine, MedicineDTO dto) {
+    medicine.setItemType(
+        dto.getItemType() != null
+            ? dto.getItemType()
+            : com.res.hms.pharmacy.domain.ItemType.MEDICINE);
+    medicine.setDepartment(dto.getDepartment());
     medicine.setName(dto.getName());
+    medicine.setItemCode(dto.getItemCode());
     medicine.setGenericName(dto.getGenericName());
     medicine.setComposition(dto.getComposition());
     medicine.setStrength(dto.getStrength());
     medicine.setForm(dto.getForm());
+    medicine.setCategory(dto.getCategory());
+    medicine.setBaseUnit(dto.getBaseUnit());
     medicine.setScheduleType(dto.getScheduleType());
     medicine.setHsnCode(dto.getHsnCode());
     medicine.setManufacturer(dto.getManufacturer());
     medicine.setStorageTemperature(dto.getTemperature());
+    medicine.setIsBatchTracked(dto.getIsBatchTracked() != null ? dto.getIsBatchTracked() : false);
+    medicine.setIsExpiryTracked(
+        dto.getIsExpiryTracked() != null ? dto.getIsExpiryTracked() : false);
 
     medicine.setThresholdQuantity(
         dto.getThresholdQuantity() != null ? dto.getThresholdQuantity() : 10);

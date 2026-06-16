@@ -240,6 +240,9 @@ public class PharmacyExcelService {
       String fStr = PharmacyExcelHelper.text(row, 4);
       String mf = PharmacyExcelHelper.text(row, 5);
       String thresholdStr = PharmacyExcelHelper.text(row, 7);
+      String batchTrackStr = PharmacyExcelHelper.text(row, 8);
+      String expiryTrackStr = PharmacyExcelHelper.text(row, 9);
+
       List<String> errors =
           PharmacyExcelHelper.validateMedicineData(name, gName, comp, str, fStr, mf);
       if (!errors.isEmpty()) {
@@ -256,6 +259,7 @@ public class PharmacyExcelService {
       }
 
       Medicine m = new Medicine();
+      m.setItemType(com.res.hms.pharmacy.domain.ItemType.MEDICINE);
       m.setName(name);
       m.setGenericName(gName);
       m.setComposition(comp);
@@ -263,7 +267,16 @@ public class PharmacyExcelService {
       m.setForm(form);
       m.setManufacturer(mf);
       m.setScheduleType(com.res.hms.pharmacy.domain.MedicineSchedule.OTC);
-      m.setThresholdQuantity(PharmacyExcelHelper.parsAnInt(thresholdStr));
+      m.setThresholdQuantity(PharmacyExcelHelper.parseInteger(thresholdStr));
+      m.setIsBatchTracked(
+          "YES".equalsIgnoreCase(batchTrackStr)
+              || "Y".equalsIgnoreCase(batchTrackStr)
+              || "TRUE".equalsIgnoreCase(batchTrackStr));
+      m.setIsExpiryTracked(
+          "YES".equalsIgnoreCase(expiryTrackStr)
+              || "Y".equalsIgnoreCase(expiryTrackStr)
+              || "TRUE".equalsIgnoreCase(expiryTrackStr));
+
       medicineRepository.save(m);
 
       PharmacyExcelHelper.updateCell(statusCell, "SUCCESS", styles[1]);

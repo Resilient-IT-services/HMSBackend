@@ -1,0 +1,2 @@
+-- V1027__add_hospital_id_to_medicine.sql
+-- EMPTY: hospital_id moved to HospitalMedicineCatalog for global master data consistency

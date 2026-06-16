@@ -100,6 +100,16 @@ public class MedicineController {
     return ApiResponse.success(null);
   }
 
+  @GetMapping("/medicines/template")
+  @PreAuthorize("hasRole('SUPER_ADMIN')")
+  public void downloadMedicineTemplate(HttpServletResponse response) throws IOException {
+    byte[] template =
+        com.res.hms.pharmacy.application.service.PharmacyTemplateService.generateMedicineTemplate();
+    response.setContentType("application/vnd.openxmlformats-officedocument.spreadsheetml.sheet");
+    response.setHeader("Content-Disposition", "attachment; filename=Medicine_Import_Template.xlsx");
+    response.getOutputStream().write(template);
+  }
+
   @PostMapping("/stock/import")
   @PreAuthorize(SecurityConstants.HAS_ADMIN_OR_PHARMACIST)
   public ApiResponse<StockImportResponse> importStock(@RequestParam MultipartFile file) {

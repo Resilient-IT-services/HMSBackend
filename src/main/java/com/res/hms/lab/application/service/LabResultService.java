@@ -32,7 +32,7 @@ public class LabResultService {
   @Transactional
   public LabResult saveOrUpdateLabResult(LabOrderTest orderTest, String findings) {
     UUID sampleId = resolveSampleId(orderTest);
-    
+
     LabResult result =
         resultRepository.findAll().stream()
             .filter(r -> orderTest.getId().equals(r.getOrderTestId()))
@@ -45,12 +45,13 @@ public class LabResultService {
     result.setEnteredAt(Instant.now());
     result.setFindings(findings);
     result = resultRepository.save(result);
-    
+
     return result;
   }
 
   @Transactional
-  public void processResultParameters(UUID resultId, List<LabResultSaveRequest.ParameterResultDTO> results) {
+  public void processResultParameters(
+      UUID resultId, List<LabResultSaveRequest.ParameterResultDTO> results) {
     if (results == null) {
       return;
     }
