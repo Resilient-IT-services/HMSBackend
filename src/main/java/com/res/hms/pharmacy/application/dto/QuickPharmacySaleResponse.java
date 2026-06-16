@@ -19,6 +19,7 @@ public class QuickPharmacySaleResponse {
   private String invoiceNumber;
   private BigDecimal totalAmount;
   private String status;
+  private String saleType;
   private UUID paymentId;
   private String receiptNumber;
   private String customerName;

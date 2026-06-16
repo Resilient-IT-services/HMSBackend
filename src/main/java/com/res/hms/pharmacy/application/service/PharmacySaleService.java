@@ -389,6 +389,57 @@ public class PharmacySaleService {
   private record PaymentReceipt(UUID paymentId, String receiptNumber) {}
 
   @Transactional(readOnly = true)
+  public com.res.hms.core.api.PageResponse<QuickPharmacySaleResponse> listSales(
+      org.springframework.data.domain.Pageable pageable,
+      String search,
+      java.util.Map<String, String> filters) {
+    UUID hospitalId = hospitalContext.requireHospitalId();
+
+    // Refined logic: SpecificationBuilder handles the basic columns.
+    // We just need to ensure hospitalId and handle the complex patient join search.
+    org.springframework.data.jpa.domain.Specification<PharmacySale> finalSpec =
+        (root, query, cb) -> {
+          List<jakarta.persistence.criteria.Predicate> predicates = new java.util.ArrayList<>();
+          predicates.add(cb.equal(root.get("hospitalId"), hospitalId));
+
+          if (filters.containsKey("saleType")) {
+            try {
+              predicates.add(
+                  cb.equal(
+                      root.get("saleType"),
+                      com.res.hms.pharmacy.domain.SaleType.valueOf(
+                          filters.get("saleType").toUpperCase())));
+            } catch (Exception ignored) {
+            }
+          }
+
+          if (search != null && !search.isBlank()) {
+            String pattern = "%" + search.toLowerCase().trim() + "%";
+            
+            List<jakarta.persistence.criteria.Predicate> searchOr = new java.util.ArrayList<>();
+            searchOr.add(cb.like(cb.lower(root.get("saleNumber")), pattern));
+            searchOr.add(cb.like(cb.lower(root.get("customerName")), pattern));
+            searchOr.add(cb.like(cb.lower(root.get("customerPhone")), pattern));
+            searchOr.add(cb.like(cb.lower(root.get("externalDoctorName")), pattern));
+
+            // Add prescriptionId search if it's a valid UUID pattern
+            try {
+              UUID searchUuid = UUID.fromString(search.trim());
+              searchOr.add(cb.equal(root.get("prescriptionId"), searchUuid));
+            } catch (IllegalArgumentException ignored) {
+            }
+
+            predicates.add(cb.or(searchOr.toArray(new jakarta.persistence.criteria.Predicate[0])));
+          }
+
+          return cb.and(predicates.toArray(new jakarta.persistence.criteria.Predicate[0]));
+        };
+
+    return com.res.hms.core.api.PageResponse.from(
+        pharmacySaleRepository.findAll(finalSpec, pageable).map(this::toQuickSaleResponse));
+  }
+
+  @Transactional(readOnly = true)
   public QuickPharmacySaleResponse getSale(UUID id) {
     UUID hospitalId = hospitalContext.requireHospitalId();
     PharmacySale sale =
@@ -455,6 +506,7 @@ public class PharmacySaleService {
             .invoiceNumber(sale.getSaleNumber())
             .totalAmount(sale.getTotalAmount())
             .status(sale.getStatus().name())
+            .saleType(sale.getSaleType() != null ? sale.getSaleType().name() : null)
             .customerName(sale.getCustomerName())
             .customerPhone(sale.getCustomerPhone())
             .externalDoctorName(sale.getExternalDoctorName())

@@ -148,6 +148,18 @@ public class MedicineController {
     return ApiResponse.success(pharmacySaleService.createSale(request));
   }
 
+  @GetMapping("/sales")
+  @PreAuthorize(SecurityConstants.HAS_ADMIN_OR_PHARMACIST)
+  public ApiResponse<PageResponse<QuickPharmacySaleResponse>> listSales(
+      @org.springframework.data.web.PageableDefault(
+              sort = "createdAt",
+              direction = org.springframework.data.domain.Sort.Direction.DESC)
+          org.springframework.data.domain.Pageable pageable,
+      @RequestParam(required = false) String search,
+      @RequestParam java.util.Map<String, String> allParams) {
+    return ApiResponse.success(pharmacySaleService.listSales(pageable, search, allParams));
+  }
+
   @PostMapping("/prescriptions/{id}/dispense")
   @PreAuthorize(SecurityConstants.HAS_ADMIN_OR_PHARMACIST)
   public ApiResponse<QuickPharmacySaleResponse> dispense(
