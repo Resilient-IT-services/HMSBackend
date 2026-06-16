@@ -19,6 +19,7 @@ import com.res.hms.hospital.infrastructure.repository.HospitalRepository;
 import com.res.hms.iam.infrastructure.repository.UserAccountRepository;
 import com.res.hms.pharmacy.application.dto.QuickPharmacySaleRequest;
 import com.res.hms.pharmacy.application.dto.QuickPharmacySaleResponse;
+import com.res.hms.pharmacy.application.mapper.PharmacySaleMapper;
 import com.res.hms.pharmacy.domain.PharmacySale;
 import com.res.hms.pharmacy.infrastructure.repository.MedicineRepository;
 import com.res.hms.pharmacy.infrastructure.repository.PharmacySaleItemRepository;
@@ -56,6 +57,7 @@ class PharmacySaleServiceTest {
   @Mock private HospitalRepository hospitalRepository;
   @Mock private UserAccountRepository userAccountRepository;
   @Mock private PaymentService paymentService;
+  @Mock private PharmacySaleMapper pharmacySaleMapper;
 
   @InjectMocks private PharmacySaleService pharmacySaleService;
 
@@ -107,6 +109,19 @@ class PharmacySaleServiceTest {
     TaxCalculationResult mockTax = mock(TaxCalculationResult.class);
     lenient().when(mockTax.totalTax()).thenReturn(BigDecimal.ZERO);
     lenient().when(taxEngineService.calculate(any())).thenReturn(mockTax);
+
+    lenient()
+        .when(pharmacySaleMapper.toResponse(any(PharmacySale.class)))
+        .thenAnswer(
+            i -> {
+              PharmacySale s = i.getArgument(0);
+              return QuickPharmacySaleResponse.builder()
+                  .saleId(s.getId())
+                  .saleNumber(s.getSaleNumber())
+                  .invoiceNumber(s.getSaleNumber())
+                  .totalAmount(s.getTotalAmount())
+                  .build();
+            });
   }
 
   @Test

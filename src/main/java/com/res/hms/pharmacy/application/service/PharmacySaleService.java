@@ -1,8 +1,8 @@
 package com.res.hms.pharmacy.application.service;
 
 import com.res.hms.clinical.application.prescription.repository.PrescriptionRepository;
+import com.res.hms.clinical.application.service.PatientVisitService;
 import com.res.hms.clinical.domain.PrescriptionStatus;
-import com.res.hms.clinical.infrastructure.repository.AppointmentRepository;
 import com.res.hms.core.exception.ApiException;
 import com.res.hms.core.tenant.HospitalContext;
 import com.res.hms.finance.application.dto.RecordPaymentRequest;
@@ -11,20 +11,27 @@ import com.res.hms.finance.application.service.PaymentService;
 import com.res.hms.finance.domain.FinanceSourceType;
 import com.res.hms.finance.domain.Invoice;
 import com.res.hms.finance.domain.InvoiceItemCategory;
+import com.res.hms.hospital.domain.Hospital;
+import com.res.hms.hospital.infrastructure.repository.HospitalRepository;
+import com.res.hms.iam.domain.UserAccount;
+import com.res.hms.iam.infrastructure.repository.UserAccountRepository;
 import com.res.hms.pharmacy.application.dto.QuickPharmacySaleRequest;
 import com.res.hms.pharmacy.application.dto.QuickPharmacySaleResponse;
+import com.res.hms.pharmacy.application.mapper.PharmacySaleMapper;
+import com.res.hms.pharmacy.domain.Medicine;
 import com.res.hms.pharmacy.domain.PharmacySale;
 import com.res.hms.pharmacy.domain.PharmacySaleItem;
 import com.res.hms.pharmacy.domain.PharmacySaleItemTax;
 import com.res.hms.pharmacy.domain.PharmacySaleStatus;
 import com.res.hms.pharmacy.domain.PharmacyStock;
 import com.res.hms.pharmacy.infrastructure.repository.MedicineRepository;
-import com.res.hms.pharmacy.infrastructure.repository.PharmacyReturnRepository;
 import com.res.hms.pharmacy.infrastructure.repository.PharmacySaleItemRepository;
 import com.res.hms.pharmacy.infrastructure.repository.PharmacySaleRepository;
+import com.res.hms.pharmacy.infrastructure.repository.PharmacySaleSpecifications;
 import com.res.hms.pharmacy.infrastructure.repository.PharmacyStockRepository;
 import com.res.hms.tax.application.dto.TaxCalculationRequest;
 import com.res.hms.tax.application.dto.TaxCalculationResult;
+import com.res.hms.tax.application.dto.TaxComponent;
 import com.res.hms.tax.application.service.TaxEngineService;
 import java.math.BigDecimal;
 import java.time.Instant;
@@ -45,41 +52,48 @@ public class PharmacySaleService {
   private final PharmacyStockRepository pharmacyStockRepository;
   private final MedicineRepository medicineRepository;
   private final PharmacySaleItemRepository pharmacySaleItemRepository;
-  private final PharmacyReturnRepository pharmacyReturnRepository;
   private final PrescriptionRepository prescriptionRepository;
-  private final AppointmentRepository appointmentRepository;
-  private final com.res.hms.hospital.infrastructure.repository.HospitalRepository
-      hospitalRepository;
-  private final com.res.hms.iam.infrastructure.repository.UserAccountRepository
-      userAccountRepository;
+  private final HospitalRepository hospitalRepository;
+  private final UserAccountRepository userAccountRepository;
   private final InvoiceService invoiceService;
   private final PaymentService paymentService;
   private final HospitalContext hospitalContext;
-  private final com.res.hms.clinical.application.service.PatientVisitService patientVisitService;
+  private final PatientVisitService patientVisitService;
   private final TaxEngineService taxEngineService;
-  private final com.res.hms.clinical.infrastructure.repository.PatientRepository patientRepository;
-  private final PharmacyStockService pharmacyStockService;
+  private final PharmacySaleMapper pharmacySaleMapper;
 
   @Transactional
   public QuickPharmacySaleResponse createSale(QuickPharmacySaleRequest request) {
     UUID hospitalId = hospitalContext.requireHospitalId();
     UUID userId = hospitalContext.currentUserIdOrNull();
-
     requireLoggedInUser(userId);
-    // Removed strict prescription dispense check to allow multiple bills
 
     PharmacySale sale = initializeSale(hospitalId, request);
     sale.setVisitId(resolveVisitId(request, sale));
     sale.setTotalAmount(processItems(hospitalId, request.getItems(), sale));
 
     PharmacySale savedSale = pharmacySaleRepository.save(sale);
-    com.res.hms.hospital.domain.Hospital hospital =
+    Hospital hospital =
         hospitalRepository
             .findById(hospitalId)
             .orElseThrow(
                 () -> new ApiException("NOT_FOUND", "Hospital not found", HttpStatus.NOT_FOUND));
 
-    // Calculate and Save Taxes for each item
+    calculateAndSaveTaxes(hospitalId, hospital, savedSale);
+    Invoice invoice = createInvoice(request, hospitalId, savedSale);
+    addInvoiceItems(savedSale, invoice);
+
+    PaymentReceipt paymentReceipt =
+        recordPayment(request, hospitalId, userId, invoice, savedSale.getTotalAmount());
+    updatePrescriptionStatus(request.getPrescriptionId());
+
+    var response = pharmacySaleMapper.toResponse(savedSale);
+    response.setPaymentId(paymentReceipt.paymentId());
+    response.setReceiptNumber(paymentReceipt.receiptNumber());
+    return response;
+  }
+
+  private void calculateAndSaveTaxes(UUID hospitalId, Hospital hospital, PharmacySale savedSale) {
     for (PharmacySaleItem item : savedSale.getItems()) {
       TaxCalculationRequest taxRequest =
           TaxCalculationRequest.builder()
@@ -91,17 +105,16 @@ public class PharmacySaleService {
               .quantity(BigDecimal.valueOf(item.getQuantity()))
               .unitPrice(item.getUnitPrice())
               .hospitalState(hospital.getState())
-              .billingState(hospital.getState()) // Default to intra-state for pharmacy sales
+              .billingState(hospital.getState())
               .invoiceDate(Instant.now())
               .build();
 
       TaxCalculationResult taxResult = taxEngineService.calculate(taxRequest);
-
       item.setTaxAmount(taxResult.totalTax());
       item.setNetAmount(item.getTaxableAmount().add(taxResult.totalTax()));
 
       if (taxResult.components() != null) {
-        for (com.res.hms.tax.application.dto.TaxComponent tc : taxResult.components()) {
+        for (TaxComponent tc : taxResult.components()) {
           PharmacySaleItemTax pit = new PharmacySaleItemTax();
           pit.setPharmacySaleItem(item);
           pit.setTaxCode(tc.taxCode());
@@ -113,49 +126,24 @@ public class PharmacySaleService {
         }
       }
     }
-
-    // Update total sale amount with taxes
     BigDecimal grandTotal =
         savedSale.getItems().stream()
             .map(PharmacySaleItem::getNetAmount)
             .reduce(BigDecimal.ZERO, BigDecimal::add);
     savedSale.setTotalAmount(grandTotal);
     pharmacySaleRepository.save(savedSale);
+  }
 
-    Invoice invoice = createInvoice(request, hospitalId, savedSale);
-    addInvoiceItems(savedSale, invoice);
-
-    PaymentReceipt paymentReceipt =
-        recordPayment(request, hospitalId, userId, invoice, savedSale.getTotalAmount());
-
-    // Update prescription status to DISPENSED if it exists
-    if (request.getPrescriptionId() != null) {
+  private void updatePrescriptionStatus(UUID prescriptionId) {
+    if (prescriptionId != null) {
       prescriptionRepository
-          .findById(request.getPrescriptionId())
+          .findById(prescriptionId)
           .ifPresent(
               pres -> {
                 pres.setStatus(PrescriptionStatus.DISPENSED);
                 prescriptionRepository.save(pres);
               });
     }
-
-    var response = toQuickSaleResponse(savedSale);
-    response.setPaymentId(paymentReceipt.paymentId());
-    response.setReceiptNumber(paymentReceipt.receiptNumber());
-
-    // Populate additional details for the response
-    if (savedSale.getDoctorId() != null) {
-      userAccountRepository
-          .findById(savedSale.getDoctorId())
-          .ifPresent(u -> response.setDoctorName(u.getFullName()));
-    }
-    if (savedSale.getPatientId() != null) {
-      patientRepository
-          .findById(savedSale.getPatientId())
-          .ifPresent(p -> response.setPatientCode(p.getPatientCode()));
-    }
-
-    return response;
   }
 
   private void requireLoggedInUser(UUID userId) {
@@ -193,21 +181,15 @@ public class PharmacySaleService {
                 sale.setVisitId(pres.getAppointment().getVisitId());
               }
             });
-
-    if (sale.getVisitId() == null) {
-      return request.getVisitId();
-    }
-    return sale.getVisitId();
+    return sale.getVisitId() != null ? sale.getVisitId() : request.getVisitId();
   }
 
   private BigDecimal processItems(
       UUID hospitalId, List<QuickPharmacySaleRequest.Item> itemDtos, PharmacySale sale) {
     BigDecimal totalAmount = BigDecimal.ZERO;
     java.time.LocalDate today = java.time.LocalDate.now();
-
     for (QuickPharmacySaleRequest.Item itemDto : itemDtos) {
       if (itemDto.getMedicineBatchId() != null) {
-        // Specific batch selection
         PharmacyStock stock =
             pharmacyStockRepository
                 .findByIdAndHospitalId(itemDto.getMedicineBatchId(), hospitalId)
@@ -215,14 +197,11 @@ public class PharmacySaleService {
                     () ->
                         new ApiException(
                             "NOT_FOUND", "Stock batch not found", HttpStatus.NOT_FOUND));
-
         totalAmount = totalAmount.add(consumeStock(sale, stock, itemDto.getQuantity(), itemDto));
       } else if (itemDto.getMedicineId() != null) {
-        // Auto-batch selection (FIFO)
         List<PharmacyStock> batches =
             pharmacyStockRepository.findDispensableBatchesForUpdate(
                 hospitalId, itemDto.getMedicineId(), today);
-
         int remaining = itemDto.getQuantity();
         for (PharmacyStock batch : batches) {
           int consumed = Math.min(remaining, batch.getQuantity());
@@ -232,12 +211,11 @@ public class PharmacySaleService {
             break;
           }
         }
-
         if (remaining > 0) {
           String medName =
               medicineRepository
                   .findById(itemDto.getMedicineId())
-                  .map(com.res.hms.pharmacy.domain.Medicine::getName)
+                  .map(Medicine::getName)
                   .orElse("Medicine");
           throw new ApiException(
               "INSUFFICIENT_STOCK", "Insufficient stock for " + medName, HttpStatus.CONFLICT);
@@ -249,58 +227,31 @@ public class PharmacySaleService {
             HttpStatus.BAD_REQUEST);
       }
     }
-
     return totalAmount;
   }
 
   private BigDecimal consumeStock(
       PharmacySale sale, PharmacyStock stock, int quantity, QuickPharmacySaleRequest.Item itemDto) {
-
-    Integer availableStock = stock.getQuantity();
-    if (availableStock <= 0) {
-      throw new ApiException("OUT_OF_STOCK", "Medicine is out of stock", HttpStatus.BAD_REQUEST);
+    if (stock.getQuantity() < quantity) {
+      throw new ApiException("INSUFFICIENT_STOCK", "Insufficient stock", HttpStatus.CONFLICT);
     }
-    if (quantity <= 0) {
-      throw new ApiException(
-          "INVALID_QUANTITY", "Quantity must be greater than zero", HttpStatus.BAD_REQUEST);
-    }
-    if (quantity > availableStock) {
-      throw new ApiException(
-          "INSUFFICIENT_STOCK",
-          "Insufficient stock for " + stock.getMedicine().getName(),
-          HttpStatus.CONFLICT);
-    }
-
     stock.setQuantity(stock.getQuantity() - quantity);
     pharmacyStockRepository.save(stock);
-
-    BigDecimal unitPrice = stock.getSellingPrice();
-
     PharmacySaleItem saleItem = new PharmacySaleItem();
     saleItem.setSale(sale);
     saleItem.setMedicine(stock.getMedicine());
     saleItem.setStock(stock);
     saleItem.setQuantity(quantity);
-    saleItem.setUnitPrice(unitPrice);
+    saleItem.setUnitPrice(stock.getSellingPrice());
     saleItem.setDiscountAmount(
         itemDto.getDiscountAmount() != null ? itemDto.getDiscountAmount() : BigDecimal.ZERO);
     saleItem.setTaxAmount(BigDecimal.ZERO);
-    BigDecimal itemSubtotal = unitPrice.multiply(BigDecimal.valueOf(quantity));
-    saleItem.setSubtotal(itemSubtotal);
-    if (saleItem.getDiscountAmount().compareTo(itemSubtotal) > 0) {
-      throw new ApiException(
-          "INVALID_DISCOUNT",
-          "Discount amount cannot exceed medicine total price",
-          HttpStatus.BAD_REQUEST);
-    }
-
-    BigDecimal itemNet =
-        itemSubtotal.add(saleItem.getTaxAmount()).subtract(saleItem.getDiscountAmount());
-    saleItem.setTaxableAmount(itemSubtotal.subtract(saleItem.getDiscountAmount()));
-    saleItem.setNetAmount(itemNet);
-
+    BigDecimal subtotal = saleItem.getUnitPrice().multiply(BigDecimal.valueOf(quantity));
+    saleItem.setSubtotal(subtotal);
+    saleItem.setTaxableAmount(subtotal.subtract(saleItem.getDiscountAmount()));
+    saleItem.setNetAmount(saleItem.getTaxableAmount()); // tax added later
     sale.getItems().add(saleItem);
-    return itemNet;
+    return saleItem.getNetAmount();
   }
 
   private Invoice createInvoice(
@@ -323,19 +274,17 @@ public class PharmacySaleService {
       doctorName =
           userAccountRepository
               .findById(savedSale.getDoctorId())
-              .map(com.res.hms.iam.domain.UserAccount::getFullName)
+              .map(UserAccount::getFullName)
               .orElse(null);
     }
-
     for (PharmacySaleItem saleItem : savedSale.getItems()) {
-      List<com.res.hms.tax.application.dto.TaxComponent> taxComponents =
+      List<TaxComponent> taxComponents =
           saleItem.getTaxes().stream()
               .map(
                   t ->
-                      new com.res.hms.tax.application.dto.TaxComponent(
+                      new TaxComponent(
                           t.getTaxCode(), t.getTaxName(), t.getTaxRate(), t.getTaxAmount()))
               .toList();
-
       invoiceService.addItem(
           invoice.getId(),
           saleItem.getMedicine().getName() + " (" + saleItem.getStock().getBatchNumber() + ")",
@@ -357,11 +306,9 @@ public class PharmacySaleService {
       UUID userId,
       Invoice invoice,
       BigDecimal saleAmount) {
-
     if (request.getPayment() != null
         && request.getPayment().getAmount() != null
         && request.getPayment().getAmount().compareTo(BigDecimal.ZERO) > 0) {
-
       RecordPaymentRequest paymentReq = new RecordPaymentRequest();
       paymentReq.setInvoiceId(invoice.getId());
       paymentReq.setPatientId(request.getPatientId());
@@ -369,20 +316,13 @@ public class PharmacySaleService {
       paymentReq.setAmount(request.getPayment().getAmount());
       paymentReq.setPaymentMode(request.getPayment().getMode());
       paymentReq.setReferenceNumber(request.getPayment().getReferenceNumber());
-
-      // Validate that payment is at least the pharmacy sale amount
       if (request.getPayment().getAmount().compareTo(saleAmount) < 0) {
         throw new ApiException(
-            "INVALID_PAYMENT",
-            "Paid amount is less than pharmacy bill amount",
-            HttpStatus.BAD_REQUEST);
+            "INVALID_PAYMENT", "Paid amount is less than bill amount", HttpStatus.BAD_REQUEST);
       }
-
       var paymentDto = paymentService.recordPayment(hospitalId, paymentReq, userId);
-
       return new PaymentReceipt(paymentDto.getId(), paymentDto.getReceiptNumber());
     }
-
     return new PaymentReceipt(null, null);
   }
 
@@ -394,49 +334,9 @@ public class PharmacySaleService {
       String search,
       java.util.Map<String, String> filters) {
     UUID hospitalId = hospitalContext.requireHospitalId();
-
-    // Refined logic: SpecificationBuilder handles the basic columns.
-    // We just need to ensure hospitalId and handle the complex patient join search.
-    org.springframework.data.jpa.domain.Specification<PharmacySale> finalSpec =
-        (root, query, cb) -> {
-          List<jakarta.persistence.criteria.Predicate> predicates = new java.util.ArrayList<>();
-          predicates.add(cb.equal(root.get("hospitalId"), hospitalId));
-
-          if (filters.containsKey("saleType")) {
-            try {
-              predicates.add(
-                  cb.equal(
-                      root.get("saleType"),
-                      com.res.hms.pharmacy.domain.SaleType.valueOf(
-                          filters.get("saleType").toUpperCase())));
-            } catch (Exception ignored) {
-            }
-          }
-
-          if (search != null && !search.isBlank()) {
-            String pattern = "%" + search.toLowerCase().trim() + "%";
-            
-            List<jakarta.persistence.criteria.Predicate> searchOr = new java.util.ArrayList<>();
-            searchOr.add(cb.like(cb.lower(root.get("saleNumber")), pattern));
-            searchOr.add(cb.like(cb.lower(root.get("customerName")), pattern));
-            searchOr.add(cb.like(cb.lower(root.get("customerPhone")), pattern));
-            searchOr.add(cb.like(cb.lower(root.get("externalDoctorName")), pattern));
-
-            // Add prescriptionId search if it's a valid UUID pattern
-            try {
-              UUID searchUuid = UUID.fromString(search.trim());
-              searchOr.add(cb.equal(root.get("prescriptionId"), searchUuid));
-            } catch (IllegalArgumentException ignored) {
-            }
-
-            predicates.add(cb.or(searchOr.toArray(new jakarta.persistence.criteria.Predicate[0])));
-          }
-
-          return cb.and(predicates.toArray(new jakarta.persistence.criteria.Predicate[0]));
-        };
-
+    var spec = PharmacySaleSpecifications.withFilters(hospitalId, search, filters);
     return com.res.hms.core.api.PageResponse.from(
-        pharmacySaleRepository.findAll(finalSpec, pageable).map(this::toQuickSaleResponse));
+        pharmacySaleRepository.findAll(spec, pageable).map(pharmacySaleMapper::toResponse));
   }
 
   @Transactional(readOnly = true)
@@ -447,8 +347,7 @@ public class PharmacySaleService {
             .findByIdAndHospitalId(id, hospitalId)
             .orElseThrow(
                 () -> new ApiException("NOT_FOUND", "Sale not found", HttpStatus.NOT_FOUND));
-
-    return toQuickSaleResponse(sale);
+    return pharmacySaleMapper.toResponse(sale);
   }
 
   @Transactional(readOnly = true)
@@ -458,79 +357,13 @@ public class PharmacySaleService {
         pharmacySaleRepository
             .findByPrescriptionIdAndHospitalId(prescriptionId, hospitalId)
             .orElseThrow(
-                () ->
-                    new ApiException(
-                        "NOT_FOUND",
-                        "No dispensing record found for this prescription",
-                        HttpStatus.NOT_FOUND));
-
-    return toQuickSaleResponse(sale);
-  }
-
-  private QuickPharmacySaleResponse toQuickSaleResponse(PharmacySale sale) {
-    List<QuickPharmacySaleResponse.Item> items =
-        sale.getItems().stream()
-            .map(
-                item ->
-                    QuickPharmacySaleResponse.Item.builder()
-                        .id(item.getId())
-                        .medicineName(item.getMedicine().getName())
-                        .batchNumber(item.getStock().getBatchNumber())
-                        .quantity(item.getQuantity())
-                        .unitPrice(item.getUnitPrice())
-                        .subtotal(item.getSubtotal())
-                        .taxableAmount(item.getTaxableAmount())
-                        .taxAmount(item.getTaxAmount())
-                        .discountAmount(item.getDiscountAmount())
-                        .netAmount(item.getNetAmount())
-                        .appliedTaxes(
-                            item.getTaxes() != null
-                                ? item.getTaxes().stream()
-                                    .map(
-                                        t ->
-                                            new com.res.hms.tax.application.dto.TaxComponent(
-                                                t.getTaxCode(),
-                                                t.getTaxName(),
-                                                t.getTaxRate(),
-                                                t.getTaxAmount()))
-                                    .toList()
-                                : null)
-                        .build())
-            .toList();
-
-    QuickPharmacySaleResponse response =
-        QuickPharmacySaleResponse.builder()
-            .saleId(sale.getId())
-            .saleNumber(sale.getSaleNumber())
-            .invoiceId(sale.getInvoiceId())
-            .invoiceNumber(sale.getSaleNumber())
-            .totalAmount(sale.getTotalAmount())
-            .status(sale.getStatus().name())
-            .saleType(sale.getSaleType() != null ? sale.getSaleType().name() : null)
-            .customerName(sale.getCustomerName())
-            .customerPhone(sale.getCustomerPhone())
-            .externalDoctorName(sale.getExternalDoctorName())
-            .createdAt(sale.getCreatedAt())
-            .items(items)
-            .build();
-
-    if (sale.getDoctorId() != null) {
-      userAccountRepository
-          .findById(sale.getDoctorId())
-          .ifPresent(u -> response.setDoctorName(u.getFullName()));
-    }
-    if (sale.getPatientId() != null) {
-      patientRepository
-          .findById(sale.getPatientId())
-          .ifPresent(p -> response.setPatientCode(p.getPatientCode()));
-    }
-
-    return response;
+                () -> new ApiException("NOT_FOUND", "No record found", HttpStatus.NOT_FOUND));
+    return pharmacySaleMapper.toResponse(sale);
   }
 
   @Transactional(readOnly = true)
   public List<Object[]> searchRecentCustomers(String search) {
-    UUID hospitalId = hospitalContext.requireHospitalId();
-    return pharmacySaleRepository.searchRecentWalkinCustomers(hospitalId, search);
+    return pharmacySaleRepository.searchRecentWalkinCustomers(
+        hospitalContext.requireHospitalId(), search);
   }
 }
