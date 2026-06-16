@@ -33,4 +33,6 @@ public interface MedicineRepository
       @Param("genericName") String genericName,
       @Param("strength") String strength,
       @Param("form") MedicineForm form);
+
+  long countByDeletedFalse();
 }

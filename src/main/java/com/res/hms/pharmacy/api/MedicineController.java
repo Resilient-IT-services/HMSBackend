@@ -9,6 +9,7 @@ import com.res.hms.pharmacy.application.dto.MedicineSummaryDTO;
 import com.res.hms.pharmacy.application.dto.PharmacyReturnRequest;
 import com.res.hms.pharmacy.application.dto.PharmacyReturnResponse;
 import com.res.hms.pharmacy.application.dto.PharmacyStockDTO;
+import com.res.hms.pharmacy.application.dto.PharmacyStockStatsDTO;
 import com.res.hms.pharmacy.application.dto.QuickPharmacySaleRequest;
 import com.res.hms.pharmacy.application.dto.QuickPharmacySaleResponse;
 import com.res.hms.pharmacy.application.dto.StockImportResponse;
@@ -169,6 +170,12 @@ public class MedicineController {
   public ApiResponse<PharmacyReturnResponse> returnStock(
       @Valid @RequestBody PharmacyReturnRequest request) {
     return ApiResponse.success(pharmacyStockService.returnStock(request));
+  }
+
+  @GetMapping("/dashboard/stats")
+  @PreAuthorize(SecurityConstants.HAS_PHARMACY_ACCESS)
+  public ApiResponse<PharmacyStockStatsDTO> getDashboardStats() {
+    return ApiResponse.success(pharmacyStockService.getStockStats());
   }
 
   @GetMapping("/alerts/expiry")
