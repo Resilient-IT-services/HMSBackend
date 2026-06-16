@@ -238,12 +238,33 @@ public class MedicineService {
           List<Predicate> predicates = new ArrayList<>();
           predicates.add(cb.equal(root.get("hospitalId"), hospitalId));
 
+          log.info(
+              "Filtering stock for hospital {}. Search: {}, Filters: {}",
+              hospitalId,
+              search,
+              filters);
+
           String status = filters.get("status");
-          if ("LOW_STOCK".equalsIgnoreCase(status)) {
+          String lowStockParam = filters.get("lowStock");
+          String expiredParam = filters.get("expired");
+          String expiringSoonParam = filters.get("expiringSoon");
+
+          if ("LOW_STOCK".equalsIgnoreCase(status) || "true".equalsIgnoreCase(lowStockParam)) {
+            log.debug("Applying LOW_STOCK filter");
+            predicates.add(cb.greaterThan(root.get("quantity"), 0));
             predicates.add(
-                cb.lessThan(root.get("quantity"), root.get("medicine").get("thresholdQuantity")));
-          } else if ("EXPIRED".equalsIgnoreCase(status)) {
+                cb.lessThanOrEqualTo(
+                    root.get("quantity"), root.get("medicine").get("thresholdQuantity")));
+          } else if ("EXPIRED".equalsIgnoreCase(status) || "true".equalsIgnoreCase(expiredParam)) {
+            log.debug("Applying EXPIRED filter");
             predicates.add(cb.lessThan(root.get("expiryDate"), LocalDate.now()));
+          } else if ("EXPIRING_SOON".equalsIgnoreCase(status)
+              || "true".equalsIgnoreCase(expiringSoonParam)) {
+            log.debug("Applying EXPIRING_SOON filter");
+            LocalDate today = LocalDate.now();
+            LocalDate thirtyDaysLater = today.plusDays(30);
+            predicates.add(cb.greaterThan(root.get("quantity"), 0));
+            predicates.add(cb.between(root.get("expiryDate"), today, thirtyDaysLater));
           }
 
           if (filters.containsKey("medicineId")) {
