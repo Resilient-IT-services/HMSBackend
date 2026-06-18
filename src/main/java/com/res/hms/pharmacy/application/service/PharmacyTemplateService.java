@@ -104,6 +104,7 @@ public class PharmacyTemplateService {
         "Medicine Name",
         "Batch Number",
         "Expiry Date (YYYY-MM-DD)",
+        "Manufacturing Date (YYYY-MM-DD)",
         "Quantity",
         "Purchase Price",
         "Selling Price",
@@ -122,7 +123,7 @@ public class PharmacyTemplateService {
       addDummyStockRow(sheet.createRow(1));
 
       DataValidationHelper helper = sheet.getDataValidationHelper();
-      addValidation(sheet, helper, new String[] {"Y", "N"}, 1, 1000, 8, 8);
+      addValidation(sheet, helper, new String[] {"Y", "N"}, 1, 1000, 9, 9);
 
       addInstructionSheet(workbook, getStockInstructions());
 
@@ -161,12 +162,13 @@ public class PharmacyTemplateService {
     row.createCell(0).setCellValue("Paracetamol 500mg");
     row.createCell(1).setCellValue("BATCH001");
     row.createCell(2).setCellValue(java.time.LocalDate.now().plusYears(1).toString());
-    row.createCell(3).setCellValue(100);
-    row.createCell(4).setCellValue(10.50);
-    row.createCell(5).setCellValue(15.00);
-    row.createCell(6).setCellValue("3004");
-    row.createCell(7).setCellValue("Maharashtra");
-    row.createCell(8).setCellValue("Y");
+    row.createCell(3).setCellValue(java.time.LocalDate.now().minusMonths(1).toString());
+    row.createCell(4).setCellValue(100);
+    row.createCell(5).setCellValue(10.50);
+    row.createCell(6).setCellValue(15.00);
+    row.createCell(7).setCellValue("3004");
+    row.createCell(8).setCellValue("Maharashtra");
+    row.createCell(9).setCellValue("Y");
   }
 
   private static void addValidation(
@@ -232,6 +234,7 @@ public class PharmacyTemplateService {
       {"Medicine Name", "Mandatory", "Must exist in Medicine Master"},
       {"Batch Number", "Mandatory", "Unique Batch Identifier"},
       {"Expiry Date", "Mandatory", "Format: YYYY-MM-DD"},
+      {"Manufacturing Date", "Optional", "Format: YYYY-MM-DD"},
       {"Quantity", "Mandatory", "Positive Number"},
       {"Purchase Price", "Mandatory", "Positive Number"},
       {"Selling Price", "Mandatory", "Positive Number (>= Purchase Price)"},

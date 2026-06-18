@@ -100,27 +100,39 @@ class StockImportIntegrationTest {
     var sheet = workbook.createSheet();
     var header = sheet.createRow(0);
     header.createCell(0).setCellValue("Medicine Name");
-    header.createCell(1).setCellValue("Batch");
-    header.createCell(2).setCellValue("Expiry");
-    header.createCell(3).setCellValue("Qty");
-    header.createCell(4).setCellValue("Purchase Price");
-    header.createCell(5).setCellValue("Selling Price");
+    header.createCell(1).setCellValue("Batch Number");
+    header.createCell(2).setCellValue("Expiry Date (YYYY-MM-DD)");
+    header.createCell(3).setCellValue("Manufacturing Date (YYYY-MM-DD)");
+    header.createCell(4).setCellValue("Quantity");
+    header.createCell(5).setCellValue("Purchase Price");
+    header.createCell(6).setCellValue("Selling Price");
+    header.createCell(7).setCellValue("HSN Code");
+    header.createCell(8).setCellValue("Supplier State");
+    header.createCell(9).setCellValue("Tax Inclusive (Y/N)");
 
     var row = sheet.createRow(1);
     row.createCell(0).setCellValue("ExcelMedicine");
     row.createCell(1).setCellValue("B123");
     row.createCell(2).setCellValue("2026-12-31");
-    row.createCell(3).setCellValue(100);
-    row.createCell(4).setCellValue(5.0);
-    row.createCell(5).setCellValue(10.0);
+    row.createCell(3).setCellValue("2024-01-01");
+    row.createCell(4).setCellValue(100);
+    row.createCell(5).setCellValue(5.0);
+    row.createCell(6).setCellValue(10.0);
+    row.createCell(7).setCellValue("");
+    row.createCell(8).setCellValue("");
+    row.createCell(9).setCellValue("N");
 
     var row2 = sheet.createRow(2);
     row2.createCell(0).setCellValue("UnknownMedicine");
     row2.createCell(1).setCellValue("B456");
     row2.createCell(2).setCellValue("2026-12-31");
-    row2.createCell(3).setCellValue(50);
-    row2.createCell(4).setCellValue(5.0);
-    row2.createCell(5).setCellValue(10.0);
+    row2.createCell(3).setCellValue("2024-01-01");
+    row2.createCell(4).setCellValue(50);
+    row2.createCell(5).setCellValue(5.0);
+    row2.createCell(6).setCellValue(10.0);
+    row2.createCell(7).setCellValue("");
+    row2.createCell(8).setCellValue("");
+    row2.createCell(9).setCellValue("N");
 
     ByteArrayOutputStream bos = new ByteArrayOutputStream();
     workbook.write(bos);
@@ -193,38 +205,54 @@ class StockImportIntegrationTest {
     var sheet = workbook.createSheet();
     var header = sheet.createRow(0);
     header.createCell(0).setCellValue("Medicine Name");
-    header.createCell(1).setCellValue("Batch");
-    header.createCell(2).setCellValue("Expiry");
-    header.createCell(3).setCellValue("Qty");
-    header.createCell(4).setCellValue("Purchase Price");
-    header.createCell(5).setCellValue("Selling Price");
+    header.createCell(1).setCellValue("Batch Number");
+    header.createCell(2).setCellValue("Expiry Date (YYYY-MM-DD)");
+    header.createCell(3).setCellValue("Manufacturing Date (YYYY-MM-DD)");
+    header.createCell(4).setCellValue("Quantity");
+    header.createCell(5).setCellValue("Purchase Price");
+    header.createCell(6).setCellValue("Selling Price");
+    header.createCell(7).setCellValue("HSN Code");
+    header.createCell(8).setCellValue("Supplier State");
+    header.createCell(9).setCellValue("Tax Inclusive (Y/N)");
 
     // First row: MedicineA, Batch B-DUP
     var row1 = sheet.createRow(1);
     row1.createCell(0).setCellValue("MedicineA");
     row1.createCell(1).setCellValue("B-DUP");
     row1.createCell(2).setCellValue("2026-12-31");
-    row1.createCell(3).setCellValue(100);
-    row1.createCell(4).setCellValue(10.0);
-    row1.createCell(5).setCellValue(20.0);
+    row1.createCell(3).setCellValue("2024-01-01");
+    row1.createCell(4).setCellValue(100);
+    row1.createCell(5).setCellValue(10.0);
+    row1.createCell(6).setCellValue(20.0);
+    row1.createCell(7).setCellValue("");
+    row1.createCell(8).setCellValue("");
+    row1.createCell(9).setCellValue("N");
 
     // Second row: MedicineB, Batch B-DUP (Should FAIL)
     var row2 = sheet.createRow(2);
     row2.createCell(0).setCellValue("MedicineB");
     row2.createCell(1).setCellValue("B-DUP");
     row2.createCell(2).setCellValue("2026-12-31");
-    row2.createCell(3).setCellValue(50);
-    row2.createCell(4).setCellValue(10.0);
-    row2.createCell(5).setCellValue(20.0);
+    row2.createCell(3).setCellValue("2024-01-01");
+    row2.createCell(4).setCellValue(50);
+    row2.createCell(5).setCellValue(10.0);
+    row2.createCell(6).setCellValue(20.0);
+    row2.createCell(7).setCellValue("");
+    row2.createCell(8).setCellValue("");
+    row2.createCell(9).setCellValue("N");
 
     // Third row: MedicineA, Batch B-DUP (Should be SKIPPED)
     var row3 = sheet.createRow(3);
     row3.createCell(0).setCellValue("MedicineA");
     row3.createCell(1).setCellValue("B-DUP");
     row3.createCell(2).setCellValue("2026-12-31");
-    row3.createCell(3).setCellValue(30);
-    row3.createCell(4).setCellValue(10.0);
-    row3.createCell(5).setCellValue(20.0);
+    row3.createCell(3).setCellValue("2024-01-01");
+    row3.createCell(4).setCellValue(30);
+    row3.createCell(5).setCellValue(10.0);
+    row3.createCell(6).setCellValue(20.0);
+    row3.createCell(7).setCellValue("");
+    row3.createCell(8).setCellValue("");
+    row3.createCell(9).setCellValue("N");
 
     ByteArrayOutputStream bos = new ByteArrayOutputStream();
     workbook.write(bos);

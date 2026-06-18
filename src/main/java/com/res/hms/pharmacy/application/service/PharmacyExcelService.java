@@ -147,15 +147,17 @@ public class PharmacyExcelService {
               .map(s -> s.trim().toUpperCase())
               .orElse("");
       String expStr = PharmacyExcelHelper.text(row, 2);
-      String qtyStr = PharmacyExcelHelper.text(row, 3);
-      String pPriceStr = PharmacyExcelHelper.text(row, 4);
-      String sPriceStr = PharmacyExcelHelper.text(row, 5);
-      String hsn = PharmacyExcelHelper.text(row, 6);
-      String supplierState = PharmacyExcelHelper.text(row, 7);
-      String taxIncStr = PharmacyExcelHelper.text(row, 8);
+      String mfgStr = PharmacyExcelHelper.text(row, 3);
+      String qtyStr = PharmacyExcelHelper.text(row, 4);
+      String pPriceStr = PharmacyExcelHelper.text(row, 5);
+      String sPriceStr = PharmacyExcelHelper.text(row, 6);
+      String hsn = PharmacyExcelHelper.text(row, 7);
+      String supplierState = PharmacyExcelHelper.text(row, 8);
+      String taxIncStr = PharmacyExcelHelper.text(row, 9);
 
       List<String> errors =
-          PharmacyExcelHelper.validateStockData(name, batch, qtyStr, sPriceStr, pPriceStr, expStr);
+          PharmacyExcelHelper.validateStockData(
+              name, batch, qtyStr, sPriceStr, pPriceStr, expStr, mfgStr);
       if (!errors.isEmpty()) {
         String errorMsg = String.join(" | ", errors);
         PharmacyExcelHelper.updateCell(statusCell, "ERROR: " + errorMsg, styles[3]);
@@ -189,16 +191,11 @@ public class PharmacyExcelService {
 
       batches.put(batch, medicine.getId());
       LocalDate expiryDate = PharmacyExcelHelper.parseDate(expStr);
-      if (expiryDate == null) {
-        PharmacyExcelHelper.updateCell(
-            statusCell,
-            "ERROR: [Expiry Date] Invalid format: '" + expStr + "'. Use YYYY-MM-DD",
-            styles[3]);
-        return "ERROR";
-      }
-      if (expiryDate.isBefore(LocalDate.now())) {
-        PharmacyExcelHelper.updateCell(
-            statusCell, "ERROR: [Expiry Date] cannot be in the past: " + expStr, styles[3]);
+      LocalDate mfgDate = PharmacyExcelHelper.parseDate(mfgStr);
+
+      String dateError = validateDates(expiryDate, expStr, mfgDate, mfgStr);
+      if (dateError != null) {
+        PharmacyExcelHelper.updateCell(statusCell, dateError, styles[3]);
         return "ERROR";
       }
 
@@ -211,6 +208,7 @@ public class PharmacyExcelService {
           StockRequest.builder()
               .medicineId(medicine.getId())
               .batchNumber(batch)
+              .manufacturingDate(mfgDate)
               .expiryDate(expiryDate)
               .quantity(PharmacyExcelHelper.parseQuantity(qtyStr))
               .purchasePrice(PharmacyExcelHelper.parseBigDecimal(pPriceStr))
@@ -285,6 +283,23 @@ public class PharmacyExcelService {
       PharmacyExcelHelper.updateCell(statusCell, "ERROR: " + getErrorMessage(e), styles[3]);
       return "ERROR";
     }
+  }
+
+  private String validateDates(
+      LocalDate expiryDate, String expStr, LocalDate mfgDate, String mfgStr) {
+    if (expiryDate == null) {
+      return "ERROR: [Expiry Date] Invalid format: '" + expStr + "'. Use YYYY-MM-DD";
+    }
+    if (expiryDate.isBefore(LocalDate.now())) {
+      return "ERROR: [Expiry Date] cannot be in the past: " + expStr;
+    }
+    if (mfgDate != null && mfgDate.isAfter(LocalDate.now())) {
+      return "ERROR: [Manufacturing Date] cannot be in the future: " + mfgStr;
+    }
+    if (mfgDate != null && !expiryDate.isAfter(mfgDate)) {
+      return "ERROR: [Expiry Date] must be after [Manufacturing Date]";
+    }
+    return null;
   }
 
   private String getErrorMessage(Exception e) {

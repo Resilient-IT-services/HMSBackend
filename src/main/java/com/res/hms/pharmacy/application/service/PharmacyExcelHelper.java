@@ -47,15 +47,15 @@ public class PharmacyExcelHelper {
   }
 
   public static List<String> validateStockData(
-      String name, String batch, String qty, String sp, String pp, String exp) {
+      String name, String batch, String qty, String sp, String pp, String exp, String mfg) {
     List<String> errors = new ArrayList<>();
-    validateStockRequiredFields(name, batch, qty, pp, sp, exp, errors);
+    validateStockRequiredFields(name, batch, qty, pp, sp, exp, mfg, errors);
     validateStockNumericFields(qty, pp, sp, errors);
     return errors;
   }
 
   private static void validateStockRequiredFields(
-      String n, String b, String q, String p, String s, String e, List<String> errors) {
+      String n, String b, String q, String p, String s, String e, String mfg, List<String> errors) {
     if (!hasText(n)) {
       errors.add("[Medicine Name] is missing");
     }
