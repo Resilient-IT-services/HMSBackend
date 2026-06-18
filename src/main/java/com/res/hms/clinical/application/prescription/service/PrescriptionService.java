@@ -59,6 +59,22 @@ public class PrescriptionService {
           predicates.add(cb.equal(root.get("deleted"), false));
           // Only show prescriptions with items in the pharmacy queue
           predicates.add(cb.greaterThan(cb.size(root.get("items")), 0));
+          if (filters != null && filters.containsKey("from")) {
+            try {
+              java.time.Instant fromDate = java.time.Instant.parse(filters.get("from"));
+              predicates.add(cb.greaterThanOrEqualTo(root.get("createdAt"), fromDate));
+            } catch (Exception e) {
+              // ignore parse errors
+            }
+          }
+          if (filters != null && filters.containsKey("to")) {
+            try {
+              java.time.Instant toDate = java.time.Instant.parse(filters.get("to"));
+              predicates.add(cb.lessThanOrEqualTo(root.get("createdAt"), toDate));
+            } catch (Exception e) {
+              // ignore parse errors
+            }
+          }
           return cb.and(predicates.toArray(new Predicate[0]));
         };
 
@@ -121,6 +137,22 @@ public class PrescriptionService {
           predicates.add(cb.equal(root.get("deleted"), false));
           // Only show prescriptions with items in the pharmacy queue
           predicates.add(cb.greaterThan(cb.size(root.get("items")), 0));
+          if (filters != null && filters.containsKey("from")) {
+            try {
+              java.time.Instant fromDate = java.time.Instant.parse(filters.get("from"));
+              predicates.add(cb.greaterThanOrEqualTo(root.get("createdAt"), fromDate));
+            } catch (Exception e) {
+              // ignore parse errors
+            }
+          }
+          if (filters != null && filters.containsKey("to")) {
+            try {
+              java.time.Instant toDate = java.time.Instant.parse(filters.get("to"));
+              predicates.add(cb.lessThanOrEqualTo(root.get("createdAt"), toDate));
+            } catch (Exception e) {
+              // ignore parse errors
+            }
+          }
           return cb.and(predicates.toArray(new Predicate[0]));
         };
 
@@ -186,42 +218,11 @@ public class PrescriptionService {
     prescription.setDoctorName(appointment.getDoctorName());
 
     if (dto.getItems() != null) {
-      for (PrescriptionItemDTO itemDto : dto.getItems()) {
-        PrescriptionItem item = new PrescriptionItem();
-        item.setHospitalId(hospitalId);
-        item.setPrescription(prescription);
-        item.setDosage(itemDto.getDosage());
-        item.setDuration(itemDto.getDuration());
-
-        if (itemDto.getMedicineId() != null) {
-          Medicine medicine =
-              medicineRepository
-                  .findById(itemDto.getMedicineId())
-                  .orElseThrow(
-                      () ->
-                          new ApiException(
-                              "NOT_FOUND", "Medicine not found", HttpStatus.NOT_FOUND));
-          item.setMedicineId(medicine.getId());
-          item.setMedicineName(medicine.getName());
-        } else {
-          item.setMedicineId(null);
-          item.setMedicineName(itemDto.getMedicineName());
-        }
-        prescription.getItems().add(item);
-      }
+      addMedicineItems(prescription, dto.getItems(), hospitalId);
     }
 
     if (dto.getLabItems() != null) {
-      for (PrescriptionLabItemDTO labDto : dto.getLabItems()) {
-        PrescriptionLabItem labItem = new PrescriptionLabItem();
-        labItem.setHospitalId(hospitalId);
-        labItem.setPrescription(prescription);
-        labItem.setTestId(labDto.getTestId());
-        labItem.setTestName(labDto.getTestName());
-        labItem.setNotes(labDto.getNotes());
-        labItem.setStatus(PrescriptionLabItemStatus.PENDING);
-        prescription.getLabItems().add(labItem);
-      }
+      addLabItems(prescription, dto.getLabItems(), hospitalId, null);
     }
 
     appointment.setStatus(AppointmentStatus.PRESCRIPTION_FINALIZED);
@@ -278,50 +279,11 @@ public class PrescriptionService {
     prescription.getLabItems().addAll(orderedLabItems);
 
     if (dto.getItems() != null) {
-      for (PrescriptionItemDTO itemDto : dto.getItems()) {
-        PrescriptionItem item = new PrescriptionItem();
-        item.setHospitalId(hospitalId);
-        item.setPrescription(prescription);
-        item.setDosage(itemDto.getDosage());
-        item.setDuration(itemDto.getDuration());
-
-        if (itemDto.getMedicineId() != null) {
-          Medicine medicine =
-              medicineRepository
-                  .findById(itemDto.getMedicineId())
-                  .orElseThrow(
-                      () ->
-                          new ApiException(
-                              "NOT_FOUND", "Medicine not found", HttpStatus.NOT_FOUND));
-          item.setMedicineId(medicine.getId());
-          item.setMedicineName(medicine.getName());
-        } else {
-          item.setMedicineId(null);
-          item.setMedicineName(itemDto.getMedicineName());
-        }
-        prescription.getItems().add(item);
-      }
+      addMedicineItems(prescription, dto.getItems(), hospitalId);
     }
 
     if (dto.getLabItems() != null) {
-      for (PrescriptionLabItemDTO labDto : dto.getLabItems()) {
-        // Skip if this test was already ordered (to prevent duplicates)
-        boolean alreadyOrdered =
-            orderedLabItems.stream()
-                .anyMatch(ordered -> ordered.getTestId().equals(labDto.getTestId()));
-        if (alreadyOrdered) {
-          continue;
-        }
-
-        PrescriptionLabItem labItem = new PrescriptionLabItem();
-        labItem.setHospitalId(hospitalId);
-        labItem.setPrescription(prescription);
-        labItem.setTestId(labDto.getTestId());
-        labItem.setTestName(labDto.getTestName());
-        labItem.setNotes(labDto.getNotes());
-        labItem.setStatus(PrescriptionLabItemStatus.PENDING);
-        prescription.getLabItems().add(labItem);
-      }
+      addLabItems(prescription, dto.getLabItems(), hospitalId, orderedLabItems);
     }
 
     prescriptionRepository.save(prescription);
@@ -456,5 +418,56 @@ public class PrescriptionService {
         .notes(item.getNotes())
         .status(item.getStatus() != null ? item.getStatus().name() : null)
         .build();
+  }
+
+  private void addMedicineItems(
+      Prescription prescription, List<PrescriptionItemDTO> items, UUID hospitalId) {
+    for (PrescriptionItemDTO itemDto : items) {
+      PrescriptionItem item = new PrescriptionItem();
+      item.setHospitalId(hospitalId);
+      item.setPrescription(prescription);
+      item.setDosage(itemDto.getDosage());
+      item.setDuration(itemDto.getDuration());
+
+      if (itemDto.getMedicineId() != null) {
+        Medicine medicine =
+            medicineRepository
+                .findById(itemDto.getMedicineId())
+                .orElseThrow(
+                    () ->
+                        new ApiException("NOT_FOUND", "Medicine not found", HttpStatus.NOT_FOUND));
+        item.setMedicineId(medicine.getId());
+        item.setMedicineName(medicine.getName());
+      } else {
+        item.setMedicineId(null);
+        item.setMedicineName(itemDto.getMedicineName());
+      }
+      prescription.getItems().add(item);
+    }
+  }
+
+  private void addLabItems(
+      Prescription prescription,
+      List<PrescriptionLabItemDTO> labItems,
+      UUID hospitalId,
+      List<PrescriptionLabItem> orderedLabItems) {
+    for (PrescriptionLabItemDTO labDto : labItems) {
+      if (orderedLabItems != null) {
+        boolean alreadyOrdered =
+            orderedLabItems.stream()
+                .anyMatch(ordered -> ordered.getTestId().equals(labDto.getTestId()));
+        if (alreadyOrdered) {
+          continue;
+        }
+      }
+      PrescriptionLabItem labItem = new PrescriptionLabItem();
+      labItem.setHospitalId(hospitalId);
+      labItem.setPrescription(prescription);
+      labItem.setTestId(labDto.getTestId());
+      labItem.setTestName(labDto.getTestName());
+      labItem.setNotes(labDto.getNotes());
+      labItem.setStatus(PrescriptionLabItemStatus.PENDING);
+      prescription.getLabItems().add(labItem);
+    }
   }
 }
