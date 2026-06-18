@@ -76,23 +76,15 @@ class StockImportIntegrationTest {
   @Test
   void testStockImport() throws Exception {
     // 1. Create a Medicine first (Master record must exist)
+    String medJson =
+        "{\"name\": \"ExcelMedicine\", \"genericName\": \"ExcelMedicine\", \"composition\": \"ExcelMedicine 500mg\", \"strength\": \"500mg\", \"form\": \"TABLET\", \"purchasePrice\": 5.0, \"sellingPrice\": 10.0, \"manufacturer\": \"Generic Pharma\"}";
     mockMvc
         .perform(
             post("/api/v1/pharmacy/medicines")
                 .session(session)
                 .header("X-Hospital-Id", testHospitalId.toString())
                 .contentType(MediaType.APPLICATION_JSON)
-                .content(
-                    "{"
-                        + "\"name\": \"ExcelMedicine\","
-                        + "\"genericName\": \"ExcelMedicine\","
-                        + "\"composition\": \"ExcelMedicine 500mg\","
-                        + "\"strength\": \"500mg\","
-                        + "\"form\": \"TABLET\","
-                        + "\"purchasePrice\": 5.0,"
-                        + "\"sellingPrice\": 10.0,"
-                        + "\"manufacturer\": \"Generic Pharma\""
-                        + "}"))
+                .content(medJson))
         .andExpect(status().isOk());
 
     // 2. Prepare Excel file
@@ -110,29 +102,8 @@ class StockImportIntegrationTest {
     header.createCell(8).setCellValue("Supplier State");
     header.createCell(9).setCellValue("Tax Inclusive (Y/N)");
 
-    var row = sheet.createRow(1);
-    row.createCell(0).setCellValue("ExcelMedicine");
-    row.createCell(1).setCellValue("B123");
-    row.createCell(2).setCellValue("2026-12-31");
-    row.createCell(3).setCellValue("2024-01-01");
-    row.createCell(4).setCellValue(100);
-    row.createCell(5).setCellValue(5.0);
-    row.createCell(6).setCellValue(10.0);
-    row.createCell(7).setCellValue("");
-    row.createCell(8).setCellValue("");
-    row.createCell(9).setCellValue("N");
-
-    var row2 = sheet.createRow(2);
-    row2.createCell(0).setCellValue("UnknownMedicine");
-    row2.createCell(1).setCellValue("B456");
-    row2.createCell(2).setCellValue("2026-12-31");
-    row2.createCell(3).setCellValue("2024-01-01");
-    row2.createCell(4).setCellValue(50);
-    row2.createCell(5).setCellValue(5.0);
-    row2.createCell(6).setCellValue(10.0);
-    row2.createCell(7).setCellValue("");
-    row2.createCell(8).setCellValue("");
-    row2.createCell(9).setCellValue("N");
+    createExcelRow(sheet, 1, "ExcelMedicine", "B123", 100);
+    createExcelRow(sheet, 2, "UnknownMedicine", "B456", 50);
 
     ByteArrayOutputStream bos = new ByteArrayOutputStream();
     workbook.write(bos);
@@ -159,26 +130,39 @@ class StockImportIntegrationTest {
         .andExpect(jsonPath("$.data.medicineNotFoundRows").value(1));
   }
 
+  private void createExcelRow(
+      org.apache.poi.ss.usermodel.Sheet sheet,
+      int rowIdx,
+      String medicineName,
+      String batchNumber,
+      int qty) {
+    var row = sheet.createRow(rowIdx);
+    row.createCell(0).setCellValue(medicineName);
+    row.createCell(1).setCellValue(batchNumber);
+    row.createCell(2).setCellValue("2026-12-31");
+    row.createCell(3).setCellValue("2024-01-01");
+    row.createCell(4).setCellValue(qty);
+    row.createCell(5).setCellValue(10.0);
+    row.createCell(6).setCellValue(20.0);
+    row.createCell(7).setCellValue("");
+    row.createCell(8).setCellValue("");
+    row.createCell(9).setCellValue("N");
+  }
+
   @Test
   void testDuplicateBatchAcrossDifferentMedicines() throws Exception {
-    // 1. Create two medicines
+    String medJsonA =
+        "{\"name\": \"MedicineA\", \"genericName\": \"GenA\", \"composition\": \"CompA\", \"strength\": \"500mg\", \"form\": \"TABLET\", \"purchasePrice\": 5.0, \"sellingPrice\": 10.0, \"manufacturer\": \"MfA\"}";
+    String medJsonB =
+        "{\"name\": \"MedicineB\", \"genericName\": \"GenB\", \"composition\": \"CompB\", \"strength\": \"500mg\", \"form\": \"TABLET\", \"purchasePrice\": 5.0, \"sellingPrice\": 10.0, \"manufacturer\": \"MfB\"}";
+
     mockMvc
         .perform(
             post("/api/v1/pharmacy/medicines")
                 .session(session)
                 .header("X-Hospital-Id", testHospitalId.toString())
                 .contentType(MediaType.APPLICATION_JSON)
-                .content(
-                    "{"
-                        + "\"name\": \"MedicineA\","
-                        + "\"genericName\": \"GenA\","
-                        + "\"composition\": \"CompA\","
-                        + "\"strength\": \"500mg\","
-                        + "\"form\": \"TABLET\","
-                        + "\"purchasePrice\": 5.0,"
-                        + "\"sellingPrice\": 10.0,"
-                        + "\"manufacturer\": \"MfA\""
-                        + "}"))
+                .content(medJsonA))
         .andExpect(status().isOk());
 
     mockMvc
@@ -187,20 +171,9 @@ class StockImportIntegrationTest {
                 .session(session)
                 .header("X-Hospital-Id", testHospitalId.toString())
                 .contentType(MediaType.APPLICATION_JSON)
-                .content(
-                    "{"
-                        + "\"name\": \"MedicineB\","
-                        + "\"genericName\": \"GenB\","
-                        + "\"composition\": \"CompB\","
-                        + "\"strength\": \"500mg\","
-                        + "\"form\": \"TABLET\","
-                        + "\"purchasePrice\": 5.0,"
-                        + "\"sellingPrice\": 10.0,"
-                        + "\"manufacturer\": \"MfB\""
-                        + "}"))
+                .content(medJsonB))
         .andExpect(status().isOk());
 
-    // 2. Prepare Excel with duplicate batch for DIFFERENT medicines
     Workbook workbook = new XSSFWorkbook();
     var sheet = workbook.createSheet();
     var header = sheet.createRow(0);
@@ -215,44 +188,9 @@ class StockImportIntegrationTest {
     header.createCell(8).setCellValue("Supplier State");
     header.createCell(9).setCellValue("Tax Inclusive (Y/N)");
 
-    // First row: MedicineA, Batch B-DUP
-    var row1 = sheet.createRow(1);
-    row1.createCell(0).setCellValue("MedicineA");
-    row1.createCell(1).setCellValue("B-DUP");
-    row1.createCell(2).setCellValue("2026-12-31");
-    row1.createCell(3).setCellValue("2024-01-01");
-    row1.createCell(4).setCellValue(100);
-    row1.createCell(5).setCellValue(10.0);
-    row1.createCell(6).setCellValue(20.0);
-    row1.createCell(7).setCellValue("");
-    row1.createCell(8).setCellValue("");
-    row1.createCell(9).setCellValue("N");
-
-    // Second row: MedicineB, Batch B-DUP (Should FAIL)
-    var row2 = sheet.createRow(2);
-    row2.createCell(0).setCellValue("MedicineB");
-    row2.createCell(1).setCellValue("B-DUP");
-    row2.createCell(2).setCellValue("2026-12-31");
-    row2.createCell(3).setCellValue("2024-01-01");
-    row2.createCell(4).setCellValue(50);
-    row2.createCell(5).setCellValue(10.0);
-    row2.createCell(6).setCellValue(20.0);
-    row2.createCell(7).setCellValue("");
-    row2.createCell(8).setCellValue("");
-    row2.createCell(9).setCellValue("N");
-
-    // Third row: MedicineA, Batch B-DUP (Should be SKIPPED)
-    var row3 = sheet.createRow(3);
-    row3.createCell(0).setCellValue("MedicineA");
-    row3.createCell(1).setCellValue("B-DUP");
-    row3.createCell(2).setCellValue("2026-12-31");
-    row3.createCell(3).setCellValue("2024-01-01");
-    row3.createCell(4).setCellValue(30);
-    row3.createCell(5).setCellValue(10.0);
-    row3.createCell(6).setCellValue(20.0);
-    row3.createCell(7).setCellValue("");
-    row3.createCell(8).setCellValue("");
-    row3.createCell(9).setCellValue("N");
+    createExcelRow(sheet, 1, "MedicineA", "B-DUP", 100);
+    createExcelRow(sheet, 2, "MedicineB", "B-DUP", 50);
+    createExcelRow(sheet, 3, "MedicineA", "B-DUP", 30);
 
     ByteArrayOutputStream bos = new ByteArrayOutputStream();
     workbook.write(bos);
@@ -266,7 +204,6 @@ class StockImportIntegrationTest {
             "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
             content);
 
-    // 3. Import and verify results
     mockMvc
         .perform(
             MockMvcRequestBuilders.multipart("/api/v1/pharmacy/stock/import")
@@ -275,12 +212,8 @@ class StockImportIntegrationTest {
                 .header("X-Hospital-Id", testHospitalId.toString()))
         .andExpect(status().isOk())
         .andExpect(jsonPath("$.data.totalRows").value(3))
-        .andExpect(jsonPath("$.data.importedRows").value(1)) // Only first row SUCCESS
-        .andExpect(
-            jsonPath("$.data.failedRows")
-                .value(1)) // Second row FAIL (assigned to another medicine)
-        .andExpect(
-            jsonPath("$.data.skippedRows")
-                .value(1)); // Third row SKIPPED (already exists for same medicine)
+        .andExpect(jsonPath("$.data.importedRows").value(1))
+        .andExpect(jsonPath("$.data.failedRows").value(1))
+        .andExpect(jsonPath("$.data.skippedRows").value(1));
   }
 }
