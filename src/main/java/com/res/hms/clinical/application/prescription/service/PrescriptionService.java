@@ -20,7 +20,10 @@ import com.res.hms.pharmacy.domain.Medicine;
 import com.res.hms.pharmacy.infrastructure.repository.MedicineRepository;
 import jakarta.persistence.criteria.JoinType;
 import jakarta.persistence.criteria.Predicate;
+import com.res.hms.hospital.infrastructure.repository.HospitalRepository;
+import java.time.LocalDate;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import java.util.UUID;
 import java.util.stream.Collectors;
@@ -39,6 +42,26 @@ public class PrescriptionService {
   private final MedicineRepository medicineRepository;
   private final AppointmentRepository appointmentRepository;
   private final HospitalContext hospitalContext;
+  private final HospitalRepository hospitalRepository;
+
+  @Transactional
+  public String generatePrescriptionNumber() {
+    UUID hospitalId = hospitalContext.requireHospitalId();
+    com.res.hms.hospital.domain.Hospital hospital = hospitalRepository.findById(hospitalId)
+        .orElseThrow(() -> new ApiException("NOT_FOUND", "Hospital not found", HttpStatus.NOT_FOUND));
+    String initials = extractInitials(hospital.getName());
+    int twoDigitYear = LocalDate.now().getYear() % 100;
+    long seq = prescriptionRepository.nextPrescriptionNumber();
+    return String.format("%s-%02d-%05d", initials, twoDigitYear, seq);
+  }
+
+  private String extractInitials(String name) {
+    if (name == null || name.isBlank()) return "RX";
+    return Arrays.stream(name.trim().split("\\s+"))
+        .filter(w -> !w.isEmpty())
+        .map(w -> String.valueOf(w.charAt(0)).toUpperCase())
+        .collect(Collectors.joining());
+  }
 
   @Transactional(readOnly = true)
   public PageResponse<PrescriptionSummaryDTO> listSummary(
@@ -49,7 +72,7 @@ public class PrescriptionService {
 
     com.res.hms.core.util.SpecificationBuilder<Prescription> builder =
         new com.res.hms.core.util.SpecificationBuilder<>(
-            filters, search, java.util.List.of("patientName", "doctorName"));
+            filters, search, java.util.List.of("patientName", "doctorName", "prescriptionNumber"));
 
     Specification<Prescription> spec = builder.build();
     Specification<Prescription> fixedSpec =
@@ -88,6 +111,7 @@ public class PrescriptionService {
 
     return PrescriptionSummaryDTO.builder()
         .id(prescription.getId())
+        .prescriptionNumber(prescription.getPrescriptionNumber())
         .patientId(prescription.getPatientId())
         .patientName(prescription.getPatientName())
         .patientCode(
@@ -111,7 +135,7 @@ public class PrescriptionService {
 
     com.res.hms.core.util.SpecificationBuilder<Prescription> builder =
         new com.res.hms.core.util.SpecificationBuilder<>(
-            filters, search, java.util.List.of("patientName", "doctorName"));
+            filters, search, java.util.List.of("patientName", "doctorName", "prescriptionNumber"));
 
     Specification<Prescription> spec = builder.build();
     Specification<Prescription> fixedSpec =
@@ -184,6 +208,7 @@ public class PrescriptionService {
     prescription.setPatientName(appointment.getPatientName());
     prescription.setDoctorId(appointment.getDoctorId());
     prescription.setDoctorName(appointment.getDoctorName());
+    prescription.setPrescriptionNumber(generatePrescriptionNumber());
 
     if (dto.getItems() != null) {
       for (PrescriptionItemDTO itemDto : dto.getItems()) {
@@ -262,6 +287,7 @@ public class PrescriptionService {
                   p.setPatientName(appointment.getPatientName());
                   p.setDoctorId(appointment.getDoctorId());
                   p.setDoctorName(appointment.getDoctorName());
+                  p.setPrescriptionNumber(generatePrescriptionNumber());
                   return p;
                 });
 
@@ -410,6 +436,7 @@ public class PrescriptionService {
     PrescriptionDTO.PrescriptionDTOBuilder builder =
         PrescriptionDTO.builder()
             .id(prescription.getId())
+            .prescriptionNumber(prescription.getPrescriptionNumber())
             .patientId(prescription.getPatientId())
             .patientName(prescription.getPatientName())
             .doctorId(prescription.getDoctorId())

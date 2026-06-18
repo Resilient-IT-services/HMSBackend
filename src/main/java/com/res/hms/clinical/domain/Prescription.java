@@ -43,6 +43,9 @@ public class Prescription extends HospitalScopedEntity {
   @Column(name = "doctor_name")
   private String doctorName;
 
+  @Column(name = "prescription_number", unique = true)
+  private String prescriptionNumber;
+
   @Column(nullable = false)
   private boolean deleted = false;
 

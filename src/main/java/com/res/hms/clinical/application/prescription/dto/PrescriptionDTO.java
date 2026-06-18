@@ -13,6 +13,7 @@ import lombok.NoArgsConstructor;
 @AllArgsConstructor
 public class PrescriptionDTO {
   private UUID id;
+  private String prescriptionNumber;
   private UUID patientId;
   private String patientName;
   private UUID doctorId;

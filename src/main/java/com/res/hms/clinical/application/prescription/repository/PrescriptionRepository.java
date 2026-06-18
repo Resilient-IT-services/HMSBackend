@@ -22,4 +22,7 @@ public interface PrescriptionRepository
   Optional<Prescription> findByAppointmentId(UUID appointmentId);
 
   boolean existsByAppointmentId(UUID appointmentId);
+
+  @Query(value = "SELECT nextval('prescription_number_seq')", nativeQuery = true)
+  Long nextPrescriptionNumber();
 }
