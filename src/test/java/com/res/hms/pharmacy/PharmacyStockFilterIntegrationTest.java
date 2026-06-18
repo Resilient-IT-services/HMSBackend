@@ -39,6 +39,13 @@ public class PharmacyStockFilterIntegrationTest {
   @Autowired private TestDataHelper testDataHelper;
   @Autowired private ObjectMapper objectMapper;
 
+  @Autowired
+  private com.res.hms.pharmacy.infrastructure.repository.PharmacyStockRepository
+      pharmacyStockRepository;
+
+  @Autowired
+  private com.res.hms.pharmacy.infrastructure.repository.MedicineRepository medicineRepository;
+
   private UUID testHospitalId;
   private MockHttpSession session;
 
@@ -117,8 +124,17 @@ public class PharmacyStockFilterIntegrationTest {
     // Not expired
     addStock(medId, "NOT_EXPIRED", 20, LocalDate.now().plusYears(1));
 
-    // Expired
-    addStock(medId, "EXPIRED", 20, LocalDate.now().minusDays(1));
+    // Expired - Insert directly to bypass service validation
+    com.res.hms.pharmacy.domain.PharmacyStock expiredStock =
+        new com.res.hms.pharmacy.domain.PharmacyStock();
+    expiredStock.setHospitalId(testHospitalId);
+    expiredStock.setMedicine(medicineRepository.findById(medId).orElseThrow());
+    expiredStock.setBatchNumber("EXPIRED");
+    expiredStock.setQuantity(20);
+    expiredStock.setExpiryDate(LocalDate.now().minusDays(1));
+    expiredStock.setPurchasePrice(BigDecimal.TEN);
+    expiredStock.setSellingPrice(BigDecimal.valueOf(15));
+    pharmacyStockRepository.save(expiredStock);
 
     // Verify expired filter
     mockMvc

@@ -69,6 +69,24 @@ public class PharmacyStockService {
                 () -> new ApiException("NOT_FOUND", "Medicine not found", HttpStatus.NOT_FOUND));
 
     // 0. Date Validations
+    validateDates(request);
+
+    // 1. Handle HSN Auto-propagation
+    String effectiveHsn = handleHsnPropagation(medicine, request.getHsnCode());
+
+    // 2. Calculate Taxes for the purchase
+    TaxCalculationResult taxResult = calculateTaxes(hospital, medicine, request, effectiveHsn);
+
+    // 3. Update Current Stock
+    PharmacyStock savedStock = updateStock(hospitalId, medicine, request);
+
+    // 4. Create Transaction Record (Fiscal Record)
+    createTransaction(hospitalId, medicine, request, taxResult);
+
+    return savedStock;
+  }
+
+  private void validateDates(StockRequest request) {
     LocalDate today = LocalDate.now();
     if (request.getManufacturingDate() != null && request.getManufacturingDate().isAfter(today)) {
       throw new ApiException(
@@ -84,29 +102,30 @@ public class PharmacyStockService {
         && request.getExpiryDate() != null
         && !request.getExpiryDate().isAfter(request.getManufacturingDate())) {
       throw new ApiException(
-          "INVALID_DATE",
-          "Expiry date must be after manufacturing date",
-          HttpStatus.BAD_REQUEST);
+          "INVALID_DATE", "Expiry date must be after manufacturing date", HttpStatus.BAD_REQUEST);
     }
+  }
 
-    // 1. Handle HSN Auto-propagation
-    String effectiveHsn = request.getHsnCode();
+  private String handleHsnPropagation(Medicine medicine, String requestHsn) {
+    String effectiveHsn = requestHsn;
     if (!hasText(effectiveHsn)) {
       effectiveHsn = medicine.getHsnCode();
     } else if (!effectiveHsn.equals(medicine.getHsnCode())) {
-      // Learning: Update master if user provided a different HSN
       medicine.setHsnCode(effectiveHsn);
       medicineRepository.save(medicine);
     }
+    return effectiveHsn;
+  }
 
-    // 2. Calculate Taxes for the purchase
+  private TaxCalculationResult calculateTaxes(
+      Hospital hospital, Medicine medicine, StockRequest request, String effectiveHsn) {
     BigDecimal purchasePrice = request.getPurchasePrice();
     BigDecimal quantity = BigDecimal.valueOf(request.getQuantity());
     BigDecimal totalAmount = purchasePrice.multiply(quantity);
 
     TaxCalculationRequest taxRequest =
         TaxCalculationRequest.builder()
-            .hospitalId(hospitalId)
+            .hospitalId(hospital.getId())
             .itemType("MEDICINE")
             .itemCode(medicine.getName())
             .hsnOrSacCode(effectiveHsn)
@@ -121,9 +140,10 @@ public class PharmacyStockService {
                     : hospital.getState())
             .build();
 
-    TaxCalculationResult taxResult = taxEngineService.calculate(taxRequest);
+    return taxEngineService.calculate(taxRequest);
+  }
 
-    // 3. Update Current Stock
+  private PharmacyStock updateStock(UUID hospitalId, Medicine medicine, StockRequest request) {
     PharmacyStock stock =
         pharmacyStockRepository
             .findByHospitalIdAndMedicineIdAndBatchNumber(
@@ -143,9 +163,11 @@ public class PharmacyStockService {
     stock.setQuantity(stock.getQuantity() + request.getQuantity());
     stock.setPurchasePrice(request.getPurchasePrice());
     stock.setSellingPrice(request.getSellingPrice());
-    PharmacyStock savedStock = pharmacyStockRepository.save(stock);
+    return pharmacyStockRepository.save(stock);
+  }
 
-    // 4. Create Transaction Record (Fiscal Record)
+  private void createTransaction(
+      UUID hospitalId, Medicine medicine, StockRequest request, TaxCalculationResult taxResult) {
     PharmacyStockTransaction tx = new PharmacyStockTransaction();
     tx.setHospitalId(hospitalId);
     tx.setMedicine(medicine);
@@ -161,7 +183,6 @@ public class PharmacyStockService {
     tx.setType(PharmacyStockTransactionType.PURCHASE);
     tx.setSupplierState(request.getSupplierState());
 
-    // 5. Create Tax Snapshots
     taxResult
         .components()
         .forEach(
@@ -177,8 +198,6 @@ public class PharmacyStockService {
             });
 
     transactionRepository.save(tx);
-
-    return savedStock;
   }
 
   @Transactional
