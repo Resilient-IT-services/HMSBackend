@@ -68,6 +68,27 @@ public class PharmacyStockService {
             .orElseThrow(
                 () -> new ApiException("NOT_FOUND", "Medicine not found", HttpStatus.NOT_FOUND));
 
+    // 0. Date Validations
+    LocalDate today = LocalDate.now();
+    if (request.getManufacturingDate() != null && request.getManufacturingDate().isAfter(today)) {
+      throw new ApiException(
+          "INVALID_DATE", "Manufacturing date cannot be in the future", HttpStatus.BAD_REQUEST);
+    }
+
+    if (request.getExpiryDate() != null && request.getExpiryDate().isBefore(today)) {
+      throw new ApiException(
+          "INVALID_DATE", "Expiry date cannot be in the past", HttpStatus.BAD_REQUEST);
+    }
+
+    if (request.getManufacturingDate() != null
+        && request.getExpiryDate() != null
+        && !request.getExpiryDate().isAfter(request.getManufacturingDate())) {
+      throw new ApiException(
+          "INVALID_DATE",
+          "Expiry date must be after manufacturing date",
+          HttpStatus.BAD_REQUEST);
+    }
+
     // 1. Handle HSN Auto-propagation
     String effectiveHsn = request.getHsnCode();
     if (!hasText(effectiveHsn)) {
@@ -117,6 +138,7 @@ public class PharmacyStockService {
                   return s;
                 });
 
+    stock.setManufacturingDate(request.getManufacturingDate());
     stock.setExpiryDate(request.getExpiryDate());
     stock.setQuantity(stock.getQuantity() + request.getQuantity());
     stock.setPurchasePrice(request.getPurchasePrice());
@@ -128,6 +150,7 @@ public class PharmacyStockService {
     tx.setHospitalId(hospitalId);
     tx.setMedicine(medicine);
     tx.setBatchNumber(request.getBatchNumber());
+    tx.setManufacturingDate(request.getManufacturingDate());
     tx.setExpiryDate(request.getExpiryDate());
     tx.setQuantity(request.getQuantity());
     tx.setPurchasePrice(request.getPurchasePrice());

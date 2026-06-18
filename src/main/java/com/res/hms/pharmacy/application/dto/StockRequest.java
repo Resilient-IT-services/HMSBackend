@@ -18,6 +18,7 @@ import lombok.NoArgsConstructor;
 public class StockRequest {
   @NotNull private UUID medicineId;
   @NotBlank private String batchNumber;
+  private LocalDate manufacturingDate;
   private LocalDate expiryDate;
 
   @NotNull

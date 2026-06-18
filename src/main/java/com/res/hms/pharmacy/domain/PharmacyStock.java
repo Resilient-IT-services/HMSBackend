@@ -40,6 +40,9 @@ public class PharmacyStock extends HospitalScopedEntity {
   @Column(name = "batch_number", nullable = false)
   private String batchNumber;
 
+  @Column(name = "manufacturing_date")
+  private LocalDate manufacturingDate;
+
   @Column(name = "expiry_date")
   private LocalDate expiryDate;
 
