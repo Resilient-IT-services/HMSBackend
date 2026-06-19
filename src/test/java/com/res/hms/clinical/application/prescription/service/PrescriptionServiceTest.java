@@ -23,6 +23,8 @@ import com.res.hms.clinical.infrastructure.repository.AppointmentRepository;
 import com.res.hms.core.api.PageResponse;
 import com.res.hms.core.exception.ApiException;
 import com.res.hms.core.tenant.HospitalContext;
+import com.res.hms.hospital.domain.Hospital;
+import com.res.hms.hospital.infrastructure.repository.HospitalRepository;
 import com.res.hms.pharmacy.domain.Medicine;
 import com.res.hms.pharmacy.infrastructure.repository.MedicineRepository;
 import java.util.ArrayList;
@@ -49,6 +51,7 @@ class PrescriptionServiceTest {
   @Mock private MedicineRepository medicineRepository;
   @Mock private AppointmentRepository appointmentRepository;
   @Mock private HospitalContext hospitalContext;
+  @Mock private HospitalRepository hospitalRepository;
 
   @InjectMocks private PrescriptionService prescriptionService;
 
@@ -118,6 +121,11 @@ class PrescriptionServiceTest {
     when(appointmentRepository.findByIdAndHospitalId(appointmentId, hospitalId))
         .thenReturn(Optional.of(appointment));
     when(prescriptionRepository.existsByAppointmentId(appointmentId)).thenReturn(false);
+
+    Hospital hospital = new Hospital();
+    hospital.setName("Test Hospital");
+    when(hospitalRepository.findById(hospitalId)).thenReturn(Optional.of(hospital));
+    when(prescriptionRepository.nextPrescriptionNumber()).thenReturn(1L);
 
     UUID medicineId = UUID.randomUUID();
     Medicine medicine = new Medicine();
@@ -298,6 +306,11 @@ class PrescriptionServiceTest {
     when(appointmentRepository.findByIdAndHospitalId(appointmentId, hospitalId))
         .thenReturn(Optional.of(appointment));
     when(prescriptionRepository.existsByAppointmentId(appointmentId)).thenReturn(false);
+
+    Hospital hospital = new Hospital();
+    hospital.setName("Test Hospital");
+    when(hospitalRepository.findById(hospitalId)).thenReturn(Optional.of(hospital));
+    when(prescriptionRepository.nextPrescriptionNumber()).thenReturn(2L);
 
     PrescriptionLabItemDTO labItemDto =
         PrescriptionLabItemDTO.builder()

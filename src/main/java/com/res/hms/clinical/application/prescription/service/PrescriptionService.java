@@ -16,11 +16,11 @@ import com.res.hms.clinical.infrastructure.repository.AppointmentRepository;
 import com.res.hms.core.api.PageResponse;
 import com.res.hms.core.exception.ApiException;
 import com.res.hms.core.tenant.HospitalContext;
+import com.res.hms.hospital.infrastructure.repository.HospitalRepository;
 import com.res.hms.pharmacy.domain.Medicine;
 import com.res.hms.pharmacy.infrastructure.repository.MedicineRepository;
 import jakarta.persistence.criteria.JoinType;
 import jakarta.persistence.criteria.Predicate;
-import com.res.hms.hospital.infrastructure.repository.HospitalRepository;
 import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -46,17 +46,22 @@ public class PrescriptionService {
 
   @Transactional
   public String generatePrescriptionNumber() {
-    UUID hospitalId = hospitalContext.requireHospitalId();
-    com.res.hms.hospital.domain.Hospital hospital = hospitalRepository.findById(hospitalId)
-        .orElseThrow(() -> new ApiException("NOT_FOUND", "Hospital not found", HttpStatus.NOT_FOUND));
-    String initials = extractInitials(hospital.getName());
-    int twoDigitYear = LocalDate.now().getYear() % 100;
-    long seq = prescriptionRepository.nextPrescriptionNumber();
-    return String.format("%s-%02d-%05d", initials, twoDigitYear, seq);
+    String initials =
+        extractInitials(
+            hospitalRepository
+                .findById(hospitalContext.requireHospitalId())
+                .orElseThrow(
+                    () -> new ApiException("NOT_FOUND", "Hospital not found", HttpStatus.NOT_FOUND))
+                .getName());
+    return String.format(
+        "%s-%02d-%05d",
+        initials, LocalDate.now().getYear() % 100, prescriptionRepository.nextPrescriptionNumber());
   }
 
   private String extractInitials(String name) {
-    if (name == null || name.isBlank()) return "RX";
+    if (name == null || name.isBlank()) {
+      return "RX";
+    }
     return Arrays.stream(name.trim().split("\\s+"))
         .filter(w -> !w.isEmpty())
         .map(w -> String.valueOf(w.charAt(0)).toUpperCase())
@@ -75,31 +80,7 @@ public class PrescriptionService {
             filters, search, java.util.List.of("patientName", "doctorName", "prescriptionNumber"));
 
     Specification<Prescription> spec = builder.build();
-    Specification<Prescription> fixedSpec =
-        (root, query, cb) -> {
-          List<Predicate> predicates = new ArrayList<>();
-          predicates.add(cb.equal(root.get("hospitalId"), hospitalId));
-          predicates.add(cb.equal(root.get("deleted"), false));
-          // Only show prescriptions with items in the pharmacy queue
-          predicates.add(cb.greaterThan(cb.size(root.get("items")), 0));
-          if (filters != null && filters.containsKey("from")) {
-            try {
-              java.time.Instant fromDate = java.time.Instant.parse(filters.get("from"));
-              predicates.add(cb.greaterThanOrEqualTo(root.get("createdAt"), fromDate));
-            } catch (Exception e) {
-              // ignore parse errors
-            }
-          }
-          if (filters != null && filters.containsKey("to")) {
-            try {
-              java.time.Instant toDate = java.time.Instant.parse(filters.get("to"));
-              predicates.add(cb.lessThanOrEqualTo(root.get("createdAt"), toDate));
-            } catch (Exception e) {
-              // ignore parse errors
-            }
-          }
-          return cb.and(predicates.toArray(new Predicate[0]));
-        };
+    Specification<Prescription> fixedSpec = buildFixedSpec(hospitalId, filters);
 
     Specification<Prescription> fetchSpec =
         (root, query, cb) -> {
@@ -154,31 +135,7 @@ public class PrescriptionService {
             filters, search, java.util.List.of("patientName", "doctorName", "prescriptionNumber"));
 
     Specification<Prescription> spec = builder.build();
-    Specification<Prescription> fixedSpec =
-        (root, query, cb) -> {
-          List<Predicate> predicates = new ArrayList<>();
-          predicates.add(cb.equal(root.get("hospitalId"), hospitalId));
-          predicates.add(cb.equal(root.get("deleted"), false));
-          // Only show prescriptions with items in the pharmacy queue
-          predicates.add(cb.greaterThan(cb.size(root.get("items")), 0));
-          if (filters != null && filters.containsKey("from")) {
-            try {
-              java.time.Instant fromDate = java.time.Instant.parse(filters.get("from"));
-              predicates.add(cb.greaterThanOrEqualTo(root.get("createdAt"), fromDate));
-            } catch (Exception e) {
-              // ignore parse errors
-            }
-          }
-          if (filters != null && filters.containsKey("to")) {
-            try {
-              java.time.Instant toDate = java.time.Instant.parse(filters.get("to"));
-              predicates.add(cb.lessThanOrEqualTo(root.get("createdAt"), toDate));
-            } catch (Exception e) {
-              // ignore parse errors
-            }
-          }
-          return cb.and(predicates.toArray(new Predicate[0]));
-        };
+    Specification<Prescription> fixedSpec = buildFixedSpec(hospitalId, filters);
 
     Specification<Prescription> fetchSpec =
         (root, query, cb) -> {
@@ -194,6 +151,33 @@ public class PrescriptionService {
         prescriptionRepository.findAll(
             Specification.where(spec).and(fixedSpec).and(fetchSpec), pageable);
     return PageResponse.from(results.map(this::toDto));
+  }
+
+  private Specification<Prescription> buildFixedSpec(
+      UUID hospitalId, java.util.Map<String, String> filters) {
+    return (root, query, cb) -> {
+      List<Predicate> predicates = new ArrayList<>();
+      predicates.add(cb.equal(root.get("hospitalId"), hospitalId));
+      predicates.add(cb.equal(root.get("deleted"), false));
+      predicates.add(cb.greaterThan(cb.size(root.get("items")), 0));
+      if (filters != null && filters.containsKey("from")) {
+        try {
+          java.time.Instant fromDate = java.time.Instant.parse(filters.get("from"));
+          predicates.add(cb.greaterThanOrEqualTo(root.get("createdAt"), fromDate));
+        } catch (Exception e) {
+          // ignore parse errors
+        }
+      }
+      if (filters != null && filters.containsKey("to")) {
+        try {
+          java.time.Instant toDate = java.time.Instant.parse(filters.get("to"));
+          predicates.add(cb.lessThanOrEqualTo(root.get("createdAt"), toDate));
+        } catch (Exception e) {
+          // ignore parse errors
+        }
+      }
+      return cb.and(predicates.toArray(new Predicate[0]));
+    };
   }
 
   @Transactional
