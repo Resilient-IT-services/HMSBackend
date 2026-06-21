@@ -2,9 +2,11 @@ package com.res.hms.ipd.application.mapper;
 
 import com.res.hms.ipd.application.dto.AdmissionResponseDTO;
 import com.res.hms.ipd.application.dto.BedDTO;
+import com.res.hms.ipd.application.dto.BedTransferResponse;
 import com.res.hms.ipd.application.dto.WardDTO;
 import com.res.hms.ipd.domain.Admission;
 import com.res.hms.ipd.domain.Bed;
+import com.res.hms.ipd.domain.BedTransferHistory;
 import com.res.hms.ipd.domain.Ward;
 import org.springframework.stereotype.Component;
 
@@ -81,6 +83,34 @@ public class IpdMapper {
     dto.setStatus(admission.getStatus());
     dto.setAdmissionReason(admission.getAdmissionReason());
     dto.setRemarks(admission.getRemarks());
+    return dto;
+  }
+
+  public BedTransferResponse toDto(BedTransferHistory history) {
+    BedTransferResponse dto = new BedTransferResponse();
+    dto.setId(history.getId());
+    dto.setAdmissionId(history.getAdmissionId());
+    dto.setFromBedId(history.getFromBedId());
+    if (history.getFromBed() != null) {
+      dto.setFromBedNumber(history.getFromBed().getBedNumber());
+      if (history.getFromBed().getWard() != null) {
+        dto.setFromWardName(history.getFromBed().getWard().getWardName());
+      }
+    }
+    dto.setToBedId(history.getToBedId());
+    if (history.getToBed() != null) {
+      dto.setToBedNumber(history.getToBed().getBedNumber());
+      if (history.getToBed().getWard() != null) {
+        dto.setToWardName(history.getToBed().getWard().getWardName());
+      }
+    }
+    dto.setTransferReason(history.getTransferReason());
+    dto.setRemarks(history.getRemarks());
+    dto.setTransferredBy(history.getTransferredBy());
+    if (history.getTransferredByUser() != null) {
+      dto.setTransferredByName(history.getTransferredByUser().getFullName());
+    }
+    dto.setTransferredAt(history.getTransferredAt());
     return dto;
   }
 }

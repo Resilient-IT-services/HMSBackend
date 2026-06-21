@@ -6,19 +6,26 @@ import com.res.hms.core.api.PageResponse;
 import com.res.hms.core.exception.ApiException;
 import com.res.hms.core.tenant.HospitalContext;
 import com.res.hms.core.util.ResourceLookup;
+import com.res.hms.iam.application.service.AuthService;
 import com.res.hms.iam.domain.UserAccount;
 import com.res.hms.iam.infrastructure.repository.UserAccountRepository;
 import com.res.hms.ipd.application.dto.AdmissionRequestDTO;
 import com.res.hms.ipd.application.dto.AdmissionResponseDTO;
+import com.res.hms.ipd.application.dto.BedTransferResponse;
+import com.res.hms.ipd.application.dto.TransferBedRequest;
 import com.res.hms.ipd.application.mapper.IpdMapper;
 import com.res.hms.ipd.domain.Admission;
 import com.res.hms.ipd.domain.AdmissionStatus;
 import com.res.hms.ipd.domain.Bed;
 import com.res.hms.ipd.domain.BedStatus;
+import com.res.hms.ipd.domain.BedTransferHistory;
 import com.res.hms.ipd.infrastructure.repository.AdmissionRepository;
 import com.res.hms.ipd.infrastructure.repository.BedRepository;
+import com.res.hms.ipd.infrastructure.repository.BedTransferHistoryRepository;
+import java.time.Instant;
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
+import java.util.List;
 import java.util.UUID;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
@@ -40,6 +47,8 @@ public class AdmissionService {
   private final HospitalContext hospitalContext;
   private final ResourceLookup resourceLookup;
   private final JdbcTemplate jdbcTemplate;
+  private final BedTransferHistoryRepository bedTransferHistoryRepository;
+  private final AuthService authService;
 
   @Transactional
   public AdmissionResponseDTO admit(AdmissionRequestDTO dto) {
@@ -126,6 +135,98 @@ public class AdmissionService {
     }
 
     return ipdMapper.toDto(admissionRepository.save(admission));
+  }
+
+  @Transactional
+  public BedTransferResponse transferBed(UUID admissionId, TransferBedRequest dto) {
+    UUID hospitalId = hospitalContext.requireHospitalId();
+    UUID transferredBy = authService.getAuthenticatedPrincipal().userId();
+
+    // 1. Fetch and Validate Admission
+    Admission admission =
+        resourceLookup.findRequired(
+            admissionId, hospitalId, admissionRepository::findByIdAndHospitalId, "Admission");
+
+    if (admission.getStatus() != AdmissionStatus.ADMITTED) {
+      throw new ApiException(
+          "INVALID_ADMISSION_STATUS",
+          "Admission must be ADMITTED to perform bed transfer",
+          HttpStatus.BAD_REQUEST);
+    }
+
+    // 2. Fetch and Validate Target Bed
+    Bed newBed =
+        resourceLookup.findRequired(
+            dto.getToBedId(), hospitalId, bedRepository::findByIdAndHospitalId, "Bed");
+
+    // 3. Target bed cannot equal current bed
+    if (admission.getBedId().equals(newBed.getId())) {
+      throw new ApiException(
+          "INVALID_BED_TRANSFER",
+          "Target bed cannot be the same as the current bed",
+          HttpStatus.BAD_REQUEST);
+    }
+
+    if (newBed.getStatus() != BedStatus.AVAILABLE) {
+      throw new ApiException(
+          "BED_NOT_AVAILABLE", "Target bed is not available", HttpStatus.BAD_REQUEST);
+    }
+
+    // 4. Release Old Bed
+    Bed oldBed = admission.getBed();
+    if (oldBed == null) {
+      oldBed =
+          bedRepository
+              .findByIdAndHospitalId(admission.getBedId(), hospitalId)
+              .orElseThrow(
+                  () ->
+                      new ApiException(
+                          "BED_NOT_FOUND", "Current bed not found", HttpStatus.NOT_FOUND));
+    }
+    oldBed.setStatus(BedStatus.AVAILABLE);
+    bedRepository.save(oldBed);
+
+    // 5. Occupy New Bed
+    newBed.setStatus(BedStatus.OCCUPIED);
+    bedRepository.save(newBed);
+
+    // 6. Update Admission bed assignment
+    admission.setBedId(newBed.getId());
+    admission.setBed(newBed);
+    admissionRepository.save(admission);
+
+    // 7. Create Transfer History record
+    BedTransferHistory history = new BedTransferHistory();
+    history.setHospitalId(hospitalId);
+    history.setAdmissionId(admission.getId());
+    history.setAdmission(admission);
+    history.setFromBedId(oldBed.getId());
+    history.setFromBed(oldBed);
+    history.setToBedId(newBed.getId());
+    history.setToBed(newBed);
+    history.setTransferReason(dto.getTransferReason());
+    history.setRemarks(dto.getRemarks());
+    history.setTransferredBy(transferredBy);
+    history.setTransferredByUser(userRepository.findById(transferredBy).orElse(null));
+    history.setTransferredAt(Instant.now());
+
+    bedTransferHistoryRepository.save(history);
+
+    return ipdMapper.toDto(history);
+  }
+
+  @Transactional(readOnly = true)
+  public List<BedTransferResponse> getTransfers(UUID admissionId) {
+    UUID hospitalId = hospitalContext.requireHospitalId();
+    // Validate Admission exists
+    resourceLookup.findRequired(
+        admissionId, hospitalId, admissionRepository::findByIdAndHospitalId, "Admission");
+
+    List<BedTransferHistory> historyList =
+        bedTransferHistoryRepository.findAllByAdmissionIdAndHospitalIdOrderByTransferredAtDesc(
+            admissionId, hospitalId);
+
+    return historyList.stream().map(ipdMapper::toDto).toList();
   }
 
   private String generateAdmissionNumber() {

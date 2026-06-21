@@ -134,10 +134,11 @@ class ActiveStatusIntegrationTest {
     com.res.hms.clinical.domain.Patient patient = testDataHelper.createTestPatient(testHospitalId);
 
     // 2. Try to book appointment
+    String appointmentTimeStr = java.time.OffsetDateTime.now().plusDays(1).toString();
     String appointmentJson =
         String.format(
-            "{\"patientId\":\"%s\", \"doctorId\":\"%s\", \"appointmentTime\":\"2026-06-20T10:00:00Z\", \"status\":\"SCHEDULED\"}",
-            patient.getId(), doctor.getDoctorProfile().getId());
+            "{\"patientId\":\"%s\", \"doctorId\":\"%s\", \"appointmentTime\":\"%s\", \"status\":\"SCHEDULED\"}",
+            patient.getId(), doctor.getDoctorProfile().getId(), appointmentTimeStr);
 
     mockMvc
         .perform(
