@@ -83,7 +83,7 @@ public class DoctorAvailabilityService {
       LocalDate today,
       LocalTime now,
       ZoneId zoneId) {
-    if (date.isAfter(today) || (o.getEndTime() != null && isTimeFuture(o.getEndTime(), now))) {
+    if (!date.isBefore(today)) {
       int count = countBookingsInRange(appointments, o.getStartTime(), o.getEndTime(), zoneId);
       int duration = o.getSlotDurationMinutes() != null ? o.getSlotDurationMinutes() : 15;
 
@@ -121,10 +121,11 @@ public class DoctorAvailabilityService {
             .toList();
 
     for (DoctorSchedule s : baseSchedules) {
-      if (date.isAfter(today) || (s.getEndTime() != null && isTimeFuture(s.getEndTime(), now))) {
+      if (!date.isBefore(today)) {
         int count = countBookingsInRange(appointments, s.getStartTime(), s.getEndTime(), zoneId);
         int max = s.getMaxPatients() != null ? s.getMaxPatients() : Integer.MAX_VALUE;
         int duration = s.getSlotDurationMinutes() != null ? s.getSlotDurationMinutes() : 15;
+        int remainingSlots = max - count;
 
         sessions.add(
             new DoctorAvailabilityResponse.SessionInfo(
@@ -133,7 +134,7 @@ public class DoctorAvailabilityService {
                 s.getEndTime(),
                 s.getMaxPatients(),
                 count,
-                count < max,
+                remainingSlots > 0,
                 calculateSuggestedTime(
                     s.getStartTime(),
                     s.getEndTime(),
@@ -145,13 +146,6 @@ public class DoctorAvailabilityService {
                     zoneId)));
       }
     }
-  }
-
-  private boolean isTimeFuture(LocalTime endTime, LocalTime now) {
-    if (endTime.equals(LocalTime.MIDNIGHT)) {
-      return true;
-    }
-    return endTime.isAfter(now);
   }
 
   @Transactional(readOnly = true)

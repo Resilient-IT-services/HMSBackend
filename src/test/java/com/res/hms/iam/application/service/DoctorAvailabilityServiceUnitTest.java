@@ -277,4 +277,31 @@ class DoctorAvailabilityServiceUnitTest {
     // Next suggested should be 15:45
     assertEquals(LocalTime.of(15, 45), response.getSessions().get(0).getNextSuggestedTime());
   }
+
+  @Test
+  void testGetAvailableSlots_Today_EndedSessionStillVisible() {
+    LocalDate today = LocalDate.of(2026, 6, 4);
+    when(availabilityOverrideRepository.findByDoctorIdAndHospitalIdAndDate(any(), any(), eq(today)))
+        .thenReturn(List.of());
+    when(appointmentRepository.findByDoctorIdAndDateRange(any(), any(), any()))
+        .thenReturn(List.of());
+
+    DoctorSchedule schedule = new DoctorSchedule();
+    schedule.setDayOfWeek(today.getDayOfWeek());
+    schedule.setStartTime(LocalTime.of(9, 0));
+    schedule.setEndTime(LocalTime.of(10, 0));
+    schedule.setMaxPatients(3);
+    schedule.setSlotDurationMinutes(15);
+
+    when(scheduleRepository.findByAssignmentId(any())).thenReturn(List.of(schedule));
+
+    var response =
+        doctorAvailabilityService.getAvailableSlots(doctorProfile, assignment, today, zoneId);
+
+    assertEquals(1, response.getSessions().size());
+    assertEquals(LocalTime.of(9, 0), response.getSessions().get(0).getStartTime());
+    assertEquals(3, response.getSessions().get(0).getMaxPatients());
+    assertEquals(0, response.getSessions().get(0).getCurrentBookings());
+    assertTrue(response.getSessions().get(0).isAvailable());
+  }
 }

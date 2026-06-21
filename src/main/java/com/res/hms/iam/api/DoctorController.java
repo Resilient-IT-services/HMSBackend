@@ -40,15 +40,17 @@ public class DoctorController {
   @GetMapping("/{doctorId}/availability")
   @PreAuthorize("isAuthenticated()")
   public ApiResponse<DoctorAvailabilityResponse> getAvailability(
-      @PathVariable UUID doctorId, @RequestParam LocalDate date) {
-    return ApiResponse.success(doctorProfileService.getAvailableSlots(doctorId, date));
+      @PathVariable UUID doctorId, @RequestParam String date) {
+    LocalDate requestDate = LocalDate.parse(date);
+    return ApiResponse.success(doctorProfileService.getAvailableSlots(doctorId, requestDate));
   }
 
   @GetMapping("/{doctorId}/slots")
   @PreAuthorize("isAuthenticated()")
   public ApiResponse<java.util.List<com.res.hms.iam.application.dto.DoctorSlotDTO>> getSlots(
-      @PathVariable UUID doctorId, @RequestParam LocalDate date) {
-    return ApiResponse.success(doctorProfileService.getSlots(doctorId, date));
+      @PathVariable UUID doctorId, @RequestParam String date) {
+    LocalDate requestDate = LocalDate.parse(date);
+    return ApiResponse.success(doctorProfileService.getSlots(doctorId, requestDate));
   }
 
   @GetMapping("/{doctorId}/revenue-summary")
