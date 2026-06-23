@@ -15,18 +15,23 @@ import com.res.hms.lab.application.dto.LabQueueItemDTO;
 import com.res.hms.lab.application.dto.LabResultSaveRequest;
 import com.res.hms.lab.application.dto.LabTestParameterDTO;
 import com.res.hms.lab.application.dto.WalkInLabOrderRequest;
+import com.res.hms.finance.domain.FinanceSourceType;
+import com.res.hms.finance.domain.InvoiceItemCategory;
+import com.res.hms.lab.domain.LabHospitalPackageConfig;
 import com.res.hms.lab.domain.LabOrder;
 import com.res.hms.lab.domain.LabOrderTest;
 import com.res.hms.lab.domain.LabPackageTest;
 import com.res.hms.lab.domain.LabPackage;
 import com.res.hms.lab.application.dto.LabPackageResultBundleDTO;
 import com.res.hms.lab.application.dto.LabPackageResultSaveRequest;
+import com.res.hms.lab.domain.LabPrice;
 import com.res.hms.lab.domain.LabResult;
 import com.res.hms.lab.domain.LabSample;
 import com.res.hms.lab.domain.LabSpecimenType;
 import com.res.hms.lab.domain.LabTest;
 import com.res.hms.lab.domain.LabTestSpecimen;
 import com.res.hms.lab.domain.TestCategory;
+import com.res.hms.lab.infrastructure.repository.LabHospitalPackageConfigRepository;
 import com.res.hms.lab.infrastructure.repository.LabOrderRepository;
 import com.res.hms.lab.infrastructure.repository.LabOrderTestRepository;
 import com.res.hms.lab.infrastructure.repository.LabPackageRepository;
@@ -36,6 +41,7 @@ import com.res.hms.lab.infrastructure.repository.LabSampleRepository;
 import com.res.hms.lab.infrastructure.repository.LabTestParameterRepository;
 import com.res.hms.lab.infrastructure.repository.LabTestRepository;
 import com.res.hms.lab.infrastructure.repository.LabTestSpecimenRepository;
+import java.math.BigDecimal;
 import java.time.Instant;
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
@@ -71,6 +77,7 @@ public class LabOrderService {
   private final com.res.hms.finance.application.service.InvoiceService invoiceService;
   private final com.res.hms.finance.application.service.PaymentService paymentService;
   private final com.res.hms.lab.infrastructure.repository.LabPriceRepository priceRepository;
+  private final LabHospitalPackageConfigRepository packageConfigRepository;
   private final LabTestSpecimenRepository testSpecimenRepository;
   private final LabPackageTestRepository packageTestRepository;
   private final com.res.hms.lab.infrastructure.repository.LabSpecimenTypeRepository
@@ -289,8 +296,115 @@ public class LabOrderService {
             .build();
 
     order = orderRepository.save(order);
-    processOrderTests(order.getId(), request.getTestIds(), request.getPackageIds());
+
+    com.res.hms.finance.domain.Invoice invoice =
+        invoiceService.getOrCreateInvoice(
+            hospitalId, patient.getId(), null,
+            request.getWalkInName(), request.getWalkInPhone());
+
+    createWalkInInvoiceItems(hospitalId, order.getId(), invoice.getId(), request);
+
     return order;
+  }
+
+  private void createWalkInInvoiceItems(
+      UUID hospitalId, UUID orderId, UUID invoiceId, WalkInLabOrderRequest request) {
+
+    if (request.getTestIds() != null) {
+      for (UUID testId : request.getTestIds()) {
+        LabTest test =
+            testRepository
+                .findById(testId)
+                .orElseThrow(
+                    () -> new ApiException("NOT_FOUND", "Test not found: " + testId, HttpStatus.NOT_FOUND));
+
+        LabOrderTest orderTest =
+            orderTestRepository.save(
+                LabOrderTest.builder()
+                    .orderId(orderId)
+                    .testId(testId)
+                    .testName(test.getTestName())
+                    .category(test.getCategory())
+                    .resultEntryType(test.getResultEntryType())
+                    .status("PENDING")
+                    .build());
+
+        BigDecimal testPrice =
+            priceRepository
+                .findByHospitalIdAndTestId(hospitalId, testId)
+                .map(LabPrice::getStandardPrice)
+                .orElse(BigDecimal.ZERO);
+
+        invoiceService.addItem(
+            invoiceId,
+            test.getTestName(),
+            InvoiceItemCategory.LAB,
+            BigDecimal.ONE,
+            testPrice,
+            BigDecimal.ZERO,
+            FinanceSourceType.LAB_ORDER,
+            orderTest.getId(),
+            null,
+            null,
+            null);
+      }
+    }
+
+    if (request.getPackageIds() != null) {
+      for (UUID packageId : request.getPackageIds()) {
+        LabPackage labPackage =
+            packageRepository
+                .findById(packageId)
+                .orElseThrow(
+                    () -> new ApiException("NOT_FOUND", "Package not found: " + packageId, HttpStatus.NOT_FOUND));
+
+        List<LabPackageTest> components = packageTestRepository.findByPackageId(packageId);
+        UUID firstOrderTestId = null;
+
+        for (LabPackageTest component : components) {
+          LabTest test =
+              testRepository
+                  .findById(component.getTestId())
+                  .orElseThrow(
+                      () -> new ApiException("NOT_FOUND", "Test not found in package: " + component.getTestId(), HttpStatus.NOT_FOUND));
+
+          LabOrderTest orderTest =
+              orderTestRepository.save(
+                  LabOrderTest.builder()
+                      .orderId(orderId)
+                      .testId(test.getId())
+                      .testName(test.getTestName())
+                      .category(test.getCategory())
+                      .resultEntryType(test.getResultEntryType())
+                      .packageId(packageId)
+                      .status("PENDING")
+                      .build());
+
+          if (firstOrderTestId == null) {
+            firstOrderTestId = orderTest.getId();
+          }
+        }
+
+        BigDecimal packagePrice =
+            packageConfigRepository
+                .findByHospitalIdAndPackageId(hospitalId, packageId)
+                .map(LabHospitalPackageConfig::getStandardPrice)
+                .orElse(BigDecimal.ZERO);
+
+        invoiceService.addItem(
+            invoiceId,
+            labPackage.getPackageName(),
+            InvoiceItemCategory.LAB,
+            BigDecimal.ONE,
+            packagePrice,
+            BigDecimal.ZERO,
+            FinanceSourceType.LAB_ORDER,
+            firstOrderTestId,
+            null,
+            null,
+            null);
+      }
+    }
   }
 
   private void processOrderTests(UUID orderId, List<UUID> testIds, List<UUID> packageIds) {

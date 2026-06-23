@@ -16,6 +16,8 @@ import com.res.hms.lab.domain.LabPrice;
 import com.res.hms.lab.domain.LabTest;
 import com.res.hms.lab.domain.LabPackage;
 import com.res.hms.lab.domain.LabPackageTest;
+import com.res.hms.lab.domain.LabHospitalPackageConfig;
+import com.res.hms.lab.infrastructure.repository.LabHospitalPackageConfigRepository;
 import com.res.hms.lab.infrastructure.repository.LabOrderRepository;
 import com.res.hms.lab.infrastructure.repository.LabOrderTestRepository;
 import com.res.hms.lab.infrastructure.repository.LabPriceRepository;
@@ -46,6 +48,7 @@ public class LabRecommendationService {
   private final HospitalContext hospitalContext;
   private final LabPackageRepository packageRepository;
   private final LabPackageTestRepository packageTestRepository;
+  private final LabHospitalPackageConfigRepository packageConfigRepository;
 
   @Transactional
   public LabOrder createOrderFromRecommendation(LabOrderFromRecommendationRequest request) {
@@ -214,9 +217,9 @@ public class LabRecommendationService {
       }
 
       BigDecimal packagePrice =
-          priceRepository
+          packageConfigRepository
               .findByHospitalIdAndPackageId(hospitalId, packageId)
-              .map(LabPrice::getStandardPrice)
+              .map(LabHospitalPackageConfig::getStandardPrice)
               .orElse(BigDecimal.ZERO);
 
       String packageName =
