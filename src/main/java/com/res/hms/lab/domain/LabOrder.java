@@ -46,4 +46,7 @@ public class LabOrder {
 
   @Column(name = "ordered_at")
   private Instant orderedAt;
+
+  @Column(name = "order_source")
+  private String orderSource;
 }

@@ -29,7 +29,7 @@ public class HospitalLabSettingsController {
   }
 
   @GetMapping("/settings/tests")
-  @PreAuthorize("hasRole('ADMIN')")
+  @PreAuthorize("hasAnyRole('ADMIN', 'LAB_ADMIN')")
   public ApiResponse<List<HospitalLabTestConfigDTO>> getAvailableGlobalTests() {
     return ApiResponse.success(service.getAvailableGlobalTests());
   }

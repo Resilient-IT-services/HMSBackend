@@ -25,6 +25,8 @@ public final class SecurityConstants {
       "hasAnyRole('ADMIN','DOCTOR','NURSE','SUPER_ADMIN')";
   public static final String HAS_ADMIN_RECEPTIONIST_OR_NURSE =
       "hasAnyRole('ADMIN','RECEPTIONIST','NURSE','SUPER_ADMIN')";
+  public static final String HAS_PATIENT_WRITE_ACCESS =
+      "hasAnyRole('ADMIN','RECEPTIONIST','NURSE','LAB_ADMIN','SUPER_ADMIN')";
   public static final String HAS_ADMIN_RECEPTIONIST_DOCTOR_OR_NURSE =
       "hasAnyRole('ADMIN','RECEPTIONIST','DOCTOR','NURSE','SUPER_ADMIN')";
 

@@ -5,11 +5,13 @@ import com.res.hms.clinical.infrastructure.repository.PatientRepository;
 import com.res.hms.core.api.PageResponse;
 import com.res.hms.core.exception.ApiException;
 import com.res.hms.core.tenant.HospitalContext;
+import com.res.hms.clinical.domain.Patient;
 import com.res.hms.lab.application.dto.LabOrderCreateRequest;
 import com.res.hms.lab.application.dto.LabOrderResponseDTO;
 import com.res.hms.lab.application.dto.LabQueueItemDTO;
 import com.res.hms.lab.application.dto.LabResultSaveRequest;
 import com.res.hms.lab.application.dto.LabTestParameterDTO;
+import com.res.hms.lab.application.dto.WalkInLabOrderRequest;
 import com.res.hms.lab.domain.LabOrder;
 import com.res.hms.lab.domain.LabOrderTest;
 import com.res.hms.lab.domain.LabPackageTest;
@@ -247,6 +249,34 @@ public class LabOrderService {
             .patientId(request.getPatientId())
             .encounterId(request.getEncounterId())
             .orderNumber("ORD-" + System.currentTimeMillis())
+            .status("ORDERED")
+            .orderedAt(Instant.now())
+            .build();
+
+    order = orderRepository.save(order);
+    processOrderTests(order.getId(), request.getTestIds(), request.getPackageIds());
+    return order;
+  }
+
+  @Transactional
+  public LabOrder createWalkInOrder(WalkInLabOrderRequest request) {
+    UUID hospitalId = hospitalContext.requireHospitalId();
+
+    Patient patient = new Patient();
+    patient.setHospitalId(hospitalId);
+    patient.setFullName(request.getWalkInName());
+    patient.setPhone(request.getWalkInPhone());
+    patient.setAddress(request.getWalkInAddress());
+    patient.setPatientCode("WI-" + System.currentTimeMillis());
+    patient.setDeleted(false);
+    patient = patientRepository.save(patient);
+
+    LabOrder order =
+        LabOrder.builder()
+            .hospitalId(hospitalId)
+            .patientId(patient.getId())
+            .orderSource("WALK_IN")
+            .orderNumber("WI-" + System.currentTimeMillis())
             .status("ORDERED")
             .orderedAt(Instant.now())
             .build();

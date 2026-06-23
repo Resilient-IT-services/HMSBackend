@@ -4,6 +4,7 @@ import com.res.hms.core.api.ApiResponse;
 import com.res.hms.core.api.PageResponse;
 import com.res.hms.lab.application.dto.LabOrderCreateRequest;
 import com.res.hms.lab.application.dto.LabOrderResponseDTO;
+import com.res.hms.lab.application.dto.WalkInLabOrderRequest;
 import com.res.hms.lab.application.dto.LabQueueItemDTO;
 import com.res.hms.lab.application.dto.LabResultSaveRequest;
 import com.res.hms.lab.application.service.LabOrderService;
@@ -34,6 +35,12 @@ public class LabOrderController {
   @PreAuthorize("hasAnyRole('DOCTOR', 'ADMIN', 'SUPER_ADMIN')")
   public ApiResponse<LabOrder> createOrder(@RequestBody LabOrderCreateRequest request) {
     return ApiResponse.success(service.createOrder(request));
+  }
+
+  @PostMapping("/walkin")
+  @PreAuthorize("hasAnyRole('LAB_ADMIN', 'ADMIN', 'SUPER_ADMIN')")
+  public ApiResponse<LabOrder> createWalkInOrder(@RequestBody WalkInLabOrderRequest request) {
+    return ApiResponse.success(service.createWalkInOrder(request));
   }
 
   @PostMapping("/from-recommendation")

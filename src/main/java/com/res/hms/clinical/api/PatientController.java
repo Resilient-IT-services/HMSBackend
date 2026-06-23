@@ -40,7 +40,7 @@ public class PatientController {
   private final PatientHistoryService patientHistoryService;
 
   @PostMapping
-  @PreAuthorize(SecurityConstants.HAS_ADMIN_RECEPTIONIST_OR_NURSE)
+  @PreAuthorize(SecurityConstants.HAS_PATIENT_WRITE_ACCESS)
   public ApiResponse<PatientDTO> create(@Valid @RequestBody PatientDTO request) {
     return ApiResponse.success(patientAggregateService.savePatientAggregate(request));
   }
@@ -100,7 +100,7 @@ public class PatientController {
   }
 
   @PutMapping("/{patientId}")
-  @PreAuthorize(SecurityConstants.HAS_ADMIN_RECEPTIONIST_OR_NURSE)
+  @PreAuthorize(SecurityConstants.HAS_PATIENT_WRITE_ACCESS)
   public ApiResponse<PatientDTO> update(
       @PathVariable UUID patientId, @Valid @RequestBody PatientDTO request) {
     request.setId(patientId);
