@@ -7,6 +7,8 @@ import com.res.hms.lab.application.dto.LabOrderResponseDTO;
 import com.res.hms.lab.application.dto.LabQueueItemDTO;
 import com.res.hms.lab.application.dto.LabResultSaveRequest;
 import com.res.hms.lab.application.dto.WalkInLabOrderRequest;
+import com.res.hms.lab.application.dto.LabPackageResultBundleDTO;
+import com.res.hms.lab.application.dto.LabPackageResultSaveRequest;
 import com.res.hms.lab.application.service.LabOrderService;
 import com.res.hms.lab.domain.LabOrder;
 import io.swagger.v3.oas.annotations.tags.Tag;
@@ -97,6 +99,47 @@ public class LabOrderController {
   public ApiResponse<Void> verifyResult(
       @PathVariable UUID orderTestId, @RequestParam String remarks, @RequestParam String status) {
     service.verifyResult(orderTestId, remarks, status);
+    return ApiResponse.success(null);
+  }
+
+  @PostMapping("/packages/{packageId}/collect")
+  @PreAuthorize("hasRole('LAB_ADMIN')")
+  public ApiResponse<Void> collectPackageSamples(
+      @PathVariable UUID packageId, @RequestParam UUID orderId) {
+    service.collectPackageSamples(orderId, packageId);
+    return ApiResponse.success(null);
+  }
+
+  @PostMapping("/packages/{packageId}/process")
+  @PreAuthorize("hasRole('LAB_ADMIN')")
+  public ApiResponse<Void> markPackageProcessing(
+      @PathVariable UUID packageId, @RequestParam UUID orderId) {
+    service.markPackageProcessing(orderId, packageId);
+    return ApiResponse.success(null);
+  }
+
+  @GetMapping("/packages/{packageId}/result-bundle")
+  @PreAuthorize("hasAnyRole('LAB_ADMIN', 'PATHOLOGIST', 'ADMIN', 'SUPER_ADMIN')")
+  public ApiResponse<LabPackageResultBundleDTO> getPackageResultBundle(
+      @PathVariable UUID packageId, @RequestParam UUID orderId) {
+    return ApiResponse.success(service.getPackageResultBundle(orderId, packageId));
+  }
+
+  @PostMapping("/packages/results")
+  @PreAuthorize("hasAnyRole('LAB_ADMIN', 'ADMIN', 'SUPER_ADMIN')")
+  public ApiResponse<Void> savePackageResults(@RequestBody LabPackageResultSaveRequest request) {
+    service.savePackageResults(request);
+    return ApiResponse.success(null);
+  }
+
+  @PostMapping("/packages/{packageId}/verify")
+  @PreAuthorize("hasAnyRole('PATHOLOGIST', 'LAB_ADMIN', 'ADMIN', 'SUPER_ADMIN')")
+  public ApiResponse<Void> verifyPackageResults(
+      @PathVariable UUID packageId,
+      @RequestParam UUID orderId,
+      @RequestParam String remarks,
+      @RequestParam String status) {
+    service.verifyPackageResults(orderId, packageId, remarks, status);
     return ApiResponse.success(null);
   }
 }

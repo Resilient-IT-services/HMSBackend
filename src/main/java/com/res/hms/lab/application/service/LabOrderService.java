@@ -1,8 +1,11 @@
 package com.res.hms.lab.application.service;
 
 import com.res.hms.clinical.domain.Patient;
+import com.res.hms.clinical.domain.Appointment;
+import com.res.hms.clinical.domain.Prescription;
 import com.res.hms.clinical.domain.PrescriptionLabItemStatus;
 import com.res.hms.clinical.infrastructure.repository.PatientRepository;
+import com.res.hms.clinical.infrastructure.repository.AppointmentRepository;
 import com.res.hms.core.api.PageResponse;
 import com.res.hms.core.exception.ApiException;
 import com.res.hms.core.tenant.HospitalContext;
@@ -15,6 +18,9 @@ import com.res.hms.lab.application.dto.WalkInLabOrderRequest;
 import com.res.hms.lab.domain.LabOrder;
 import com.res.hms.lab.domain.LabOrderTest;
 import com.res.hms.lab.domain.LabPackageTest;
+import com.res.hms.lab.domain.LabPackage;
+import com.res.hms.lab.application.dto.LabPackageResultBundleDTO;
+import com.res.hms.lab.application.dto.LabPackageResultSaveRequest;
 import com.res.hms.lab.domain.LabResult;
 import com.res.hms.lab.domain.LabSample;
 import com.res.hms.lab.domain.LabSpecimenType;
@@ -54,6 +60,7 @@ public class LabOrderService {
   private final LabTestRepository testRepository;
   private final LabPackageRepository packageRepository;
   private final PatientRepository patientRepository;
+  private final AppointmentRepository appointmentRepository;
   private final LabSampleRepository sampleRepository;
   private final LabResultParameterRepository resultParameterRepository;
   private final LabTestParameterRepository testParameterRepository;
@@ -366,10 +373,40 @@ public class LabOrderService {
   private void syncPrescriptionStatus(UUID orderTestId, PrescriptionLabItemStatus status) {
     prescriptionLabItemRepository
         .findByLabOrderTestId(orderTestId)
-        .ifPresent(
+        .ifPresentOrElse(
             item -> {
               item.setStatus(status);
               prescriptionLabItemRepository.save(item);
+            },
+            () -> {
+              orderTestRepository.findById(orderTestId).ifPresent(orderTest -> {
+                if (orderTest.getPackageId() != null) {
+                  orderRepository.findById(orderTest.getOrderId()).ifPresent(order -> {
+                    if (order.getEncounterId() != null) {
+                      appointmentRepository.findByVisitId(order.getEncounterId()).ifPresent(app -> {
+                        prescriptionRepository.findByAppointmentId(app.getId()).ifPresent(prescription -> {
+                          prescription.getLabItems().stream()
+                              .filter(item -> orderTest.getPackageId().equals(item.getPackageId()))
+                              .forEach(item -> {
+                                if (status == PrescriptionLabItemStatus.COMPLETED) {
+                                  boolean allPackageTestsVerified = orderTestRepository.findAll().stream()
+                                      .filter(ot -> order.getId().equals(ot.getOrderId()) && orderTest.getPackageId().equals(ot.getPackageId()))
+                                      .allMatch(ot -> "VERIFIED".equals(ot.getStatus()));
+                                  if (allPackageTestsVerified) {
+                                    item.setStatus(PrescriptionLabItemStatus.COMPLETED);
+                                    prescriptionLabItemRepository.save(item);
+                                  }
+                                } else {
+                                  item.setStatus(status);
+                                  prescriptionLabItemRepository.save(item);
+                                }
+                              });
+                        });
+                      });
+                    }
+                  });
+                }
+              });
             });
   }
 
@@ -434,5 +471,124 @@ public class LabOrderService {
             .collect(Collectors.toList());
 
     return mapper.toResponseDTO(order, patientName, orderTests, testRepository, packageRepository);
+  }
+
+  @Transactional
+  public void collectPackageSamples(UUID orderId, UUID packageId) {
+    List<LabOrderTest> components = orderTestRepository.findAll().stream()
+        .filter(ot -> orderId.equals(ot.getOrderId()) && packageId.equals(ot.getPackageId()))
+        .collect(Collectors.toList());
+
+    if (components.isEmpty()) {
+      throw new ApiException("NOT_FOUND", "No components found for this package in the order", HttpStatus.NOT_FOUND);
+    }
+
+    for (LabOrderTest component : components) {
+      if ("PENDING".equals(component.getStatus())) {
+        collectSample(component.getId());
+      }
+    }
+  }
+
+  @Transactional
+  public void markPackageProcessing(UUID orderId, UUID packageId) {
+    List<LabOrderTest> components = orderTestRepository.findAll().stream()
+        .filter(ot -> orderId.equals(ot.getOrderId()) && packageId.equals(ot.getPackageId()))
+        .collect(Collectors.toList());
+
+    if (components.isEmpty()) {
+      throw new ApiException("NOT_FOUND", "No components found for this package in the order", HttpStatus.NOT_FOUND);
+    }
+
+    for (LabOrderTest component : components) {
+      if ("SAMPLE_COLLECTED".equals(component.getStatus())) {
+        markProcessing(component.getId());
+      }
+    }
+  }
+
+  @Transactional
+  public void verifyPackageResults(UUID orderId, UUID packageId, String remarks, String status) {
+    List<LabOrderTest> components = orderTestRepository.findAll().stream()
+        .filter(ot -> orderId.equals(ot.getOrderId()) && packageId.equals(ot.getPackageId()))
+        .collect(Collectors.toList());
+
+    if (components.isEmpty()) {
+      throw new ApiException("NOT_FOUND", "No components found for this package in the order", HttpStatus.NOT_FOUND);
+    }
+
+    for (LabOrderTest component : components) {
+      if ("RESULT_ENTERED".equals(component.getStatus())) {
+        verifyResult(component.getId(), remarks, status);
+      }
+    }
+  }
+
+  @Transactional(readOnly = true)
+  public LabPackageResultBundleDTO getPackageResultBundle(UUID orderId, UUID packageId) {
+    LabPackage labPackage = packageRepository.findById(packageId)
+        .orElseThrow(() -> new ApiException("NOT_FOUND", "Package not found", HttpStatus.NOT_FOUND));
+
+    List<LabOrderTest> components = orderTestRepository.findAll().stream()
+        .filter(ot -> orderId.equals(ot.getOrderId()) && packageId.equals(ot.getPackageId()))
+        .collect(Collectors.toList());
+
+    String status = "PENDING";
+    if (!components.isEmpty()) {
+      boolean allVerified = components.stream().allMatch(c -> "VERIFIED".equals(c.getStatus()));
+      boolean allResultEntered = components.stream().allMatch(c -> "VERIFIED".equals(c.getStatus()) || "RESULT_ENTERED".equals(c.getStatus()));
+      boolean anyProcessing = components.stream().anyMatch(c -> "PROCESSING".equals(c.getStatus()));
+      boolean anyCollected = components.stream().anyMatch(c -> "SAMPLE_COLLECTED".equals(c.getStatus()));
+
+      if (allVerified) {
+        status = "VERIFIED";
+      } else if (allResultEntered) {
+        status = "COMPLETED";
+      } else if (anyProcessing) {
+        status = "PROCESSING";
+      } else if (anyCollected) {
+        status = "COLLECTED";
+      }
+    }
+
+    List<LabPackageResultBundleDTO.PackageTestBundleDTO> testBundles = components.stream().map(comp -> {
+      LabResult existingResult = labResultService.findResultByOrderTestId(comp.getId());
+      String findings = existingResult != null ? existingResult.getFindings() : null;
+
+      List<LabTestParameterDTO> params = getParametersForOrderTest(comp.getId());
+
+      return LabPackageResultBundleDTO.PackageTestBundleDTO.builder()
+          .orderTestId(comp.getId())
+          .testId(comp.getTestId())
+          .testName(comp.getTestName())
+          .category(comp.getCategory() != null ? comp.getCategory().name() : null)
+          .resultEntryType(comp.getResultEntryType() != null ? comp.getResultEntryType().name() : null)
+          .status(comp.getStatus())
+          .findings(findings)
+          .parameters(params)
+          .build();
+    }).collect(Collectors.toList());
+
+    return LabPackageResultBundleDTO.builder()
+        .orderId(orderId)
+        .packageId(packageId)
+        .packageName(labPackage.getPackageName())
+        .status(status)
+        .tests(testBundles)
+        .build();
+  }
+
+  @Transactional
+  public void savePackageResults(LabPackageResultSaveRequest request) {
+    if (request.getTests() != null) {
+      for (LabPackageResultSaveRequest.PackageTestResultRequest testRequest : request.getTests()) {
+        LabResultSaveRequest singleRequest = LabResultSaveRequest.builder()
+            .orderTestId(testRequest.getOrderTestId())
+            .findings(testRequest.getFindings())
+            .results(testRequest.getResults())
+            .build();
+        saveResults(singleRequest);
+      }
+    }
   }
 }

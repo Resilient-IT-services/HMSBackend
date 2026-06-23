@@ -10,6 +10,7 @@ import lombok.Data;
 public class LabOrderFromRecommendationRequest {
   private UUID prescriptionId;
   private List<UUID> testIds;
+  private List<UUID> packageIds;
   private PaymentMode paymentMode;
   private BigDecimal amountPaid;
   private String referenceNumber;

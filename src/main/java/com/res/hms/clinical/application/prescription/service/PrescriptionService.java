@@ -426,6 +426,8 @@ public class PrescriptionService {
         .id(item.getId())
         .testId(item.getTestId())
         .testName(item.getTestName())
+        .packageId(item.getPackageId())
+        .packageName(item.getPackageName())
         .notes(item.getNotes())
         .status(item.getStatus() != null ? item.getStatus().name() : null)
         .build();
@@ -466,7 +468,16 @@ public class PrescriptionService {
       if (orderedLabItems != null) {
         boolean alreadyOrdered =
             orderedLabItems.stream()
-                .anyMatch(ordered -> ordered.getTestId().equals(labDto.getTestId()));
+                .anyMatch(
+                    ordered -> {
+                      if (labDto.getTestId() != null && ordered.getTestId() != null) {
+                        return ordered.getTestId().equals(labDto.getTestId());
+                      }
+                      if (labDto.getPackageId() != null && ordered.getPackageId() != null) {
+                        return ordered.getPackageId().equals(labDto.getPackageId());
+                      }
+                      return false;
+                    });
         if (alreadyOrdered) {
           continue;
         }
@@ -476,6 +487,8 @@ public class PrescriptionService {
       labItem.setPrescription(prescription);
       labItem.setTestId(labDto.getTestId());
       labItem.setTestName(labDto.getTestName());
+      labItem.setPackageId(labDto.getPackageId());
+      labItem.setPackageName(labDto.getPackageName());
       labItem.setNotes(labDto.getNotes());
       labItem.setStatus(PrescriptionLabItemStatus.PENDING);
       prescription.getLabItems().add(labItem);

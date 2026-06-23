@@ -110,4 +110,6 @@ public interface AppointmentRepository
       @Param("start") java.time.Instant start,
       @Param("end") java.time.Instant end,
       Pageable pageable);
+
+  java.util.Optional<Appointment> findByVisitId(UUID visitId);
 }

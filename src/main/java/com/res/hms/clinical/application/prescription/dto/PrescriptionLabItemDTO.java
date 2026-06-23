@@ -14,6 +14,8 @@ public class PrescriptionLabItemDTO {
   private UUID id;
   private UUID testId;
   private String testName;
+  private UUID packageId;
+  private String packageName;
   private String notes;
   private String status;
 }
