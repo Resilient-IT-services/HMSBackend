@@ -255,7 +255,7 @@ public class LabOrderService {
 
   @Transactional
   public LabOrder createOrder(LabOrderCreateRequest request) {
-    UUID hospitalId = hospitalContext.requireHospitalId();
+    UUID hospitalId = hospitalContext.requireHospitalId();validateNoDuplicates(request.getTestIds(), request.getPackageIds());
 
     LabOrder order =
         LabOrder.builder()
@@ -272,9 +272,48 @@ public class LabOrderService {
     return order;
   }
 
+  private void validateNoDuplicates(List<UUID> testIds, List<UUID> packageIds) {
+    if (testIds == null || testIds.isEmpty() || packageIds == null || packageIds.isEmpty()) return;
+
+    for (UUID packageId : packageIds) {
+      List<UUID> coveredTestIds =
+          packageTestRepository.findByPackageId(packageId).stream()
+              .map(LabPackageTest::getTestId)
+              .collect(Collectors.toList());
+
+      List<String> duplicateNames =
+          testIds.stream()
+              .filter(coveredTestIds::contains)
+              .map(
+                  testId ->
+                      testRepository
+                          .findById(testId)
+                          .map(LabTest::getTestName)
+                          .orElse(testId.toString()))
+              .collect(Collectors.toList());
+
+      if (!duplicateNames.isEmpty()) {
+        String packageName =
+            packageRepository
+                .findById(packageId)
+                .map(LabPackage::getPackageName)
+                .orElse(packageId.toString());
+        throw new ApiException(
+            "DUPLICATE_TEST",
+            String.format(
+                "%s %s already included in \"%s\". Remove the duplicate test(s) before ordering.",
+                String.join(", ", duplicateNames),
+                duplicateNames.size() == 1 ? "is" : "are",
+                packageName),
+            HttpStatus.BAD_REQUEST);
+      }
+    }
+  }
+
   @Transactional
   public LabOrder createWalkInOrder(WalkInLabOrderRequest request) {
     UUID hospitalId = hospitalContext.requireHospitalId();
+    validateNoDuplicates(request.getTestIds(), request.getPackageIds());
 
     Patient patient = new Patient();
     patient.setHospitalId(hospitalId);
