@@ -2,12 +2,19 @@ package com.res.hms.lab.application.service;
 
 import com.res.hms.core.tenant.HospitalContext;
 import com.res.hms.lab.application.dto.HospitalLabDashboardStatsDTO;
+import com.res.hms.lab.application.dto.HospitalLabPackageConfigDTO;
 import com.res.hms.lab.application.dto.HospitalLabTestConfigDTO;
+import com.res.hms.lab.domain.LabHospitalPackageConfig;
 import com.res.hms.lab.domain.LabHospitalTestConfig;
+import com.res.hms.lab.domain.LabPackage;
+import com.res.hms.lab.domain.LabPackageTest;
 import com.res.hms.lab.domain.LabPrice;
 import com.res.hms.lab.domain.LabTest;
+import com.res.hms.lab.infrastructure.repository.LabHospitalPackageConfigRepository;
 import com.res.hms.lab.infrastructure.repository.LabHospitalTestConfigRepository;
 import com.res.hms.lab.infrastructure.repository.LabOrderRepository;
+import com.res.hms.lab.infrastructure.repository.LabPackageRepository;
+import com.res.hms.lab.infrastructure.repository.LabPackageTestRepository;
 import com.res.hms.lab.infrastructure.repository.LabPriceRepository;
 import com.res.hms.lab.infrastructure.repository.LabTestRepository;
 import java.math.BigDecimal;
@@ -29,6 +36,9 @@ public class HospitalLabSettingsService {
   private final LabHospitalTestConfigRepository configRepository;
   private final LabPriceRepository priceRepository;
   private final LabOrderRepository orderRepository;
+  private final LabPackageRepository packageRepository;
+  private final LabPackageTestRepository packageTestRepository;
+  private final LabHospitalPackageConfigRepository packageConfigRepository;
   private final HospitalContext hospitalContext;
 
   @Transactional(readOnly = true)
@@ -131,5 +141,64 @@ public class HospitalLabSettingsService {
     price.setStandardPrice(dto.getStandardPrice());
     price.setEmergencyPrice(dto.getEmergencyPrice());
     priceRepository.save(price);
+  }
+
+  @Transactional(readOnly = true)
+  public List<HospitalLabPackageConfigDTO> getAvailablePackages() {
+    UUID hospitalId = hospitalContext.requireHospitalId();
+    List<LabPackage> allPackages = packageRepository.findAll();
+
+    return allPackages.stream()
+        .map(
+            pkg -> {
+              Optional<LabHospitalPackageConfig> cfgOpt =
+                  packageConfigRepository.findByHospitalIdAndPackageId(hospitalId, pkg.getId());
+
+              List<UUID> testIds =
+                  packageTestRepository.findByPackageId(pkg.getId()).stream()
+                      .map(LabPackageTest::getTestId)
+                      .collect(Collectors.toList());
+
+              boolean enabled = cfgOpt.map(LabHospitalPackageConfig::getActive).orElse(false);
+              BigDecimal stdPrice =
+                  cfgOpt.map(LabHospitalPackageConfig::getStandardPrice).orElse(null);
+              BigDecimal emgPrice =
+                  cfgOpt.map(LabHospitalPackageConfig::getEmergencyPrice).orElse(null);
+
+              return HospitalLabPackageConfigDTO.builder()
+                  .packageId(pkg.getId())
+                  .packageCode(pkg.getPackageCode())
+                  .packageName(pkg.getPackageName())
+                  .description(pkg.getDescription())
+                  .packageType(pkg.getPackageType())
+                  .versionNo(pkg.getVersionNo())
+                  .enabled(enabled)
+                  .standardPrice(stdPrice)
+                  .emergencyPrice(emgPrice)
+                  .testIds(testIds)
+                  .build();
+            })
+        .collect(Collectors.toList());
+  }
+
+  @Transactional
+  public void configurePackage(HospitalLabPackageConfigDTO dto) {
+    UUID hospitalId = hospitalContext.requireHospitalId();
+
+    LabHospitalPackageConfig config =
+        packageConfigRepository
+            .findByHospitalIdAndPackageId(hospitalId, dto.getPackageId())
+            .orElseGet(
+                () -> {
+                  LabHospitalPackageConfig c = new LabHospitalPackageConfig();
+                  c.setHospitalId(hospitalId);
+                  c.setPackageId(dto.getPackageId());
+                  return c;
+                });
+
+    config.setActive(dto.isEnabled());
+    config.setStandardPrice(dto.getStandardPrice());
+    config.setEmergencyPrice(dto.getEmergencyPrice());
+    packageConfigRepository.save(config);
   }
 }

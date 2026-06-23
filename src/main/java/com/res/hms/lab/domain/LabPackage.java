@@ -31,6 +31,18 @@ public class LabPackage {
   @Column(name = "package_name")
   private String packageName;
 
+  @Column(name = "description")
+  private String description;
+
   @Column(name = "active")
   private Boolean active;
+
+  @Column(name = "package_type")
+  private String packageType;
+
+  @Column(name = "version_no")
+  private Integer versionNo;
+
+  @Column(name = "is_billable")
+  private Boolean isBillable;
 }

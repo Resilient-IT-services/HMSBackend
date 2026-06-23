@@ -14,14 +14,17 @@ import com.res.hms.core.tenant.HospitalContext;
 import com.res.hms.lab.application.dto.LabOrderCreateRequest;
 import com.res.hms.lab.application.service.LabOrderService;
 import com.res.hms.lab.domain.LabOrder;
+import com.res.hms.lab.domain.LabPackageTest;
 import com.res.hms.lab.infrastructure.repository.LabOrderRepository;
 import com.res.hms.lab.infrastructure.repository.LabOrderTestRepository;
 import com.res.hms.lab.infrastructure.repository.LabPackageRepository;
+import com.res.hms.lab.infrastructure.repository.LabPackageTestRepository;
 import com.res.hms.lab.infrastructure.repository.LabResultParameterRepository;
 import com.res.hms.lab.infrastructure.repository.LabResultRepository;
 import com.res.hms.lab.infrastructure.repository.LabSampleRepository;
 import com.res.hms.lab.infrastructure.repository.LabTestRepository;
 import java.util.Collections;
+import java.util.List;
 import java.util.UUID;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
@@ -38,6 +41,7 @@ public class LabOrderFlowTest {
   @Mock private LabOrderTestRepository orderTestRepository;
   @Mock private LabTestRepository testRepository;
   @Mock private LabPackageRepository packageRepository;
+  @Mock private LabPackageTestRepository packageTestRepository;
   @Mock private PatientRepository patientRepository;
   @Mock private LabSampleRepository sampleRepository;
   @Mock private LabResultRepository resultRepository;
@@ -93,11 +97,14 @@ public class LabOrderFlowTest {
   }
 
   @Test
-  @DisplayName("Flow: Package ordering should record package intent")
+  @DisplayName("Flow: Package ordering should explode into individual test rows")
   void testPackageExpansion() {
     // Given
     when(hospitalContext.requireHospitalId()).thenReturn(hospitalId);
     UUID packageId = UUID.randomUUID();
+    UUID componentTestId1 = UUID.randomUUID();
+    UUID componentTestId2 = UUID.randomUUID();
+
     when(orderRepository.save(any(LabOrder.class)))
         .thenAnswer(
             i -> {
@@ -105,6 +112,22 @@ public class LabOrderFlowTest {
               o.setId(UUID.randomUUID());
               return o;
             });
+
+    // Package has 2 component tests
+    LabPackageTest pt1 =
+        LabPackageTest.builder().packageId(packageId).testId(componentTestId1).build();
+    LabPackageTest pt2 =
+        LabPackageTest.builder().packageId(packageId).testId(componentTestId2).build();
+    when(packageTestRepository.findByPackageId(packageId)).thenReturn(List.of(pt1, pt2));
+
+    com.res.hms.lab.domain.LabTest mockTest1 = new com.res.hms.lab.domain.LabTest();
+    mockTest1.setId(componentTestId1);
+    mockTest1.setTestName("Hemoglobin");
+    com.res.hms.lab.domain.LabTest mockTest2 = new com.res.hms.lab.domain.LabTest();
+    mockTest2.setId(componentTestId2);
+    mockTest2.setTestName("RBC Count");
+    when(testRepository.findById(componentTestId1)).thenReturn(java.util.Optional.of(mockTest1));
+    when(testRepository.findById(componentTestId2)).thenReturn(java.util.Optional.of(mockTest2));
 
     LabOrderCreateRequest request =
         LabOrderCreateRequest.builder()
@@ -116,7 +139,11 @@ public class LabOrderFlowTest {
     // When
     labOrderService.createOrder(request);
 
-    // Then
-    verify(orderTestRepository, times(1)).save(argThat(t -> packageId.equals(t.getPackageId())));
+    // Then: 2 LabOrderTest rows created — one per component test, each carrying the packageId
+    verify(orderTestRepository, times(2)).save(argThat(t -> packageId.equals(t.getPackageId())));
+    verify(orderTestRepository, times(1))
+        .save(argThat(t -> componentTestId1.equals(t.getTestId())));
+    verify(orderTestRepository, times(1))
+        .save(argThat(t -> componentTestId2.equals(t.getTestId())));
   }
 }

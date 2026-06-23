@@ -23,4 +23,6 @@ public class LabQueueItemDTO {
   private String resultEntryType;
   private String status;
   private Instant orderedAt;
+  private UUID packageId;
+  private String packageName;
 }

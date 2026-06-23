@@ -10,4 +10,6 @@ import org.springframework.stereotype.Repository;
 public interface LabPriceRepository
     extends JpaRepository<LabPrice, UUID>, JpaSpecificationExecutor<LabPrice> {
   java.util.Optional<LabPrice> findByHospitalIdAndTestId(UUID hospitalId, UUID testId);
+
+  java.util.Optional<LabPrice> findByHospitalIdAndPackageId(UUID hospitalId, UUID packageId);
 }

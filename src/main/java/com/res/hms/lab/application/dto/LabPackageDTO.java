@@ -15,6 +15,10 @@ public class LabPackageDTO {
   private UUID id;
   private String packageCode;
   private String packageName;
+  private String description;
   private Boolean active;
+  private String packageType;
+  private Integer versionNo;
+  private Boolean isBillable;
   private List<UUID> testIds;
 }

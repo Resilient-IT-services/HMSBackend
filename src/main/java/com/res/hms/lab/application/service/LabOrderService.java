@@ -1,11 +1,11 @@
 package com.res.hms.lab.application.service;
 
+import com.res.hms.clinical.domain.Patient;
 import com.res.hms.clinical.domain.PrescriptionLabItemStatus;
 import com.res.hms.clinical.infrastructure.repository.PatientRepository;
 import com.res.hms.core.api.PageResponse;
 import com.res.hms.core.exception.ApiException;
 import com.res.hms.core.tenant.HospitalContext;
-import com.res.hms.clinical.domain.Patient;
 import com.res.hms.lab.application.dto.LabOrderCreateRequest;
 import com.res.hms.lab.application.dto.LabOrderResponseDTO;
 import com.res.hms.lab.application.dto.LabQueueItemDTO;
@@ -311,8 +311,28 @@ public class LabOrderService {
 
     if (packageIds != null) {
       for (UUID packageId : packageIds) {
-        orderTestRepository.save(
-            LabOrderTest.builder().orderId(orderId).packageId(packageId).status("PENDING").build());
+        List<LabPackageTest> components = packageTestRepository.findByPackageId(packageId);
+        for (LabPackageTest component : components) {
+          LabTest test =
+              testRepository
+                  .findById(component.getTestId())
+                  .orElseThrow(
+                      () ->
+                          new ApiException(
+                              "NOT_FOUND",
+                              "Test not found in package: " + component.getTestId(),
+                              HttpStatus.NOT_FOUND));
+          orderTestRepository.save(
+              LabOrderTest.builder()
+                  .orderId(orderId)
+                  .testId(test.getId())
+                  .testName(test.getTestName())
+                  .category(test.getCategory())
+                  .resultEntryType(test.getResultEntryType())
+                  .packageId(packageId)
+                  .status("PENDING")
+                  .build());
+        }
       }
     }
   }

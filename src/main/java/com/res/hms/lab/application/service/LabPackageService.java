@@ -27,8 +27,7 @@ public class LabPackageService {
             p -> {
               LabPackageDTO dto = mapper.toDto(p);
               List<UUID> testIds =
-                  packageTestRepository.findAll().stream()
-                      .filter(pt -> pt.getPackageId().equals(p.getId()))
+                  packageTestRepository.findByPackageId(p.getId()).stream()
                       .map(LabPackageTest::getTestId)
                       .collect(Collectors.toList());
               dto.setTestIds(testIds);
@@ -40,6 +39,10 @@ public class LabPackageService {
   @Transactional
   public LabPackageDTO create(LabPackageDTO dto) {
     LabPackage entity = mapper.toEntity(dto);
+    entity.setVersionNo(1);
+    if (entity.getIsBillable() == null) {
+      entity.setIsBillable(true);
+    }
     entity = packageRepository.save(entity);
 
     if (dto.getTestIds() != null) {
@@ -49,7 +52,9 @@ public class LabPackageService {
       }
     }
 
-    return mapper.toDto(entity);
+    LabPackageDTO result = mapper.toDto(entity);
+    result.setTestIds(dto.getTestIds());
+    return result;
   }
 
   @Transactional
@@ -59,15 +64,13 @@ public class LabPackageService {
 
     entity.setPackageCode(dto.getPackageCode());
     entity.setPackageName(dto.getPackageName());
+    entity.setDescription(dto.getDescription());
     entity.setActive(dto.getActive());
+    entity.setPackageType(dto.getPackageType());
+    entity.setIsBillable(dto.getIsBillable());
     entity = packageRepository.save(entity);
 
-    // Update tests
-    List<LabPackageTest> existingTests =
-        packageTestRepository.findAll().stream()
-            .filter(pt -> pt.getPackageId().equals(id))
-            .collect(Collectors.toList());
-    packageTestRepository.deleteAll(existingTests);
+    packageTestRepository.deleteAll(packageTestRepository.findByPackageId(id));
 
     if (dto.getTestIds() != null) {
       for (UUID testId : dto.getTestIds()) {
@@ -75,7 +78,9 @@ public class LabPackageService {
       }
     }
 
-    return mapper.toDto(entity);
+    LabPackageDTO result = mapper.toDto(entity);
+    result.setTestIds(dto.getTestIds());
+    return result;
   }
 
   @Transactional
