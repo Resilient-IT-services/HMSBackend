@@ -49,4 +49,11 @@ public class LabOrderTest {
 
   @Column(name = "status")
   private String status;
+
+  @Column(name = "locked")
+  @Builder.Default
+  private Boolean locked = false;
+
+  @Column(name = "locked_reason")
+  private String lockedReason;
 }

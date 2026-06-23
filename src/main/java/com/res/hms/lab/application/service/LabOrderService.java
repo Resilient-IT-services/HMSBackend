@@ -638,6 +638,60 @@ public class LabOrderService {
     }
   }
 
+  @Transactional
+  public void lockOrderTest(UUID orderTestId) {
+    LabOrderTest orderTest =
+        orderTestRepository
+            .findById(orderTestId)
+            .orElseThrow(() -> new ApiException("NOT_FOUND", "Order test not found", HttpStatus.NOT_FOUND));
+    if (!"VERIFIED".equals(orderTest.getStatus())) {
+      throw new ApiException("INVALID_STATE", "Only verified tests can be locked", HttpStatus.BAD_REQUEST);
+    }
+    orderTest.setLocked(true);
+    orderTestRepository.save(orderTest);
+  }
+
+  @Transactional
+  public void unlockOrderTest(UUID orderTestId, String reason) {
+    LabOrderTest orderTest =
+        orderTestRepository
+            .findById(orderTestId)
+            .orElseThrow(() -> new ApiException("NOT_FOUND", "Order test not found", HttpStatus.NOT_FOUND));
+    orderTest.setLocked(false);
+    orderTest.setLockedReason(reason);
+    orderTestRepository.save(orderTest);
+  }
+
+  @Transactional
+  public void lockPackageTests(UUID orderId, UUID packageId) {
+    List<LabOrderTest> components = orderTestRepository.findAll().stream()
+        .filter(ot -> orderId.equals(ot.getOrderId()) && packageId.equals(ot.getPackageId()))
+        .collect(Collectors.toList());
+    if (components.isEmpty()) {
+      throw new ApiException("NOT_FOUND", "No tests found for this package", HttpStatus.NOT_FOUND);
+    }
+    boolean allVerified = components.stream().allMatch(c -> "VERIFIED".equals(c.getStatus()));
+    if (!allVerified) {
+      throw new ApiException("INVALID_STATE", "All package tests must be verified before locking", HttpStatus.BAD_REQUEST);
+    }
+    for (LabOrderTest test : components) {
+      test.setLocked(true);
+      orderTestRepository.save(test);
+    }
+  }
+
+  @Transactional
+  public void unlockPackageTests(UUID orderId, UUID packageId, String reason) {
+    List<LabOrderTest> components = orderTestRepository.findAll().stream()
+        .filter(ot -> orderId.equals(ot.getOrderId()) && packageId.equals(ot.getPackageId()))
+        .collect(Collectors.toList());
+    for (LabOrderTest test : components) {
+      test.setLocked(false);
+      test.setLockedReason(reason);
+      orderTestRepository.save(test);
+    }
+  }
+
   @Transactional(readOnly = true)
   public LabPackageResultBundleDTO getPackageResultBundle(UUID orderId, UUID packageId) {
     LabPackage labPackage = packageRepository.findById(packageId)

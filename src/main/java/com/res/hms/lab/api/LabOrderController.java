@@ -142,4 +142,35 @@ public class LabOrderController {
     service.verifyPackageResults(orderId, packageId, remarks, status);
     return ApiResponse.success(null);
   }
+
+  @PostMapping("/tests/{orderTestId}/lock")
+  @PreAuthorize("hasAnyRole('PATHOLOGIST', 'LAB_ADMIN', 'ADMIN', 'SUPER_ADMIN')")
+  public ApiResponse<Void> lockOrderTest(@PathVariable UUID orderTestId) {
+    service.lockOrderTest(orderTestId);
+    return ApiResponse.success(null);
+  }
+
+  @PostMapping("/tests/{orderTestId}/unlock")
+  @PreAuthorize("hasAnyRole('PATHOLOGIST', 'LAB_ADMIN', 'ADMIN', 'SUPER_ADMIN')")
+  public ApiResponse<Void> unlockOrderTest(
+      @PathVariable UUID orderTestId, @RequestParam String reason) {
+    service.unlockOrderTest(orderTestId, reason);
+    return ApiResponse.success(null);
+  }
+
+  @PostMapping("/packages/{packageId}/lock")
+  @PreAuthorize("hasAnyRole('PATHOLOGIST', 'LAB_ADMIN', 'ADMIN', 'SUPER_ADMIN')")
+  public ApiResponse<Void> lockPackageTests(
+      @PathVariable UUID packageId, @RequestParam UUID orderId) {
+    service.lockPackageTests(orderId, packageId);
+    return ApiResponse.success(null);
+  }
+
+  @PostMapping("/packages/{packageId}/unlock")
+  @PreAuthorize("hasAnyRole('PATHOLOGIST', 'LAB_ADMIN', 'ADMIN', 'SUPER_ADMIN')")
+  public ApiResponse<Void> unlockPackageTests(
+      @PathVariable UUID packageId, @RequestParam UUID orderId, @RequestParam String reason) {
+    service.unlockPackageTests(orderId, packageId, reason);
+    return ApiResponse.success(null);
+  }
 }
