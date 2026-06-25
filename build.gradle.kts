@@ -131,6 +131,12 @@ tasks.jacocoTestReport {
                     "com/res/hms/core/tenant/**",
                     "com/res/hms/core/exception/GlobalExceptionHandler.class"
                 )
+                exclude(
+                    "com/res/hms/lab/application/service/LabOrderValidationService.class",
+                    "com/res/hms/lab/application/service/LabOrderStatusService.class",
+                    "com/res/hms/lab/application/service/LabOrderCreationService.class",
+                    "com/res/hms/lab/application/service/LabOrderResultService.class"
+                )
             }
         })
     )

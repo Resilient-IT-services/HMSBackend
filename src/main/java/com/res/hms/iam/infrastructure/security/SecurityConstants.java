@@ -30,6 +30,10 @@ public final class SecurityConstants {
   public static final String HAS_ADMIN_RECEPTIONIST_DOCTOR_OR_NURSE =
       "hasAnyRole('ADMIN','RECEPTIONIST','DOCTOR','NURSE','SUPER_ADMIN')";
 
+  public static final String IPD_MY_PATIENTS_VIEW = "hasAnyRole('DOCTOR')";
+  public static final String IPD_PROGRESS_NOTE_VIEW = "hasAnyRole('DOCTOR','RECEPTIONIST')";
+  public static final String IPD_PROGRESS_NOTE_CREATE = "hasAnyRole('DOCTOR')";
+
   private SecurityConstants() {
     // Utility class
   }

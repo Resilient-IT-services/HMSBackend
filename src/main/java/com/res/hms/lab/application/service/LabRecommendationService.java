@@ -10,20 +10,20 @@ import com.res.hms.finance.domain.FinanceSourceType;
 import com.res.hms.finance.domain.Invoice;
 import com.res.hms.finance.domain.InvoiceItemCategory;
 import com.res.hms.lab.application.dto.LabOrderFromRecommendationRequest;
+import com.res.hms.lab.domain.LabHospitalPackageConfig;
 import com.res.hms.lab.domain.LabOrder;
 import com.res.hms.lab.domain.LabOrderTest;
-import com.res.hms.lab.domain.LabPrice;
-import com.res.hms.lab.domain.LabTest;
 import com.res.hms.lab.domain.LabPackage;
 import com.res.hms.lab.domain.LabPackageTest;
-import com.res.hms.lab.domain.LabHospitalPackageConfig;
+import com.res.hms.lab.domain.LabPrice;
+import com.res.hms.lab.domain.LabTest;
 import com.res.hms.lab.infrastructure.repository.LabHospitalPackageConfigRepository;
 import com.res.hms.lab.infrastructure.repository.LabOrderRepository;
 import com.res.hms.lab.infrastructure.repository.LabOrderTestRepository;
-import com.res.hms.lab.infrastructure.repository.LabPriceRepository;
-import com.res.hms.lab.infrastructure.repository.LabTestRepository;
 import com.res.hms.lab.infrastructure.repository.LabPackageRepository;
 import com.res.hms.lab.infrastructure.repository.LabPackageTestRepository;
+import com.res.hms.lab.infrastructure.repository.LabPriceRepository;
+import com.res.hms.lab.infrastructure.repository.LabTestRepository;
 import java.math.BigDecimal;
 import java.time.Instant;
 import java.util.List;
@@ -66,7 +66,8 @@ public class LabRecommendationService {
     boolean hasPackages = request.getPackageIds() != null && !request.getPackageIds().isEmpty();
 
     if (!hasTests && !hasPackages) {
-      throw new ApiException("BAD_REQUEST", "No tests or packages selected", HttpStatus.BAD_REQUEST);
+      throw new ApiException(
+          "BAD_REQUEST", "No tests or packages selected", HttpStatus.BAD_REQUEST);
     }
 
     UUID visitId =
@@ -77,10 +78,12 @@ public class LabRecommendationService {
         invoiceService.getOrCreateInvoice(hospitalId, prescription.getPatientId(), visitId);
 
     if (hasTests) {
-      processRecommendedTests(hospitalId, prescription, order.getId(), invoice, request.getTestIds());
+      processRecommendedTests(
+          hospitalId, prescription, order.getId(), invoice, request.getTestIds());
     }
     if (hasPackages) {
-      processRecommendedPackages(hospitalId, prescription, order.getId(), invoice, request.getPackageIds());
+      processRecommendedPackages(
+          hospitalId, prescription, order.getId(), invoice, request.getPackageIds());
     }
 
     processRecommendationPayment(hospitalId, prescription, visitId, userId, request);

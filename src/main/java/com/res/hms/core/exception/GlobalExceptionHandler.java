@@ -109,7 +109,9 @@ public class GlobalExceptionHandler {
   public ResponseEntity<ApiResponse<Void>> handleNoResourceFound(
       NoResourceFoundException exception) {
     return ResponseEntity.status(HttpStatus.NOT_FOUND)
-        .body(ApiResponse.failure(new ApiError("NOT_FOUND", "The requested endpoint does not exist", Map.of())));
+        .body(
+            ApiResponse.failure(
+                new ApiError("NOT_FOUND", "The requested endpoint does not exist", Map.of())));
   }
 
   @ExceptionHandler(Exception.class)

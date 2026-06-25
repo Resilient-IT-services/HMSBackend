@@ -3,10 +3,12 @@ package com.res.hms.ipd.application.mapper;
 import com.res.hms.ipd.application.dto.AdmissionResponseDTO;
 import com.res.hms.ipd.application.dto.BedDTO;
 import com.res.hms.ipd.application.dto.BedTransferResponse;
+import com.res.hms.ipd.application.dto.ProgressNoteResponse;
 import com.res.hms.ipd.application.dto.WardDTO;
 import com.res.hms.ipd.domain.Admission;
 import com.res.hms.ipd.domain.Bed;
 import com.res.hms.ipd.domain.BedTransferHistory;
+import com.res.hms.ipd.domain.ProgressNote;
 import com.res.hms.ipd.domain.Ward;
 import org.springframework.stereotype.Component;
 
@@ -111,6 +113,18 @@ public class IpdMapper {
       dto.setTransferredByName(history.getTransferredByUser().getFullName());
     }
     dto.setTransferredAt(history.getTransferredAt());
+    return dto;
+  }
+
+  public ProgressNoteResponse toDto(ProgressNote note) {
+    ProgressNoteResponse dto = new ProgressNoteResponse();
+    dto.setId(note.getId());
+    dto.setDoctorId(note.getDoctorId());
+    if (note.getDoctor() != null) {
+      dto.setDoctorName(note.getDoctor().getFullName());
+    }
+    dto.setNote(note.getNote());
+    dto.setCreatedAt(note.getCreatedAt());
     return dto;
   }
 }

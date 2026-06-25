@@ -235,4 +235,16 @@ public class AdmissionService {
         jdbcTemplate.queryForObject("SELECT nextval('ipd.admission_number_seq')", Long.class);
     return String.format("ADM-%s-%04d", datePart, seq);
   }
+
+  @Transactional(readOnly = true)
+  public List<AdmissionResponseDTO> getMyPatients() {
+    UUID hospitalId = hospitalContext.requireHospitalId();
+    UUID doctorId = authService.getAuthenticatedPrincipal().userId();
+
+    List<Admission> admissions =
+        admissionRepository.findAllByDoctorIdAndStatusAndHospitalIdOrderByAdmissionDateTimeDesc(
+            doctorId, AdmissionStatus.ADMITTED, hospitalId);
+
+    return admissions.stream().map(ipdMapper::toDto).toList();
+  }
 }

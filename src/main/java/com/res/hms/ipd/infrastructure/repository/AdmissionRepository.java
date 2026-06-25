@@ -15,4 +15,7 @@ public interface AdmissionRepository extends BaseRepository<Admission> {
   List<Admission> findAllByPatientIdAndStatus(UUID patientId, AdmissionStatus status);
 
   Optional<Admission> findByBedIdAndStatus(UUID bedId, AdmissionStatus status);
+
+  List<Admission> findAllByDoctorIdAndStatusAndHospitalIdOrderByAdmissionDateTimeDesc(
+      UUID doctorId, AdmissionStatus status, UUID hospitalId);
 }
